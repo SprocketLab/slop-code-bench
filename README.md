@@ -1,6 +1,6 @@
 <div align="center">
+<h1 > SlopCodeBench (SCBench)</h1>
 
-![](assets/overview.png)
   [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
   [![GitHub stars](https://img.shields.io/github/stars/SprocketLab/slop-code-bench)](https://github.com/SprocketLab/slop-code-bench/stargazers)
@@ -8,6 +8,7 @@
   [🌐 Website](https://www.scbench.ai) | [📝 Blog Post](https://gabeorlanski.github.io/posts/slop-code-bench) | [📄 Paper](#citing-us)
 </div>
 
+![](assets/overview.png)
 ---
 
 **SlopCodeBench** measures *code erosion under iterative specification refinement* — quantifying how code quality degrades as AI agents iterate on programming problems. As agents receive feedback and refine their solutions, they often introduce subtle degradations: unnecessary abstractions, defensive programming patterns, and structural bloat. This benchmark captures and measures that drift.
