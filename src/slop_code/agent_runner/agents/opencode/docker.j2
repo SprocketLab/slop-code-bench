@@ -1,0 +1,15 @@
+FROM {{base_image}}
+USER agent
+WORKDIR /workspace
+# Configure npm globals under user home
+ENV NPM_CONFIG_PREFIX="$HOME/.npm-global"
+ENV PATH="$HOME/.npm-global/bin:$PATH"
+ENV XDG_CONFIG_HOME="$HOME/.config"
+ENV XDG_DATA_HOME="$HOME/.local/share"
+
+# --- Install OpenCode and dependencies --------------------------------------
+RUN npm install -g opencode-ai@{{ version }} @ai-sdk/openai-compatible && \
+    mkdir -p "$HOME/.config/opencode" "$HOME/.local/share/opencode"
+
+# --- Default shell ----------------------------------------------------------
+CMD ["opencode"]

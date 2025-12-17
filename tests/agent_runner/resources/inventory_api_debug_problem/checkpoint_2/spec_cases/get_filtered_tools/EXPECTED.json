@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "wrench",
+    "quantity": 5,
+    "category": "tools"
+  },
+  {
+    "id": 2,
+    "name": "screwdriver",
+    "quantity": 4,
+    "category": "tools"
+  }
+]

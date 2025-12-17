@@ -1,0 +1,5 @@
+id: get_item_1
+method: GET
+path: /v1/items/1
+expected:
+  status_code: 200

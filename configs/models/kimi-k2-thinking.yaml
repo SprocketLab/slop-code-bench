@@ -1,0 +1,14 @@
+internal_name: kimi-k2-thinking
+provider: moonshot
+pricing:
+  input: 0.45
+  output: 2.35
+  cache_read: 0
+  cache_write: 0
+aliases:
+  - moonshotai/kimi-k2-thinking
+provider_slugs:
+  openrouter: moonshotai/kimi-k2-thinking
+agent_specific:
+  opencode:
+    provider: openrouter

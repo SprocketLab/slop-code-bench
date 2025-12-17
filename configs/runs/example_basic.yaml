@@ -1,0 +1,10 @@
+# Basic run configuration example
+# Uses defaults for most values
+
+model:
+  provider: anthropic
+  name: sonnet-4.5
+
+# Optional overrides (uncomment to use)
+# thinking: medium
+# pass_policy: all-cases

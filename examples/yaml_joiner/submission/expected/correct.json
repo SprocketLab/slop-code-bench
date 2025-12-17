@@ -1,0 +1,62 @@
+{
+    "checkpoint_1": {
+        "problem_name": "yaml_joiner",
+        "problem_version": 1,
+        "name": "checkpoint_1",
+        "version": 1,
+        "timestamp": "2025-10-16T12:30:09.970682",
+        "duration": 0.5785729885101318,
+        "reports": [],
+        "group_outcomes": {
+            "core": {
+                "duration": 0.5785729885101318,
+                "results": {
+                    "multiple": 1.0,
+                    "single": 1.0
+                },
+                "type": "Core"
+            }
+        },
+        "pass_counts": {
+            "Core": 2
+        },
+        "total_counts": {
+            "Core": 2
+        }
+    },
+    "checkpoint_2": {
+        "problem_name": "yaml_joiner",
+        "problem_version": 1,
+        "name": "checkpoint_2",
+        "version": 1,
+        "timestamp": "2025-10-16T12:40:21.041800",
+        "duration": 1.264064073562622,
+        "reports": [],
+        "group_outcomes": {
+            "random": {
+                "duration": 0.6710829734802246,
+                "results": {
+                    "local": 1.0,
+                    "static": 1.0
+                },
+                "type": "Core"
+            },
+            "checkpoint_1_core": {
+                "duration": 0.5929811000823975,
+                "results": {
+                    "multiple": 1.0,
+                    "single": 1.0
+                },
+                "type": "Regression"
+            }
+        },
+        "pass_counts": {
+            "Core": 2,
+            "Regression": 2
+        },
+        "total_counts": {
+            "Core": 2,
+            "Regression": 2
+        }
+    }
+}

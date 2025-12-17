@@ -1,0 +1,12 @@
+internal_name: grok-code-fast-1
+provider: xai
+pricing:
+  input: 0.20
+  output: 1.50
+  cache_read: 0.02
+  cache_write: 0
+aliases:
+  - x-ai/grok-code-fast-1
+provider_slugs:
+  openrouter: x-ai/grok-code-fast-1
+# mini_swe uses provider_slugs.openrouter automatically

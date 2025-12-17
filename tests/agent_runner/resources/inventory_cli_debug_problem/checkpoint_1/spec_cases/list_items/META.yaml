@@ -1,0 +1,5 @@
+id: list_items
+arguments:
+  - list
+expected:
+  status_code: 0

@@ -1,0 +1,7 @@
+id: update_wrench
+method: PUT
+path: /v1/items/1
+headers:
+  content-type: application/json; charset=utf-8
+expected:
+  status_code: 200

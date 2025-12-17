@@ -1,0 +1,8 @@
+# Agent config for MiniSWE v1.0
+# Note: model is specified via --model CLI argument
+# Model must have mini_swe agent_specific settings in catalog (configs/models/*.yaml)
+type: mini_swe
+cost_limits:
+  cost_limit: 20
+  step_limit: 300
+  net_cost_limit: 0

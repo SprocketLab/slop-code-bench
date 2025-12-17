@@ -1,0 +1,23 @@
+internal_name: claude-sonnet-4-5-20250929
+provider: anthropic
+pricing:
+  input: 3
+  output: 15
+  cache_read: 0.30
+  cache_write: 3.75
+aliases:
+  - claude-sonnet-4.5
+  - sonnet-4.5
+provider_slugs:
+  openrouter: anthropic/claude-sonnet-4.5
+
+agent_specific:
+  mini_swe:
+    model_name: anthropic/claude-sonnet-4.5
+    model_class: openrouter
+
+  codex:
+    thinking: medium
+
+  opencode:
+    provider_name: anthropic

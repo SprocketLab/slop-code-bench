@@ -1,0 +1,9 @@
+internal_name: o3
+provider: openai
+pricing:
+  input: 2
+  output: 8
+  cache_read: 0.50
+  cache_write: 0
+aliases:
+  - o3-2025-04-16

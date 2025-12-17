@@ -1,0 +1,5 @@
+id: get_missing_item
+method: GET
+path: /v1/items/999
+expected:
+  status_code: 404

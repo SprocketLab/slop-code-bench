@@ -1,0 +1,6 @@
+id: get_item_1
+arguments:
+  - get
+  - "1"
+expected:
+  status_code: 0

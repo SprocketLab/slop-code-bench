@@ -1,0 +1,14 @@
+# Example with inline agent configuration
+# Useful for custom agent settings without creating a separate file
+environment: docker-python3.12-uv
+prompt: just-solve
+thinking: high
+output_path: outputs/single_shot_runs/${model.name}_${thinking}_${now:%Y%m%dT%H%M}
+one_shot:
+  enabled: true
+  prefix: "\n===============================\nPART {{idx}}\n===============================\n"
+  include_first_prefix: true
+problems:
+  - code_search
+  - file_backup
+  - trajectory_api

@@ -1,0 +1,5 @@
+id: get_filtered_tools
+method: GET
+path: /v1/items?category=tools
+expected:
+  status_code: 200

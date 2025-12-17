@@ -1,0 +1,3 @@
+stdin: "undefined_var + 1"
+expected:
+  status_code: 2

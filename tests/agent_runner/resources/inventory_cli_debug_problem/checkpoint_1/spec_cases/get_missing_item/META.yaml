@@ -1,0 +1,6 @@
+id: get_missing_item
+arguments:
+  - get
+  - "99"
+expected:
+  status_code: 1

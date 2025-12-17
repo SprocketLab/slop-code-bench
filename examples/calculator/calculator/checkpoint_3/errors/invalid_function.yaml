@@ -1,0 +1,3 @@
+stdin: "def 123invalid(): return 0"
+expected:
+  status_code: 1

@@ -1,0 +1,5 @@
+id: reset_defaults
+arguments:
+  - reset
+expected:
+  status_code: 0

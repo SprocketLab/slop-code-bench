@@ -1,0 +1,12 @@
+internal_name: gemini-3-pro-preview
+provider: google
+provider_slugs:
+  openrouter: google/gemini-3-pro-preview
+pricing:
+  input: 2
+  output: 12
+  cache_read: 0.2
+  cache_write: 0.0
+aliases:
+  - gemini-3
+

@@ -1,0 +1,20 @@
+# Example with inline agent configuration
+# Useful for custom agent settings without creating a separate file
+
+agent:
+  type: claude_code
+  version: "2.0.51"
+  cost_limits:
+    step_limit: 100
+    cost_limit: 5.0
+    net_cost_limit: 20.0
+
+environment: docker-python3.12-uv
+prompt: just-solve
+
+model:
+  provider: anthropic
+  name: opus-4.5
+
+thinking: high
+pass_policy: all-cases

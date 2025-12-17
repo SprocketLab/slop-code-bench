@@ -1,0 +1,7 @@
+id: set_theme_dark
+arguments:
+  - set
+  - theme
+  - dark
+expected:
+  status_code: 0

@@ -1,0 +1,9 @@
+id: create_gadget
+arguments:
+  - create
+  - --name
+  - gadget
+  - --quantity
+  - "2"
+expected:
+  status_code: 0

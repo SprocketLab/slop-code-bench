@@ -1,0 +1,36 @@
+---
+id: type-in-name
+language: python
+severity: warning
+message: "Variable name includes type suffix (e.g., users_list, count_int) - redundant with type annotation"
+metadata:
+  weight: 1
+  category: naming
+rule:
+  kind: identifier
+  regex: "_(list|dict|string|array|int|str|bool|set|tuple|map)$"
+---
+id: verbose-identifier
+language: python
+severity: warning
+message: "Identifier exceeds 30 characters - consider shortening"
+metadata:
+  weight: 1
+  category: naming
+rule:
+  kind: identifier
+  regex: "^[a-zA-Z_][a-zA-Z0-9_]{30,}$"
+---
+id: generic-placeholder-name
+language: python
+severity: warning
+message: "Generic variable name (data, result, temp, item, output) - use descriptive name"
+metadata:
+  weight: 1
+  category: naming
+rule:
+  kind: assignment
+  has:
+    kind: identifier
+    field: left
+    regex: "^(data|result|temp|item|output|value|obj|ret|res|tmp)$"

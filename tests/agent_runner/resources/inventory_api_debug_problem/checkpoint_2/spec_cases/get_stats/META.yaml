@@ -1,0 +1,5 @@
+id: get_stats
+method: GET
+path: /v1/items/stats
+expected:
+  status_code: 200

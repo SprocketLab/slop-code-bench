@@ -1,0 +1,3 @@
+stdin: "foo"
+expected:
+  status_code: 1

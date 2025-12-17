@@ -1,0 +1,14 @@
+internal_name: kimi-k2-0905
+provider: moonshot
+pricing:
+  input: 0.60
+  output: 2.50
+  cache_read: 0.15
+  cache_write: 0
+aliases:
+  - moonshotai/kimi-k2-0905
+provider_slugs:
+  openrouter: moonshotai/kimi-k2-0905
+agent_specific:
+  opencode:
+    provider: openrouter

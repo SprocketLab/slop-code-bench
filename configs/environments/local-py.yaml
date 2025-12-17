@@ -1,0 +1,12 @@
+type: local
+name: python
+environment:
+  include_os_env: true
+setup:
+  eval_commands:
+    - uv init
+    - uv add -r requirements.txt
+commands:
+  entry_file: "{entry_file}.py"
+  command: "uv run"
+  agent_command: "python"

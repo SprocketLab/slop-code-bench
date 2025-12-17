@@ -1,0 +1,7 @@
+# The input to pass
+stdin: "1/0"
+
+# The expected result we will get
+expected:
+  # The status code of the expected result.
+  status_code: 2

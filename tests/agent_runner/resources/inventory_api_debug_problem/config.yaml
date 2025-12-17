@@ -1,0 +1,24 @@
+adapter:
+  address: 127.0.0.1
+  health_path: /healthz
+  startup_timeout_s: 45
+  tracked_files: []
+  type: api
+category: diagnostics
+checkpoints:
+- checkpoint_1
+- checkpoint_2
+description: Simple inventory API used to debug agent runner behaviour.
+difficulty: Easy
+entry_file: inventory_service
+loader:
+  entrypoint: load_checkpoint
+  path: loader.py
+  type: script
+name: inventory_api_debug_problem
+tags:
+- debug
+- api
+- smoke
+timeout: 10
+version: 1

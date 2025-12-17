@@ -1,0 +1,47 @@
+FROM {{ base_image }}
+
+# --- Base setup -------------------------------------------------------------
+ENV DEBIAN_FRONTEND=noninteractive
+ENV HOME=/tmp/agent_home
+
+RUN apt-get update && apt-get upgrade -y && apt-get install -y build-essential
+RUN apt-get install -y bzip2 tar gzip zip unzip curl ca-certificates gnupg procps
+
+# Install Node via nvm and make it the default
+ENV NVM_DIR=/usr/local/nvm
+ENV NODE_VERSION=22.21.1
+
+SHELL ["/bin/bash", "-lc"]
+# Install Node via nvm and make it the default
+RUN mkdir -p "$NVM_DIR" \
+    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+RUN . "$NVM_DIR/nvm.sh" \
+    && nvm install "$NODE_VERSION" \
+    && nvm alias default "$NODE_VERSION" \
+    && nvm use $NODE_VERSION
+
+RUN . "$NVM_DIR/nvm.sh" \
+  && nvm use $NODE_VERSION \
+  && NODE_PATH="$(nvm which node)" \
+  && NODE_BIN_DIR="$(dirname "$NODE_PATH")" \
+  && ln -s "$NODE_BIN_DIR/node" /usr/local/bin/node \
+  && ln -s "$NODE_BIN_DIR/npm" /usr/local/bin/npm \
+  && ln -s "$NODE_BIN_DIR/npx" /usr/local/bin/npx
+
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/tmp/agent_home/.cargo/bin:${PATH}"
+
+{% for key, value in env.items() %}
+    ENV {{ key }}={{ value }}
+{% endfor %}
+
+# Create non-root user and workspace
+RUN groupadd -g 1000 agent && \
+    useradd -m -u 1000 -g 1000 -d "$HOME" -s /bin/bash agent && \
+    mkdir -p /workspace && \
+    chown -R agent:agent "$HOME" /workspace
+ENV CARGO_HOME=$HOME/.cargo
+ENV RUSTUP_HOME=$HOME/.rustup

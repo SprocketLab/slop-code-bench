@@ -1,0 +1,23 @@
+type: docker
+name: python3.12
+docker:
+  image: ghcr.io/astral-sh/uv:python3.12-trixie-slim
+  workdir: /workspace
+  mount_workspace: true
+environment:
+  env:
+    UV_CACHE_DIR: /tmp/uv-cache
+    PIP_CACHE_DIR: /tmp/pip-cache-dir
+    PIP_CONFIG_FILE: /tmp/pip-conf
+setup:
+  eval_commands:
+    - uv init
+    - uv add -r requirements.txt
+  resume_commands:
+    # Create venv and install deps using standard Python (agent uses pip, not uv)
+    - python -m venv .venv || true
+    - .venv/bin/pip install -r requirements.txt 2>/dev/null || true
+commands:
+  entry_file: "{entry_file}.py"
+  command: uv run
+  agent_command: "python"

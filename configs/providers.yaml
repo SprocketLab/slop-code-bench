@@ -1,0 +1,93 @@
+# Provider definitions - single source of truth for credentials
+#
+# Each provider maps to either an environment variable or a file path.
+# This file is loaded by ProviderCatalog and used by APIKeyStore to
+# resolve credentials for agents.
+#
+# To add a new provider:
+#   1. Add an entry below with type: env_var or type: file
+#   2. For env_var: specify env_var field
+#   3. For file: specify file_path field
+
+providers:
+  # Environment variable providers
+  anthropic:
+    type: env_var
+    env_var: ANTHROPIC_API_KEY
+    description: Anthropic API key for Claude models
+
+  openai:
+    type: env_var
+    env_var: OPENAI_API_KEY
+    description: OpenAI API key
+
+  openrouter:
+    type: env_var
+    env_var: OPENROUTER_API_KEY
+    description: OpenRouter API key for multi-provider access
+
+  zhipu:
+    type: env_var
+    env_var: ZHIPU_API_KEY
+    description: Zhipu AI API key for GLM models
+
+  google:
+    type: env_var
+    env_var: GEMINI_API_KEY
+    description: Google API key for Gemini models
+
+  mistral:
+    type: env_var
+    env_var: MISTRAL_API_KEY
+    description: Mistral AI API key
+
+  deepseek:
+    type: env_var
+    env_var: DEEPSEEK_API_KEY
+    description: DeepSeek API key
+
+  together:
+    type: env_var
+    env_var: TOGETHER_API_KEY
+    description: Together AI API key
+
+  groq:
+    type: env_var
+    env_var: GROQ_API_KEY
+    description: Groq API key
+
+  cohere:
+    type: env_var
+    env_var: COHERE_API_KEY
+    description: Cohere API key
+
+  claude_code_oauth:
+    type: env_var
+    env_var: CLAUDE_CODE_OAUTH_TOKEN
+    description: Claude Code OAuth token for authentication
+
+  xai:
+    type: env_var
+    env_var: XAI_API_KEY
+    description: xAI API key for Grok models
+
+  moonshot:
+    type: env_var
+    env_var: MOONSHOT_API_KEY
+    description: Moonshot AI API key for Kimi models
+
+  # File-based providers
+  codex_auth:
+    type: file
+    file_path: ~/.codex/auth.json
+    description: OpenAI Codex CLI authentication file
+
+  opencode_auth:
+    type: file
+    file_path: ~/.local/share/opencode/auth.json
+    description: OpenCode authentication file
+
+  gemini_auth:
+    type: file
+    file_path: ~/.gemini/oauth_creds.json
+    description: Gemini CLI OAuth credentials file

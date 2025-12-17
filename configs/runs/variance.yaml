@@ -1,0 +1,10 @@
+# Example with inline agent configuration
+# Useful for custom agent settings without creating a separate file
+environment: docker-python3.12-uv
+prompt: just-solve
+thinking: high
+output_path: outputs/variance_runs/${model.name}_${thinking}_${prompt}_${now:%Y%m%dT%H%M}
+problems:
+  - code_search
+  - file_backup
+  - trajectory_api

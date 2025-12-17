@@ -1,0 +1,45 @@
+# Full run configuration example with all options
+
+# Agent configuration - can be:
+# - A bare name (e.g., "claude_code-2.0.51") that resolves from configs/agents/
+# - An explicit path (e.g., "./my_agent.yaml", "/abs/path/agent.yaml")
+# - An inline configuration dict
+agent: claude_code-2.0.51
+
+# Environment configuration - same resolution as agent
+# - Bare name resolves from configs/environments/
+# - Explicit paths are used as-is
+environment: docker-python3.12-uv
+
+# Prompt template - bare name resolves from configs/prompts/ with .jinja extension
+prompt: just-solve
+
+# Model configuration (required)
+model:
+  provider: anthropic
+  name: sonnet-4.5
+
+# Thinking configuration
+# Either a preset: none, disabled, low, medium, high
+# Or use max_tokens for explicit control
+thinking: medium
+
+# Pass policy for evaluation
+# Options: any, any-case, all-cases, all-non-error-cases, core-cases, any-core-cases, all-core-cases
+pass_policy: all-cases
+
+# One-shot mode: collapse all checkpoint specs into one prompt using the final checkpoint's tests
+# one_shot:
+#   enabled: false
+#   prefix: "--- Next Checkpoint {{ idx }} ---"  # Jinja template; idx is 1-based
+#   include_first_prefix: false
+
+# Output path with interpolation support
+# Available variables:
+# - ${model.name}, ${model.provider}: Model configuration
+# - ${agent.type}: Agent type from config
+# - ${prompt}: Prompt template file stem
+# - ${thinking}: Thinking preset
+# - ${env.name}: Environment name
+# - ${now:FORMAT}: Timestamp with strftime format
+output_path: outputs/${model.name}/${agent.type}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}

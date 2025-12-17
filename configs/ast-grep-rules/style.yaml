@@ -1,0 +1,1122 @@
+---
+id: bool-comparison
+language: python
+severity: warning
+message: Comparing to boolean literal - use 'if x' instead of 'if x == True'
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: comparison_operator
+  regex: '==\s*(True|False)'
+---
+id: chained-none-check
+language: python
+severity: warning
+message: Chained 'is not None' checks - use try/except or walrus operator
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: boolean_operator
+  regex: "is not None\\s+(and|or)\\s+\\w+\\s+is not None"
+---
+id: class-inherits-object
+language: python
+severity: warning
+message: Explicit inheritance from object - Python 2 legacy style
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: class_definition
+  has:
+    kind: argument_list
+    has:
+      kind: identifier
+      regex: "^object$"
+---
+id: dict-get-default-none
+language: python
+severity: warning
+message: dict.get(k, None) - None is the default return value, so the second argument
+  is redundant
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  all:
+  - has:
+      kind: attribute
+      regex: "\\.get$"
+  - has:
+      kind: argument_list
+      has:
+        kind: none
+---
+id: empty-init
+language: python
+severity: warning
+message: Empty __init__ method - redundant
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: function_definition
+  all:
+  - has:
+      kind: identifier
+      regex: "^__init__$"
+  - has:
+      kind: block
+      has:
+        kind: pass_statement
+---
+id: empty-string-or
+language: python
+severity: warning
+message: Checking empty string with 'or' - defensive pattern
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: boolean_operator
+  regex: "==\\s*(\"\"|'')\\s+(or|and)"
+---
+id: enumerate-unused-index
+language: python
+severity: warning
+message: enumerate() where index is unused (_) - direct iteration may be clearer
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: for_statement
+  regex: "for\\s+_\\s*,\\s*\\w+\\s+in\\s+enumerate"
+---
+id: eq-none-comparison
+language: python
+severity: warning
+message: Using == None instead of 'is None'
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: comparison_operator
+  regex: "==\\s*None"
+---
+id: explicit-bool-cast
+language: python
+severity: warning
+message: bool() cast - usually unnecessary, use truthiness directly
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  has:
+    kind: identifier
+    regex: "^bool$"
+---
+id: f-string-no-vars
+language: python
+severity: warning
+message: f-string without variables - unnecessary f prefix
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: string
+  regex: "^f['\"][^{}]*['\"]$"
+---
+id: get-then-none-check
+language: python
+severity: warning
+message: .get() followed by None check - use 'in' check or EAFP
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: if_statement
+  has:
+    kind: comparison_operator
+    regex: "is None|is not None"
+  follows:
+    kind: expression_statement
+    has:
+      kind: assignment
+      has:
+        kind: call
+        has:
+          kind: attribute
+          regex: "\\.get$"
+---
+id: guard-return-none
+language: python
+severity: warning
+message: 'if x is None: return None - overly defensive early guard'
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: if_statement
+  pattern: 'if $X is None: return None'
+---
+id: if-none-raise
+language: python
+severity: warning
+message: 'if x is None: raise - defensive None guard before operation'
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: comparison_operator
+      regex: "is None"
+  - has:
+      kind: block
+      has:
+        kind: raise_statement
+---
+id: if-not-guard
+language: python
+severity: warning
+message: 'if not x: raise/return - defensive guard pattern'
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: not_operator
+  - has:
+      kind: block
+      any:
+      - has:
+          kind: raise_statement
+      - has:
+          kind: return_statement
+---
+id: if-return-bool-else
+language: python
+severity: warning
+message: if/else returning True/False - simplify to 'return bool(condition)'
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: block
+      has:
+        kind: return_statement
+        regex: "return True"
+  - has:
+      kind: else_clause
+      has:
+        kind: block
+        has:
+          kind: return_statement
+          regex: "return False"
+---
+id: int-float-coerce
+language: python
+severity: warning
+message: Casting via int(float(x)) is sloppy and can mis-handle strings; parse once
+  or validate explicitly.
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: call
+  pattern: int(float($X))
+---
+id: lambda-assignment
+language: python
+severity: warning
+message: Assigning lambda to variable - use def function instead
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: assignment
+  has:
+    kind: lambda
+---
+id: len-comparison
+language: python
+severity: warning
+message: len() > 0 or len() != 0 - use truthiness instead
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: comparison_operator
+  has:
+    kind: call
+    regex: "^len\\("
+  regex: "(>\\s*0|!=\\s*0|>=\\s*1)"
+---
+id: manual-dict-setdefault
+language: python
+severity: warning
+message: 'Manual dict setdefault pattern (if k not in d: d[k] = ...) - use d.setdefault()'
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: comparison_operator
+      regex: "not in"
+  - has:
+      kind: block
+      has:
+        kind: expression_statement
+        has:
+          kind: assignment
+          has:
+            kind: subscript
+---
+id: many-positional-args
+language: python
+severity: warning
+message: 5+ positional arguments - use keyword arguments for clarity
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: argument_list
+  has:
+    nthChild:
+      position: 5
+      ofRule:
+        not:
+          has:
+            kind: keyword_argument
+---
+id: map-to-list
+language: python
+severity: warning
+message: Usage of list(map(...)) - consider list comprehension for readability
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  has:
+    kind: argument_list
+    has:
+      kind: call
+      has:
+        kind: identifier
+        regex: "^map$"
+---
+id: multiple-isinstance-or
+language: python
+severity: warning
+message: Multiple isinstance() with or - use isinstance(x, (A, B)) tuple form
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: boolean_operator
+  regex: "isinstance.*or.*isinstance"
+---
+id: not-in-comparison
+language: python
+severity: warning
+message: '''not X in Y'' - consider using ''X not in Y'' for clarity'
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: not_operator
+  has:
+    kind: comparison_operator
+    regex: "\\bin\\b"
+---
+id: range-len-pattern
+language: python
+severity: warning
+message: range(len(x)) - use enumerate() instead
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  pattern: range(len($X))
+---
+id: redundant-bool-ternary
+language: python
+severity: warning
+message: Redundant boolean ternary 'True if x else False' - use 'bool(x)'
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: conditional_expression
+  regex: "True\\s+if.*else\\s+False|False\\s+if.*else\\s+True"
+---
+id: redundant-continue
+language: python
+severity: warning
+message: Redundant continue at end of loop
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: block
+  regex: "continue\\s*$"
+  inside:
+    any:
+    - kind: for_statement
+    - kind: while_statement
+---
+id: redundant-list-comprehension
+language: python
+severity: warning
+message: Redundant list comprehension - usage of [x for x in iterable] is unnecessary,
+  use list(iterable)
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: list_comprehension
+  pattern: "[$X for $X in $ITER]"
+---
+id: redundant-none-empty-check
+language: python
+severity: warning
+message: Redundant None and empty check - use truthiness
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: boolean_operator
+  regex: "is not None.*(!=\\s*\"\"|len\\(|==\\s*\"\"|!=\\s*''|==\\s*'')"
+---
+id: redundant-parens
+language: python
+severity: warning
+message: Redundant parentheses in if/while statement
+metadata:
+  weight: 1
+  category: style
+rule:
+  any:
+  - pattern: 'if ($COND):'
+  - pattern: 'while ($COND):'
+---
+id: redundant-return-none
+language: python
+severity: warning
+message: Explicit 'return None' at end of function - implicit None is cleaner
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: return_statement
+  regex: "^return None$"
+---
+id: chained-string-prefix-suffix
+language: python
+severity: warning
+message: 'Multiple startswith/endswith - use tuple form: s.startswith((''a'', ''b''))'
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: boolean_operator
+  regex: "startswith|endswith"
+  has:
+    kind: call
+    has:
+      kind: attribute
+      regex: "\\.(startswith|endswith)$"
+---
+id: result-return
+language: python
+severity: warning
+message: Generic result variable immediately returned - return directly
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: return_statement
+  regex: "return\\s+(result|results|response|output|ret|retval)\\s*$"
+---
+id: set-literal-list
+language: python
+severity: warning
+message: set([list]) - use set literal {x, y} instead
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  has:
+    kind: argument_list
+    has:
+      kind: list
+---
+id: side-effect-comprehension-append
+language: python
+severity: warning
+message: List comprehension used for side effects (append) without using the result;
+  prefer an explicit loop.
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: list_comprehension
+  pattern: '[$ACC.append($X) for $Y in $ITER]'
+---
+id: type-name-in-error
+language: python
+severity: warning
+message: Using type(x).__name__ - verbose way to get type name for error messages
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: attribute
+  regex: "type\\([^)]+\\)\\.__name__"
+---
+id: unnecessary-cast-str
+language: python
+severity: warning
+message: Unnecessary str() cast on string literal or f-string
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  all:
+  - has:
+      kind: identifier
+      regex: "^str$"
+  - has:
+      kind: argument_list
+      has:
+        kind: string
+---
+id: unnecessary-elif
+language: python
+severity: warning
+message: Unnecessary elif after return/raise - use if instead
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: block
+      any:
+      - has:
+          kind: return_statement
+      - has:
+          kind: raise_statement
+  - has:
+      kind: elif_clause
+---
+id: unnecessary-else-raise
+language: python
+severity: warning
+message: else after raise - the else block is redundant
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: block
+      has:
+        kind: raise_statement
+  - has:
+      kind: else_clause
+---
+id: unnecessary-format
+language: python
+severity: warning
+message: Unnecessary .format() call - prefer f-strings
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  has:
+    kind: attribute
+    pattern: $STR.format
+    has:
+      kind: string
+---
+id: unnecessary-lambda
+language: python
+severity: warning
+message: 'Unnecessary lambda - lambda x: func(x) can be replaced by func'
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: lambda
+  pattern: "lambda $ARG: $FN($ARG)"
+---
+id: unnecessary-semicolon
+language: python
+severity: warning
+message: Unnecessary semicolon
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: expression_statement
+  regex: ";\\s*$"
+---
+id: verbose-and-return
+language: python
+severity: warning
+message: 'Early ''if not x: return False'' pattern - may be simplifiable'
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: not_operator
+  - has:
+      kind: block
+      has:
+        kind: return_statement
+        regex: "return False"
+  not:
+    has:
+      kind: else_clause
+---
+id: verbose-conditional-assign
+language: python
+severity: warning
+message: Verbose conditional assignment - consider ternary operator
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: block
+      has:
+        kind: expression_statement
+        has:
+          kind: assignment
+  - has:
+      kind: else_clause
+      has:
+        kind: block
+        has:
+          kind: expression_statement
+          has:
+            kind: assignment
+  - not:
+      has:
+        kind: elif_clause
+---
+id: verbose-none-default
+language: python
+severity: warning
+message: Verbose None default pattern - use 'x = x or default'
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: comparison_operator
+      regex: "is None"
+  - has:
+      kind: block
+      has:
+        kind: expression_statement
+        has:
+          kind: assignment
+---
+id: verbose-or-return
+language: python
+severity: warning
+message: 'Early ''if x: return True'' pattern - may be simplifiable'
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  has:
+    kind: block
+    has:
+      kind: return_statement
+      regex: "return True"
+  not:
+    has:
+      kind: else_clause
+---
+id: verbose-variable-prefix
+language: python
+severity: warning
+message: Verbose variable prefix (overall_, total_, is_temp_, is_valid_) - may be
+  unnecessarily descriptive
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: identifier
+  regex: "^(overall_|total_|is_temp_|is_valid_|current_result|current_index)"
+---
+id: while-len-loop
+language: python
+severity: warning
+message: while loop with len() check instead of for loop - non-idiomatic Python
+metadata:
+  weight: 3
+  category: style
+rule:
+  kind: while_statement
+  has:
+    kind: comparison_operator
+    has:
+      kind: call
+      regex: "len\\("
+---
+id: yield-from-loop
+language: python
+severity: warning
+message: 'for x in y: yield x - use yield from y'
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: for_statement
+  has:
+    kind: block
+    has:
+      kind: yield
+      regex: "^yield\\s+[a-zA-Z0-9_]+$"
+---
+id: silent-makedirs
+language: python
+severity: hint
+message: os.makedirs with exist_ok=True without logging - silently creates directories
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  pattern: os.makedirs($PATH, exist_ok=True)
+---
+id: verbose-dict-key-access
+language: python
+severity: warning
+message: Verbose dict access - use dict.get() or walrus operator (var := dict.get(key))
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: if_statement
+  pattern: |
+    if "$KEY" in $DICT:
+        $VAR = $DICT["$KEY"]
+---
+id: verbose-error-dict-literal
+language: python
+severity: warning
+message: Repeated inline error dict - consider error factory function or dataclass
+metadata:
+  weight: 1
+  category: style
+rule:
+  pattern: 'return {"error": $MSG, "code": $CODE}'
+---
+id: defensive-isinstance-return
+language: python
+severity: warning
+message: Defensive isinstance check - consider type hints, schema validation, or
+  EAFP
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: if_statement
+  pattern: |
+    if not isinstance($VAR, $TYPE):
+        return $ERR
+---
+id: defensive-if-return-same
+language: python
+severity: warning
+message: Defensive if-return-same - simplify to 'return x or None' or use walrus
+  operator
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  pattern: |
+    if $X:
+        return $X
+---
+id: manual-sqrt
+language: python
+severity: hint
+message: Manual square root via ** 0.5 - use math.sqrt() for clarity
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: binary_operator
+  pattern: $X ** 0.5
+---
+id: manual-variance-calc
+language: python
+severity: warning
+message: Manual variance calculation - use statistics.variance() or statistics.pvariance()
+metadata:
+  weight: 2
+  category: style
+rule:
+  pattern: sum(($X - $AVG) ** 2 for $X in $ITER) / $N
+---
+id: verbose-median-calc
+language: python
+severity: warning
+message: Manual median calculation - use statistics.median()
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: subscript
+  pattern: $SORTED[$N // 2]
+  inside:
+    kind: conditional_expression
+---
+id: unnecessary-else-after-return-loop
+language: python
+severity: warning
+message: Unnecessary else block after loop with break - use flag or restructure
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: for_statement
+  all:
+  - has:
+      kind: block
+      has:
+        kind: break_statement
+  - has:
+      kind: else_clause
+---
+id: verbose-file-exists-check
+language: python
+severity: hint
+message: Verbose file exists check - use try/except for EAFP or pathlib
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: call
+      pattern: os.path.exists($PATH)
+  - has:
+      kind: block
+      has:
+        kind: with_statement
+        has:
+          kind: call
+          pattern: open($PATH2)
+---
+id: tuple-error-return-pattern
+language: python
+severity: warning
+message: "Go-style tuple error return (value, error) - prefer raising exceptions in Python"
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: return_statement
+  has:
+    kind: expression_list
+    all:
+      - has:
+          kind: none
+          nthChild:
+            position: 1
+      - has:
+          kind: call
+          nthChild:
+            position: 2
+---
+id: string-literal-type-check
+language: python
+severity: warning
+message: "String-based type check via type().__name__ == 'string' is fragile; use isinstance() instead"
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: comparison_operator
+  has:
+    kind: attribute
+    pattern: type($X).__name__
+  regex: "==\\s*['\"]"
+---
+id: is-bool-comparison
+language: python
+severity: warning
+message: "Using 'is True' or 'is False' - use truthiness or == for explicit comparison"
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: comparison_operator
+  regex: "\\bis\\s+(True|False)\\b"
+---
+id: redundant-str-in-fstring
+language: python
+severity: warning
+message: "Redundant str() call inside f-string - f-strings automatically convert to string"
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: interpolation
+  has:
+    kind: call
+    pattern: str($X)
+---
+id: enumerate-start-zero
+language: python
+severity: warning
+message: "enumerate() with start=0 is redundant - 0 is the default"
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  pattern: enumerate($ITER, start=0)
+---
+id: sorted-key-none
+language: python
+severity: warning
+message: "sorted() with key=None is redundant - None is the default"
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  pattern: sorted($ITER, key=None)
+---
+id: return-ternary-or-none
+language: python
+severity: warning
+message: "Return ternary 'x if x else None' is redundant - just return x"
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: return_statement
+  has:
+    kind: conditional_expression
+    pattern: $X if $X else None
+---
+id: if-pass-else-action
+language: python
+severity: warning
+message: "if-pass-else pattern - invert the condition and remove pass branch"
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: if_statement
+  all:
+    - has:
+        kind: block
+        has:
+          kind: pass_statement
+        not:
+          has:
+            kind: expression_statement
+    - has:
+        kind: else_clause
+---
+id: manual-string-escape
+language: python
+severity: warning
+message: "Manual string escaping with replace() - use proper escaping function"
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: call
+  all:
+    - has:
+        kind: attribute
+        regex: "\\.replace$"
+    - has:
+        kind: argument_list
+        has:
+          kind: string
+          regex: "[\\\\'\"]{2}"
+---
+id: any-not-instead-of-all
+language: python
+severity: warning
+message: "not any() pattern - consider using all(not ...) for clarity"
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: not_operator
+  has:
+    kind: call
+    has:
+      kind: identifier
+      regex: "^any$"
+---
+id: all-not-instead-of-any
+language: python
+severity: warning
+message: "not all() pattern - consider using any(not ...) for clarity"
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: not_operator
+  has:
+    kind: call
+    has:
+      kind: identifier
+      regex: "^all$"
+---
+id: dict-comprehension-from-keys
+language: python
+severity: warning
+message: "dict.fromkeys() pattern - consider dict comprehension for clarity"
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  pattern: dict.fromkeys($KEYS, $VAL)
+---
+id: list-extend-single-item
+language: python
+severity: warning
+message: "list.extend() with single item - use append() instead"
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: call
+  all:
+    - has:
+        kind: attribute
+        regex: "\\.extend$"
+    - has:
+        kind: argument_list
+        has:
+          kind: list
+          not:
+            has:
+              nthChild:
+                position: 2
+---
+id: hasattr-guard-access
+language: python
+severity: warning
+message: "hasattr() check before attribute access - use getattr() with default or just access directly"
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: if_statement
+  all:
+    - has:
+        kind: call
+        pattern: hasattr($OBJ, $ATTR)
+    - has:
+        kind: block
+        has:
+          kind: attribute
+          has:
+            kind: identifier
+            pattern: $OBJ
+---
+id: redundant-truthy-none-and
+language: python
+severity: warning
+message: "'if x is not None and x' - just use 'if x' since truthiness already handles None"
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: boolean_operator
+  pattern: $X is not None and $X
+---
+id: isinstance-then-same-cast
+language: python
+severity: warning
+message: "Casting to same type after isinstance check - the cast is redundant"
+metadata:
+  weight: 2
+  category: style
+rule:
+  kind: if_statement
+  any:
+    - pattern: |
+        if isinstance($VAR, str):
+            $$$PRE
+            str($VAR)
+            $$$POST
+    - pattern: |
+        if isinstance($VAR, int):
+            $$$PRE
+            int($VAR)
+            $$$POST
+    - pattern: |
+        if isinstance($VAR, float):
+            $$$PRE
+            float($VAR)
+            $$$POST
+    - pattern: |
+        if isinstance($VAR, list):
+            $$$PRE
+            list($VAR)
+            $$$POST
+    - pattern: |
+        if isinstance($VAR, dict):
+            $$$PRE
+            dict($VAR)
+            $$$POST
+---
+id: defensive-or-empty
+language: python
+severity: warning
+message: "'x if x else []' - use 'x or []' instead"
+metadata:
+  weight: 1
+  category: style
+rule:
+  kind: conditional_expression
+  any:
+    - pattern: $X if $X else []
+    - pattern: $X if $X else {}

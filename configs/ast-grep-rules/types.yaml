@@ -1,0 +1,243 @@
+---
+id: any-type-annotation
+language: python
+severity: warning
+message: Using 'Any' type - prefer specific types
+metadata:
+  weight: 1
+  category: types
+rule:
+  kind: type
+  regex: "\bAny\b"
+---
+id: complex-tuple-type
+language: python
+severity: warning
+message: Complex tuple type annotation (4+ elements) - consider using NamedTuple or
+  dataclass
+metadata:
+  weight: 1
+  category: types
+rule:
+  kind: type
+  regex: '[Tt]uple\[[^\]]*,[^\]]*,[^\]]*,[^\]]*'
+---
+id: isinstance-bool-exclusion
+language: python
+severity: warning
+message: isinstance(x, bool) check - over-defensive type exclusion
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: call
+  regex: "isinstance\\([^,]+,\\s*bool\\)"
+---
+id: isinstance-guard-raise
+language: python
+severity: warning
+message: Defensive isinstance check that raises on failure - excessive type validation
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: if_statement
+  all:
+  - has:
+      kind: not_operator
+      has:
+        kind: call
+        regex: "isinstance\\("
+  - has:
+      kind: block
+      has:
+        any:
+        - has:
+            kind: raise_statement
+        - has:
+            kind: call
+            regex: "exit"
+---
+id: type-equality
+language: python
+severity: warning
+message: type(x) == Type comparison - use isinstance() instead
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: comparison_operator
+  has:
+    kind: call
+    regex: "^type\\("
+---
+id: type-ignore-arg-type
+language: python
+severity: warning
+message: '`# type: ignore[arg-type]` suppresses type errors; prefer fixing types instead
+  of ignoring.'
+metadata:
+  weight: 1
+  category: types
+rule:
+  kind: comment
+  regex: "type:\\s*ignore\\[arg-type\\]"
+---
+id: untyped-list-annotation
+language: python
+severity: warning
+message: Unparameterized List annotation - specify element type (e.g. List[str]) instead of raw List
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: type
+  regex: "^List$"
+---
+id: untyped-dict-annotation
+language: python
+severity: warning
+message: Unparameterized Dict annotation - declare key/value types instead of bare Dict
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: type
+  regex: "^Dict$"
+---
+id: untyped-tuple-annotation
+language: python
+severity: warning
+message: Unparameterized Tuple annotation - spell out expected element types
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: type
+  regex: "^Tuple$"
+---
+id: untyped-set-annotation
+language: python
+severity: warning
+message: Unparameterized Set annotation - provide element type instead of raw Set
+metadata:
+  weight: 1
+  category: types
+rule:
+  kind: type
+  regex: "^Set$"
+---
+id: list-of-bare-dicts
+language: python
+severity: warning
+message: List of raw Dict objects - specify key and value types for the dict entries
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: type
+  regex: "^List\\[\\s*Dict\\s*\\]$"
+---
+id: optional-bare-list
+language: python
+severity: warning
+message: Optional[List] without element type - annotate the list contents explicitly
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: type
+  regex: "^Optional\\[\\s*List\\s*\\]$"
+---
+id: optional-bare-dict
+language: python
+severity: warning
+message: Optional[Dict] without key/value types - annotate the mapping shape
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: type
+  regex: "^Optional\\[\\s*Dict\\s*\\]$"
+---
+id: dict-str-any
+language: python
+severity: warning
+message: Dict[str, Any] return/field - prefer precise value types instead of Any
+metadata:
+  weight: 1
+  category: types
+rule:
+  kind: type
+  regex: "^Dict\\[\\s*str\\s*,\\s*Any\\s*\\]$"
+---
+id: list-any
+language: python
+severity: warning
+message: List[Any] annotation - tighten element typing instead of using Any
+metadata:
+  weight: 1
+  category: types
+rule:
+  kind: type
+  regex: "^List\\[\\s*Any\\s*\\]$"
+---
+id: union-with-any
+language: python
+severity: warning
+message: Union containing Any defeats type checking - drop Any or use a narrower union
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: type
+  regex: "Union\\[[^\\]]*Any[^\\]]*\\]"
+---
+id: cast-any-bypass
+language: python
+severity: warning
+message: "cast(Any, x) escapes the type system entirely - fix the underlying type issue instead"
+metadata:
+  weight: 3
+  category: types
+rule:
+  kind: call
+  pattern: cast(Any, $X)
+---
+id: type-ignore-blanket
+language: python
+severity: warning
+message: "Blanket '# type: ignore' without error code - specify what's being ignored (e.g., [arg-type])"
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: comment
+  regex: "#\\s*type:\\s*ignore\\s*$"
+---
+id: assert-isinstance-narrowing
+language: python
+severity: hint
+message: "assert isinstance() used for type narrowing - consider TypeGuard or fixing upstream types"
+metadata:
+  weight: 1
+  category: types
+rule:
+  kind: assert_statement
+  has:
+    kind: call
+    pattern: isinstance($VAR, $TYPE)
+---
+id: object-type-annotation
+language: python
+severity: warning
+message: "Using 'object' as type annotation is too broad - use a specific type, Protocol, or Any"
+metadata:
+  weight: 2
+  category: types
+rule:
+  kind: type
+  any:
+    - regex: "^object$"
+    - regex: "^\"object\"$"
+    - regex: "^'object'$"

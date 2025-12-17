@@ -1,0 +1,173 @@
+[project]
+name = "agent-slop-code"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyarrow>=20.0.0",
+    "ujson>=5.10.0",
+    "docker>=7.1.0",
+    "rich>=13.7.0",
+    "structlog>=25.4.0",
+    "gitpython>=3.1.45",
+    "pyyaml>=6.0.2",
+    "pandas>=2.3.1",
+    "pydantic>=2.11.7",
+    "numpy>=2.3.2",
+    "scipy>=1.15.0",
+    "click>=8.2.1",
+    "mini-swe-agent>=1.9.0",
+    "typer>=0.9.0",
+    "python-dotenv>=1.1.1",
+    "tokenizers>=0.15.0",
+    # Pin litellm so we don't have to build `madoka`
+    # which I can't get to work on mac
+    # https://github.com/BerriAI/litellm/issues/14762
+    "litellm>=1.77.1",
+    "deepdiff>=8.6.0",
+    "omegaconf>=2.3.0",
+    "pydantic-settings>=2.10.1",
+    "isort>=6.0.1",
+    "httpx>=0.28.1",
+    "nltk>=3.9.1",
+    "jupyter>=1.1.1",
+    "toml>=0.10.2",
+    "pytz>=2025.2",
+    "pyyaml-include>=2.2",
+    "rfc3339-validator>=0.1.4",
+    "pulp>=3.3.0",
+    "universal-pathlib>=0.3.0",
+    "playwright>=1.55.0",
+    "streamlit>=1.50.0",
+    "geopy>=2.4.1",
+    "swe-rex>=1.4.0",
+    "aiofiles>=25.1.0",
+    "radon>=6.0.1",
+    "pydeps>=3.0.0",
+    "dash>=3.2.0",
+    "httpx-sse>=0.4.3",
+    "dash-bootstrap-components>=2.0.4",
+    "tabulate>=0.9.0",
+    "anthropic>=0.72.0",
+    "tenacity>=9.0.0",
+    "tree-sitter>=0.25.0",
+    "tree-sitter-language-pack>=0.6.0",
+    "kaleido>=1.2.0",
+    "semgrep>=1.85.0",
+    "mypy>=1.19.0",
+    "types-pyyaml>=6.0.12.20250915",
+    "dash-ag-grid>=32.3.2",
+    "boto3>=1.42.9",
+    "botocore[crt]>=1.42.9",
+    "networkx[default]>=3.6.1",
+]
+
+
+[project.optional-dependencies]
+hydra = [
+    "hydra-core>=1.3.2",
+]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.hatch.build.targets.sdist.force-include]
+"src/slop_code/entrypoints/cli.py" = "src/slop_code/entrypoints/cli.py"
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/slop_code/entrypoints/cli.py" = "src/slop_code/entrypoints/cli.py"
+
+[project.scripts]
+"slop-code" = "slop_code.entrypoints.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "watchdog>=6.0.0",
+    "isort",
+    "ruff>=0.12.7",
+    "seaborn>=0.13.2",
+    "pytest-xdist>=3.8.0",
+    "flask>=3.1.2",
+    "pytest-asyncio>=1.2.0",
+]
+openhands = [
+    "openhands-agent-server>=1.0.0a5",
+    "openhands-sdk>=1.0.0a5",
+    "openhands-tools>=1.0.0a5",
+    "openhands-workspace>=1.0.0a5",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/slop_code"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--ignore=src --ignore=data --ignore=scratch "
+testpaths = [
+    "tests"
+]
+
+[tool.ruff]
+exclude = [".venv",".gitignore", ".dockerignore"]
+line-length = 80
+extend-exclude = ["tests/mining/fixtures/*",".vscode/*","scratch/attempts/*","debug_code/*", "repos/*", "data/*",".venv/*",".pytest_cache/*", ".cache/*",".local/*", "tests/mining/fixtures/*","scripts/attempts/*","problems/**/solution/*"]
+show-fixes = true
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+force-single-line = true
+single-line-exclusions = ["typing"]
+
+[tool.ruff.lint]
+select = [
+    "I",
+    # Pyflakes
+    "F",
+     "W",        # PyCodeStyle warnings
+    "E",        # PyCodeStyle errors
+    "UP",       # Warn if certain things can changed due to newer Python versions
+    "C4",       # Catch incorrect use of comprehensions, dict, list, etc
+    "FA",       # Enforce from __future__ import annotations
+    "ISC",      # Good use of string concatenation
+    "ICN",      # Use common import conventions
+    "RET",      # Good return practices
+    "SIM",      # Common simplification rules
+    "TID",      # Some good import practices
+    "TC",       # Enforce importing certain types in a TYPE_CHECKING block
+    "PTH",      # Use pathlib instead of os.path
+    "TD",       # Be diligent with TODO comments
+    "NPY",      # Some numpy-specific things
+    "A",   # detect shadowed builtins
+    "BLE", # disallow catch-all exceptions
+    "S",   # disallow things like "exec"
+    "FBT", # detect boolean traps
+    "N",   # enforce naming conventions, e.g. ClassName vs function_name
+]
+ignore=[
+    "TC001",
+    "TC003",
+    "E501",
+    "C408"
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
+"**/__init__.py" = ["E402"]
+# Ignore `D` rules everywhere except for the `src/` directory.
+"!src/**.py" = ["D"]
+"tests/**.py" = ["S101"]
+
+
+[tool.pyright]
+reportCallInDefaultInitializer = false
+reportAny = false
+reportUnusedCallResult = false
+reportUnannotatedClassAttribute = false
+
+
+[tool.uv.workspace]
+members = [
+    "outputs/DEBUG_MiniSWE_qwen3-coder-30b-a3b/20251012T1653_simple_reset_python3.11-uv/dynamic_config_service_api/checkpoint_1/snapshot",
+]
+

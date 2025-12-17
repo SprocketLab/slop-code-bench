@@ -1,0 +1,4 @@
+local/A.yaml: 
+    original: local_A
+local/Z/ZZ.yaml:
+    original: local_Z_ZZ

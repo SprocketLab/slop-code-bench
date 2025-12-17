@@ -1,0 +1,11 @@
+id: create_wrench
+arguments:
+  - create
+  - --name
+  - wrench
+  - --quantity
+  - "1"
+  - --category
+  - tools
+expected:
+  status_code: 0

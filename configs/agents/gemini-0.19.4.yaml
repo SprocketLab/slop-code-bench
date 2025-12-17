@@ -1,0 +1,11 @@
+type: gemini
+binary: gemini
+
+version: 0.19.4
+timeout: 3600 # seconds; adjust to fit expected checkpoint duration
+extra_args: []
+env: {}
+cost_limits:
+  cost_limit: 0
+  step_limit: 0
+  net_cost_limit: 0

@@ -1,0 +1,3 @@
+stdin: "123invalid = 5"
+expected:
+  status_code: 1

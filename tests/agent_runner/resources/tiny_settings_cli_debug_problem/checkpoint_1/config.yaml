@@ -1,0 +1,14 @@
+groups:
+  spec_cases:
+    case_order:
+    - show_defaults
+    - set_theme_dark
+    - show_after_set
+    - reset_defaults
+    - show_after_reset
+    timeout: 20
+    type: Core
+specification: spec.md
+state: Core Tests
+timeout: 20
+version: 1

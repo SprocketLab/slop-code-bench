@@ -1,0 +1,8 @@
+type: claude_code
+binary: claude
+permission_mode: bypassPermissions
+version: 2.0.51
+cost_limits:
+  cost_limit: 0
+  step_limit: 100
+  net_cost_limit: 0

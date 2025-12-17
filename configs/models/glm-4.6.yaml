@@ -1,0 +1,15 @@
+internal_name: glm-4.6
+provider: zhipu
+pricing:
+  input: 0.6
+  output: 2.2
+  cache_read: 0.11
+  cache_write: 0.75
+aliases: []
+provider_slugs:
+  openrouter: z-ai/glm-4.6
+
+agent_specific:
+  opencode:
+    model: z-ai/glm-4.6
+    provider: openrouter

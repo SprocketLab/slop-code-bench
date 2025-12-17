@@ -1,0 +1,3 @@
+stdin: "nonexistent_function(5)"
+expected:
+  status_code: 2

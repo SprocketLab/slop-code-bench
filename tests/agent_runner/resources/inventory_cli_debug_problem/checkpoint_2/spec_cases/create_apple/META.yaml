@@ -1,0 +1,11 @@
+id: create_apple
+arguments:
+  - create
+  - --name
+  - apple
+  - --quantity
+  - "6"
+  - --category
+  - groceries
+expected:
+  status_code: 0

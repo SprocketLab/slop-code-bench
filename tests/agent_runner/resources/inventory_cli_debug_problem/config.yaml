@@ -1,0 +1,20 @@
+adapter:
+  tracked_files:
+  - inventory_state.json
+  type: cli
+category: diagnostics
+checkpoints:
+- checkpoint_1
+- checkpoint_2
+description: Simple inventory CLI used to debug agent runner behaviour.
+difficulty: Easy
+entry_file: inventory_cli.sh
+loader_entrypoint: Loader
+loader_script: loader.py
+name: inventory_cli_debug_problem
+tags:
+- debug
+- cli
+- smoke
+timeout: 10
+version: 1

@@ -1,0 +1,17 @@
+internal_name: gemini-2.5-flash
+provider: google
+pricing:
+  input: 0.15
+  output: 0.60
+  cache_read: 0.0375
+  cache_write: 0
+aliases:
+  - gemini-2.5-flash-preview-04-17
+
+agent_specific:
+  mini_swe:
+    model_name: google/gemini-2.5-flash
+    model_class: litellm
+
+  opencode:
+    provider_name: google

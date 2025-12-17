@@ -1,0 +1,5 @@
+id: show_after_reset
+arguments:
+  - show
+expected:
+  status_code: 0

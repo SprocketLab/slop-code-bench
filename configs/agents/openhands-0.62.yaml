@@ -1,0 +1,10 @@
+type: openhands
+
+version: "0.62"
+timeout: 3600  # seconds; adjust to fit expected checkpoint duration
+env: {}
+
+cost_limits:
+  cost_limit: 10
+  step_limit: 0
+  net_cost_limit: 0

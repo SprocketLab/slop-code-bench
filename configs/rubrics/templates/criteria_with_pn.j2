@@ -1,0 +1,14 @@
+Here is the rubric criteria:
+{% for item in items %}
+[{{ item.name }}] {{ item.description }}
+
+Positive Indicators:
+{% for indicator in item.positive_indicators -%}
+- {{ indicator }}
+{% endfor -%}
+
+Negative Indicators:
+{% for indicator in item.negative_indicators -%}
+- {{ indicator }}
+{% endfor -%}
+{% endfor %}

@@ -1,0 +1,18 @@
+FROM {{ base_image }}
+
+# --- Switch to non-root -----------------------------------------------------
+USER agent
+WORKDIR /workspace
+
+# Configure npm globals under user home
+ENV NPM_CONFIG_PREFIX="$HOME/.npm-global"
+ENV PATH="$HOME/.npm-global/bin:$PATH"
+ENV XDG_CONFIG_HOME="$HOME/.config"
+ENV XDG_DATA_HOME="$HOME/.local/share"
+
+# --- Install Codex dependencies --------------------------------------------
+RUN npm install -g @openai/codex@{{ version }} && \
+    mkdir -p "$HOME/.codex"
+
+# --- Default shell ----------------------------------------------------------
+CMD ["codex"]

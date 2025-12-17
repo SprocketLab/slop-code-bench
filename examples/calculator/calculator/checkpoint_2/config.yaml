@@ -1,0 +1,28 @@
+version: 1
+path: .
+loader:
+  type: nested
+  include:
+    - spec_cases/**/*.yaml
+groups:
+  core:
+    name: Core
+    type: Core
+  variables:
+    name: Variables
+    type: Functionality
+  errors:
+    name: Errors
+    type: Error
+
+loader:
+  type: nested
+  include:
+    - spec_cases/**/*.yaml
+
+adapter:
+  cli: {}
+
+specification: spec.md
+state: Core Tests
+timeout: 30

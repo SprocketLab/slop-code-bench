@@ -1,0 +1,12 @@
+internal_name: gemini-2.5-flash-lite
+provider: google
+pricing:
+  input: 0.10
+  output: 0.40
+  cache_read: 0.025
+  cache_write: 0
+aliases:
+  - google/gemini-2.5-flash-lite
+provider_slugs:
+  openrouter: google/gemini-2.5-flash-lite
+# mini_swe uses provider_slugs.openrouter automatically

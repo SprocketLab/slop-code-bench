@@ -1,0 +1,9 @@
+internal_name: gpt-5
+provider: openai
+pricing:
+  input: 1.25
+  output: 10
+  cache_read: 0.125
+  cache_write: 0
+aliases:
+  - gpt-5-2025-08-08

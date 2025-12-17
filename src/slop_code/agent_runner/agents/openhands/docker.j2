@@ -1,0 +1,20 @@
+FROM {{ base_image }}
+
+USER root
+
+# Create OpenHands directory in /openhands (separate from /workspace!)
+RUN mkdir -p /openhands && chown -R 1000:1000 /openhands
+
+# Install tmux (needed by OpenHands)
+RUN apt-get update && apt-get install -y tmux && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /openhands
+
+# Create venv and install OpenHands with jupyter dependencies
+RUN uv venv --python 3.13 && \
+    uv pip install --prerelease=allow openhands-ai=={{ version }} \
+        ipykernel jupyterlab notebook jupyter \
+        jupyter-console jupyter-client nbconvert
+
+USER agent
+WORKDIR /workspace

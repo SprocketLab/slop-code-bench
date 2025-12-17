@@ -1,0 +1,5 @@
+id: show_defaults
+arguments:
+  - show
+expected:
+  status_code: 0

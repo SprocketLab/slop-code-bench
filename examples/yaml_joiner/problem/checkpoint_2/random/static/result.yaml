@@ -1,0 +1,6 @@
+static_cfgs/A.yaml:
+    original: A
+static_cfgs/B.yaml:
+    original: B
+static_cfgs/B/C.yaml:
+    original: C

@@ -1,0 +1,871 @@
+id: verbose-dict-update
+language: python
+severity: warning
+message: Verbose dict assignment in loop - consider dict comprehension
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: for_statement
+  has:
+    kind: block
+    has:
+      kind: expression_statement
+      has:
+        kind: assignment
+        has:
+          kind: subscript
+---
+id: verbose-list-append-loop
+language: python
+severity: warning
+message: Loop with list.append() - consider list comprehension
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: for_statement
+  has:
+    kind: block
+    has:
+      kind: expression_statement
+      has:
+        kind: call
+        has:
+          kind: attribute
+          regex: "\\.append$"
+---
+id: verbose-dict-elif-updates
+language: python
+severity: warning
+message: Repeated dict[...] assignments across if/elif branches; prefer a dispatch map or helper to centralize the updates.
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: |
+    if $COND1:
+      $$$PRE1
+      $D[$KEY1] = $VAL1
+      $$$POST1
+    elif $COND2:
+      $$$PRE2
+      $D[$KEY2] = $VAL2
+      $$$POST2
+---
+id: verbose-missing-remove-loop
+language: python
+severity: warning
+message: Finding missing items by copying a list and removing matches is verbose; use set difference instead.
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: for_statement
+  pattern: |
+    for $ITEM in $REQ:
+      if $ITEM in $TARGET:
+        $MISSING.remove($ITEM)
+  follows:
+    kind: expression_statement
+    has:
+      pattern: $MISSING = list($REQ)
+    stopBy: end
+---
+id: duplicate-regex-return
+language: python
+severity: warning
+message: Repeating re.search checks returning the same code; consolidate into one pattern or helper.
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: if_statement
+  pattern: |
+    if re.search($PAT_A, $TEXT):
+      return $CODE
+  follows:
+    pattern: |
+      if re.search($PAT_B, $TEXT):
+        return $CODE
+---
+id: tokenizer-char-append-branch
+language: python
+severity: warning
+message: Tokenizer branches appending tokens one character at a time; use a lookup table to map chars to tokens instead of repetitive append/pos++ blocks.
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: expression_statement
+  has:
+    pattern: $OBJ.tokens.append($NEW_TOKEN)
+  precedes:
+    kind: expression_statement
+    has:
+      pattern: $OBJ.pos += 1
+---
+id: manual-quote-strip
+language: python
+severity: warning
+message: Manually stripping quotes with startswith/endswith is verbose; use a helper or literal parser.
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: |
+    if $VAL.startswith($Q1) and $VAL.endswith($Q1):
+      $OUT = $VAL[1:-1]
+---
+id: manual-bool-str-parse
+language: python
+severity: warning
+message: Parsing 'true'/'false' string literals manually; prefer literal_eval/json parsing or centralized helpers.
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: |
+    if $VAL == 'true':
+        $OUT = True
+    elif $VAL == 'false':
+        $OUT = False
+---
+id: manual-float-dot-check
+language: python
+severity: warning
+message: Using '.' in string to guess float default is brittle; parse with a real literal parser.
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: |
+    if '.' in $VAL:
+        $OUT = float($VAL)
+---
+id: manual-line-continuation-join
+language: python
+severity: warning
+message: Building continued lines via current_line += ' ' + stripped is verbose; join once or use a dedicated helper.
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: $LINE += " " + $PART
+---
+
+id: init-populate-iterate-dict
+language: python
+severity: hint
+message: |
+  Initialize-populate-iterate pattern detected on '$DICT'.
+  Empty dict is created, populated in a loop, then iterated over.
+note: |
+  Consider refactoring to:
+  1. Dict comprehension: {key: val for item in items}
+  2. Helper function: def build_lookup(items) -> dict
+  3. Inline the logic if the intermediate dict isn't needed elsewhere
+
+metadata:
+  weight: 4
+  category: verbosity
+rule:
+  # Match the iterate loop: for ... in $DICT.items/keys/values():
+  pattern: |
+    for $VARS in $DICT.$METHOD():
+        $$$BODY
+  follows:
+    all:
+      # Preceded by a for loop (the populate phase)
+      - kind: for_statement
+      # That contains an assignment to $DICT[...]
+      - has:
+          kind: subscript
+          all:
+            - has:
+                kind: identifier
+                field: value  
+                pattern: $DICT
+            - inside:
+                kind: assignment
+                field: left
+          stopBy: end
+      # Which follows an empty dict init for $DICT
+      - follows:
+          kind: expression_statement
+          has:
+            kind: assignment
+            all:
+              - has:
+                  kind: identifier
+                  field: left
+                  pattern: $DICT
+              - has:
+                  kind: dictionary
+                  field: right
+                  not:
+                    has:
+                      kind: pair
+          stopBy:
+            kind: for_statement
+    stopBy: end
+
+constraints:
+  METHOD:
+    regex: "^(items|keys|values)$"
+
+---
+
+id: init-populate-iterate-list
+language: python
+severity: hint
+message: |
+  Initialize-populate-iterate pattern detected on '$LIST'.
+  Empty list is created, populated via .append() in a loop, then iterated over.
+note: |
+  Consider refactoring to:
+  1. List comprehension: [val for item in items if cond]
+  2. Helper function: def collect_items(source) -> list
+  3. Generator expression if only iterating once: (val for item in items)
+metadata:
+  weight: 4
+  category: verbosity
+rule:
+  # Match the iterate loop: for ... in $LIST:
+  pattern: |
+    for $VAR in $LIST:
+        $$$BODY
+  # Exclude dict iteration patterns (already caught above)
+  not:
+    has:
+      kind: call
+      has:
+        kind: attribute
+        regex: "\\.(items|keys|values)$"
+  follows:
+    all:
+      # Preceded by a for loop (the populate phase)
+      - kind: for_statement
+      # That contains $LIST.append(...)
+      - has:
+          kind: call
+          has:
+            kind: attribute
+            all:
+              - has:
+                  kind: identifier
+                  field: object
+                  pattern: $LIST
+              - has:
+                  field: attribute
+                  regex: "^append$"
+          stopBy: end
+      # Which follows an empty list init for $LIST
+      - follows:
+          kind: expression_statement
+          has:
+            kind: assignment
+            all:
+              - has:
+                  kind: identifier
+                  field: left
+                  pattern: $LIST
+              - has:
+                  kind: list
+                  field: right
+                  not:
+                    has:
+                      any:
+                        - kind: identifier
+                        - kind: string
+                        - kind: integer
+          stopBy:
+            kind: for_statement
+    stopBy: end
+---
+id: repeated-error-dict-literal
+language: python
+severity: warning
+message: "Repeated error dict literal construction - extract to helper function or error class"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: dictionary
+  has:
+    kind: pair
+    has:
+      kind: string
+      regex: "error|Error|ERROR"
+  follows:
+    kind: return_statement
+    has:
+      kind: dictionary
+      has:
+        kind: pair
+        has:
+          kind: string
+          regex: "error|Error|ERROR"
+    stopBy: end
+    inside:
+      kind: function_definition
+---
+id: verbose-type-conversion-chain
+language: python
+severity: warning
+message: "Chained type conversions (str(int(...)) or similar) - simplify or validate input"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: call
+  any:
+    - pattern: str(int($X))
+    - pattern: int(str($X))
+    - pattern: str(float($X))
+    - pattern: float(str($X))
+    - pattern: list(tuple($X))
+    - pattern: tuple(list($X))
+---
+id: double-conversion-int-float
+language: python
+severity: warning
+message: "Double conversion int(float(x)) - parse directly or validate input format"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: call
+  any:
+    - pattern: int(float($X))
+    - pattern: float(int($X))
+---
+id: verbose-none-or-default
+language: python
+severity: warning
+message: "Verbose 'x if x is not None else default' - use 'x or default' if x is never falsy"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: conditional_expression
+  pattern: $X if $X is not None else $DEFAULT
+---
+id: list-comprehension-identity
+language: python
+severity: warning
+message: "List comprehension with identity transform - use list() directly"
+metadata:
+  weight: 1
+  category: verbosity
+rule:
+  kind: list_comprehension
+  pattern: "[$ITEM for $ITEM in $ITER if $COND]"
+  not:
+    has:
+      kind: if_clause
+      has:
+        kind: identifier
+        pattern: $ITEM
+---
+id: consecutive-append-calls
+language: python
+severity: warning
+message: "Consecutive list.append() calls - use extend() with a list literal"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: expression_statement
+  has:
+    kind: call
+    has:
+      kind: attribute
+      regex: "\\.append$"
+  follows:
+    kind: expression_statement
+    has:
+      kind: call
+      has:
+        kind: attribute
+        regex: "\\.append$"
+    stopBy: neighbor
+---
+id: repeated-json-dumps-indent
+language: python
+severity: warning
+message: "Repeated json.dumps() with same indent - extract to helper or constant"
+metadata:
+  weight: 1
+  category: verbosity
+rule:
+  kind: call
+  pattern: json.dumps($X, indent=$N)
+  follows:
+    kind: call
+    pattern: json.dumps($Y, indent=$N)
+    stopBy: end
+---
+id: verbose-dict-iteration
+language: python
+severity: warning
+message: "Iterating dict.keys() explicitly - dict iteration yields keys by default"
+metadata:
+  weight: 1
+  category: verbosity
+rule:
+  kind: for_statement
+  pattern: |
+    for $KEY in $DICT.keys():
+        $$$BODY
+---
+id: verbose-sorted-lambda-key
+language: python
+severity: warning
+message: "sorted() with simple lambda key - use operator.itemgetter or attrgetter"
+metadata:
+  weight: 1
+  category: verbosity
+rule:
+  kind: call
+  all:
+    - has:
+        kind: identifier
+        regex: "^sorted$"
+    - has:
+        kind: argument_list
+        has:
+          kind: keyword_argument
+          has:
+            kind: lambda
+            pattern: "lambda $X: $X[$KEY]"
+---
+id: verbose-filter-lambda
+language: python
+severity: warning
+message: "filter() with lambda - use list comprehension with condition"
+metadata:
+  weight: 1
+  category: verbosity
+rule:
+  kind: call
+  all:
+    - has:
+        kind: identifier
+        regex: "^filter$"
+    - has:
+        kind: argument_list
+        has:
+          kind: lambda
+---
+id: try-except-single-conversion
+language: python
+severity: warning
+message: "Try/except around single type conversion - validate input or use safer pattern"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  any:
+    - pattern: |
+        try:
+            $VAR = int($ARG)
+        except $EXC:
+            $$$HANDLER
+    - pattern: |
+        try:
+            $VAR = float($ARG)
+        except $EXC:
+            $$$HANDLER
+    - pattern: |
+        try:
+            $VAR = str($ARG)
+        except $EXC:
+            $$$HANDLER
+---
+id: sequential-key-not-in-checks
+language: python
+severity: warning
+message: "Sequential key-not-in checks - use schema validation or set difference"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: |
+    if $KEY not in $DICT:
+        raise $ERR($MSG)
+  follows:
+    pattern: |
+      if $KEY2 not in $DICT:
+          raise $ERR2($MSG2)
+    stopBy: neighbor
+---
+id: verbose-none-guard-return
+language: python
+severity: warning
+message: "Guard returns None when variable is None - just return the variable"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: |
+    if $X is None:
+        return None
+---
+id: verbose-string-concat-str
+language: python
+severity: warning
+message: "str() + str() concatenation - use f-string instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: str($X) + str($Y)
+---
+id: verbose-default-arg-none-check
+language: python
+severity: warning
+message: "None check for default - use default parameter value instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: if_statement
+  pattern: |
+    if $ARG is None:
+        $ARG = $DEFAULT
+  inside:
+    kind: function_definition
+    stopBy: end
+---
+id: verbose-manual-enumerate
+language: python
+severity: warning
+message: "Manual index counter in loop - use enumerate()"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: |
+    for $ITEM in $ITER:
+        $$$PRE
+        $IDX += 1
+        $$$POST
+  follows:
+    pattern: $IDX = 0
+    stopBy: neighbor
+---
+id: verbose-list-index-minus-one
+language: python
+severity: warning
+message: "list[len(list) - 1] - use list[-1] instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: $LIST[len($LIST) - 1]
+---
+id: verbose-range-zero-start
+language: python
+severity: warning
+message: "range(0, n) - the 0 is the default start, use range(n)"
+metadata:
+  weight: 1
+  category: verbosity
+rule:
+  pattern: range(0, $END)
+---
+id: verbose-get-equals-true
+language: python
+severity: warning
+message: ".get() == True - use truthiness check instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  any:
+    - pattern: $DICT.get($KEY) == True
+    - pattern: $DICT.get($KEY, $DEF) == True
+---
+id: verbose-get-equals-false
+language: python
+severity: warning
+message: ".get() == False - use 'not .get()' instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  any:
+    - pattern: $DICT.get($KEY) == False
+    - pattern: $DICT.get($KEY, $DEF) == False
+---
+id: verbose-string-literal-plus-str
+language: python
+severity: warning
+message: "String literal + str() - use f-string instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: binary_operator
+  regex: "^['\"].*['\"]\\s*\\+\\s*str\\("
+---
+id: verbose-not-equals-comparison
+language: python
+severity: warning
+message: "'not x == y' - use 'x != y' instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: not $X == $Y
+---
+id: verbose-compare-empty-list
+language: python
+severity: warning
+message: "Comparing to [] - use 'if not x' for emptiness check"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  any:
+    - pattern: $X == []
+    - pattern: $X != []
+---
+id: verbose-compare-empty-dict
+language: python
+severity: warning
+message: "Comparing to {} - use 'if not x' for emptiness check"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: comparison_operator
+  regex: "==\\s*\\{\\}|!=\\s*\\{\\}"
+---
+id: verbose-compare-empty-string
+language: python
+severity: warning
+message: "Comparing to '' - use 'if not x' for emptiness check"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  any:
+    - pattern: $X == ""
+    - pattern: $X == ''
+    - pattern: $X != ""
+    - pattern: $X != ''
+---
+id: verbose-sorted-list
+language: python
+severity: warning
+message: "sorted(list(x)) - sorted() already creates a new list"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: sorted(list($X))
+---
+id: verbose-list-range
+language: python
+severity: warning
+message: "list(range(...)) - iterate directly over range() instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: list(range($$$ARGS))
+---
+id: verbose-str-fstring
+language: python
+severity: warning
+message: "str(f'...') - f-string already returns str, wrapper is redundant"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: call
+  all:
+    - has:
+        kind: identifier
+        regex: "^str$"
+    - has:
+        kind: argument_list
+        has:
+          kind: string
+          regex: "^f['\"]"
+---
+id: verbose-list-literal-wrap
+language: python
+severity: warning
+message: "list([...]) - list literal doesn't need list() wrapper"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: list([$$$ITEMS])
+---
+id: verbose-tuple-literal-wrap
+language: python
+severity: warning
+message: "tuple((...)) - tuple literal doesn't need tuple() wrapper"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: tuple(($$$ITEMS))
+---
+id: verbose-dict-literal-wrap
+language: python
+severity: warning
+message: "dict({...}) - dict literal doesn't need dict() wrapper"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: call
+  all:
+    - has:
+        kind: identifier
+        regex: "^dict$"
+    - has:
+        kind: argument_list
+        has:
+          kind: dictionary
+---
+id: verbose-concat-empty-string
+language: python
+severity: warning
+message: "Concatenating empty string - use str() if converting, or remove if already string"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  any:
+    - pattern: '""  + $X'
+    - pattern: "'' + $X"
+    - pattern: '$X + ""'
+    - pattern: "$X + ''"
+---
+id: verbose-double-strip
+language: python
+severity: warning
+message: "Double .strip() call - single strip() handles all whitespace"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: $X.strip().strip()
+---
+id: verbose-len-list
+language: python
+severity: warning
+message: "len(list(x)) - materializes iterator just to count, use sum(1 for _ in x)"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: len(list($X))
+---
+id: verbose-print-str
+language: python
+severity: warning
+message: "print(str(x)) - print() calls str() implicitly"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  pattern: print(str($X))
+---
+id: verbose-single-var-fstring
+language: python
+severity: hint
+message: "f'{x}' for single variable - str(x) may be clearer"
+metadata:
+  weight: 1
+  category: verbosity
+rule:
+  kind: string
+  regex: "^f['\"]\\{[a-zA-Z_][a-zA-Z0-9_]*\\}['\"]$"
+---
+id: verbose-assert-bool-compare
+language: python
+severity: warning
+message: "assert x == True/False - use 'assert x' or 'assert not x'"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: assert_statement
+  regex: "==\\s*(True|False)"
+---
+id: verbose-iterate-literal-list
+language: python
+severity: hint
+message: "Iterating over literal list - use tuple for slight efficiency"
+metadata:
+  weight: 1
+  category: verbosity
+rule:
+  kind: for_statement
+  has:
+    kind: list
+    nthChild:
+      position: 3
+---
+id: items-unused-value
+language: python
+severity: warning
+message: "Iterating dict.items() but only using key - use 'for k in d:' instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: for_statement
+  pattern: |
+    for $KEY, _ in $DICT.items():
+        $$$BODY
+---
+id: items-unused-key
+language: python
+severity: warning
+message: "Iterating dict.items() but only using value - use 'for v in d.values():' instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: for_statement
+  pattern: |
+    for _, $VAL in $DICT.items():
+        $$$BODY
+---
+id: verbose-split-rejoin
+language: python
+severity: warning
+message: "Splitting then rejoining with same separator is a no-op - just use the original string"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: call
+  any:
+    - pattern: $SEP.join($S.split($SEP))
+    - pattern: '"".join($S.split(""))'
+    - pattern: "' '.join($S.split(' '))"
+    - pattern: '"-".join($S.split("-"))'
+    - pattern: '"_".join($S.split("_"))'
+    - pattern: '"/".join($S.split("/"))'
+---
+id: list-extend-from-loop
+language: python
+severity: warning
+message: "Loop appending items from iterable - use list.extend() instead"
+metadata:
+  weight: 2
+  category: verbosity
+rule:
+  kind: for_statement
+  pattern: |
+    for $ITEM in $ITER:
+        $LIST.append($ITEM)

@@ -1,0 +1,40 @@
+internal_name: glm-4.6
+provider: zhipu
+pricing:
+  input: 0.6
+  output: 2.2
+  cache_read: 0.11
+  cache_write: 0.75
+aliases: []
+
+agent_specific:
+  mini_swe:
+    model_name: openai/glm-4.6
+    model_class: litellm
+    api_base: https://api.z.ai/api/coding/paas/v4
+    thinking_enabled: true
+
+  claude_code:
+    base_url: https://api.z.ai/api/anthropic
+    env_overrides:
+      ANTHROPIC_DEFAULT_SONNET_MODEL: glm-4.6
+      ANTHROPIC_DEFAULT_OPUS_MODEL: glm-4.6
+
+  opencode:
+    config:
+      "$schema": "https://opencode.ai/config.json"
+      provider:
+        zai-coding-plan:
+          models:
+            glm-4.6:
+              options:
+                thinking:
+                  type: "enabled"
+                stream_options:
+                  include_usage: true
+    model: glm-4.6
+    provider: zai-coding-plan
+    thinking_enabled: true
+
+  codex:
+    thinking: high

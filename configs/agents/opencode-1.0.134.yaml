@@ -1,0 +1,7 @@
+type: opencode
+version: 1.0.134
+      
+cost_limits:
+  cost_limit: 20
+  step_limit: 250
+  net_cost_limit: 0

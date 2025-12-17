@@ -1,0 +1,1 @@
+Debug asset: make sure every response includes this note.
