@@ -13,6 +13,7 @@
 
 **SlopCodeBench** measures *code erosion under iterative specification refinement* — quantifying how code quality degrades as AI agents iterate on programming problems. As agents receive feedback and refine their solutions, they often introduce subtle degradations: unnecessary abstractions, defensive programming patterns, and structural bloat. This benchmark captures and measures that drift.
 
+We actively want more problems, follow [the creating a problem guide and create a pr!](/docs/contributing-problems/).
 
 > [!NOTE]
 > This is an initial release. We're actively developing and welcome feedback via [GitHub Issues](https://github.com/SprocketLab/slop-code-bench/issues).
