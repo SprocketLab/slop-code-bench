@@ -1,0 +1,29 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 9,
+        "line": 1
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "END",
+      "rule_id": "end",
+      "start": {
+        "col": 6,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/f.py": "line END"
+  },
+  "rules.json": [
+    {
+      "id": "end",
+      "kind": "exact",
+      "pattern": "END"
+    }
+  ]
+}

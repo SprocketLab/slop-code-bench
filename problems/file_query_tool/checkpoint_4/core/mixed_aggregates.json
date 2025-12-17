@@ -1,0 +1,39 @@
+{
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/sales.csv",
+      "content": [
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "800"
+        },
+        {
+          "region": "EU",
+          "product": "Widget B",
+          "sales": "1200"
+        },
+        {
+          "region": "NA",
+          "product": "Widget A",
+          "sales": "1000"
+        },
+        {
+          "region": "NA",
+          "product": "Widget B",
+          "sales": "1500"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT \n    region,\n    SUM(sales) as total_sales,\n    MAX(sales) OVER (PARTITION BY region) as max_single_sale,\n    ROUND(100.0 * sales / SUM(sales) OVER (PARTITION BY region), 2) as regional_percent\nFROM sales\nORDER BY region, sales",
+  "expected": "| region | total_sales | max_single_sale | regional_percent |\n| ------ | ----------- | --------------- | ---------------- |\n| EU     | 800         | 1200            | 40               |\n| EU     | 1200        | 1200            | 60               |\n| NA     | 1000        | 1500            | 40               |\n| NA     | 1500        | 1500            | 60               |"
+}

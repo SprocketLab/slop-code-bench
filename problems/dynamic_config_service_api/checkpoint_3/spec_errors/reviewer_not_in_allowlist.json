@@ -1,0 +1,42 @@
+{
+  "case": {
+    "body": {
+      "actor": "dave",
+      "decision": "approve",
+      "message": "Trying to review but not allowed"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "reviewer_not_in_allowlist",
+    "method": "POST",
+    "path": "/v1/proposals/5:review"
+  },
+  "expected": {
+    "status_code": 422,
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "policy_violation"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    }
+  }
+}

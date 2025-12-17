@@ -1,0 +1,1 @@
+{"event":"validation_failed","file":"inheritance/app.yaml","rule":"require_timeout","error":"missing required key: timeout"}

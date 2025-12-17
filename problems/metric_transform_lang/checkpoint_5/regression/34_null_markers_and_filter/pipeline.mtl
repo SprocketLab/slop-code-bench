@@ -1,0 +1,12 @@
+mtl_version 1.5
+schema BaseSale {
+  timestamp: timestamp
+  price: float
+}
+
+pipeline Nulls using BaseSale {
+  filter(price >= 1.0)
+  aggregate average(price) as avg_price,
+            count(price) as nonnull_price,
+            count(*) as n
+}

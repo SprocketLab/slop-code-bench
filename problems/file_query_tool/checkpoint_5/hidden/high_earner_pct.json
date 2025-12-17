@@ -1,0 +1,11 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "query": "WITH high_earners AS (\n    SELECT * FROM employees WHERE salary > 85000\n),\ndept_counts AS (\n    SELECT \n        department,\n        COUNT(*) as total_employees,\n        COUNT(*) FILTER (WHERE salary > 85000) as high_earner_count\n    FROM employees\n    GROUP BY department\n)\nSELECT \n    e.name,\n    e.department,\n    e.salary,\n    dc.high_earner_count,\n    ROUND(100.0 * dc.high_earner_count / dc.total_employees, 2) as high_earner_pct\nFROM high_earners e\nJOIN dept_counts dc ON e.department = dc.department\nORDER BY e.salary DESC",
+    "expected": "| name    | department  | salary | high_earner_count | high_earner_pct |\n| ------- | ----------- | ------ | ----------------- | --------------- |\n| Alice   | Engineering | 120000 | 3                 | 60              |\n| Frank   | Sales       | 110000 | 1                 | 33.33           |\n| Charlie | Engineering | 95000  | 3                 | 60              |\n| Bob     | Engineering | 90000  | 3                 | 60              |",
+    "input_data": "data.json"
+}

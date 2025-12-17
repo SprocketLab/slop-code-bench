@@ -1,0 +1,4 @@
+app: myapp
+timeout: 60
+retry: 3
+region: us-west-2

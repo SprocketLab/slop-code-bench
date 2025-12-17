@@ -1,0 +1,8 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+}
+
+pipeline NoData using Sale {
+  aggregate sum(price) as total, average(price) as avg, count(*) as n
+}

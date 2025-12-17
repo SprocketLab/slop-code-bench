@@ -1,0 +1,46 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 17,
+        "line": 4
+      },
+      "file": "main.py",
+      "language": "python",
+      "match": "def process_data",
+      "rule_id": "def-func",
+      "start": {
+        "col": 1,
+        "line": 4
+      }
+    },
+    {
+      "end": {
+        "col": 9,
+        "line": 13
+      },
+      "file": "main.py",
+      "language": "python",
+      "match": "def main",
+      "rule_id": "def-func",
+      "start": {
+        "col": 1,
+        "line": 13
+      }
+    }
+  ],
+  "rules.json": [
+    {
+      "id": "def-func",
+      "kind": "regex",
+      "languages": [
+        "python"
+      ],
+      "pattern": "^def\\s+\\w+",
+      "regex_flags": [
+        "m"
+      ]
+    }
+  ]
+}

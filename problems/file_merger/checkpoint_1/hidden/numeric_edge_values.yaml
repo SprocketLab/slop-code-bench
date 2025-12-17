@@ -1,0 +1,54 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json data.csv
+  input_files:
+  - content:
+    - big_int: '999999999'
+      float_val: '3.14159265'
+      id: '1'
+      neg_int: '-2147483648'
+    - big_int: '-999999999'
+      float_val: '-0.000001'
+      id: '2'
+      neg_int: '2147483647'
+    - big_int: '0'
+      float_val: '150.0'
+      id: '3'
+      neg_int: '0'
+    - big_int: '123456789'
+      float_val: '0.0001'
+      id: '4'
+      neg_int: '-1'
+    file_type: csv
+    path: data.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: big_int
+        type: int
+      - name: neg_int
+        type: int
+      - name: float_val
+        type: float
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - big_int: 999999999
+      float_val: 3.14159265
+      id: 1
+      neg_int: -2147483648
+    - big_int: -999999999
+      float_val: -0.000001
+      id: 2
+      neg_int: 2147483647
+    - big_int: 0
+      float_val: 150.0
+      id: 3
+      neg_int: 0
+    - big_int: 123456789
+      float_val: 0.0001
+      id: 4
+      neg_int: -1
+  status_code: 0

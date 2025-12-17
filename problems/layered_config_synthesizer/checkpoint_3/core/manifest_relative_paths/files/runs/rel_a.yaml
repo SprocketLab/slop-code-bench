@@ -1,0 +1,3 @@
+experiment_name: rel_a
+resources:
+  world_size: 5

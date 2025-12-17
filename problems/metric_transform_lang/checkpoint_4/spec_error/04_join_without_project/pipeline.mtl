@@ -1,0 +1,19 @@
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+schema WebSale extends BaseSale {}
+
+pipeline CrossStream using WebSale {
+  sources { web as W, pos as P }
+  # Missing required project block should be a DSL syntax error
+  join W with P on (W.item == P.item) type inner
+  aggregate count(*) as n
+}
+

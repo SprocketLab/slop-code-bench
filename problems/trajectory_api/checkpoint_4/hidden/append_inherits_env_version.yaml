@@ -1,0 +1,34 @@
+case:
+  body:
+    steps:
+      - role: user
+        content: Continue conversation
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: I will continue without tools
+        input_tokens: 10
+        output_tokens: 15
+        cost: 0.001
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: append_inherits_env_version
+  method: POST
+  path: /trajectories/{{store.hidden_create_in_progress_for_append}}/steps
+expected:
+  output:
+    properties:
+      status:
+        const: in_progress
+      rev:
+        const: 2
+      appended:
+        const: 2
+    required:
+      - status
+      - rev
+      - appended
+    type: object
+  status_code: 200

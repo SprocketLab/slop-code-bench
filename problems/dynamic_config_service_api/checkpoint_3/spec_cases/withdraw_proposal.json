@@ -1,0 +1,72 @@
+{
+  "case": {
+    "body": {
+      "actor": "alice",
+      "reason": "No longer needed"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "withdraw_proposal",
+    "method": "POST",
+    "path": "/v1/proposals/2:withdraw"
+  },
+  "expected": {
+    "output": {
+      "proposal_id": 2,
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "author": "alice",
+      "draft_version": 2,
+      "base_version": 1,
+      "title": "Raise pool",
+      "description": "Raise pool to 8",
+      "labels": [],
+      "status": "withdrawn",
+      "quorum": {
+        "allow_author_approval": false,
+        "allowed_reviewers": [
+          "alice",
+          "bob",
+          "carol"
+        ],
+        "required_approvals": 2
+      },
+      "tally": {
+        "approvals": 1,
+        "rejections": 0,
+        "by_actor": [
+          {
+            "actor": "bob",
+            "decision": "approve",
+            "message": null
+          }
+        ]
+      },
+      "diffs": {
+        "human": [
+          "REPLACE /db/pool: 4 -> 8"
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 8
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 8
+          }
+        ]
+      }
+    },
+    "status_code": 200
+  }
+}

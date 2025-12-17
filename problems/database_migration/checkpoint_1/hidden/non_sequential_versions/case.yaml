@@ -1,0 +1,37 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: |
+    {
+      "version": 10,
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "logs",
+          "columns": [
+            {
+              "name": "id",
+              "type": "INTEGER",
+              "primary_key": true,
+              "autoincrement": true
+            },
+            {
+              "name": "message",
+              "type": "TEXT"
+            },
+            {
+              "name": "timestamp",
+              "type": "TIMESTAMP",
+              "default": "CURRENT_TIMESTAMP"
+            }
+          ]
+        }
+      ],
+      "description": "Create logs table with version 10"
+    }
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

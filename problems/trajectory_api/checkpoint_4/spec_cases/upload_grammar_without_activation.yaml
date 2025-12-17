@@ -1,0 +1,35 @@
+case:
+  body:
+    grammar: "TOOL_CALL = '```tool\\n', TOOL_NAME, '\\n', TOOL_ARGS, '\\n```'; TOOL_NAME = { letter | digit | '_' }; TOOL_ARGS = { ? any char except backticks ? };"
+    activate: false
+  headers:
+    content-type: application/json; charset=utf-8
+  id: upload_grammar_without_activation
+  method: POST
+  path: /environments/local-sim/versions
+expected:
+  output:
+    properties:
+      environment:
+        const: local-sim
+      version:
+        const: 2
+      active:
+        const: false
+      created_at:
+        type: string
+        pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+      grammar_sha256:
+        type: string
+        pattern: '^[0-9a-f]{64}$'
+      grammar_len:
+        type: integer
+    required:
+    - environment
+    - version
+    - active
+    - created_at
+    - grammar_sha256
+    - grammar_len
+    type: object
+  status_code: 201

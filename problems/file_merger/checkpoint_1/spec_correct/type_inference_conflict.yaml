@@ -1,0 +1,29 @@
+case:
+  arguments: --output output.csv --key id --infer strict a.csv b.csv
+  input_files:
+  - content:
+    - id: '1'
+      value: '100'
+    - id: '3'
+      value: '300'
+    file_type: csv
+    path: a.csv
+  - content:
+    - id: '2'
+      value: 'true'
+    - id: '4'
+      value: 'false'
+    file_type: csv
+    path: b.csv
+expected:
+  files:
+    output.csv:
+    - id: 1
+      value: '100'
+    - id: 2
+      value: 'true'
+    - id: 3
+      value: '300'
+    - id: 4
+      value: 'false'
+  status_code: 0

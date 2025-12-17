@@ -1,0 +1,61 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: |
+    {
+      "version": 2,
+      "description": "Transform data then add constraints",
+      "operations": [
+        {
+          "type": "add_column",
+          "table": "users",
+          "column": {
+            "name": "age",
+            "type": "INTEGER"
+          }
+        },
+        {
+          "type": "transform_data",
+          "table": "users",
+          "transformations": [
+            {
+              "column": "age",
+              "expression": "CAST(age_text AS INTEGER)"
+            }
+          ]
+        },
+        {
+          "type": "transform_data",
+          "table": "users",
+          "transformations": [
+            {
+              "column": "email",
+              "expression": "LOWER(email)"
+            }
+          ]
+        },
+        {
+          "type": "drop_column",
+          "table": "users",
+          "column": "age_text"
+        },
+        {
+          "type": "add_check_constraint",
+          "table": "users",
+          "name": "chk_users_age",
+          "expression": "age >= 18 AND age <= 100"
+        },
+        {
+          "type": "add_check_constraint",
+          "table": "users",
+          "name": "chk_users_email",
+          "expression": "email LIKE '%@%'"
+        }
+      ]
+    }
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

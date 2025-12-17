@@ -1,0 +1,35 @@
+case:
+  body:
+    steps:
+      - role: assistant
+        content: "Appended step with decreased input_tokens (valid - only output_tokens/cost must be non-decreasing)"
+        input_tokens: 3
+        output_tokens: 110
+        cost: 0.015
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: append_input_tokens_decreasing
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_running_totals}}/steps
+expected:
+  output:
+    properties:
+      status:
+        const: in_progress
+      rev:
+        const: 2
+      appended:
+        const: 1
+      final_output_tokens:
+        const: 110
+      final_cost:
+        const: 0.015
+    required:
+      - status
+      - rev
+      - appended
+      - final_output_tokens
+      - final_cost
+    type: object
+  status_code: 200

@@ -1,0 +1,52 @@
+case:
+  arguments: --output output.csv --key department,name a.csv b.jsonl c.parquet
+  input_files:
+  - content:
+    - department: Engineering
+      name: Alice
+      id: '1'
+    - department: Sales
+      name: Bob
+      id: '2'
+    file_type: csv
+    path: a.csv
+  - content:
+    - department: Engineering
+      name: Charlie
+      id: 3
+    - department: Marketing
+      name: Alice
+      id: 4
+    file_type: jsonl
+    path: b.jsonl
+  - content:
+    - department: Sales
+      name: Alice
+      id: 5
+    - department: Marketing
+      name: Bob
+      id: 6
+    file_type: parquet
+    path: c.parquet
+expected:
+  files:
+    output.csv:
+    - department: Engineering
+      id: 1
+      name: Alice
+    - department: Engineering
+      id: 3
+      name: Charlie
+    - department: Marketing
+      id: 4
+      name: Alice
+    - department: Marketing
+      id: 6
+      name: Bob
+    - department: Sales
+      id: 5
+      name: Alice
+    - department: Sales
+      id: 2
+      name: Bob
+  status_code: 0

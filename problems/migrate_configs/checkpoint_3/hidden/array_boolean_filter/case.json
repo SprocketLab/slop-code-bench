@@ -1,0 +1,10 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "promote_enabled_features": {
+      "type": "pattern_replace",
+      "key_pattern": "features[?enabled=true].host",
+      "value": "beta.prod"
+    }
+  }
+}

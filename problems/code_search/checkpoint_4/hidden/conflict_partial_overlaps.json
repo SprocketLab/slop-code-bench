@@ -1,0 +1,99 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "rule_id": "left",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 6
+      },
+      "match": "a + b"
+    },
+    {
+      "event": "fix",
+      "rule_id": "left",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 6
+      },
+      "replacement": "LEFT",
+      "applied": true,
+      "skipped_reason": null
+    },
+    {
+      "rule_id": "right",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "match": "b + c"
+    },
+    {
+      "event": "fix",
+      "rule_id": "right",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "replacement": "RIGHT",
+      "applied": false,
+      "skipped_reason": "overlap"
+    }
+  ],
+  "expected_files": {
+    "proj/code.py": "LEFT + c"
+  },
+  "input_files": {
+    "proj/code.py": "a + b + c"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "LEFT"
+      },
+      "id": "left",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "a + b"
+    },
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "RIGHT"
+      },
+      "id": "right",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "b + c"
+    }
+  ]
+}

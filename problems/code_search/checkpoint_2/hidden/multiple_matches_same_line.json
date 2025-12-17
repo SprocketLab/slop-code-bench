@@ -1,0 +1,43 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 4,
+        "line": 1
+      },
+      "file": "test.js",
+      "language": "javascript",
+      "match": "var",
+      "rule_id": "var",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 12,
+        "line": 1
+      },
+      "file": "test.js",
+      "language": "javascript",
+      "match": "var",
+      "rule_id": "var",
+      "start": {
+        "col": 9,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/test.js": "var x = var;"
+  },
+  "rules.json": [
+    {
+      "id": "var",
+      "kind": "exact",
+      "pattern": "var"
+    }
+  ]
+}

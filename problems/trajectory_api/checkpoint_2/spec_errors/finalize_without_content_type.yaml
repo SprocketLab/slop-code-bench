@@ -1,0 +1,28 @@
+case:
+  body: '{"metrics": {"pass": true}}'
+  headers:
+    if-match: W/"2"
+  id: finalize_without_content_type
+  method: POST
+  path: /trajectories/{{store.create_in_progress_trajectory}}/finalize
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            type: string
+            const: UNSUPPORTED_MEDIA_TYPE
+          message:
+            type: string
+          field_path:
+            const: null
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 415

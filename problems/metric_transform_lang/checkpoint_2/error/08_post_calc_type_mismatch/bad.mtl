@@ -1,0 +1,10 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+}
+
+pipeline BadType using Sale {
+  aggregate sum(price) as total
+  # total is float, but declared as int
+  calc doubled = total * 2.0 : int @stage(post_agg)
+}

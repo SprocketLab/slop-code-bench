@@ -1,0 +1,6 @@
+experiment_name: schema_bad
+resources:
+  world_size: 4
+training:
+  # optimizer missing
+  remarks: none

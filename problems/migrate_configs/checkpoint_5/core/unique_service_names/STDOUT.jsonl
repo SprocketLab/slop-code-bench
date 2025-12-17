@@ -1,0 +1,1 @@
+{"event":"validation_failed","file":"app.yaml","rule":"unique_service_names","error":"duplicate values for field 'name' in array at 'services': api"}

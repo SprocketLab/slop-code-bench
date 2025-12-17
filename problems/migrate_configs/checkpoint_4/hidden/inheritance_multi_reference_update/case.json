@@ -1,0 +1,11 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "rules": {
+    "move_shared_base": {
+      "type": "relocate_files",
+      "scope": "file",
+      "source_pattern": "base.yaml",
+      "destination": "shared/"
+    }
+  }
+}

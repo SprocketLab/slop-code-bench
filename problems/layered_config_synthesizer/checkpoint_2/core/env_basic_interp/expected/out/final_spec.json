@@ -1,0 +1,1 @@
+{"experiment_name":"alpha-prod","metadata":{"labels":["alpha","stable"],"owner":"infra"},"resources":{"accelerators":[{"count":4,"type":"h100"}],"profile":"standard","world_size":4},"training":{"batch_size":64,"notes":"Run alpha on prod","optimizer":"adam"}}

@@ -1,0 +1,6 @@
+id,cond_a,cond_b,value
+1,true,false,10
+2,false,false,20
+3,false,true,30
+4,false,false,40
+5,true,true,50

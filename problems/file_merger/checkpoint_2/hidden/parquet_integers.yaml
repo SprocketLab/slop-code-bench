@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id data.parquet
+  input_files:
+  - content:
+    - id: 1
+      count: 100
+      amount: 50
+    - id: 2
+      count: 200
+      amount: 75
+    - id: 3
+      count: 300
+      amount: 25
+    file_type: parquet
+    path: data.parquet
+expected:
+  files:
+    output.csv:
+    - amount: 50
+      count: 100
+      id: 1
+    - amount: 75
+      count: 200
+      id: 2
+    - amount: 25
+      count: 300
+      id: 3
+  status_code: 0

@@ -1,0 +1,15 @@
+schema Data {
+  timestamp: timestamp
+  value: float
+}
+
+pipeline AllAggs using Data {
+  aggregate sum(value) as total,
+            average(value) as avg,
+            median(value) as med,
+            count(*) as n,
+            std(value) as std_dev,
+            var(value) as variance,
+            min(value) as minimum,
+            max(value) as maximum
+}

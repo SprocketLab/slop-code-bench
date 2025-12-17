@@ -1,0 +1,11 @@
+{
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "query": "SELECT \n    name,\n    department,\n    salary\nFROM employees e1\nWHERE EXISTS (\n    SELECT 1 \n    FROM employees e2 \n    WHERE e2.manager_id = e1.id\n)\nORDER BY department, name",
+  "expected": "| name  | department  | salary |\n| ----- | ----------- | ------ |\n| Alice | Engineering | 120000 |\n| Bob   | Engineering | 90000  |\n| David | Engineering | 80000  |\n| Frank | Sales       | 110000 |",
+  "input_data": "data.json"
+}

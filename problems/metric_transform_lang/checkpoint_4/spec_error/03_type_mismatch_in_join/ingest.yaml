@@ -1,0 +1,11 @@
+sources:
+  - name: web
+    inputs: ["web.csv"]
+    format: auto
+    schema: WebSale
+    precedence: 10
+  - name: pos
+    inputs: ["pos.csv"]
+    format: auto
+    schema: PosSale
+    precedence: 20

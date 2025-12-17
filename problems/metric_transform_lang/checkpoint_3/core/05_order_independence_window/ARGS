@@ -1,0 +1,1 @@
+--input f2.csv --input f1.csv --dsl pipeline.mtl --tz UTC

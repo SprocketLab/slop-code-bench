@@ -1,0 +1,21 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance.json",
+  "status_code": 1,
+  "expected_stdout": "{\"event\":\"validation_failed\",\"file\":\"inheritance/app.yaml\",\"rule\":\"require_timeout\",\"error\":\"missing required key: timeout\"}\\n",
+  "rules": {
+    "require_timeout": {
+      "type": "require_keys",
+      "scope": "validation",
+      "keys": [
+        "timeout"
+      ]
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/inheritance/base.yaml",
+      "file_type": "yaml",
+      "content": "region: us-west-2\\n"
+    }
+  ]
+}

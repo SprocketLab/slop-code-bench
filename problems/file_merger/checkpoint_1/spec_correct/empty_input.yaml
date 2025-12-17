@@ -1,0 +1,18 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json empty.csv
+  input_files:
+  - content: []
+    file_type: csv
+    path: empty.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: name
+        type: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv: []
+  status_code: 0

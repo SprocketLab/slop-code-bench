@@ -1,0 +1,131 @@
+{
+  "arguments": "proj --rules rules.json --dry-run",
+  "expected": [
+    {
+      "rule_id": "fix_with_dollar",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 15
+      },
+      "match": "fmt.Println(x)",
+      "captures": {
+        "$VAR": {
+          "text": "x",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 13
+              },
+              "end": {
+                "line": 1,
+                "col": 14
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "event": "fix",
+      "rule_id": "fix_with_dollar",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 15
+      },
+      "replacement": "log.Printf(\"$x = %v\", x)",
+      "applied": false,
+      "skipped_reason": null
+    },
+    {
+      "rule_id": "fix_with_dollar_rust",
+      "file": "test.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 16
+      },
+      "match": "println!(\"msg\")",
+      "captures": {
+        "$MSG": {
+          "text": "\"msg\"",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 10
+              },
+              "end": {
+                "line": 1,
+                "col": 15
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "event": "fix",
+      "rule_id": "fix_with_dollar_rust",
+      "file": "test.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 16
+      },
+      "replacement": "eprintln!(\"$DEBUG: {}\", \"msg\")",
+      "applied": false,
+      "skipped_reason": null
+    }
+  ],
+  "input_files": {
+    "proj/test.go": "fmt.Println(x)",
+    "proj/test.rs": "println!(\"msg\")"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "log.Printf(\"$$x = %v\", $VAR)"
+      },
+      "id": "fix_with_dollar",
+      "kind": "pattern",
+      "languages": [
+        "go"
+      ],
+      "pattern": "fmt.Println($VAR)"
+    },
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "eprintln!(\"$$DEBUG: {}\", $MSG)"
+      },
+      "id": "fix_with_dollar_rust",
+      "kind": "pattern",
+      "languages": [
+        "rust"
+      ],
+      "pattern": "println!($MSG)"
+    }
+  ]
+}

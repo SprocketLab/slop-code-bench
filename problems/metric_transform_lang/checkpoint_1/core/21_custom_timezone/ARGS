@@ -1,0 +1,1 @@
+--csv input.csv --dsl query.mtl --tz America/New_York --timestamp-format \"%Y-%m-%d %H:%M:%S\"

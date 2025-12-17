@@ -1,0 +1,41 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json --on-type-error keep-string
+    d1.csv d2.csv
+  input_files:
+  - content:
+    - amount: '2.5'
+      id: '3'
+    file_type: csv
+    path: d2.csv
+  - content:
+    - amount: '10'
+      id: '1'
+      note: ok
+    - amount: x
+      id: '2'
+      note: bad
+    file_type: csv
+    path: d1.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: amount
+        type: float
+      - name: note
+        type: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - amount: '10'
+      id: 1
+      note: ok
+    - amount: x
+      id: 2
+      note: bad
+    - amount: '2.5'
+      id: 3
+      note: null
+  status_code: 0

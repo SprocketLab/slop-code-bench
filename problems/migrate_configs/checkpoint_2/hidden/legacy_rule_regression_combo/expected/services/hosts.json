@@ -1,0 +1,16 @@
+{
+  "services": {
+    "api": {
+      "host": "api.svc.internal",
+      "port": 8080
+    },
+    "database": {
+      "host": "database.svc.internal",
+      "port": 5432
+    },
+    "worker": {
+      "hostname": "localhost",
+      "port": 9200
+    }
+  }
+}

@@ -1,0 +1,5 @@
+CONFLICT gamma /metadata base.yaml -> runs/gamma.yaml
+CONFLICT gamma /training/optimizer base.yaml -> runs/gamma.yaml
+CONFLICT gamma /training/optimizer runs/gamma.yaml -> run_flags/gamma.json
+FRAGMENT_DEPRECATED gamma legacy_logger Use structured_logger
+FRAGMENT_DEPRECATED theta legacy_logger Use structured_logger

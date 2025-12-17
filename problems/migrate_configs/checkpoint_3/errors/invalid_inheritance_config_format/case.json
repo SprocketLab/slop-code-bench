@@ -1,0 +1,10 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/bad_format.json",
+  "files": {
+    "configs/inheritance/bad_format.json": "{\"yaml\":\n"
+  },
+  "expected_stdout": "",
+  "rules": {},
+  "status_code": 1,
+  "expected_stderr": "^Error: invalid inheritance config: .*bad_format\\.json$"
+}

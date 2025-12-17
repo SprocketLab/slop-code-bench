@@ -1,0 +1,1 @@
+{"failed":0,"runs":[{"conflicts":3,"notes":"conflicts+fragment","run_id":"gamma","status":"ok","warnings":4},{"conflicts":0,"notes":"fragment only","run_id":"theta","status":"ok","warnings":1}],"succeeded":2,"total_runs":2}

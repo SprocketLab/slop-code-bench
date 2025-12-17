@@ -1,0 +1,65 @@
+case:
+  body:
+    date: "2025-10-01T00:00:00Z"
+    task: hidden_fork_basic_task
+    environment: hidden_fork_env
+    model: hidden_fork_model
+    framework: hidden_fork_framework
+    status: in_progress
+    metrics: {}
+    trajectory:
+      - role: system
+        content: You are a helpful assistant.
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: user
+        content: What is 2+2?
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: The answer is 4.
+        input_tokens: 10
+        output_tokens: 20
+        cost: 0.001
+      - role: user
+        content: What is 3+3?
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: The answer is 6.
+        input_tokens: 15
+        output_tokens: 25
+        cost: 0.002
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_for_fork_basic
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      rev:
+        const: 1
+      steps:
+        const: 5
+      final_output_tokens:
+        const: 25
+      final_cost:
+        const: 0.002
+    required:
+      - id
+      - status
+      - rev
+      - steps
+      - final_output_tokens
+      - final_cost
+    type: object
+  status_code: 201

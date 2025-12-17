@@ -1,0 +1,24 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [],
+  "input_files": {
+    "proj/empty.go": "",
+    "proj/empty.hs": "",
+    "proj/empty.java": "",
+    "proj/empty.lhs": "",
+    "proj/empty.rs": ""
+  },
+  "rules.json": [
+    {
+      "id": "find_anything",
+      "kind": "exact",
+      "languages": [
+        "rust",
+        "java",
+        "go",
+        "haskell"
+      ],
+      "pattern": "anything"
+    }
+  ]
+}

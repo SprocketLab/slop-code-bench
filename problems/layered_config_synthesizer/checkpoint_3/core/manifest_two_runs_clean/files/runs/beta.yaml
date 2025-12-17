@@ -1,0 +1,5 @@
+experiment_name: beta
+resources:
+  world_size: 6
+training:
+  learning_rate: 0.02

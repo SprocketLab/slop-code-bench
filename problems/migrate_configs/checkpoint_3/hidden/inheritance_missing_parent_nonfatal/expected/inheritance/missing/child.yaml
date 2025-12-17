@@ -1,0 +1,3 @@
+extends: absent.yaml
+name: orphan
+environment: production

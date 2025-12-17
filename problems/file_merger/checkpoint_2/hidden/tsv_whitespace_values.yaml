@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id data.tsv
+  input_files:
+  - content:
+    - id: '1'
+      name: '  Alice  '
+      note: ' leading space'
+    - id: '2'
+      name: 'Bob'
+      note: 'trailing space '
+    - id: '3'
+      name: '  '
+      note: 'normal'
+    file_type: tsv
+    path: data.tsv
+expected:
+  files:
+    output.csv:
+    - id: 1
+      name: '  Alice  '
+      note: ' leading space'
+    - id: 2
+      name: Bob
+      note: 'trailing space '
+    - id: 3
+      name: '  '
+      note: normal
+  status_code: 0

@@ -1,0 +1,5 @@
+experiment_name: schema_good
+resources:
+  world_size: 4
+training:
+  optimizer: adamw

@@ -1,0 +1,90 @@
+{
+  "arguments": "proj --rules rules.json --dry-run",
+  "expected": [
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "same.py",
+      "language": "python",
+      "match": "x",
+      "rule_id": "rule_a",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "applied": false,
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "same.py",
+      "language": "python",
+      "replacement": "a",
+      "rule_id": "rule_a",
+      "skipped_reason": null,
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "same.py",
+      "language": "python",
+      "match": "x",
+      "rule_id": "rule_z",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "applied": false,
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "same.py",
+      "language": "python",
+      "replacement": "z",
+      "rule_id": "rule_z",
+      "skipped_reason": null,
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/same.py": "x"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "a"
+      },
+      "id": "rule_a",
+      "kind": "exact",
+      "pattern": "x"
+    },
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "z"
+      },
+      "id": "rule_z",
+      "kind": "exact",
+      "pattern": "x"
+    }
+  ]
+}

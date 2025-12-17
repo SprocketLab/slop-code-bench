@@ -1,0 +1,119 @@
+{
+    "rename_from_to": {
+        "stdin": {
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "Select",
+                        "columns": [
+                            "id",
+                            "price",
+                            "category"
+                        ]
+                    },
+                    {
+                        "op": "rename",
+                        "from": "price",
+                        "to": "usd_price"
+                    }
+                ]
+            },
+            "dataset": []
+        },
+        "expected": {
+            "status": "ok",
+            "normalized": {
+                "steps": [
+                    {
+                        "op": "select",
+                        "columns": [
+                            "id",
+                            "price",
+                            "category"
+                        ]
+                    },
+                    {
+                        "op": "rename",
+                        "mapping": {
+                            "price": "usd_price"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "trim_and_case": {
+        "stdin": {
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": " map ",
+                        "as": "total",
+                        "expr": " qty * price "
+                    },
+                    {
+                        "op": "FILTER",
+                        "where": " total > 100 "
+                    }
+                ]
+            },
+            "dataset": []
+        },
+        "expected": {
+            "status": "ok",
+            "normalized": {
+                "steps": [
+                    {
+                        "op": "map",
+                        "as": "total",
+                        "expr": "qty * price"
+                    },
+                    {
+                        "op": "filter",
+                        "where": "total > 100"
+                    }
+                ]
+            }
+        }
+    },
+    "drop_unknown_keys": {
+        "stdin": {
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "select",
+                        "columns": [
+                            "a",
+                            "b"
+                        ],
+                        "note": "ignored"
+                    },
+                    {
+                        "op": "limit",
+                        "n": 5,
+                        "extra": 123
+                    }
+                ]
+            },
+            "dataset": []
+        },
+        "expected": {
+            "status": "ok",
+            "normalized": {
+                "steps": [
+                    {
+                        "op": "select",
+                        "columns": [
+                            "a",
+                            "b"
+                        ]
+                    },
+                    {
+                        "op": "limit",
+                        "n": 5
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,3 @@
+run_id,override_path,flags_path,notes
+schema_good,runs/good.yaml,,ok
+schema_bad,runs/bad.yaml,,no optimizer

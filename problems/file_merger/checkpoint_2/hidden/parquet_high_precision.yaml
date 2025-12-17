@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id data.parquet
+  input_files:
+  - content:
+    - id: 1
+      value: 3.141592653589793
+      tiny: 0.000000001
+    - id: 2
+      value: 2.718281828459045
+      tiny: 0.000000002
+    - id: 3
+      value: 1.4142135623730951
+      tiny: 0.000000003
+    file_type: parquet
+    path: data.parquet
+expected:
+  files:
+    output.csv:
+    - id: 1
+      tiny: 0.000000001
+      value: 3.141592653589793
+    - id: 2
+      tiny: 0.000000002
+      value: 2.718281828459045
+    - id: 3
+      tiny: 0.000000003
+      value: 1.4142135623730951
+  status_code: 0

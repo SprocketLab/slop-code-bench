@@ -1,0 +1,5 @@
+environment = "qa"
+[server]
+host = "localhost"
+port = 8080
+mode = "development"

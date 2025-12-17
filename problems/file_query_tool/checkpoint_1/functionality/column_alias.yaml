@@ -1,0 +1,33 @@
+id: column_alias
+files:
+  query.sql: "SELECT \n  first_name AS name,\n  country AS location,\n  car AS vehicle\n\
+    FROM users WHERE country IN ('AR', 'CH') ORDER BY name\n"
+expected: '| name      | location   | vehicle   |
+
+  |-----------|------------|-----------|
+
+  | Brady     | AR         | Mazda     |
+
+  | Cristabel | CH         | Ferarri   |
+
+  | Darin     | AR         | Ferarri   |
+
+  | Gaylene   | AR         | Toyota    |
+
+  | Irita     | AR         | Mazda     |
+
+  | Juanita   | AR         | Chevy     |
+
+  | Mirelle   | AR         | Toyota    |
+
+  | Olivia    | AR         | Ferarri   |
+
+  | Osmond    | AR         | Ford      |
+
+  | Othilia   | AR         | Ferarri   |
+
+  | Rori      | AR         | Chevy     |
+
+  | Sheilah   | CH         | Ford      |
+
+  | Wilden    | AR         | Ford      |'

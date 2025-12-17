@@ -1,0 +1,254 @@
+{
+  "missing_command_field": {
+    "order": 0,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "env": {},
+        "files": {},
+        "stdin": [],
+        "timeout": 10
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "MISSING_REQUIRED_FIELD"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  },
+  "invalid_timeout_negative": {
+    "order": 1,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo test",
+        "timeout": -5
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "INVALID_TIMEOUT"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  },
+  "invalid_timeout_zero": {
+    "order": 2,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo test",
+        "timeout": 0
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "INVALID_TIMEOUT"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  },
+  "invalid_timeout_type": {
+    "order": 3,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo test",
+        "timeout": "abc"
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "INVALID_TYPE"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  },
+  "invalid_env_type": {
+    "order": 4,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo test",
+        "env": "not_an_object"
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "INVALID_TYPE"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  },
+  "invalid_files_type": {
+    "order": 5,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo test",
+        "files": ["array", "not", "object"]
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "INVALID_TYPE"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  },
+  "invalid_stdin_type": {
+    "order": 6,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo test",
+        "stdin": 123
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "INVALID_TYPE"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  },
+  "empty_command_string": {
+    "order": 7,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": ""
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "INVALID_COMMAND"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  },
+  "command_type_not_string": {
+    "order": 8,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": ["echo", "test"]
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "INVALID_TYPE"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  },
+  "env_values_not_strings": {
+    "order": 9,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo test",
+        "env": {
+          "KEY": 123
+        }
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "code": {"const": "INVALID_TYPE"}
+        },
+        "required": ["error", "code"]
+      }
+    }
+  }
+}

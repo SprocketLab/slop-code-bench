@@ -1,0 +1,47 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: regression_get_has_derived_tools
+  method: GET
+  path: /trajectories/{{store.hidden_create_for_tool_extraction}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.hidden_create_for_tool_extraction}}"
+      record:
+        type: object
+      derived:
+        properties:
+          steps:
+            type: integer
+          final_output_tokens:
+            type: integer
+          final_cost:
+            type: number
+          tool_calls:
+            type: array
+          tool_call_count:
+            type: integer
+        required:
+          - steps
+          - final_output_tokens
+          - final_cost
+          - tool_calls
+          - tool_call_count
+        type: object
+      status:
+        type: string
+      rev:
+        type: integer
+      environment_version:
+        type: [integer, "null"]
+    required:
+      - id
+      - record
+      - derived
+      - status
+      - rev
+      - environment_version
+    type: object
+  status_code: 200

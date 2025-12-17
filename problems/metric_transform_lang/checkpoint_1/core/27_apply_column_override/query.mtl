@@ -1,0 +1,2 @@
+apply(round(price, 1), price)
+aggregate sum(price) as total_price

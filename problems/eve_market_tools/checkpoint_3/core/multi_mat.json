@@ -1,0 +1,271 @@
+{
+  "expected": {
+    "output": {
+      "buy_list": {
+        "Compressed Viridian Mykoserocin": {
+          "quantity": 10527,
+          "cost": 1141427400.0,
+          "volume": 10527.0,
+          "category": "gas",
+          "purchases": {
+            "Dodixie IX - Moon 20 - Federation Navy Assembly Plant": {
+              "quantity": 5778,
+              "total": 606690000.0,
+              "avg_price": 105000.0
+            },
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 4749,
+              "total": 534737400.0,
+              "avg_price": 112600.0
+            }
+          }
+        },
+        "Compressed Vermillion Mykoserocin": {
+          "quantity": 10527,
+          "cost": 873868000.0,
+          "volume": 10527.0,
+          "category": "gas",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 10527,
+              "total": 873868000.0,
+              "avg_price": 83012.06
+            }
+          }
+        },
+        "Compressed Gelidus": {
+          "quantity": 106,
+          "cost": 43775400.0,
+          "volume": 10600.0,
+          "category": "ice",
+          "purchases": {
+            "Dodixie IX - Moon 20 - Federation Navy Assembly Plant": {
+              "quantity": 60,
+              "total": 24000000.0,
+              "avg_price": 400000.0
+            },
+            "Jita IV - Moon 4 - Caldari Navy Assembly Plant": {
+              "quantity": 46,
+              "total": 19775400.0,
+              "avg_price": 429900.0
+            }
+          }
+        },
+        "Compressed Eifyrium": {
+          "quantity": 4100,
+          "cost": 12639360.0,
+          "volume": 656.0,
+          "category": "ore",
+          "purchases": {
+            "Dodixie IX - Moon 20 - Federation Navy Assembly Plant": {
+              "quantity": 4100,
+              "total": 12639360.0,
+              "avg_price": 3082.77
+            }
+          }
+        },
+        "Compressed Brimful Coesite": {
+          "quantity": 14200,
+          "cost": 11033400.0,
+          "volume": 1420.0,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 14200,
+              "total": 11033400.0,
+              "avg_price": 777.0
+            }
+          }
+        },
+        "Compressed Clear Icicle": {
+          "quantity": 27,
+          "cost": 8397000.0,
+          "volume": 2700.0,
+          "category": "ice",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 27,
+              "total": 8397000.0,
+              "avg_price": 311000.0
+            }
+          }
+        },
+        "Compressed Coesite": {
+          "quantity": 600,
+          "cost": 414060.0,
+          "volume": 60.0,
+          "category": "ore",
+          "purchases": {
+            "Jita IV - Moon 4 - Caldari Navy Assembly Plant": {
+              "quantity": 600,
+              "total": 414060.0,
+              "avg_price": 690.1
+            }
+          }
+        },
+        "Compressed Sharp Hezorime": {
+          "quantity": 100,
+          "cost": 135000.0,
+          "volume": 5.0,
+          "category": "ore",
+          "purchases": {
+            "Jita IV - Moon 4 - Caldari Navy Assembly Plant": {
+              "quantity": 100,
+              "total": 135000.0,
+              "avg_price": 1350.0
+            }
+          }
+        },
+        "Compressed Hezorime": {
+          "quantity": 100,
+          "cost": 114100.0,
+          "volume": 5.0,
+          "category": "ore",
+          "purchases": {
+            "Jita IV - Moon 4 - Caldari Navy Assembly Plant": {
+              "quantity": 100,
+              "total": 114100.0,
+              "avg_price": 1141.0
+            }
+          }
+        },
+        "Batch Compressed Condensed Scordite": {
+          "quantity": 672,
+          "cost": 1350.72,
+          "volume": 127.68,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 672,
+              "total": 1350.72,
+              "avg_price": 2.01
+            }
+          }
+        }
+      },
+      "total": 2104624758.72,
+      "shipping": 12819688.0,
+      "collateral_tax": 0.0,
+      "items": 2091805070.72,
+      "raw_ship": 84017500.0,
+      "material_value": 1818682636.52,
+      "excess_value": 21835051.76,
+      "yields": {
+        "Tritanium": {
+          "target": 100000,
+          "actual": 100123,
+          "buy": 389566.27,
+          "sell": 330901.93
+        },
+        "Pyerite": {
+          "target": 5000,
+          "actual": 369602,
+          "buy": 9823786.53,
+          "sell": 8761257.53
+        },
+        "Mexallon": {
+          "target": 10000,
+          "actual": 61374,
+          "buy": 3269406.79,
+          "sell": 3740958.41
+        },
+        "Isogen": {
+          "target": null,
+          "actual": 233,
+          "buy": 58305.7,
+          "sell": 60822.38
+        },
+        "Zydrine": {
+          "target": 10000,
+          "actual": 10000,
+          "buy": 13554695.53,
+          "sell": 14712258.71
+        },
+        "Heavy Water": {
+          "target": 10000,
+          "actual": 34831,
+          "buy": 4618959.15,
+          "sell": 4144037.36
+        },
+        "Liquid Ozone": {
+          "target": 10000,
+          "actual": 67238,
+          "buy": 8441343.66,
+          "sell": 8045411.72
+        },
+        "Helium Isotopes": {
+          "target": 10000,
+          "actual": 10130,
+          "buy": 9948479.99,
+          "sell": 9524699.06
+        },
+        "Strontium Clathrates": {
+          "target": 10000,
+          "actual": 10015,
+          "buy": 49447422.61,
+          "sell": 48568757.25
+        },
+        "Silicates": {
+          "target": 10000,
+          "actual": 10005,
+          "buy": 3253834.41,
+          "sell": 3105778.74
+        },
+        "Vermillion Mykoserocin": {
+          "target": 10000,
+          "actual": 10000,
+          "buy": 773862002.36,
+          "sell": 760182123.49
+        },
+        "Viridian Mykoserocin": {
+          "target": 10000,
+          "actual": 10000,
+          "buy": 991312077.74,
+          "sell": 979340681.72
+        }
+      }
+    },
+    "status_code": 200
+  },
+  "input": {
+    "body": {
+      "materials": {
+        "Tritanium": 100000,
+        "Pyerite": 5000,
+        "Mexallon": 10000,
+        "Silicates": 10000,
+        "Helium Isotopes": 10000,
+        "Heavy Water": 10000,
+        "Liquid Ozone": 10000,
+        "Strontium Clathrates": 10000,
+        "Vermillion Mykoserocin": 10000,
+        "Viridian Mykoserocin": 10000,
+        "Zydrine": 10000
+      },
+      "hubs": [
+        "jita",
+        "amarr",
+        "dodixie",
+        "rens",
+        "hek"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "order": 12
+}

@@ -1,0 +1,17 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"files-removed","kind":"daily","now_local":"2025-01-15T02:00:00Z"}
+{"event":"JOB_STARTED","exclude_count":0,"job_id":"files-removed"}
+{"event":"STRATEGY_SELECTED","job_id":"files-removed","kind":"pack"}
+{"event":"FILE_SELECTED","job_id":"files-removed","path":"A"}
+{"event":"FILE_PACKED","job_id":"files-removed","pack_id":1,"path":"A","size":1}
+{"event":"FILE_SELECTED","job_id":"files-removed","path":"B"}
+{"event":"FILE_PACKED","job_id":"files-removed","pack_id":1,"path":"B","size":2}
+{"event":"FILE_SELECTED","job_id":"files-removed","path":"C"}
+{"event":"FILE_PACKED","job_id":"files-removed","pack_id":1,"path":"C","size":2}
+{"event":"FILE_SELECTED","job_id":"files-removed","path":"D"}
+{"event":"FILE_PACKED","job_id":"files-removed","pack_id":1,"path":"D","size":3}
+{"event":"FILE_SELECTED","job_id":"files-removed","path":"E"}
+{"event":"PACK_CREATED","job_id":"files-removed","name":"pack-1.tar","size":8,"tar_size":10240,"checksum":"sha256:32392f6447c858b600ca25b4aa4234811a216a7de8eb015deb3ddb7abcb36358","timestamp":"2025-01-15T02:00:00Z"}
+{"event":"FILE_PACKED","job_id":"files-removed","pack_id":2,"path":"E","size":1}
+{"event":"PACK_CREATED","job_id":"files-removed","name":"pack-2.tar","size":1,"tar_size":10240,"checksum":"sha256:66db1dc853674ed5ea303c1594ad632a2a71faecac5f9aff4894467dd3f239e5","timestamp":"2025-01-15T02:00:00Z"}
+{"event":"JOB_COMPLETED","job_id":"files-removed","selected":5,"excluded":0,"files_skipped_unchanged":0,"dest_state_files":0,"packs":2,"total_size":9}

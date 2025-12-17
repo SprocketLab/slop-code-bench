@@ -1,0 +1,22 @@
+case:
+  arguments: --output output.csv --key id users.parquet
+  input_files:
+  - content:
+    - id: 2
+      active: true
+      score: 85.5
+    - id: 1
+      active: false
+      score: 92.0
+    file_type: parquet
+    path: users.parquet
+expected:
+  files:
+    output.csv:
+    - active: false
+      id: 1
+      score: 92.0
+    - active: true
+      id: 2
+      score: 85.5
+  status_code: 0

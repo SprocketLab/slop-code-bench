@@ -1,0 +1,40 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: report_no_grouping_no_window
+  method: GET
+  path: /reports?group_by=none&window=none
+expected:
+  output:
+    properties:
+      rows:
+        type: array
+        items:
+          properties:
+            bucket:
+              const: null
+            group:
+              const: null
+            count_runs:
+              type: integer
+              minimum: 1
+            sum_cost:
+              type: number
+            avg_steps:
+              type: number
+            avg_output_tokens:
+              type: number
+          required:
+          - bucket
+          - group
+          - count_runs
+          - sum_cost
+          - avg_steps
+          - avg_output_tokens
+          type: object
+        minItems: 1
+        maxItems: 1
+    required:
+    - rows
+    type: object
+  status_code: 200

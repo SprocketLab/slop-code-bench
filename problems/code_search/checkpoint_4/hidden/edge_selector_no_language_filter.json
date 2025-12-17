@@ -1,0 +1,59 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "rule_id": "all_returns",
+      "file": "a.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 1,
+        "col": 3
+      },
+      "end": {
+        "line": 1,
+        "col": 12
+      },
+      "match": "return 0;"
+    },
+    {
+      "rule_id": "all_returns",
+      "file": "b.js",
+      "language": "javascript",
+      "start": {
+        "line": 1,
+        "col": 3
+      },
+      "end": {
+        "line": 1,
+        "col": 12
+      },
+      "match": "return 1;"
+    },
+    {
+      "rule_id": "all_returns",
+      "file": "c.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 13
+      },
+      "match": "return 2"
+    }
+  ],
+  "input_files": {
+    "proj/a.cpp": "  return 0;",
+    "proj/b.js": "  return 1;",
+    "proj/c.py": "    return 2"
+  },
+  "rules.json": [
+    {
+      "id": "all_returns",
+      "kind": "selector",
+      "selector": "return_statement"
+    }
+  ]
+}

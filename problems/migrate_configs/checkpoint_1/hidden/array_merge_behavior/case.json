@@ -1,0 +1,40 @@
+{
+  "rules": {
+    "merge_arrays_and_objects": {
+      "type": "merge_data",
+      "glob": "**/*",
+      "data": {
+        "services": [
+          "api",
+          "worker",
+          "scheduler"
+        ],
+        "features": {
+          "flags": [
+            "new_ui",
+            "analytics"
+          ],
+          "enabled": true
+        },
+        "ports": [
+          8080,
+          9090
+        ],
+        "metadata": {
+          "tags": [
+            "production",
+            "critical"
+          ],
+          "owners": [
+            "team-a",
+            "team-b"
+          ]
+        }
+      }
+    }
+  },
+  "arguments": "rules.json configs",
+  "files": {
+    "configs/app.yaml": "services:\n  - web\n  - db\nfeatures:\n  flags:\n    - beta\n  experimental: true\nports:\n  - 3000\nmetadata:\n  tags:\n    - staging\n  version: 1.0.0"
+  }
+}

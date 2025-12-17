@@ -1,0 +1,46 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "rule_id": "type_sigs",
+      "file": "Lib.hs",
+      "language": "haskell",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 18
+      },
+      "match": "add :: Int -> Int"
+    },
+    {
+      "rule_id": "type_sigs",
+      "file": "Lib.hs",
+      "language": "haskell",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 14
+      },
+      "match": "main :: IO ()"
+    }
+  ],
+  "input_files": {
+    "proj/Lib.hs": "add :: Int -> Int\nadd x y = x + y\n\nmain :: IO ()\nmain = putStrLn \"test\""
+  },
+  "rules.json": [
+    {
+      "id": "type_sigs",
+      "kind": "regex",
+      "languages": [
+        "haskell"
+      ],
+      "pattern": "\\w+ :: [^\\n]+"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "database": {
+    "host": "prod.db",
+    "port": 5432,
+    "options": {
+      "retries": 5
+    }
+  },
+  "features": [
+    "release"
+  ],
+  "app": "nested-override"
+}

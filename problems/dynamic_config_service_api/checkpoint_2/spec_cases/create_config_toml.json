@@ -1,0 +1,30 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "env": "dev",
+        "app": "testing"
+      },
+      "raw_config": "[db]\nhost = \"dev.db\"\npool = 5\n\nfeature_flags = [\"feature1\", \"feature2\"]\n",
+      "raw_format": "toml"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_config_toml",
+    "method": "POST",
+    "path": "/v1/configs/testing_app"
+  },
+  "expected": {
+    "status_code": 201,
+    "output": {
+      "active": true,
+      "name": "testing_app",
+      "scope": {
+        "app": "testing",
+        "env": "dev"
+      },
+      "version": 1
+    }
+  }
+}

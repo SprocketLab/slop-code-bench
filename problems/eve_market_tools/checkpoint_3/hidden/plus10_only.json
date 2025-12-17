@@ -1,0 +1,83 @@
+{
+  "order": 12,
+  "input": {
+    "body": {
+      "materials": {
+        "Pyerite": 300000
+      },
+      "hubs": [
+        "amarr"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": false,
+        "plus5": false,
+        "plus10": true,
+        "plus15": false
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Compressed Massive Scordite": {
+          "quantity": 300400,
+          "cost": 7510000.0,
+          "volume": 450.6,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 300400,
+              "total": 7510000.0,
+              "avg_price": 25.0
+            }
+          }
+        },
+        "Compressed Prize Mordunium": {
+          "quantity": 600,
+          "cost": 13800.0,
+          "volume": 0.6,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 600,
+              "total": 13800.0,
+              "avg_price": 23.0
+            }
+          }
+        }
+      },
+      "total": 7681720.0,
+      "shipping": 157920.0,
+      "collateral_tax": 0.0,
+      "items": 7523800.0,
+      "raw_ship": 1050000.0,
+      "material_value": 6944394.59,
+      "excess_value": 1478013.23,
+      "yields": {
+        "Tritanium": {
+          "target": null,
+          "actual": 449216,
+          "buy": 1419522.56,
+          "sell": 1477920.64
+        },
+        "Pyerite": {
+          "target": 300000,
+          "actual": 300004,
+          "buy": 6558087.44,
+          "sell": 6944487.18
+        }
+      }
+    }
+  }
+}

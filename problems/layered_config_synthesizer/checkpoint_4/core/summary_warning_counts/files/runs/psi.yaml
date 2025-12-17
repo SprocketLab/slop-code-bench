@@ -1,0 +1,4 @@
+experiment_name: psi
+logging: "{{static:legacy_logger}}"
+resources:
+  world_size: 4

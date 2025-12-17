@@ -1,0 +1,16 @@
+case:
+  arguments: --output out.csv --key order_id --schema schema.json f.csv
+  input_files:
+  - content:
+    - id: '1'
+    file_type: csv
+    path: f.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 3
+  stderr: "^ERR 3"

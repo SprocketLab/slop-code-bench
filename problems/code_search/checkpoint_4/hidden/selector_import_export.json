@@ -1,0 +1,83 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 15,
+        "line": 1
+      },
+      "file": "code.js",
+      "language": "javascript",
+      "match": "export { foo }",
+      "rule_id": "exports",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 33,
+        "line": 2
+      },
+      "file": "code.js",
+      "language": "javascript",
+      "match": "export default function bar() {}",
+      "rule_id": "exports",
+      "start": {
+        "col": 1,
+        "line": 2
+      }
+    },
+    {
+      "end": {
+        "col": 10,
+        "line": 1
+      },
+      "file": "code.py",
+      "language": "python",
+      "match": "import os",
+      "rule_id": "imports",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 21,
+        "line": 2
+      },
+      "file": "code.py",
+      "language": "python",
+      "match": "from sys import argv",
+      "rule_id": "imports",
+      "start": {
+        "col": 1,
+        "line": 2
+      }
+    }
+  ],
+  "input_files": {
+    "proj/code.js": "export { foo };\nexport default function bar() {}",
+    "proj/code.py": "import os\nfrom sys import argv"
+  },
+  "rules.json": [
+    {
+      "id": "exports",
+      "kind": "selector",
+      "languages": [
+        "javascript"
+      ],
+      "selector": "export"
+    },
+    {
+      "id": "imports",
+      "kind": "selector",
+      "languages": [
+        "python"
+      ],
+      "selector": "import"
+    }
+  ]
+}

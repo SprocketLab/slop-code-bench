@@ -1,0 +1,368 @@
+{
+  "create_never_environment": {
+    "order": 0,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "hidden-never",
+        "concurrency_mode": "never",
+        "files": {
+          "config.txt": "initial state"
+        }
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "name": "hidden-never",
+        "concurrency_mode": "never",
+        "files": {
+          "config.txt": {
+            "written_bytes": 13
+          }
+        }
+      }
+    }
+  },
+  "create_fork_environment": {
+    "order": 1,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "hidden-fork",
+        "concurrency_mode": "fork",
+        "files": {
+          "counter.txt": "0"
+        }
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "name": "hidden-fork",
+        "concurrency_mode": "fork",
+        "files": {
+          "counter.txt": {
+            "written_bytes": 1
+          }
+        }
+      }
+    }
+  },
+  "create_base_environment": {
+    "order": 2,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "hidden-base",
+        "concurrency_mode": "base",
+        "files": {
+          "base.txt": "base content"
+        }
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "name": "hidden-base",
+        "concurrency_mode": "base",
+        "files": {
+          "base.txt": {
+            "written_bytes": 12
+          }
+        }
+      }
+    }
+  },
+  "create_default_environment": {
+    "order": 3,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "hidden-default",
+        "files": {
+          "default.txt": "default mode test"
+        }
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "name": "hidden-default",
+        "concurrency_mode": "never",
+        "files": {
+          "default.txt": {
+            "written_bytes": 17
+          }
+        }
+      }
+    }
+  },
+  "create_empty_environment": {
+    "order": 4,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "hidden-empty"
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "name": "hidden-empty",
+        "concurrency_mode": "never",
+        "files": {}
+      }
+    }
+  },
+  "execute_never_initial_write": {
+    "order": 5,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "sh -c \"echo modified > output.txt\"",
+        "environment": "hidden-never",
+        "track": [
+          "*.txt"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "cached": false,
+        "duration": 10,
+        "stdout": "",
+        "stderr": "",
+        "exit_code": 0,
+        "timed_out": false,
+        "files": {
+          "config.txt": "initial state",
+          "output.txt": "modified\n"
+        },
+        "environment": {
+          "name": "hidden-never",
+          "snapshot_source": "exclusive",
+          "committed": true
+        }
+      }
+    }
+  },
+  "execute_never_persistence": {
+    "order": 6,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "cat output.txt",
+        "environment": "hidden-never",
+        "track": [
+          "*.txt"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "cached": false,
+        "duration": 10,
+        "stdout": "modified\n",
+        "stderr": "",
+        "exit_code": 0,
+        "timed_out": false,
+        "files": {
+          "config.txt": "initial state",
+          "output.txt": "modified\n"
+        },
+        "environment": {
+          "name": "hidden-never",
+          "snapshot_source": "exclusive",
+          "committed": true
+        }
+      }
+    }
+  },
+  "execute_fork_counter_update": {
+    "order": 7,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "sh -c \"echo 1 > counter.txt\"",
+        "environment": "hidden-fork",
+        "track": [
+          "*.txt"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "cached": false,
+        "duration": 10,
+        "stdout": "",
+        "stderr": "",
+        "exit_code": 0,
+        "timed_out": false,
+        "files": {
+          "counter.txt": "1\n"
+        },
+        "environment": {
+          "name": "hidden-fork",
+          "snapshot_source": "exclusive",
+          "committed": true
+        }
+      }
+    }
+  },
+  "execute_base_create_state": {
+    "order": 8,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "sh -c \"echo modified > state.txt\"",
+        "environment": "hidden-base",
+        "track": [
+          "*.txt"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "cached": false,
+        "duration": 10,
+        "stdout": "",
+        "stderr": "",
+        "exit_code": 0,
+        "timed_out": false,
+        "files": {
+          "base.txt": "base content",
+          "state.txt": "modified\n"
+        },
+        "environment": {
+          "name": "hidden-base",
+          "snapshot_source": "base",
+          "committed": true
+        }
+      }
+    }
+  },
+  "execute_base_clean_snapshot": {
+    "order": 9,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "sh -c \"if [ -f state.txt ]; then echo stale && exit 1; fi; cat base.txt\"",
+        "environment": "hidden-base",
+        "track": [
+          "base.txt"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "cached": false,
+        "duration": 10,
+        "stdout": "base content",
+        "stderr": "",
+        "exit_code": 0,
+        "timed_out": false,
+        "files": {
+          "base.txt": "base content"
+        },
+        "environment": {
+          "name": "hidden-base",
+          "snapshot_source": "base",
+          "committed": true
+        }
+      }
+    }
+  },
+  "execute_overlay_files": {
+    "order": 10,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "cat overlay.txt",
+        "environment": "hidden-never",
+        "files": {
+          "overlay.txt": "overlay content\n"
+        },
+        "track": [
+          "*.txt"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "cached": false,
+        "duration": 10,
+        "stdout": "overlay content\n",
+        "stderr": "",
+        "exit_code": 0,
+        "timed_out": false,
+        "files": {
+          "config.txt": "initial state",
+          "output.txt": "modified\n",
+          "overlay.txt": "overlay content\n"
+        },
+        "environment": {
+          "name": "hidden-never",
+          "snapshot_source": "exclusive",
+          "committed": true
+        }
+      }
+    }
+  }
+}

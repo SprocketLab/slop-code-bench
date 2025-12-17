@@ -1,0 +1,2 @@
+{"event": "operation_applied", "type": "add_check_constraint", "table": "orders", "name": "chk_orders_discount", "version": 2}
+{"event": "migration_complete", "version": 2, "operations_count": 1}

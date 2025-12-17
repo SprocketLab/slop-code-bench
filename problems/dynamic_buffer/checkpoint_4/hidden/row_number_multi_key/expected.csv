@@ -1,0 +1,7 @@
+user_id,category,value,row_num
+u1,A,100,1
+u1,B,200,1
+u1,B,300,2
+u2,A,400,1
+u2,B,500,1
+u3,C,600,1

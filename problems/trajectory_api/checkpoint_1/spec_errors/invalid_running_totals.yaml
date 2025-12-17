@@ -1,0 +1,45 @@
+case:
+  body:
+    date: "2025-10-12T00:00:00Z"
+    task: cot_math_gsm8k
+    environment: local-sim
+    model: gpt-x-pro
+    framework: my-agent-v2
+    metrics: {}
+    trajectory:
+      - role: assistant
+        content: Step 1
+        input_tokens: 5
+        output_tokens: 10
+        cost: 0.001
+      - role: assistant
+        content: Step 2
+        input_tokens: 2
+        output_tokens: 9
+        cost: 0.0009
+  headers:
+    content-type: application/json; charset=utf-8
+  id: invalid_running_totals
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            type: string
+            const: INVALID_INPUT
+          message:
+            const: assistant.output_tokens must be cumulative and non-decreasing across assistant steps
+          field_path:
+            const: trajectory[1].output_tokens
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 400

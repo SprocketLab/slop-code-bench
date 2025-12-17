@@ -1,0 +1,5 @@
+timestamp,category,price
+2025-09-14T08:00:00Z,electronics,100.0
+2025-09-14T08:05:00Z,books,50.0
+2025-09-14T08:10:00Z,electronics,150.0
+2025-09-14T08:15:00Z,furniture,200.0

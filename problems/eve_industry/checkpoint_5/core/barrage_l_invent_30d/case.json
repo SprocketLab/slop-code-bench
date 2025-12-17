@@ -1,0 +1,18 @@
+{
+    "case": {
+        "arguments": [
+            "plan",
+            "'Barrage L 10 None x10'",
+            "--sde",
+            "{{static:sde_dir}}",
+            "--build-all",
+            "--config",
+            "build_config.yaml",
+            "--output",
+            "outputs"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

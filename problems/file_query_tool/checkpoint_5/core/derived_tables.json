@@ -1,0 +1,11 @@
+{
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "query": "SELECT \n    dept_name,\n    max_salary,\n    min_salary,\n    max_salary - min_salary as salary_range\nFROM (\n    SELECT \n        department as dept_name,\n        MAX(salary) as max_salary,\n        MIN(salary) as min_salary\n    FROM employees\n    GROUP BY department\n) dept_stats\nORDER BY salary_range DESC, dept_name",
+  "expected": "| dept_name   | max_salary | min_salary | salary_range |\n| ----------- | ---------- | ---------- | ------------ |\n| Engineering | 120000     | 80000      | 40000        |\n| Sales       | 110000     | 70000      | 40000        |",
+  "input_data": "data.json"
+}

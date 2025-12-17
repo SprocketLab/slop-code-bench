@@ -1,0 +1,8 @@
+schema BaseSale {
+  a: float = b * 2.0  # forward reference to b
+  b: float
+}
+
+pipeline P using BaseSale {
+  aggregate count(*) as n
+}

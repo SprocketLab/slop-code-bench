@@ -1,0 +1,44 @@
+case:
+  arguments: --output output.csv --key group,priority --schema schema.json data.csv
+  input_files:
+  - content:
+    - group: A
+      id: '1'
+      priority: '1'
+    - group: ''
+      id: '2'
+      priority: '2'
+    - group: A
+      id: '3'
+      priority: ''
+    - group: B
+      id: '4'
+      priority: '1'
+    file_type: csv
+    path: data.csv
+  - content:
+      columns:
+      - name: group
+        type: string
+      - name: priority
+        type: int
+      - name: id
+        type: int
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - group: null
+      id: 2
+      priority: 2
+    - group: A
+      id: 3
+      priority: null
+    - group: A
+      id: 1
+      priority: 1
+    - group: B
+      id: 4
+      priority: 1
+  status_code: 0

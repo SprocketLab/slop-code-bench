@@ -1,0 +1,83 @@
+{
+  "arguments": "--sql query.sql --sharded sales_data=test_data/*/*_sales.csv --data test_data",
+  "input_files": [
+    {
+      "path": "test_data/2023/jan_sales.csv",
+      "content": [
+        {
+          "date": "2023-01-01",
+          "product": "Laptop",
+          "sales": "1000",
+          "region": "North"
+        },
+        {
+          "date": "2023-01-02",
+          "product": "Mouse",
+          "sales": "500",
+          "region": "South"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/2023/feb_sales.csv",
+      "content": [
+        {
+          "date": "2023-02-01",
+          "product": "Laptop",
+          "sales": "1200",
+          "region": "East"
+        },
+        {
+          "date": "2023-02-02",
+          "product": "Mouse",
+          "sales": "600",
+          "region": "West"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/2024/jan_sales.csv",
+      "content": [
+        {
+          "date": "2024-01-01",
+          "product": "Laptop",
+          "sales": "1500",
+          "region": "North"
+        },
+        {
+          "date": "2024-01-02",
+          "product": "Mouse",
+          "sales": "750",
+          "region": "South"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/2024/feb_sales.csv",
+      "content": [
+        {
+          "date": "2024-02-01",
+          "product": "Laptop",
+          "sales": "1800",
+          "region": "East"
+        },
+        {
+          "date": "2024-02-02",
+          "product": "Mouse",
+          "sales": "900",
+          "region": "West"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT region, SUM(sales) as total_sales\nFROM sales_data\nWHERE product = 'Laptop'\nGROUP BY region\nORDER BY total_sales DESC",
+  "expected": "| region   |   total_sales |\n|----------|---------------|\n| East     |          3000 |\n| North    |          2500 |"
+}

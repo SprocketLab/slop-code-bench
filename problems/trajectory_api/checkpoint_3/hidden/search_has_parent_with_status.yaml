@@ -1,0 +1,31 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_has_parent_with_status
+  method: GET
+  path: /trajectories?has_parent=true&status=in_progress
+expected:
+  output:
+    properties:
+      items:
+        type: array
+        items:
+          properties:
+            status:
+              const: in_progress
+            lineage:
+              properties:
+                parent_id:
+                  type: string
+                  pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+              required:
+                - parent_id
+              type: object
+          required:
+            - status
+            - lineage
+          type: object
+    required:
+      - items
+    type: object
+  status_code: 200

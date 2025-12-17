@@ -1,0 +1,77 @@
+{
+  "case": {
+    "body": {
+      "author": "dave",
+      "base_version": 1,
+      "description": "Increase pool to 12",
+      "labels": [
+        "capacity"
+      ],
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "title": "Pool increase v3"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "setup_proposal_3_open",
+    "method": "POST",
+    "path": "/v1/configs/billing/3:propose"
+  },
+  "expected": {
+    "output": {
+      "author": "dave",
+      "base_version": 1,
+      "description": "Increase pool to 12",
+      "labels": [
+        "capacity"
+      ],
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "title": "Pool increase v3",
+      "diffs": {
+        "human": [
+          "REPLACE /db/pool: 4 -> 12"
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ]
+      },
+      "draft_version": 3,
+      "name": "billing",
+      "proposal_id": 3,
+      "quorum": {
+        "allow_author_approval": false,
+        "allowed_reviewers": [
+          "alice",
+          "bob",
+          "carol"
+        ],
+        "required_approvals": 2
+      },
+      "status": "open",
+      "tally": {
+        "approvals": 0,
+        "by_actor": [],
+        "rejections": 0
+      }
+    },
+    "status_code": 201
+  }
+}

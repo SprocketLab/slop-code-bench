@@ -1,0 +1,39 @@
+{
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/sales.csv",
+      "content": [
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "800"
+        },
+        {
+          "region": "EU",
+          "product": "Widget B",
+          "sales": ""
+        },
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "900"
+        },
+        {
+          "region": "NA",
+          "product": "",
+          "sales": "1500"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT \n    region,\n    product,\n    sales,\n    SUM(sales) OVER (PARTITION BY region ORDER BY sales) as running_total,\n    RANK() OVER (PARTITION BY region ORDER BY sales DESC) as sales_rank\nFROM sales\nORDER BY region, sales_rank",
+  "expected": "| region | product  | sales | running_total | sales_rank |\n| ------ | -------- | ----- | ------------- | ---------- |\n| EU     | Widget A | 900   | 1700          | 1          |\n| EU     | Widget A | 800   | 800           | 2          |\n| EU     | Widget B | NULL  | 1700          | 3          |\n| NA     | NULL     | 1500  | 1500          | 1          |"
+}

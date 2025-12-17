@@ -1,0 +1,10 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "normalize_primary_nodes": {
+      "type": "pattern_replace",
+      "key_pattern": "clusters[*].nodes[0].ip",
+      "value": "10.9.9.1"
+    }
+  }
+}

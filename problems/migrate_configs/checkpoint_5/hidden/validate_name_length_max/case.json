@@ -1,0 +1,21 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "rules": {
+    "validate_name_length": {
+      "type": "validate_value",
+      "scope": "validation",
+      "key": "app.name",
+      "constraint": {
+        "length_max": 20
+      }
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "text",
+      "content": "app:\n  name: this-name-is-way-too-long\n"
+    }
+  ]
+}

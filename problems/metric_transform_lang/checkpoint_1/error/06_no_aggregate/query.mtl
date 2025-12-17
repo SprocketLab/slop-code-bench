@@ -1,0 +1,2 @@
+filter(price > 1.0)
+group_by(category)

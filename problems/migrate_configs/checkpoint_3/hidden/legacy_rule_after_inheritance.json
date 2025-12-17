@@ -1,0 +1,19 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"inheritance/json/legacy_app.json\",\"rules_applied\":[\"a_rename_old_key\",\"b_force_env\"]}\\n",
+  "rules": {
+    "a_rename_old_key": {
+      "type": "rename_key",
+      "old_key": "old_key",
+      "new_key": "new_key"
+    },
+    "b_force_env": {
+      "type": "replace_value",
+      "key": "environment",
+      "value": "production"
+    }
+  },
+  "expected_files": {
+    "configs/inheritance/json/legacy_app.json": "{\\n  \\\"name\\\": \\\"legacy-app\\\",\\n  \\\"new_key\\\": \\\"value\\\",\\n  \\\"timeout\\\": 30,\\n  \\\"environment\\\": \\\"production\\\"\\n}\\n"
+  }
+}

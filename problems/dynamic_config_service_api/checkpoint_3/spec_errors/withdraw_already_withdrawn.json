@@ -1,0 +1,68 @@
+{
+  "case": {
+    "body": {
+      "actor": "dave",
+      "reason": "Trying to withdraw again"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "withdraw_already_withdrawn",
+    "method": "POST",
+    "path": "/v1/proposals/3:withdraw"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "proposal_id": 3,
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "draft_version": 3,
+      "base_version": 1,
+      "author": "dave",
+      "title": "Pool increase v3",
+      "description": "Increase pool to 12",
+      "labels": [
+        "capacity"
+      ],
+      "status": "withdrawn",
+      "quorum": {
+        "required_approvals": 2,
+        "allow_author_approval": false,
+        "allowed_reviewers": [
+          "alice",
+          "bob",
+          "carol"
+        ]
+      },
+      "tally": {
+        "approvals": 0,
+        "rejections": 0,
+        "by_actor": []
+      },
+      "diffs": {
+        "raw_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ],
+        "includes_changes": [],
+        "human": [
+          "REPLACE /db/pool: 4 -> 12"
+        ]
+      }
+    }
+  }
+}

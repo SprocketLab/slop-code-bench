@@ -1,0 +1,41 @@
+case:
+  arguments: --output output.csv --key id --schema-strategy union a.csv b.tsv c.jsonl
+  input_files:
+  - content:
+    - amount: '2.0'
+      id: '2'
+    - amount: '1'
+      id: '1'
+    file_type: csv
+    path: a.csv
+  - content:
+    - amount: '5.5'
+      id: 4
+    - id: 5
+      note: x
+    file_type: jsonl
+    path: c.jsonl
+  - content:
+    - amount: '3'
+      id: '3'
+    file_type: tsv
+    path: b.tsv
+expected:
+  files:
+    output.csv:
+    - amount: 1.0
+      id: 1
+      note: null
+    - amount: 2.0
+      id: 2
+      note: null
+    - amount: 3.0
+      id: 3
+      note: null
+    - amount: 5.5
+      id: 4
+      note: null
+    - amount: null
+      id: 5
+      note: x
+  status_code: 0

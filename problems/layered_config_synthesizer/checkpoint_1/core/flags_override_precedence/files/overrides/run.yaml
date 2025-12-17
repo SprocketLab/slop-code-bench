@@ -1,0 +1,5 @@
+training:
+  learning_rate: 0.02
+  optimizer: adamw
+resources:
+  world_size: 4

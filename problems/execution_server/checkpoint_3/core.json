@@ -1,0 +1,562 @@
+{
+  "bz2_compression": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "id,name\n1,test\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "bzcat data.csv.bz2",
+        "env": {},
+        "files": {
+          "data.csv.bz2": [
+            {
+              "id": 1,
+              "name": "test"
+            }
+          ]
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "csv_cell_types": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "arr,bool_false,bool_true,null_val,num_float,num_int,obj,str\n\"[1,2,3]\",false,true,,3.14,42,{},hello\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat types.csv",
+        "env": {},
+        "files": {
+          "types.csv": [
+            {
+              "arr": [
+                1,
+                2,
+                3
+              ],
+              "bool_false": false,
+              "bool_true": true,
+              "null_val": null,
+              "num_float": 3.14,
+              "num_int": 42,
+              "obj": {},
+              "str": "hello"
+            }
+          ]
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "csv_columns": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "age,name\n30,alice\n25,bob\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat data.csv",
+        "env": {},
+        "files": {
+          "data.csv": {
+            "age": [
+              30,
+              25
+            ],
+            "name": [
+              "alice",
+              "bob"
+            ]
+          }
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "csv_list_objects": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "id,name\n1,\n,x\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat table.csv",
+        "env": {},
+        "files": {
+          "table.csv": [
+            {
+              "id": 1
+            },
+            {
+              "name": "x"
+            }
+          ]
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "csv_quoting": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "normal,with_comma,with_newline,with_quote\nsimple,\"hello, world\",\"line1\nline2\",\"say \"\"hi\"\"\"\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat quoted.csv",
+        "env": {},
+        "files": {
+          "quoted.csv": [
+            {
+              "normal": "simple",
+              "with_comma": "hello, world",
+              "with_newline": "line1\nline2",
+              "with_quote": "say \"hi\""
+            }
+          ]
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "csv_sorted_headers": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "apple,mango,zebra\n2,3,1\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat sorted.csv",
+        "env": {},
+        "files": {
+          "sorted.csv": [
+            {
+              "apple": 2,
+              "mango": 3,
+              "zebra": 1
+            }
+          ]
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "final_stats": {
+    "expected": {
+      "output": {
+        "duration": {
+          "average": "{{ duration.average }}",
+          "max": "{{ duration.max }}",
+          "median": "{{ duration.median }}",
+          "min": "{{ duration.min }}",
+          "stddev": "{{ duration.stddev }}"
+        },
+        "ran": "{{ ran }}"
+      },
+      "status_code": 200
+    },
+    "input": {
+      "method": "GET",
+      "path": "/v1/stats/execution"
+    },
+    "order": 2
+  },
+  "gz_compression": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "{\"message\":\"compressed\"}\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "zcat data.json.gz",
+        "env": {},
+        "files": {
+          "data.json.gz": {
+            "message": "compressed"
+          }
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "initial_stats": {
+    "expected": {
+      "output": {
+        "duration": {
+          "average": null,
+          "max": null,
+          "median": null,
+          "min": null,
+          "stddev": null
+        },
+        "ran": 0
+      },
+      "status_code": 200
+    },
+    "input": {
+      "method": "GET",
+      "path": "/v1/stats/execution"
+    },
+    "order": 0
+  },
+  "json_array": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "[1,2,3,\"hello\"]\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat data.json",
+        "env": {},
+        "files": {
+          "data.json": [
+            1,
+            2,
+            3,
+            "hello"
+          ]
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "json_object": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "{\"bar\":{\"a\": 1},\"foo\":[1, 2, 3]}\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat doc.json",
+        "env": {},
+        "files": {
+          "doc.json": {
+            "bar": {
+              "a": 1
+            },
+            "foo": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "jsonl_columns": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "{\"id\":1,\"name\":\"alice\"}\n{\"id\":2,\"name\":\"bob\"}\n{\"id\":3,\"name\":\"charlie\"}\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat data.jsonl",
+        "env": {},
+        "files": {
+          "data.jsonl": {
+            "id": [
+              1,
+              2,
+              3
+            ],
+            "name": [
+              "alice",
+              "bob",
+              "charlie"
+            ]
+          }
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "jsonl_list": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "2 events.jsonl\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "wc -l events.jsonl",
+        "env": {},
+        "files": {
+          "events.jsonl": [
+            {
+              "id": 1,
+              "ok": true
+            },
+            {
+              "id": 2,
+              "ok": false
+            }
+          ]
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "tsv_basic": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "id\tname\n1\talice\n2\tbob\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat data.tsv",
+        "env": {},
+        "files": {
+          "data.tsv": [
+            {
+              "id": 1,
+              "name": "alice"
+            },
+            {
+              "id": 2,
+              "name": "bob"
+            }
+          ]
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "unknown_extension": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "{\"foo\":\"bar\"}\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat data.unknown",
+        "env": {},
+        "files": {
+          "data.unknown": {
+            "foo": "bar"
+          }
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "yaml_data": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "count: 42\nenabled: true\nname: test\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat config.yaml",
+        "env": {},
+        "files": {
+          "config.yaml": {
+            "count": 42,
+            "enabled": true,
+            "name": "test"
+          }
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  }
+}

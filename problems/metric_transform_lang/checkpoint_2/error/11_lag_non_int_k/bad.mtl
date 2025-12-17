@@ -1,0 +1,11 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+}
+
+pipeline BadK using Sale {
+  window(1h)
+  aggregate sum(price) as total
+  # k must be int, not float
+  calc prev = lag(total, 1.5) : float @stage(post_agg)
+}

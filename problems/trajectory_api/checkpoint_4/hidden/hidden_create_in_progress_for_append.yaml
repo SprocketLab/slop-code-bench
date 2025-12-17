@@ -1,0 +1,50 @@
+case:
+  body:
+    date: "2025-10-03T00:00:00Z"
+    task: hidden_append_task
+    environment: local-sim
+    model: hidden-model-7
+    framework: hidden-framework-7
+    status: in_progress
+    metrics: {}
+    trajectory:
+      - role: user
+        content: Start a conversation
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: '<tool init_tool args="start"/> Starting...'
+        input_tokens: 5
+        output_tokens: 10
+        cost: 0.0005
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_in_progress_for_append
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      environment:
+        const: local-sim
+      environment_version:
+        const: 1
+      status:
+        const: in_progress
+      rev:
+        const: 1
+      steps:
+        const: 2
+    required:
+      - id
+      - environment
+      - environment_version
+      - status
+      - rev
+      - steps
+    type: object
+  status_code: 201

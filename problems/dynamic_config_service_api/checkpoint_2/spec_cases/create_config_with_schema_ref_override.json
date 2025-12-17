@@ -1,0 +1,39 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "config": {
+        "db": {
+          "host": "prod.db.new",
+          "pool": 12,
+          "timeout": 30
+        }
+      },
+      "schema_ref": {
+        "name": "cfg",
+        "version": 2
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_config_with_schema_ref_override",
+    "method": "POST",
+    "path": "/v1/configs/billing"
+  },
+  "expected": {
+    "status_code": 201,
+    "output": {
+      "active": true,
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "version": 2
+    }
+  }
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "window_start": "2024-01-01T10:00:00Z",
+    "window_end": "2024-01-01T11:00:00Z",
+    "location": "LA",
+    "item": "PROMO_apple",
+    "web_rev": 1.6,
+    "pos_total": 18.0
+  },
+  {
+    "window_start": "2024-01-01T10:00:00Z",
+    "window_end": "2024-01-01T11:00:00Z",
+    "location": "NYC",
+    "item": "PROMO_banana",
+    "web_rev": 0.8,
+    "pos_total": 8.0
+  }
+]

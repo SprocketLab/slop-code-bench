@@ -1,0 +1,2 @@
+window(1h)
+aggregate count(*) as n

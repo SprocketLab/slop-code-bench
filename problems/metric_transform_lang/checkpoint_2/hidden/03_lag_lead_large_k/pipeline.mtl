@@ -1,0 +1,13 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  price: float
+}
+
+pipeline LargeK using Sale {
+  group_by(['location'])
+  aggregate sum(price) as total
+
+  calc lag5 = lag(total, 5) : float @stage(post_agg)
+  calc lead10 = lead(total, 10) : float @stage(post_agg)
+}

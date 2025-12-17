@@ -1,0 +1,20 @@
+[
+  {
+    "window_start": "2024-07-02T14:00:00Z",
+    "window_end": "2024-07-02T15:00:00Z",
+    "location": "Austin",
+    "item": "laptop",
+    "web_units": 2.0,
+    "pos_units": 6.0,
+    "max_on_hand": 8.0
+  },
+  {
+    "window_start": "2024-07-02T14:00:00Z",
+    "window_end": "2024-07-02T15:00:00Z",
+    "location": "Austin",
+    "item": "mouse",
+    "web_units": 2.0,
+    "pos_units": 4.0,
+    "max_on_hand": 20.0
+  }
+]

@@ -1,0 +1,18 @@
+mtl_version 1.5
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline WithParams using BaseSale {
+  params {
+    min_qty: float = 0.0
+  }
+  filter(quantity >= param("min_qty"))
+  aggregate count(*) as n
+}

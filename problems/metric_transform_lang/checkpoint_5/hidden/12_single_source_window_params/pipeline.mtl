@@ -1,0 +1,24 @@
+mtl_version 1.5
+
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline ParamWindows using Sale {
+  params {
+    min_price: float = 5.0
+  }
+
+  filter(price >= param("min_price"))
+  apply(price * quantity, line_revenue)
+  window(1h)
+  group_by(['location'])
+  aggregate sum(line_revenue) as revenue,
+            count(*) as rows
+}

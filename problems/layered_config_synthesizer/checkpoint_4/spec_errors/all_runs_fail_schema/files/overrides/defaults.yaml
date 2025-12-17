@@ -1,0 +1,2 @@
+training:
+  batch_size: 15

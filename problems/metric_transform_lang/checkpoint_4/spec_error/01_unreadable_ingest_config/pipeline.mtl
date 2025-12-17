@@ -1,0 +1,8 @@
+schema BaseSale {
+  timestamp: timestamp
+}
+
+pipeline P using BaseSale {
+  aggregate count(*) as n
+}
+

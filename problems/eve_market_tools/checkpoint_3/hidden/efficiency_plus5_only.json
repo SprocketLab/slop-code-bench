@@ -1,0 +1,64 @@
+{
+  "order": 29,
+  "input": {
+    "body": {
+      "materials": {
+        "Tritanium": 350000
+      },
+      "hubs": [
+        "jita"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.8,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": false,
+        "plus5": true,
+        "plus10": false,
+        "plus15": false
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Compressed Concentrated Veldspar": {
+          "quantity": 104200,
+          "cost": 1354600.0,
+          "volume": 104.2,
+          "category": "ore",
+          "purchases": {
+            "Jita IV - Moon 4 - Caldari Navy Assembly Plant": {
+              "quantity": 104200,
+              "total": 1354600.0,
+              "avg_price": 13.0
+            }
+          }
+        }
+      },
+      "total": 1391070.0,
+      "shipping": 36470.0,
+      "collateral_tax": 0.0,
+      "items": 1354600.0,
+      "raw_ship": 1225000.0,
+      "material_value": 1416296.44,
+      "excess_value": 453.21,
+      "yields": {
+        "Tritanium": {
+          "target": 350000,
+          "actual": 350112,
+          "buy": 1330578.11,
+          "sell": 1416749.65
+        }
+      }
+    }
+  }
+}

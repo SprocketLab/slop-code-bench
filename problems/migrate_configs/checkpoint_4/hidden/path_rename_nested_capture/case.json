@@ -1,0 +1,11 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "flatten_deployments": {
+      "type": "path_rename",
+      "scope": "file",
+      "path_pattern": "services/$name/deploy/$env.yaml",
+      "new_path": "deployments/${name}-${env}.yaml"
+    }
+  }
+}

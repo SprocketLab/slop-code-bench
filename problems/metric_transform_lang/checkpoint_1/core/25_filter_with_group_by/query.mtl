@@ -1,0 +1,4 @@
+filter(price > 1.0)
+group_by(category)
+aggregate count(*) as n,
+          sum(price) as total

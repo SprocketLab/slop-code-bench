@@ -1,0 +1,1 @@
+{"experiment_name":"override-run","logging":{"destination":{"path":"/tmp/debug.log","type":"file"},"format":"text"},"resources":{"accelerators":[{"count":1,"type":"v100"}],"profile":"override","world_size":1},"training":{"batch_size":16,"optimizer":"adam"}}

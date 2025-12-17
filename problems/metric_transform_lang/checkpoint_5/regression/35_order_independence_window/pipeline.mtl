@@ -1,0 +1,9 @@
+mtl_version 1.5
+schema BaseSale {
+  timestamp: timestamp
+}
+
+pipeline Win using BaseSale {
+  window(1h)
+  aggregate count(*) as n
+}

@@ -1,0 +1,40 @@
+case:
+  arguments: --output out.csv --key items.0.qty --schema schema.json --type-alias-file
+    aliases.json a.jsonl
+  input_files:
+  - content:
+      aliases:
+        decimal: float
+    file_type: json
+    path: aliases.json
+  - content:
+      columns:
+      - name: items
+        type:
+          list:
+            element:
+              struct:
+                fields:
+                - name: qty
+                  type: decimal
+      - name: ts
+        type: timestamptz
+    file_type: json
+    path: schema.json
+  - content:
+    - items:
+      - qty: 1.5
+      ts: '2024-07-01T10:00:00+01:00'
+    - items:
+      - qty: 2.0
+      ts: '2024-07-01T08:00:00Z'
+    file_type: jsonl
+    path: a.jsonl
+expected:
+  files:
+    out.csv:
+    - items: '[{"qty":1.5}]'
+      ts: '2024-07-01T09:00:00Z'
+    - items: '[{"qty":2.0}]'
+      ts: '2024-07-01T08:00:00Z'
+  status_code: 0

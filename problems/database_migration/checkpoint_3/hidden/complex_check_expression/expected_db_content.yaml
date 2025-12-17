@@ -1,0 +1,16 @@
+tables:
+  orders:
+    columns:
+    - id
+    - total
+    - discount
+    rows:
+    - id: 1
+      total: 100.0
+      discount: 10.0
+    - id: 2
+      total: 200.0
+      discount: 50.0
+    - id: 3
+      total: 150.0
+      discount: 25.0

@@ -1,0 +1,34 @@
+case:
+  arguments: --output output.csv --key id data.parquet
+  input_files:
+  - content:
+    - id: 1
+      name: Alice
+      score: 90.5
+    - id: 2
+      name: null
+      score: 85.0
+    - id: 3
+      name: Charlie
+      score: null
+    - id: 4
+      name: null
+      score: null
+    file_type: parquet
+    path: data.parquet
+expected:
+  files:
+    output.csv:
+    - id: 1
+      name: Alice
+      score: 90.5
+    - id: 2
+      name: null
+      score: 85.0
+    - id: 3
+      name: Charlie
+      score: null
+    - id: 4
+      name: null
+      score: null
+  status_code: 0

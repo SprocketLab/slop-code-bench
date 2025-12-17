@@ -1,0 +1,108 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "rule_id": "params",
+      "file": "code.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 1,
+        "col": 10
+      },
+      "end": {
+        "line": 1,
+        "col": 15
+      },
+      "match": "int x"
+    },
+    {
+      "rule_id": "params",
+      "file": "code.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 1,
+        "col": 17
+      },
+      "end": {
+        "line": 1,
+        "col": 22
+      },
+      "match": "int y"
+    },
+    {
+      "rule_id": "params",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 1,
+        "col": 12
+      },
+      "end": {
+        "line": 1,
+        "col": 13
+      },
+      "match": "a"
+    },
+    {
+      "rule_id": "params",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 1,
+        "col": 15
+      },
+      "end": {
+        "line": 1,
+        "col": 16
+      },
+      "match": "b"
+    },
+    {
+      "rule_id": "args",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 2,
+        "col": 3
+      },
+      "end": {
+        "line": 2,
+        "col": 4
+      },
+      "match": "1"
+    },
+    {
+      "rule_id": "args",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 2,
+        "col": 6
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "2"
+    }
+  ],
+  "input_files": {
+    "proj/code.cpp": "void foo(int x, int y) {}",
+    "proj/code.js": "function f(a, b) {}\nf(1, 2);"
+  },
+  "rules.json": [
+    {
+      "id": "params",
+      "kind": "selector",
+      "selector": "parameter"
+    },
+    {
+      "id": "args",
+      "kind": "selector",
+      "languages": [
+        "javascript"
+      ],
+      "selector": "argument"
+    }
+  ]
+}

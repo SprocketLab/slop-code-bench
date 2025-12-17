@@ -1,0 +1,7 @@
+sources:
+  - name: main
+    inputs:
+      - "input.csv"
+    format: auto
+    schema: PromoSale
+    precedence: 10

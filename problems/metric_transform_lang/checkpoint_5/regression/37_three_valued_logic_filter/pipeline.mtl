@@ -1,0 +1,11 @@
+mtl_version 1.5
+schema Event {
+  timestamp: timestamp
+  value: float
+  active: bool
+}
+
+pipeline ThreeValued using Event {
+  filter(value > 10.0 & active)
+  aggregate count(*) as n, sum(value) as total
+}

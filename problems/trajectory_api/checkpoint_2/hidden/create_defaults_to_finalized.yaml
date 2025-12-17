@@ -1,0 +1,35 @@
+case:
+  body:
+    date: "2025-10-09T00:00:00Z"
+    task: default_status_task
+    environment: default_status_env
+    model: default_status_model
+    framework: default_status_framework
+    metrics: {}
+    trajectory:
+      - role: user
+        content: "Question without status field - should default to finalized"
+        input_tokens: null
+        output_tokens: null
+        cost: null
+  headers:
+    content-type: application/json; charset=utf-8
+  id: create_defaults_to_finalized
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: finalized
+      rev:
+        const: 1
+    required:
+      - id
+      - status
+      - rev
+    type: object
+  status_code: 201

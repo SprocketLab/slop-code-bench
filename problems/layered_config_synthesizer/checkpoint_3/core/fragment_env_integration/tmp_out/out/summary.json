@@ -1,0 +1,1 @@
+{"failed":0,"runs":[{"conflicts":0,"notes":"uses fragment","run_id":"delta","status":"ok","warnings":0},{"conflicts":0,"notes":"env stage","run_id":"echo","status":"ok","warnings":0}],"succeeded":2,"total_runs":2}

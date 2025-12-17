@@ -1,0 +1,8 @@
+sources:
+  - name: main
+    inputs:
+      - "a.csv"
+      - "b.csv"
+    format: auto
+    schema: WideSale
+    precedence: 10

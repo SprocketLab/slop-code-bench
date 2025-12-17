@@ -1,0 +1,14 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+  quantity: int
+}
+
+pipeline MultiFileCalcs using Sale {
+  calc revenue = price * quantity : float @stage(pre)
+
+  window(1h)
+  aggregate sum(revenue) as total_rev, count(*) as n
+
+  calc doubled = total_rev * 2.0 : float @stage(post_agg)
+}

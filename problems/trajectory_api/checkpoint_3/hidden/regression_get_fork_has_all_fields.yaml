@@ -1,0 +1,65 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: regression_get_fork_has_all_fields
+  method: GET
+  path: /trajectories/{{store.regression_fork_then_append}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.regression_fork_then_append}}"
+      record:
+        properties:
+          date:
+            type: string
+            pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+          task:
+            const: regression_test_task
+          environment:
+            const: regression_test_env
+          model:
+            const: regression_test_model
+          framework:
+            const: regression_test_framework
+          metrics:
+            type: object
+          trajectory:
+            type: array
+        required:
+          - date
+          - task
+          - environment
+          - model
+          - framework
+          - metrics
+          - trajectory
+        type: object
+      derived:
+        properties:
+          steps:
+            type: integer
+          final_output_tokens:
+            type: integer
+          final_cost:
+            type: number
+        required:
+          - steps
+          - final_output_tokens
+          - final_cost
+        type: object
+      status:
+        const: in_progress
+      rev:
+        type: integer
+      lineage:
+        type: object
+    required:
+      - id
+      - record
+      - derived
+      - status
+      - rev
+      - lineage
+    type: object
+  status_code: 200

@@ -1,0 +1,42 @@
+{
+  "case": {
+    "body": {
+      "data": {
+        "constants": {
+          "prod_must_use_tls": true
+        }
+      },
+      "metadata": {
+        "version_label": "seed"
+      },
+      "rego_modules": {
+        "main.rego": "package guardrails\n\nprod_target {\n  input.target.scope.env == \"prod\"\n}\n\ndeny[v] {\n  prod_target\n  not input.target.resolved_config.db.tls\n  v := {\"id\":\"db_tls_required\",\"message\":\"prod must set db.tls=true\",\"path\":\"/db/tls\",\"target\": input.target.name}\n}\n\nwarn[v] {\n  input.target.resolved_config.db.pool < 4\n  v := {\"id\":\"db_pool_low\",\"message\":\"db.pool < 4 in prod\",\"path\":\"/db/pool\",\"target\": input.target.name}\n}\n"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_policy_bundle_v1",
+    "method": "POST",
+    "path": "/v1/policies/bundles/org-defaults/versions"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "bundle_name": {
+          "const": "org-defaults"
+        },
+        "version": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "bundle_name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "status_code": 201
+  }
+}

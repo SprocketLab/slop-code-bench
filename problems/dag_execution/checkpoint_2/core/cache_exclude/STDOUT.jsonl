@@ -1,0 +1,25 @@
+{"event": "TASK_STARTED", "job_id": 1, "task": "collect_reports", "parent": null}
+{"event": "TASK_STARTED", "job_id": 2, "task": "generate_report", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 2, "task": "generate_report", "parent": 1, "cache_key": "1ff1b180a2ffbf6bf73619b75590be44754102c19a35e8c2cde9d8f15615b235"}
+{"event": "CACHE_MISS", "job_id": 2, "task": "generate_report", "parent": 1, "cache_key": "1ff1b180a2ffbf6bf73619b75590be44754102c19a35e8c2cde9d8f15615b235", "reason": "first_execution"}
+{"event": "TASK_RUNNING", "job_id": 2, "task": "generate_report", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 2, "task": "generate_report", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 3, "task": "generate_report", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 3, "task": "generate_report", "parent": 1, "cache_key": "1ff1b180a2ffbf6bf73619b75590be44754102c19a35e8c2cde9d8f15615b235"}
+{"event": "CACHE_HIT", "job_id": 3, "task": "generate_report", "parent": 1, "cache_key": "1ff1b180a2ffbf6bf73619b75590be44754102c19a35e8c2cde9d8f15615b235"}
+{"event": "TASK_COMPLETED", "job_id": 3, "task": "generate_report", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 4, "task": "generate_report", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 4, "task": "generate_report", "parent": 1, "cache_key": "1ff1b180a2ffbf6bf73619b75590be44754102c19a35e8c2cde9d8f15615b235"}
+{"event": "CACHE_HIT", "job_id": 4, "task": "generate_report", "parent": 1, "cache_key": "1ff1b180a2ffbf6bf73619b75590be44754102c19a35e8c2cde9d8f15615b235"}
+{"event": "TASK_COMPLETED", "job_id": 4, "task": "generate_report", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 5, "task": "generate_report", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 5, "task": "generate_report", "parent": 1, "cache_key": "1ff1b180a2ffbf6bf73619b75590be44754102c19a35e8c2cde9d8f15615b235"}
+{"event": "CACHE_HIT", "job_id": 5, "task": "generate_report", "parent": 1, "cache_key": "1ff1b180a2ffbf6bf73619b75590be44754102c19a35e8c2cde9d8f15615b235"}
+{"event": "TASK_COMPLETED", "job_id": 5, "task": "generate_report", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 6, "task": "generate_report", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 6, "task": "generate_report", "parent": 1, "cache_key": "29b8f17eac5e353ce26aae74ce2924d0cb1c7948977c54333781ac7fc940e900"}
+{"event": "CACHE_MISS", "job_id": 6, "task": "generate_report", "parent": 1, "cache_key": "29b8f17eac5e353ce26aae74ce2924d0cb1c7948977c54333781ac7fc940e900", "reason": "not_found"}
+{"event": "TASK_RUNNING", "job_id": 6, "task": "generate_report", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 6, "task": "generate_report", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 1, "task": "collect_reports", "parent": null}
+{"event": "TASK_COMPLETED", "job_id": 1, "task": "collect_reports", "parent": null}

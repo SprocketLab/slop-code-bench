@@ -1,0 +1,16 @@
+mtl_version 1.5
+schema Data {
+  timestamp: timestamp
+  group: string
+  value: float
+}
+
+pipeline NullAgg using Data {
+  group_by(['group'])
+  aggregate sum(value) as total,
+            average(value) as avg,
+            min(value) as minimum,
+            max(value) as maximum,
+            count(*) as n,
+            count(value) as value_count
+}

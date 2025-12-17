@@ -1,0 +1,70 @@
+case:
+  arguments: --output out.csv --key order.items.0.details.price --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 3
+      order:
+        id: o3
+        items:
+        - sku: c
+          details:
+            price: 15.0
+            weight: 0.3
+    - id: 1
+      order:
+        id: o1
+        items:
+        - sku: a
+          details:
+            price: 25.0
+            weight: 0.5
+    - id: 2
+      order:
+        id: o2
+        items:
+        - sku: b
+          details:
+            price: 10.0
+            weight: 0.2
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: order
+        type:
+          struct:
+            fields:
+            - name: id
+              type: string
+            - name: items
+              type:
+                array:
+                  element:
+                    struct:
+                      fields:
+                      - name: sku
+                        type: string
+                      - name: details
+                        type:
+                          struct:
+                            fields:
+                            - name: price
+                              type: float
+                            - name: weight
+                              type: float
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv: 'id,order
+
+      2,"{\"id\":\"o2\",\"items\":[{\"sku\":\"b\",\"details\":{\"price\":10.0,\"weight\":0.2}}]}"
+
+      3,"{\"id\":\"o3\",\"items\":[{\"sku\":\"c\",\"details\":{\"price\":15.0,\"weight\":0.3}}]}"
+
+      1,"{\"id\":\"o1\",\"items\":[{\"sku\":\"a\",\"details\":{\"price\":25.0,\"weight\":0.5}}]}"
+
+      '
+  status_code: 0

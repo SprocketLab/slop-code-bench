@@ -1,0 +1,42 @@
+case:
+  body:
+    date: "2025-10-10T00:00:00Z"
+    task: response_validation_task
+    environment: response_validation_env
+    model: response_validation_model
+    framework: response_validation_framework
+    status: in_progress
+    metrics:
+      test: "value"
+    trajectory:
+      - role: user
+        content: "Question for response validation"
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: "Response for validation"
+        input_tokens: 10
+        output_tokens: 30
+        cost: 0.003
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_for_response_validation
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      rev:
+        const: 1
+    required:
+      - id
+      - status
+      - rev
+    type: object
+  status_code: 201

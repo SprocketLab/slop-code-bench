@@ -1,0 +1,52 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: |
+    {
+      "version": 2,
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "settings",
+          "columns": [
+            {
+              "name": "id",
+              "type": "INTEGER",
+              "primary_key": true
+            },
+            {
+              "name": "key",
+              "type": "TEXT",
+              "not_null": true
+            },
+            {
+              "name": "value",
+              "type": "TEXT",
+              "default": "default_value"
+            },
+            {
+              "name": "count",
+              "type": "INTEGER",
+              "default": "0"
+            },
+            {
+              "name": "enabled",
+              "type": "INTEGER",
+              "default": "1"
+            },
+            {
+              "name": "created_at",
+              "type": "TIMESTAMP",
+              "default": "CURRENT_TIMESTAMP"
+            }
+          ]
+        }
+      ],
+      "description": "Create settings table with various default values"
+    }
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

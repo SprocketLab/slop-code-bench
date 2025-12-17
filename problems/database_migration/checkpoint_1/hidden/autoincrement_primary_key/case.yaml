@@ -1,0 +1,36 @@
+arguments: migrate migration.json app.db
+input_files:
+- content: |
+    {
+      "version": 1,
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "orders",
+          "columns": [
+            {
+              "name": "id",
+              "type": "INTEGER",
+              "primary_key": true,
+              "autoincrement": true
+            },
+            {
+              "name": "customer_id",
+              "type": "INTEGER",
+              "not_null": true
+            },
+            {
+              "name": "total",
+              "type": "REAL",
+              "not_null": true
+            }
+          ]
+        }
+      ],
+      "description": "Create orders table with autoincrement primary key"
+    }
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

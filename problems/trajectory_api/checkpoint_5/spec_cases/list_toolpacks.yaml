@@ -1,0 +1,35 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: list_toolpacks
+  method: GET
+  path: /environments/local-sim/toolpacks
+expected:
+  output:
+    properties:
+      environment:
+        const: local-sim
+      active_version:
+        const: 1
+      items:
+        type: array
+        items:
+          properties:
+            version:
+              const: 1
+            active:
+              const: true
+            created_at:
+              type: string
+              pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+          required:
+          - version
+          - active
+          - created_at
+          type: object
+    required:
+    - environment
+    - active_version
+    - items
+    type: object
+  status_code: 200

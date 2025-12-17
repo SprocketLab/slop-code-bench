@@ -1,0 +1,41 @@
+{
+  "case": {
+    "body": {},
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "list_bundle_versions_multiple",
+    "method": "POST",
+    "path": "/v1/policies/bundles/org-defaults/versions:list"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "versions": {
+          "items": {
+            "properties": {
+              "version": {
+                "type": "integer"
+              },
+              "metadata": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "version",
+              "metadata"
+            ],
+            "type": "object"
+          },
+          "minItems": 2,
+          "type": "array"
+        }
+      },
+      "required": [
+        "versions"
+      ],
+      "type": "object"
+    },
+    "status_code": 200
+  }
+}

@@ -1,0 +1,15 @@
+{
+    "case": {
+        "arguments": [
+            "\"Jita IV - Moon 4 - Caldari Navy Assembly Plant\"",
+            "\"Amarr\"",
+            "--config",
+            "config.yaml",
+            "--ship",
+            "Prowler"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

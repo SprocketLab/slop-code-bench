@@ -1,0 +1,49 @@
+case:
+  arguments: --output out --key id --partition-by country --max-rows-per-file 2 data.csv
+  input_files:
+  - content:
+    - country: US
+      id: '1'
+      name: Alice
+    - country: CA
+      id: '2'
+      name: Bob
+    - country: US
+      id: '3'
+      name: Charlie
+    - country: CA
+      id: '4'
+      name: Dave
+    - country: US
+      id: '5'
+      name: Eve
+    - country: CA
+      id: '6'
+      name: Frank
+    file_type: csv
+    path: data.csv
+expected:
+  files:
+    out/country=CA/part-00000.csv:
+    - country: CA
+      id: 2
+      name: Bob
+    - country: CA
+      id: 4
+      name: Dave
+    out/country=CA/part-00001.csv:
+    - country: CA
+      id: 6
+      name: Frank
+    out/country=US/part-00000.csv:
+    - country: US
+      id: 1
+      name: Alice
+    - country: US
+      id: 3
+      name: Charlie
+    out/country=US/part-00001.csv:
+    - country: US
+      id: 5
+      name: Eve
+  status_code: 0

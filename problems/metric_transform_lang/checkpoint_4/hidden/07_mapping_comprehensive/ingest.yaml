@@ -1,0 +1,21 @@
+sources:
+  - name: web
+    inputs: ["web.csv"]
+    format: auto
+    schema: WebSale
+    precedence: 10
+    mapping:
+      rename: { qty: quantity }
+      cast: { price: float, timestamp: timestamp }
+      defaults: { unit: "ea", category: "general" }
+      drop: ["debug_col"]
+    required: ["timestamp", "price", "quantity"]
+  - name: pos
+    inputs: ["pos.csv"]
+    format: auto
+    schema: BaseSale
+    precedence: 20
+    mapping:
+      rename: { amt: price }
+      cast: { amt: float }
+    required: ["timestamp", "price", "quantity"]

@@ -1,0 +1,16 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline NullAggregates using Sale {
+  filter(category == 'dairy')
+  aggregate count(*) as n,
+            sum(price) as total,
+            average(quantity) as avg_qty
+}

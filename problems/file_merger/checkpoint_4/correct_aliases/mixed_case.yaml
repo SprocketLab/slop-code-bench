@@ -1,0 +1,36 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 2
+      name: Bob
+      score: 85.5
+      active: true
+    - id: 1
+      name: Alice
+      score: 92.0
+      active: false
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: INTEGER
+      - name: name
+        type: TeXt
+      - name: score
+        type: DOUBLE
+      - name: active
+        type: BOOLEAN
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv: 'active,id,name,score
+
+      false,1,Alice,92.0
+
+      true,2,Bob,85.5
+
+      '
+  status_code: 0

@@ -1,0 +1,4 @@
+filter(category == 'dairy')
+aggregate count(*) as n,
+          sum(price) as total,
+          average(quantity) as avg_qty

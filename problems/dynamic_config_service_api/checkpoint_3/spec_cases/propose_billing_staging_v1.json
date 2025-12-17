@@ -1,0 +1,82 @@
+{
+  "case": {
+    "body": {
+      "author": "eve",
+      "base_version": 0,
+      "description": "Initial staging config",
+      "scope": {
+        "app": "billing",
+        "env": "staging"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "propose_billing_staging_v1",
+    "method": "POST",
+    "path": "/v1/configs/billing/1:propose"
+  },
+  "expected": {
+    "output": {
+      "author": "eve",
+      "base_version": 0,
+      "description": "Initial staging config",
+      "draft_version": 1,
+      "labels": [],
+      "name": "billing",
+      "proposal_id": 6,
+      "scope": {
+        "app": "billing",
+        "env": "staging"
+      },
+      "status": "open",
+      "title": null,
+      "diffs": {
+        "human": [
+          "SET /db: {\"pool\":2}",
+          "SET /debug: true"
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "add",
+            "path": "/db",
+            "value": {
+              "pool": 2
+            }
+          },
+          {
+            "op": "add",
+            "path": "/debug",
+            "value": true
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "add",
+            "path": "/db",
+            "value": {
+              "pool": 2
+            }
+          },
+          {
+            "op": "add",
+            "path": "/debug",
+            "value": true
+          }
+        ]
+      },
+      "quorum": {
+        "allow_author_approval": false,
+        "allowed_reviewers": null,
+        "required_approvals": 2
+      },
+      "tally": {
+        "approvals": 0,
+        "by_actor": [],
+        "rejections": 0
+      }
+    },
+    "status_code": 201
+  }
+}

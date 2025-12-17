@@ -1,0 +1,1 @@
+{"event":"validation_failed","file":"app.yaml","rule":"require_database","error":"missing required key: database.port"}

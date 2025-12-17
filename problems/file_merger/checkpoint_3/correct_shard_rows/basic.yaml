@@ -1,0 +1,29 @@
+case:
+  arguments: --output out --key id --max-rows-per-file 2 data.csv
+  input_files:
+  - content: 'id,name
+
+      3,c
+
+      1,a
+
+      4,d
+
+      2,b
+
+      '
+    file_type: text
+    path: data.csv
+expected:
+  files:
+    out/part-00000.csv:
+    - id: 1
+      name: a
+    - id: 2
+      name: b
+    out/part-00001.csv:
+    - id: 3
+      name: c
+    - id: 4
+      name: d
+  status_code: 0

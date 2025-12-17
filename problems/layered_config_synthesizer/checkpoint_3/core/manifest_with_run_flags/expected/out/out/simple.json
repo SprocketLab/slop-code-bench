@@ -1,0 +1,1 @@
+{"experiment_name":"simple","resources":{"accelerators":[{"count":2,"type":"a10"}],"profile":"shared","world_size":3},"training":{"batch_size":16,"learning_rate":0.01,"optimizer":"adam"}}

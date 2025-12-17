@@ -1,0 +1,5 @@
+experiment_name: parse-fail
+training:
+  optimizer: adam
+resources:
+  profile: x

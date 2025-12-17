@@ -1,0 +1,23 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+  rules:
+    expected_us_00000.csv:
+      dest: ["expected", "files", "out/country=US/part-00000.csv"]
+      loader: text
+    expected_us_00001.csv:
+      dest: ["expected", "files", "out/country=US/part-00001.csv"]
+      loader: text
+verifiers:
+  success:
+    type: status_code
+    value: 0
+  us_part0:
+    type: exact_match
+    result_attr: [files, "out/country=US/part-00000.csv"]
+    expected_attr: [files, "out/country=US/part-00000.csv"]
+  us_part1:
+    type: exact_match
+    result_attr: [files, "out/country=US/part-00001.csv"]
+    expected_attr: [files, "out/country=US/part-00001.csv"]

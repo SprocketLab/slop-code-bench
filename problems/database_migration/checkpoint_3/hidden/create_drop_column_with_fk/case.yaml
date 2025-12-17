@@ -1,0 +1,10 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Complex schema evolution: drop FK, drop column, add new column with new FK\",\n  \"operations\": [\n    {\n      \"type\": \"drop_foreign_key\",\n      \"table\": \"posts\",\n      \"name\": \"fk_posts_user_id\"\n    },\n    {\n      \"type\": \"drop_column\",\n      \"table\": \"posts\",\n      \"column\": \"user_id\"\n    },\n    {\n      \"type\": \"add_column\",\n      \"table\": \"posts\",\n      \"column\": {\n        \"name\": \"author_id\",\n        \"type\": \"INTEGER\",\n        \"not_null\": true,\n        \"default\": \"1\"\n      }\n    },\n    {\n      \"type\": \"migrate_column_data\",\n      \"table\": \"posts\",\n      \"from_column\": \"id\",\n      \"to_column\": \"author_id\"\n    },\n    {\n      \"type\": \"add_foreign_key\",\n      \"table\": \"posts\",\n      \"name\": \"fk_posts_author\",\n      \"columns\": [\n        \"author_id\"\n      ],\n      \"references\": {\n        \"table\": \"authors\",\n        \"columns\": [\n          \"id\"\n        ]\n      },\n      \"on_delete\": \"CASCADE\"\n    }\n  ]\n}\n"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

@@ -1,0 +1,13 @@
+schema Event {
+  timestamp: timestamp
+  event_type: string
+}
+
+pipeline TimestampParam using Event {
+  params {
+    cutoff: timestamp
+  }
+
+  filter(timestamp >= param("cutoff"))
+  aggregate count(*) as n
+}

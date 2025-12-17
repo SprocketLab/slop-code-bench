@@ -1,0 +1,22 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "rules": {
+    "validate_timeout": {
+      "type": "validate_value",
+      "scope": "validation",
+      "key": "timeout",
+      "constraint": {
+        "min": 10,
+        "max": 300
+      }
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "text",
+      "content": "timeout: 500\n"
+    }
+  ]
+}

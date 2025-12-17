@@ -1,0 +1,18 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+  rules:
+    expected.err:
+      dest: ["expected", "stderr"]
+      loader: text
+verifiers:
+  had_error:
+    type: status_code
+    value: 0
+    not_equals: true
+  error_match:
+    type: exact_match
+    result_attr: stderr
+
+

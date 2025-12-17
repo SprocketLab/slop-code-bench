@@ -1,0 +1,7 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "expected_stdout": "",
+  "rules": {},
+  "status_code": 1,
+  "expected_stderr": "^Error: circular dependency detected: .*circular/app\\.yaml -> .*circular/base\\.yaml -> .*circular/app\\.yaml$"
+}

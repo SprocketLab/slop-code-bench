@@ -1,0 +1,77 @@
+{
+  "order": 24,
+  "input": {
+    "body": {
+      "materials": {
+        "Tritanium": 400000
+      },
+      "hubs": [
+        "amarr"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.95,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Compressed Dense Veldspar": {
+          "quantity": 95600,
+          "cost": 1118520.0,
+          "volume": 95.6,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 95600,
+              "total": 1118520.0,
+              "avg_price": 11.7
+            }
+          }
+        },
+        "Batch Compressed Concentrated Veldspar": {
+          "quantity": 1,
+          "cost": 1130.0,
+          "volume": 0.15,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 1,
+              "total": 1130.0,
+              "avg_price": 1130.0
+            }
+          }
+        }
+      },
+      "total": 1153162.5,
+      "shipping": 33512.5,
+      "collateral_tax": 0.0,
+      "items": 1119650.0,
+      "raw_ship": 1400000.0,
+      "material_value": 1326535.54,
+      "excess_value": 23.21,
+      "yields": {
+        "Tritanium": {
+          "target": 400000,
+          "actual": 400007,
+          "buy": 1200021.0,
+          "sell": 1326558.76
+        }
+      }
+    }
+  }
+}

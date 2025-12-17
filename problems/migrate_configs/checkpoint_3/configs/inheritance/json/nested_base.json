@@ -1,0 +1,10 @@
+{
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "options": {
+      "retries": 1
+    }
+  },
+  "features": ["alpha", "beta"]
+}

@@ -1,0 +1,5 @@
+timestamp,category,value,status
+2025-09-14T08:00:00Z,A,15.0,active
+2025-09-14T08:05:00Z,B,5.0,active
+2025-09-14T08:10:00Z,C,20.0,inactive
+2025-09-14T08:15:00Z,D,25.0,active

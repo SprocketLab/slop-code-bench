@@ -1,0 +1,8 @@
+sources:
+  - name: main
+    inputs:
+      - "input.csv"
+      - "bad.jsonl"
+    format: auto
+    schema: Data
+    precedence: 10

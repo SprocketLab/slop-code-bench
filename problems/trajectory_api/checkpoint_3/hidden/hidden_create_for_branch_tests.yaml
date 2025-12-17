@@ -1,0 +1,50 @@
+case:
+  body:
+    date: "2025-10-02T00:00:00Z"
+    task: hidden_branch_task
+    environment: hidden_branch_env
+    model: hidden_branch_model
+    framework: hidden_branch_framework
+    status: in_progress
+    metrics: {}
+    trajectory:
+      - role: user
+        content: Start branch tests
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: Ready for branch testing.
+        input_tokens: 5
+        output_tokens: 10
+        cost: 0.0005
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_for_branch_tests
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      rev:
+        const: 1
+      steps:
+        const: 2
+      final_output_tokens:
+        const: 10
+      final_cost:
+        const: 0.0005
+    required:
+      - id
+      - status
+      - rev
+      - steps
+      - final_output_tokens
+      - final_cost
+    type: object
+  status_code: 201

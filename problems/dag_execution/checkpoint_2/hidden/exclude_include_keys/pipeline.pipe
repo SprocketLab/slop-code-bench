@@ -1,0 +1,30 @@
+// Cascade invalidation - dependent task caches should invalidate
+task generate_base {
+    params: {
+        seed: int
+        epochs: int
+        batch_size: int
+        output_dir: string
+    }
+    cache: {
+        enabled: true
+        key: {
+            include: [seed, output_dir]
+            exclude: [batch_size]
+        }
+    }
+    run: {
+        echo "Generating base with seed ${params.seed}";
+        echo "seed: ${params.seed}\n${params.epochs}\n${params.batch_size}\n${params.output_dir}"  > config.txt;
+    }
+}
+
+task main {
+    requires: {
+        generate_base(1,2,3,"test");
+        generate_base(1,5,6,"test"); // Should be cached
+        generate_base(1,5,6,"test1"); // Cache miss
+        generate_base(1,2,3,"test1"); // Cache hit
+        generate_base(2,2,3,"test1"); // Cache miss
+    }
+}

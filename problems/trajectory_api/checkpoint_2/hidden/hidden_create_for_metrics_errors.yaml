@@ -1,0 +1,36 @@
+case:
+  body:
+    date: "2025-10-05T00:00:00Z"
+    task: hidden_metrics_error_task
+    environment: hidden_metrics_error_env
+    model: hidden_metrics_error_model
+    framework: hidden_metrics_error_framework
+    status: in_progress
+    metrics: {}
+    trajectory:
+      - role: user
+        content: "Question for metrics error tests"
+        input_tokens: null
+        output_tokens: null
+        cost: null
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_for_metrics_errors
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      rev:
+        const: 1
+    required:
+      - id
+      - status
+      - rev
+    type: object
+  status_code: 201

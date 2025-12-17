@@ -1,0 +1,45 @@
+{
+  "case": {
+    "body": {
+      "config": {
+        "features": [
+          "c",
+          "d"
+        ],
+        "settings": {
+          "theme": "dark"
+        }
+      },
+      "includes": [
+        {
+          "name": "array_base",
+          "scope": {
+            "env": "prod"
+          }
+        }
+      ],
+      "scope": {
+        "env": "prod",
+        "app": "test"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "deep_merge_arrays",
+    "method": "POST",
+    "path": "/v1/configs/array_test"
+  },
+  "expected": {
+    "output": {
+      "active": true,
+      "name": "array_test",
+      "scope": {
+        "env": "prod",
+        "app": "test"
+      },
+      "version": 1
+    },
+    "status_code": 201
+  }
+}

@@ -1,0 +1,2 @@
+entry = "main"
+clean_cwd = false

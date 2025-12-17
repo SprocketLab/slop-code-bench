@@ -1,0 +1,14 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "bad_pattern": {
+      "type": "relocate_files",
+      "scope": "file",
+      "source_pattern": "environments/${env",
+      "destination": "noop/"
+    }
+  },
+  "status_code": 1,
+  "expected_stderr": "^Error: invalid file pattern in rule 'bad_pattern': environments/\\$\\{env$"
+}

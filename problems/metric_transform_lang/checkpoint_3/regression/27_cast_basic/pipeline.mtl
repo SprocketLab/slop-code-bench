@@ -1,0 +1,13 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+  quantity: int
+}
+
+pipeline CastTest using Sale {
+  calc price_int = cast(price as int) : int @stage(pre)
+  calc quantity_float = cast(quantity as float) : float @stage(pre)
+
+  filter(price_int > 10)
+  aggregate sum(quantity_float) as total_qty, count(*) as n
+}

@@ -1,0 +1,1 @@
+{"experiment_name":"flag-stack","resources":{"accelerators":[{"count":2,"type":"v100"}],"profile":"compute_a","world_size":4},"training":{"batch_size":32,"learning_rate":0.03,"optimizer":{"beta2":0.95,"name":"lion"}}}

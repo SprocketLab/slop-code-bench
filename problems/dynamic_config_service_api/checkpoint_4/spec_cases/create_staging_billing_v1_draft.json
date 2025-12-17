@@ -1,0 +1,71 @@
+{
+  "case": {
+    "body": {
+      "activate": false,
+      "config": {
+        "db": {
+          "pool": 2,
+          "tls": false
+        }
+      },
+      "scope": {
+        "app": "billing",
+        "env": "staging",
+        "tenant": "beta-corp"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_staging_billing_v1_draft",
+    "method": "POST",
+    "path": "/v1/configs/billing"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "active": {
+          "const": false
+        },
+        "name": {
+          "const": "billing"
+        },
+        "scope": {
+          "properties": {
+            "app": {
+              "const": "billing"
+            },
+            "env": {
+              "const": "staging"
+            },
+            "tenant": {
+              "const": "beta-corp"
+            }
+          },
+          "required": [
+            "env",
+            "tenant",
+            "app"
+          ],
+          "type": "object"
+        },
+        "status": {
+          "const": "draft"
+        },
+        "version": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "scope",
+        "version",
+        "status",
+        "active"
+      ],
+      "type": "object"
+    },
+    "status_code": 201
+  }
+}

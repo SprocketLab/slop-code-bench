@@ -1,0 +1,15 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "missing_server_template": {
+      "type": "template_string",
+      "key": "backup_endpoint",
+      "variables": {
+        "host": "servers[5].host"
+      },
+      "template": "http://${host}"
+    }
+  },
+  "expected_files": {}
+}

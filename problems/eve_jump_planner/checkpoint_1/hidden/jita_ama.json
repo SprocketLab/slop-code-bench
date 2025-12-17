@@ -1,0 +1,17 @@
+{
+    "start": "Jita IV - Moon 4 - Caldari Navy Assembly Plant",
+    "end": "Amamake VI - Moon 2 - Nurtura Food Packaging",
+    "cases": [
+        {
+            "expected": "START: Jita IV - Moon 4 - Caldari Navy Assembly Plant\nUNDOCK\nJUMP 8.43 LY: Resbroko (85K isotopes)\nDOCK: Resbroko I - Moon 7 - Republic Fleet Assembly Plant\nUNDOCK\nJUMP 4.32 LY: Amamake (44K isotopes)\nDOCK: Amamake VI - Moon 2 - Nurtura Food Packaging\nSUMMARY:\n  End Cooldown: 00:02\n  End Fatigue: 00:24\n  Isotopes Used: 128K\n  Time Waiting: 00:02\n  Total LY: 12.75"
+        },
+        {
+            "reduction": 0,
+            "expected": "START: Jita IV - Moon 4 - Caldari Navy Assembly Plant\nUNDOCK\nJUMP 8.43 LY: Resbroko (85K isotopes)\nDOCK: Resbroko I - Moon 7 - Republic Fleet Assembly Plant\nUNDOCK\nJUMP 4.32 LY: Amamake (44K isotopes)\nDOCK: Amamake VI - Moon 2 - Nurtura Food Packaging\nSUMMARY:\n  End Cooldown: 00:09\n  End Fatigue: 05:00\n  Isotopes Used: 128K\n  Time Waiting: 00:10\n  Total LY: 12.75"
+        },
+        {
+            "range": 6,
+            "expected": "START: Jita IV - Moon 4 - Caldari Navy Assembly Plant\nUNDOCK\nJUMP 5.58 LY: Carrou (56K isotopes)\nDOCK: Carrou III - Moon 7 - Federation Customs Logistic Support\nUNDOCK\nJUMP 4.65 LY: Auner (47K isotopes)\nDOCK: Auner V - Republic Fleet Logistic Support\nUNDOCK\nJUMP 4.40 LY: Amamake (45K isotopes)\nDOCK: Amamake VI - Moon 2 - Nurtura Food Packaging\nSUMMARY:\n  End Cooldown: 00:02\n  End Fatigue: 00:27\n  Isotopes Used: 147K\n  Time Waiting: 00:04\n  Total LY: 14.62"
+        }
+    ]
+}

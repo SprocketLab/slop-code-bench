@@ -1,0 +1,38 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "schema_ref": {
+        "name": "cfg",
+        "version": 2
+      },
+      "mode": "resolved"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "validate_with_schema_ref_override",
+    "method": "POST",
+    "path": "/v1/configs/billing:validate"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "mode": "resolved",
+      "valid": true,
+      "validated_against": {
+        "name": "cfg",
+        "version": 2
+      },
+      "version_used": 2
+    }
+  }
+}

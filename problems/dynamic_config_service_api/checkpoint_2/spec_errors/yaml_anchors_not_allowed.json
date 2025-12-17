@@ -1,0 +1,58 @@
+{
+  "case": {
+    "body": {
+      "activate": false,
+      "raw_config": "defaults: &def\n  db: { host: prod.db, pool: 8 }\nitem: { <<: *def }\n",
+      "raw_format": "yaml",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "yaml_anchors_not_allowed",
+    "method": "POST",
+    "path": "/v1/configs/billing"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "unprocessable"
+            },
+            "details": {
+              "properties": {
+                "reason": {
+                  "const": "yaml_feature_not_allowed"
+                }
+              },
+              "required": [
+                "reason"
+              ],
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "status_code": 422
+  }
+}

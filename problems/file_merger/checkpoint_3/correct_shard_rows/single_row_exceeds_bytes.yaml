@@ -1,0 +1,24 @@
+case:
+  arguments: --output out --key id --max-bytes-per-file 30 data.csv
+  input_files:
+  - content:
+    - id: '1'
+      name: Alice
+    - id: '2'
+      name: ThisIsAVeryLongNameThatExceedsTheByteLimitForASingleFile
+    - id: '3'
+      name: Bob
+    file_type: csv
+    path: data.csv
+expected:
+  files:
+    out/part-00000.csv:
+    - id: 1
+      name: Alice
+    out/part-00001.csv:
+    - id: 2
+      name: ThisIsAVeryLongNameThatExceedsTheByteLimitForASingleFile
+    out/part-00002.csv:
+    - id: 3
+      name: Bob
+  status_code: 0

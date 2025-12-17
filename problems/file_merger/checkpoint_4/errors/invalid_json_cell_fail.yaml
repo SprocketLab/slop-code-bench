@@ -1,0 +1,25 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --on-type-error fail data.csv
+  input_files:
+  - content: 'id,user
+
+      1,{bad}
+
+      '
+    file_type: text
+    path: data.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: name
+              type: string
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 4
+  stderr: ERR 4 cannot cast "{bad}" to struct in field "user" (file=data.csv line=2)

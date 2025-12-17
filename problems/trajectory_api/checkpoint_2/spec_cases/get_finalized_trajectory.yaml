@@ -1,0 +1,34 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: get_finalized_trajectory
+  method: GET
+  path: /trajectories/{{store.create_finalized_trajectory_default}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.create_finalized_trajectory_default}}"
+      record:
+        type: object
+      derived:
+        properties:
+          steps:
+            const: 2
+          final_output_tokens:
+            const: 10
+          final_cost:
+            const: 0.001
+        type: object
+      status:
+        const: finalized
+      rev:
+        const: 1
+    required:
+    - id
+    - record
+    - derived
+    - status
+    - rev
+    type: object
+  status_code: 200

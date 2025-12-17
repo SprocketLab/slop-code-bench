@@ -1,0 +1,11 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "query": "WITH RECURSIVE employee_hierarchy AS (\n    SELECT \n        id,\n        name,\n        manager_id,\n        department,\n        salary,\n        0 as level,\n        CAST(name AS TEXT) as hierarchy_path\n    FROM employees\n    WHERE manager_id IS NULL\n    \n    UNION ALL\n    \n    SELECT \n        e.id,\n        e.name,\n        e.manager_id,\n        e.department,\n        e.salary,\n        eh.level + 1,\n        eh.hierarchy_path || ' -> ' || e.name\n    FROM employees e\n    JOIN employee_hierarchy eh ON e.manager_id = eh.id\n    WHERE eh.level < 10\n)\nSELECT \n    hierarchy_path,\n    level,\n    department,\n    salary\nFROM employee_hierarchy\nORDER BY department, level, hierarchy_path",
+    "expected": "| hierarchy_path               | level | department  | salary |\n| ---------------------------- | ----- | ----------- | ------ |\n| Alice                        | 0     | Engineering | 120000 |\n| Alice -> Bob                 | 1     | Engineering | 90000  |\n| Alice -> Charlie             | 1     | Engineering | 95000  |\n| Alice -> Bob -> David        | 2     | Engineering | 80000  |\n| Alice -> Bob -> David -> Eve | 3     | Engineering | 85000  |\n| Frank                        | 0     | Sales       | 110000 |\n| Frank -> Grace               | 1     | Sales       | 75000  |\n| Frank -> Henry               | 1     | Sales       | 70000  |",
+    "input_data": "data.json"
+}

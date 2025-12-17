@@ -1,0 +1,12 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "missing_pattern": {
+      "type": "pattern_replace",
+      "value": "noop"
+    }
+  },
+  "status_code": 1,
+  "expected_stderr": "^Error: pattern_replace rule \\\"missing_pattern\\\" requires key_pattern"
+}

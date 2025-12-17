@@ -1,0 +1,23 @@
+case:
+  arguments: --output output.csv --key id events.jsonl.gz
+  input_files:
+  - content:
+    - id: 3
+      score: 75.5
+    - id: 1
+      score: 90.0
+    - id: 2
+      score: 85.5
+    file_type: jsonl
+    compression: gzip
+    path: events.jsonl.gz
+expected:
+  files:
+    output.csv:
+    - id: 1
+      score: 90.0
+    - id: 2
+      score: 85.5
+    - id: 3
+      score: 75.5
+  status_code: 0

@@ -1,0 +1,44 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --infer loose --on-type-error coerce-null data.parquet
+  input_files:
+  - content:
+    - id: 1
+      price: "10.5"
+      qty: 5
+      tags: "a,b,c"
+    - id: 2
+      price: "bad"
+      qty: 3
+      tags: "x,y"
+    file_type: parquet
+    path: data.parquet
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: price
+        type: float
+      - name: qty
+        type: int
+      - name: metadata
+        type:
+          struct:
+            fields:
+            - name: tags
+              type:
+                array:
+                  element: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      price: 10.5
+      qty: 5
+      metadata: null
+    - id: 2
+      price: null
+      qty: 3
+      metadata: null
+  status_code: 0

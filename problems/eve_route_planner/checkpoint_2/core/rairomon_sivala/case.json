@@ -1,0 +1,15 @@
+{
+    "case": {
+        "arguments": [
+            "Rairomon",
+            "Sivala",
+            "--config",
+            "config.yaml",
+            "--ship",
+            "Prowler"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

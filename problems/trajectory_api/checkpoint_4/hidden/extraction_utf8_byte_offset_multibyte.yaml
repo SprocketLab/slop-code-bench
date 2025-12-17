@@ -1,0 +1,53 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: extraction_utf8_byte_offset_multibyte
+  method: GET
+  path: /trajectories/{{store.hidden_create_for_utf8_tests}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.hidden_create_for_utf8_tests}}"
+      derived:
+        properties:
+          tool_calls:
+            type: array
+            minItems: 1
+            items:
+              properties:
+                step_index:
+                  type: integer
+                name:
+                  const: search_wiki
+                args_raw:
+                  type: string
+                span:
+                  properties:
+                    start:
+                      type: integer
+                      minimum: 6
+                    end:
+                      type: integer
+                  required:
+                    - start
+                    - end
+                  type: object
+              required:
+                - step_index
+                - name
+                - args_raw
+                - span
+              type: object
+          tool_call_count:
+            type: integer
+            minimum: 1
+        required:
+          - tool_calls
+          - tool_call_count
+        type: object
+    required:
+      - id
+      - derived
+    type: object
+  status_code: 200

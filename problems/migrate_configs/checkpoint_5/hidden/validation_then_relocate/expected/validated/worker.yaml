@@ -1,0 +1,12 @@
+environment: development
+timeout: 45
+database:
+  host: dev.db.internal
+  port: 5433
+services:
+  - name: batch
+    port: 7000
+  - name: jobs
+    port: 7001
+app:
+  name: workerapp

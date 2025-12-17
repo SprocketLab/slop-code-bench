@@ -1,0 +1,1 @@
+{"event":"validation_failed","file":"services.yaml","rule":"unique_service_ids","error":"duplicate values for field 'metadata.name' in array at 'services': api"}

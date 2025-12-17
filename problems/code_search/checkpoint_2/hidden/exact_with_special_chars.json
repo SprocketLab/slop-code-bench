@@ -1,0 +1,29 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 16,
+        "line": 1
+      },
+      "file": "code.js",
+      "language": "javascript",
+      "match": "=>",
+      "rule_id": "arrow",
+      "start": {
+        "col": 14,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/code.js": "const f = () => {};"
+  },
+  "rules.json": [
+    {
+      "id": "arrow",
+      "kind": "exact",
+      "pattern": "=>"
+    }
+  ]
+}

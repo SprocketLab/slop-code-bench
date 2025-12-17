@@ -1,0 +1,16 @@
+[
+    {
+        "window_start": "2024-06-01T10:00:00Z",
+        "window_end": "2024-06-01T11:00:00Z",
+        "location": "LA",
+        "revenue": 7.0,
+        "rows": 1
+    },
+    {
+        "window_start": "2024-06-01T10:00:00Z",
+        "window_end": "2024-06-01T11:00:00Z",
+        "location": "SF",
+        "revenue": 28.5,
+        "rows": 2
+    }
+]

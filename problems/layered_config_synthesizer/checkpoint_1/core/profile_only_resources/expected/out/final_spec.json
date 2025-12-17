@@ -1,0 +1,1 @@
+{"experiment_name":"profile-solo","resources":{"profile":"custom-profile","world_size":3},"training":{"batch_size":8,"optimizer":"adam"}}

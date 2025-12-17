@@ -1,0 +1,18 @@
+{
+  "case": {
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "merge_proposal_5_idempotent",
+    "method": "POST",
+    "path": "/v1/proposals/5:merge"
+  },
+  "expected": {
+    "output": {
+      "activated_version": 1,
+      "previous_active": null,
+      "proposal_id": 5
+    },
+    "status_code": 200
+  }
+}

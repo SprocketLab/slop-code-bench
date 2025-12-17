@@ -1,0 +1,43 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 15,
+        "line": 24
+      },
+      "file": "src/engine.cpp",
+      "language": "cpp",
+      "match": "printf",
+      "rule_id": "printf",
+      "start": {
+        "col": 9,
+        "line": 24
+      }
+    },
+    {
+      "end": {
+        "col": 15,
+        "line": 36
+      },
+      "file": "src/engine.cpp",
+      "language": "cpp",
+      "match": "printf",
+      "rule_id": "printf",
+      "start": {
+        "col": 9,
+        "line": 36
+      }
+    }
+  ],
+  "rules.json": [
+    {
+      "id": "printf",
+      "kind": "exact",
+      "languages": [
+        "cpp"
+      ],
+      "pattern": "printf"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+case:
+  arguments: --output output.csv --key ts --schema schema.json file1.csv file2.csv
+  input_files:
+  - content:
+    - id: '1'
+      ts: '2024-07-01T08:00:00-04:00'
+    - id: '2'
+      ts: '2024-07-01T16:00:00+04:00'
+    file_type: csv
+    path: file1.csv
+  - content:
+    - id: '3'
+      ts: '2024-07-01T12:00:00Z'
+    - id: '4'
+      ts: '2024-07-01T14:00:00+02:00'
+    file_type: csv
+    path: file2.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: ts
+        type: timestamp
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - id: 1
+      ts: '2024-07-01T12:00:00Z'
+    - id: 2
+      ts: '2024-07-01T12:00:00Z'
+    - id: 3
+      ts: '2024-07-01T12:00:00Z'
+    - id: 4
+      ts: '2024-07-01T12:00:00Z'
+  status_code: 0

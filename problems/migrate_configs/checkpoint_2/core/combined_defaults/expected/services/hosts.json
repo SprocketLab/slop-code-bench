@@ -1,0 +1,18 @@
+{
+  "services": {
+    "api": {
+      "host": "localhost",
+      "port": 9000
+    },
+    "database": {
+      "host": "localhost",
+      "port": 9000
+    },
+    "worker": {
+      "host": "localhost",
+      "port": 9000
+    }
+  },
+  "environment": "production",
+  "timeout": 30
+}

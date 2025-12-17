@@ -1,0 +1,56 @@
+case:
+  arguments: --output output.csv --key ts,id --desc --schema schema.json --on-type-error
+    coerce-null --csv-null-literal NULL dataA.csv dataB.csv
+  input_files:
+  - content:
+    - amount: '5'
+      id: '3'
+      ts: '2024-07-01T09:00:00Z'
+    - amount: '7.5'
+      id: '2'
+      ts: '2024-07-01T11:00:00Z'
+    file_type: csv
+    path: dataB.csv
+  - content:
+    - amount: '10.0'
+      id: '1'
+      note: ok
+      ts: '2024-07-01T10:00:00Z'
+    - amount: abc
+      id: '2'
+      note: foo
+      ts: '2024-07-01T11:00:00+01:00'
+    file_type: csv
+    path: dataA.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: ts
+        type: timestamp
+      - name: amount
+        type: float
+      - name: note
+        type: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - amount: 7.5
+      id: 2
+      note: null
+      ts: '2024-07-01T11:00:00Z'
+    - amount: null
+      id: 2
+      note: foo
+      ts: '2024-07-01T10:00:00Z'
+    - amount: 10.0
+      id: 1
+      note: ok
+      ts: '2024-07-01T10:00:00Z'
+    - amount: 5.0
+      id: 3
+      note: null
+      ts: '2024-07-01T09:00:00Z'
+  status_code: 0

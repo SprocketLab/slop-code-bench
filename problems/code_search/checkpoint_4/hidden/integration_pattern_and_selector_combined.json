@@ -1,0 +1,149 @@
+{
+  "arguments": "proj --rules rules.json --dry-run",
+  "expected": [
+    {
+      "rule_id": "pattern_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 16
+      },
+      "match": "print(\"hi\")",
+      "captures": {
+        "$ARG": {
+          "text": "\"hi\"",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 11
+              },
+              "end": {
+                "line": 1,
+                "col": 15
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "event": "fix",
+      "rule_id": "pattern_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 16
+      },
+      "replacement": "logger.info(\"hi\")",
+      "applied": false,
+      "skipped_reason": null
+    },
+    {
+      "rule_id": "selector_no_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 16
+      },
+      "match": "print(\"hi\")"
+    },
+    {
+      "rule_id": "selector_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 5
+      },
+      "end": {
+        "line": 2,
+        "col": 14
+      },
+      "match": "return 42"
+    },
+    {
+      "event": "fix",
+      "rule_id": "selector_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 5
+      },
+      "end": {
+        "line": 2,
+        "col": 14
+      },
+      "replacement": "pass",
+      "applied": false,
+      "skipped_reason": null
+    },
+    {
+      "rule_id": "selector_no_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 3,
+        "col": 5
+      },
+      "end": {
+        "line": 3,
+        "col": 10
+      },
+      "match": "foo()"
+    }
+  ],
+  "input_files": {
+    "proj/code.py": "    print(\"hi\")\n    return 42\n    foo()"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "logger.info($ARG)"
+      },
+      "id": "pattern_fix",
+      "kind": "pattern",
+      "languages": [
+        "python"
+      ],
+      "pattern": "print($ARG)"
+    },
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "pass"
+      },
+      "id": "selector_fix",
+      "kind": "selector",
+      "languages": [
+        "python"
+      ],
+      "selector": "return_statement"
+    },
+    {
+      "id": "selector_no_fix",
+      "kind": "selector",
+      "languages": [
+        "python"
+      ],
+      "selector": "call_expression"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --type-alias-file aliases.json
+    input.jsonl
+  input_files:
+  - content:
+      aliases:
+        myint: footype
+    file_type: json
+    path: aliases.json
+  - content:
+    - id: 1
+    file_type: jsonl
+    path: input.jsonl
+  - content:
+      columns:
+      - name: id
+        type: myint
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 2
+  stderr: ERR 2 unknown type name "footype"

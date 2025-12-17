@@ -1,0 +1,29 @@
+{
+  "case": {
+    "body": {
+      "config": {
+        "db": {
+          "host": "prod.db",
+          "pool": 4
+        }
+      },
+      "scope": {
+        "env": "prod"
+      }
+    },
+    "id": "create_base_v1",
+    "method": "POST",
+    "path": "/v1/configs/base"
+  },
+  "expected": {
+    "output": {
+      "active": true,
+      "name": "base",
+      "scope": {
+        "env": "prod"
+      },
+      "version": 1
+    },
+    "status_code": 201
+  }
+}

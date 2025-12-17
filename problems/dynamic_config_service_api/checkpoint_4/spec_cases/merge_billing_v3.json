@@ -1,0 +1,32 @@
+{
+  "case": {
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "merge_billing_v3",
+    "method": "POST",
+    "path": "/v1/proposals/2:merge"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "proposal_id": {
+          "const": 2
+        },
+        "activated_version": {
+          "const": 3
+        },
+        "previous_active": {
+          "const": null
+        }
+      },
+      "required": [
+        "proposal_id",
+        "activated_version",
+        "previous_active"
+      ],
+      "type": "object"
+    },
+    "status_code": 200
+  }
+}

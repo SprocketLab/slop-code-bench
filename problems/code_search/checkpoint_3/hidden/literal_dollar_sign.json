@@ -1,0 +1,49 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "captures": {
+        "$VAL": {
+          "ranges": [
+            {
+              "end": {
+                "col": 13,
+                "line": 1
+              },
+              "start": {
+                "col": 10,
+                "line": 1
+              }
+            }
+          ],
+          "text": "100"
+        }
+      },
+      "end": {
+        "col": 13,
+        "line": 1
+      },
+      "file": "test.py",
+      "language": "python",
+      "match": "$price = 100",
+      "rule_id": "dollar_var",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/test.py": "$price = 100\n$cost = 50"
+  },
+  "rules.json": [
+    {
+      "id": "dollar_var",
+      "kind": "pattern",
+      "languages": [
+        "python"
+      ],
+      "pattern": "$$price = $VAL"
+    }
+  ]
+}

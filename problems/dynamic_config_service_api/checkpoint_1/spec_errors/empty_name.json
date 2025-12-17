@@ -1,0 +1,52 @@
+{
+  "case": {
+    "body": {
+      "config": {
+        "app": {
+          "name": "empty_name_test",
+          "version": 1.0
+        }
+      },
+      "scope": {
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "empty_name",
+    "method": "POST",
+    "path": "/v1/configs/"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "not_found"
+            },
+            "details": {
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "status_code": 404
+  }
+}

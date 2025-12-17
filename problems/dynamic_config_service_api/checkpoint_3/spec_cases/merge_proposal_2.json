@@ -1,0 +1,18 @@
+{
+  "case": {
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "merge_proposal_2",
+    "method": "POST",
+    "path": "/v1/proposals/2:merge"
+  },
+  "expected": {
+    "output": {
+      "activated_version": 2,
+      "previous_active": 1,
+      "proposal_id": 2
+    },
+    "status_code": 200
+  }
+}

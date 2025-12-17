@@ -1,0 +1,112 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "end": {
+        "col": 8,
+        "line": 1
+      },
+      "file": "vars.py",
+      "language": "python",
+      "match": "oldName",
+      "rule_id": "replace_var",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 8,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "vars.py",
+      "language": "python",
+      "replacement": "newName",
+      "rule_id": "replace_var",
+      "skipped_reason": null,
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 12,
+        "line": 2
+      },
+      "file": "vars.py",
+      "language": "python",
+      "match": "oldName",
+      "rule_id": "replace_var",
+      "start": {
+        "col": 5,
+        "line": 2
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 12,
+        "line": 2
+      },
+      "event": "fix",
+      "file": "vars.py",
+      "language": "python",
+      "replacement": "newName",
+      "rule_id": "replace_var",
+      "skipped_reason": null,
+      "start": {
+        "col": 5,
+        "line": 2
+      }
+    },
+    {
+      "end": {
+        "col": 14,
+        "line": 3
+      },
+      "file": "vars.py",
+      "language": "python",
+      "match": "oldName",
+      "rule_id": "replace_var",
+      "start": {
+        "col": 7,
+        "line": 3
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 14,
+        "line": 3
+      },
+      "event": "fix",
+      "file": "vars.py",
+      "language": "python",
+      "replacement": "newName",
+      "rule_id": "replace_var",
+      "skipped_reason": null,
+      "start": {
+        "col": 7,
+        "line": 3
+      }
+    }
+  ],
+  "input_files": {
+    "proj/vars.py": "oldName = 5\nx = oldName\nprint(oldName)"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "newName"
+      },
+      "id": "replace_var",
+      "kind": "exact",
+      "pattern": "oldName"
+    }
+  ]
+}

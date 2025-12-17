@@ -1,0 +1,9 @@
+sources:
+  - name: web
+    inputs: ["web.csv"]
+    format: auto
+    schema: WebSale
+  - name: pos
+    inputs: ["pos.csv"]
+    format: auto
+    schema: BaseSale

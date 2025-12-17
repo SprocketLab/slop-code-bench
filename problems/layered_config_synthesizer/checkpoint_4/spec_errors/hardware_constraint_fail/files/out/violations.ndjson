@@ -1,0 +1,1 @@
+{"code":"HARDWARE_CONSTRAINT","message":"world_size must be multiple of 4","path":"/resources/world_size","run_id":"bad_world"}

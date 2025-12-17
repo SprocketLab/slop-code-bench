@@ -1,0 +1,4 @@
+[server]
+timeout = 30
+workers = 8
+mode = "development"

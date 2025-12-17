@@ -1,0 +1,3 @@
+metadata:
+  extends: base_only.yaml
+app: metadata-app

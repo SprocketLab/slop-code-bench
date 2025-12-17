@@ -1,0 +1,6 @@
+timestamp,location,price,quantity
+2025-09-14T08:00:00Z,NYC,10.0,2
+2025-09-14T08:05:00Z,SF,null,3
+2025-09-14T08:10:00Z,LA,20.0,null
+2025-09-14T08:15:00Z,BOS,null,null
+2025-09-14T08:20:00Z,NYC,30.0,5

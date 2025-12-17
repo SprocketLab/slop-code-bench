@@ -1,0 +1,1 @@
+--dsl pipeline.mtl --input sales.csv --out out.json

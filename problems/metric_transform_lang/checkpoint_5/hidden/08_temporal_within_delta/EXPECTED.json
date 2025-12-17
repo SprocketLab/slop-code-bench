@@ -1,0 +1,10 @@
+[
+  {
+    "window_start": "2024-02-01T10:00:00Z",
+    "window_end": "2024-02-01T10:30:00Z",
+    "location": "NYC",
+    "item": "banana",
+    "web_rev": 2.6,
+    "store_units": 12.0
+  }
+]

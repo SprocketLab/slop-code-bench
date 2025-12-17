@@ -1,0 +1,3 @@
+CONFLICT /training/checkpoint base.yaml -> defaults.yaml
+CONFLICT /training/checkpoint defaults.yaml -> run.yaml
+CONFLICT /training/logging base.yaml -> run.yaml

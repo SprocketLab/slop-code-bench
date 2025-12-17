@@ -1,0 +1,15 @@
+{
+    "case": {
+        "arguments": [
+            "Turnur",
+            "Alsavoinon",
+            "--config",
+            "config.yaml",
+            "--ship",
+            "Charon"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

@@ -1,0 +1,2 @@
+{"event":"file_relocated","from":"content_refs/service_a.yaml","to":"content_refs/audit.qa.yaml"}
+{"event":"file_relocated","from":"content_refs/service_b.yaml","to":"content_refs/logging.prod.yaml"}

@@ -1,0 +1,77 @@
+{
+  "case": {
+    "body": {
+      "actor": "carol",
+      "decision": "approve"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "review_carol_approve_v2",
+    "method": "POST",
+    "path": "/v1/proposals/2:review"
+  },
+  "expected": {
+    "output": {
+      "author": "alice",
+      "base_version": 1,
+      "description": "Raise pool to 8",
+      "diffs": {
+        "human": [
+          "REPLACE /db/pool: 4 -> 8"
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 8
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 8
+          }
+        ]
+      },
+      "draft_version": 2,
+      "labels": [],
+      "name": "billing",
+      "proposal_id": 2,
+      "quorum": {
+        "allow_author_approval": false,
+        "allowed_reviewers": [
+          "alice",
+          "bob",
+          "carol"
+        ],
+        "required_approvals": 2
+      },
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "status": "approved",
+      "tally": {
+        "approvals": 2,
+        "by_actor": [
+          {
+            "actor": "bob",
+            "decision": "approve",
+            "message": null
+          },
+          {
+            "actor": "carol",
+            "decision": "approve",
+            "message": null
+          }
+        ],
+        "rejections": 0
+      },
+      "title": "Raise pool"
+    },
+    "status_code": 200
+  }
+}

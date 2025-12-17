@@ -1,0 +1,5 @@
+experiment_name: env-prof
+training:
+  optimizer: adam
+resources:
+  profile: ${PRIMARY_PROFILE}

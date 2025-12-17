@@ -1,0 +1,4 @@
+owner: ${TEAM}
+labels:
+  - ${RUN}
+  - stable

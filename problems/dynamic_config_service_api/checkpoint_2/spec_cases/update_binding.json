@@ -1,0 +1,35 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "schema_ref": {
+        "name": "cfg",
+        "version": 2
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "update_binding",
+    "method": "POST",
+    "path": "/v1/configs/billing:bind"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "schema_ref": {
+        "name": "cfg",
+        "version": 2
+      },
+      "active": true
+    }
+  }
+}

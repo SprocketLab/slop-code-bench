@@ -1,0 +1,3 @@
+{"event":"file_updated","file":"database.json","rules_applied":["rename_deep_connection"]}
+{"event":"file_updated","file":"features.yaml","rules_applied":["rename_deeply_nested"]}
+{"event":"file_updated","file":"services.toml","rules_applied":["rename_nested_timeout"]}

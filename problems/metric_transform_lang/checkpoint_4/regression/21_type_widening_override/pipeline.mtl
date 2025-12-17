@@ -1,0 +1,15 @@
+schema BaseSale {
+  timestamp: timestamp
+  item: string
+  quantity: int
+  price: float
+}
+
+schema WidenedSale extends BaseSale {
+  # Legal widening: int -> float
+  quantity: float
+}
+
+pipeline QuantityCalc using WidenedSale {
+  aggregate sum(quantity) as total_qty, average(quantity) as avg_qty
+}

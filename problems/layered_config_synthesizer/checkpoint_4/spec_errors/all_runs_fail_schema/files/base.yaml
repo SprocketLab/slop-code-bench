@@ -1,0 +1,5 @@
+experiment_name: all-fail
+training:
+  optimizer: adam
+resources:
+  profile: train_l4

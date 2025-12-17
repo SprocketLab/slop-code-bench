@@ -1,0 +1,2 @@
+{"event":"file_updated","file":"infra/config.toml","rules_applied":["increase_timeout"]}
+{"event":"file_updated","file":"infra/settings.ini","rules_applied":["increase_timeout"]}

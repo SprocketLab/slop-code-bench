@@ -1,0 +1,17 @@
+arguments: --now 2025-09-10T03:30:00Z --schedule schedule.yaml --duration 24 --mount {{static:files}}
+input_files:
+- content:
+    jobs:
+    - destination: ignored://sink
+      exclude:
+      - '**/*.bin'
+      id: weekly-backup
+      source: mount://
+      when:
+        at: '03:30'
+        kind: weekly
+        days: ['Wed']
+    timezone: UTC
+    version: 1
+  file_type: yaml
+  path: schedule.yaml

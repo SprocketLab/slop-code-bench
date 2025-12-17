@@ -1,0 +1,1 @@
+--output out --key id --partition-by city INPUT1.csv

@@ -1,0 +1,15 @@
+{
+    "case": {
+        "arguments": [
+            "Arant",
+            "\"Droselory IX - Moon 4 - Material Acquisition Mineral Reserve\"",
+            "--config",
+            "config.yaml",
+            "--ship",
+            "Charon"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

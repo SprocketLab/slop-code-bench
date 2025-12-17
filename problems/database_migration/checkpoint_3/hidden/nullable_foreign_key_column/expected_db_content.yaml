@@ -1,0 +1,22 @@
+tables:
+  comments:
+    columns:
+    - id
+    - content
+    - parent_comment_id
+    rows:
+    - id: 1
+      content: Top level comment 1
+      parent_comment_id: null
+    - id: 2
+      content: Reply to comment 1
+      parent_comment_id: 1
+    - id: 3
+      content: Another top level
+      parent_comment_id: null
+    - id: 4
+      content: Reply to comment 1 again
+      parent_comment_id: 1
+    - id: 5
+      content: Reply to comment 3
+      parent_comment_id: 3

@@ -1,0 +1,30 @@
+case:
+  body:
+    up_to_step: 1
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: fork_not_found
+  method: POST
+  path: /trajectories/00000000-0000-0000-0000-000000000000/fork
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            type: string
+            const: NOT_FOUND
+          message:
+            type: string
+          field_path:
+            const: null
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 404

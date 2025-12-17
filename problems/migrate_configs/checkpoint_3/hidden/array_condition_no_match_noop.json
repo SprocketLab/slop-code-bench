@@ -1,0 +1,12 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "no_match": {
+      "type": "pattern_replace",
+      "key_pattern": "features[?name=api].host",
+      "value": "unused"
+    }
+  },
+  "expected_files": {}
+}

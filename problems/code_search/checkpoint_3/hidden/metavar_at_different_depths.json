@@ -1,0 +1,186 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "captures": {
+        "$METHOD": {
+          "ranges": [
+            {
+              "end": {
+                "col": 13,
+                "line": 1
+              },
+              "start": {
+                "col": 6,
+                "line": 1
+              }
+            }
+          ],
+          "text": "getName"
+        },
+        "$OBJ": {
+          "ranges": [
+            {
+              "end": {
+                "col": 5,
+                "line": 1
+              },
+              "start": {
+                "col": 1,
+                "line": 1
+              }
+            }
+          ],
+          "text": "user"
+        }
+      },
+      "end": {
+        "col": 15,
+        "line": 1
+      },
+      "file": "methods.js",
+      "language": "javascript",
+      "match": "user.getName()",
+      "rule_id": "method_call",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "captures": {
+        "$ARG": {
+          "ranges": [
+            {
+              "end": {
+                "col": 12,
+                "line": 2
+              },
+              "start": {
+                "col": 9,
+                "line": 2
+              }
+            }
+          ],
+          "text": "123"
+        },
+        "$METHOD": {
+          "ranges": [
+            {
+              "end": {
+                "col": 8,
+                "line": 2
+              },
+              "start": {
+                "col": 5,
+                "line": 2
+              }
+            }
+          ],
+          "text": "foo"
+        },
+        "$OBJ": {
+          "ranges": [
+            {
+              "end": {
+                "col": 4,
+                "line": 2
+              },
+              "start": {
+                "col": 1,
+                "line": 2
+              }
+            }
+          ],
+          "text": "obj"
+        }
+      },
+      "end": {
+        "col": 13,
+        "line": 2
+      },
+      "file": "methods.js",
+      "language": "javascript",
+      "match": "obj.foo(123)",
+      "rule_id": "method_call",
+      "start": {
+        "col": 1,
+        "line": 2
+      }
+    },
+    {
+      "captures": {
+        "$ARG": {
+          "ranges": [
+            {
+              "end": {
+                "col": 19,
+                "line": 3
+              },
+              "start": {
+                "col": 13,
+                "line": 3
+              }
+            }
+          ],
+          "text": "'test'"
+        },
+        "$METHOD": {
+          "ranges": [
+            {
+              "end": {
+                "col": 12,
+                "line": 3
+              },
+              "start": {
+                "col": 9,
+                "line": 3
+              }
+            }
+          ],
+          "text": "log"
+        },
+        "$OBJ": {
+          "ranges": [
+            {
+              "end": {
+                "col": 8,
+                "line": 3
+              },
+              "start": {
+                "col": 1,
+                "line": 3
+              }
+            }
+          ],
+          "text": "console"
+        }
+      },
+      "end": {
+        "col": 20,
+        "line": 3
+      },
+      "file": "methods.js",
+      "language": "javascript",
+      "match": "console.log('test')",
+      "rule_id": "method_call",
+      "start": {
+        "col": 1,
+        "line": 3
+      }
+    }
+  ],
+  "input_files": {
+    "proj/methods.js": "user.getName();\nobj.foo(123);\nconsole.log('test');"
+  },
+  "rules.json": [
+    {
+      "id": "method_call",
+      "kind": "pattern",
+      "languages": [
+        "javascript"
+      ],
+      "pattern": "$OBJ.$METHOD($ARG?)"
+    }
+  ]
+}

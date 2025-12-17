@@ -1,0 +1,4 @@
+filter(price >= 1.0)
+apply(len(item), name_len)
+aggregate count(*) as n,
+          sum(quantity) as total_qty

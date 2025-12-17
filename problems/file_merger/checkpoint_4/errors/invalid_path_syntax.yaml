@@ -1,0 +1,23 @@
+case:
+  arguments: --output out.csv --key items.[x].qty --schema schema.json input.jsonl
+  input_files:
+  - content:
+    - items:
+      - qty: 1
+    file_type: jsonl
+    path: input.jsonl
+  - content:
+      columns:
+      - name: items
+        type:
+          array:
+            element:
+              struct:
+                fields:
+                - name: qty
+                  type: int
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 2
+  stderr: 'ERR 2 invalid key path syntax: items.[x].qty'

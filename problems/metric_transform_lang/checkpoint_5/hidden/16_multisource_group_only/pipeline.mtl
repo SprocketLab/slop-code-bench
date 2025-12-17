@@ -1,0 +1,35 @@
+mtl_version 1.5
+
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+}
+
+schema WebSale extends BaseSale {
+  unit: string
+  category: string
+}
+
+pipeline GroupJoin using WebSale {
+  sources {
+    web as W,
+    pos as P
+  }
+
+  join W with P
+    on (W.item == P.item & W.location == P.location)
+    type inner
+    project {
+      W.timestamp as timestamp,
+      W.location  as location,
+      W.price     as web_price,
+      P.quantity  as store_qty
+    }
+
+  group_by(['location'])
+  aggregate sum(web_price) as web_rev,
+            sum(store_qty) as store_units
+}

@@ -1,0 +1,17 @@
+case:
+  arguments: --output - --key id data.csv
+  input_files:
+  - content:
+    - id: '2'
+      name: Bob
+    - id: '1'
+      name: Alice
+    file_type: csv
+    path: data.csv
+expected:
+  stdout:
+    - id: 1
+      name: Alice
+    - id: 2
+      name: Bob
+  status_code: 0

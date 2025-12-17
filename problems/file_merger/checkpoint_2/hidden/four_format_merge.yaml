@@ -1,0 +1,43 @@
+case:
+  arguments: --output output.csv --key id a.csv b.tsv c.jsonl d.parquet
+  input_files:
+  - content:
+    - id: '1'
+      name: Alice
+      score: '90'
+    file_type: csv
+    path: a.csv
+  - content:
+    - id: '2'
+      name: Bob
+      score: '85'
+    file_type: tsv
+    path: b.tsv
+  - content:
+    - id: 3
+      name: Charlie
+      score: 80
+    file_type: jsonl
+    path: c.jsonl
+  - content:
+    - id: 4
+      name: Diana
+      score: 95
+    file_type: parquet
+    path: d.parquet
+expected:
+  files:
+    output.csv:
+    - id: 1
+      name: Alice
+      score: 90
+    - id: 2
+      name: Bob
+      score: 85
+    - id: 3
+      name: Charlie
+      score: 80
+    - id: 4
+      name: Diana
+      score: 95
+  status_code: 0

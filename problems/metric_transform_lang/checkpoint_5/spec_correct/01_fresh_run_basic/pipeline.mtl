@@ -1,0 +1,38 @@
+mtl_version 1.5
+
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+}
+
+schema WebSale extends BaseSale {
+  unit: string
+  category: string
+}
+
+pipeline KPIs using WebSale {
+  sources {
+    web as W,
+    pos as P
+  }
+
+  join W with P
+    on (W.item == P.item & W.location == P.location)
+    type inner
+    project {
+      W.timestamp as timestamp,
+      W.location  as location,
+      W.item      as item,
+      P.quantity  as pos_qty,
+      W.price     as web_price
+    }
+
+  window(1h)
+  group_by(['location','item'])
+  aggregate sum(web_price) as web_rev,
+            sum(pos_qty)   as qty
+}
+

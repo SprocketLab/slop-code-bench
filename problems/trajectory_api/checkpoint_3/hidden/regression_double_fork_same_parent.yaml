@@ -1,0 +1,41 @@
+case:
+  body:
+    up_to_step: 1
+    status: in_progress
+    branch: second-fork-same-parent
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: regression_double_fork_same_parent
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_regression}}/fork
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      rev:
+        const: 1
+      lineage:
+        properties:
+          parent_id:
+            const: "{{store.hidden_create_for_regression}}"
+          parent_rev:
+            const: 1
+          branch:
+            const: second-fork-same-parent
+        required:
+          - parent_id
+          - parent_rev
+          - branch
+        type: object
+    required:
+      - id
+      - status
+      - rev
+      - lineage
+    type: object
+  status_code: 201

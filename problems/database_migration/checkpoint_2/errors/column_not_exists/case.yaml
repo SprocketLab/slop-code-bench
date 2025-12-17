@@ -1,0 +1,39 @@
+arguments: migrate migration.json app.db
+input_files:
+- content: |
+    {
+      "version": 1,
+      "description": "Create users table",
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "users",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true},
+            {"name": "email", "type": "TEXT", "not_null": true, "unique": true},
+            {"name": "name", "type": "TEXT", "not_null": true}
+          ]
+        }
+      ]
+    }
+  file_type: json
+  path: migration_v1.json
+- content: |
+    {
+      "version": 2,
+      "description": "Try to backfill non-existent column",
+      "operations": [
+        {
+          "type": "backfill_data",
+          "table": "users",
+          "column": "status",
+          "value": "'active'"
+        }
+      ]
+    }
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 1
+

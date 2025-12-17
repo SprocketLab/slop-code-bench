@@ -1,0 +1,10 @@
+[
+  {
+    "window_start": "2024-03-05T09:00:00Z",
+    "window_end": "2024-03-05T10:00:00Z",
+    "location": "NYC",
+    "item": "apple",
+    "total_units": 5.0,
+    "total_markup": 0.075
+  }
+]

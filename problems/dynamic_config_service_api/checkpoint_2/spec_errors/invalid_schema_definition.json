@@ -1,0 +1,56 @@
+{
+  "case": {
+    "body": {
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "db": {
+            "properties": {
+              "pool": {
+                "type": "not-a-real-type"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "invalid_schema_definition",
+    "method": "POST",
+    "path": "/v1/schemas/cfg"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "schema_invalid"
+            },
+            "details": {
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "status_code": 422
+  }
+}

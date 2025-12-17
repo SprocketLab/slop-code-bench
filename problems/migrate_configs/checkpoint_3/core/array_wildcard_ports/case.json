@@ -1,0 +1,13 @@
+{
+  "arguments": "rules.json configs",
+  "files": {
+    "configs/arrays/services.json": "{\n  \"services\": [\n    {\"name\": \"api\", \"port\": 3000},\n    {\"name\": \"worker\", \"port\": 3001}\n  ]\n}\n"
+  },
+  "rules": {
+    "standardize_ports": {
+      "type": "pattern_replace",
+      "key_pattern": "services[*].port",
+      "value": 8080
+    }
+  }
+}

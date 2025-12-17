@@ -1,0 +1,35 @@
+arguments: --now 2025-09-10T03:30:00Z --schedule schedule.yaml --duration 1 --mount {{static:files}}
+input_files:
+- content:
+    jobs:
+    - destination: ignored://sink
+      enabled: true
+      exclude:
+      - '**/*'
+      id: charlie-enabled
+      source: mount://
+      when:
+        at: '03:30'
+        kind: daily
+    - destination: ignored://sink
+      enabled: false
+      exclude:
+      - '**/*'
+      id: alpha-disabled
+      source: mount://
+      when:
+        at: '03:30'
+        kind: daily
+    - destination: ignored://sink
+      enabled: true
+      exclude:
+      - '**/*'
+      id: bravo-enabled
+      source: mount://
+      when:
+        at: '03:30'
+        kind: daily
+    timezone: UTC
+    version: 1
+  file_type: yaml
+  path: schedule.yaml

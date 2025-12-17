@@ -1,0 +1,58 @@
+{
+  "case": {
+    "body": {
+      "include_graph": true,
+      "name": "billing",
+      "scope": {
+        "env": "prod",
+        "tenant": "acme"
+      },
+      "version": 2
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "evaluate_billing_v2_clean",
+    "method": "POST",
+    "path": "/v1/policies/evaluate"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "policy_stack": {
+          "type": "array"
+        },
+        "tally": {
+          "properties": {
+            "errors": {
+              "const": 0
+            },
+            "warnings": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "errors",
+            "warnings"
+          ],
+          "type": "object"
+        },
+        "violations": {
+          "items": {
+            "type": "object"
+          },
+          "maxItems": 0,
+          "type": "array"
+        }
+      },
+      "required": [
+        "policy_stack",
+        "violations",
+        "tally"
+      ],
+      "type": "object"
+    },
+    "status_code": 200
+  }
+}

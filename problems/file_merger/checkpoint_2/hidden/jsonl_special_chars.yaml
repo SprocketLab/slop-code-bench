@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id data.jsonl
+  input_files:
+  - content:
+    - id: 1
+      name: 'She said "hello"'
+      path: '/home/user/docs'
+    - id: 2
+      name: 'Value with, comma'
+      path: '/var/log/app.log'
+    - id: 3
+      name: 'Quotes "inside" text'
+      path: 'path/with,comma'
+    file_type: jsonl
+    path: data.jsonl
+expected:
+  files:
+    output.csv:
+    - id: 1
+      name: 'She said "hello"'
+      path: '/home/user/docs'
+    - id: 2
+      name: 'Value with, comma'
+      path: '/var/log/app.log'
+    - id: 3
+      name: 'Quotes "inside" text'
+      path: 'path/with,comma'
+  status_code: 0

@@ -1,0 +1,11 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "query": "WITH RECURSIVE team_sizes AS (\n    SELECT \n        id,\n        name,\n        manager_id,\n        1 as team_size\n    FROM employees\n    \n    UNION ALL\n    \n    SELECT \n        e.id,\n        e.name,\n        e.manager_id,\n        ts.team_size + 1\n    FROM employees e\n    JOIN team_sizes ts ON e.manager_id = ts.id\n)\nSELECT \n    e.name,\n    e.department,\n    e.salary,\n    MAX(ts.team_size) as total_team_size\nFROM employees e\nJOIN team_sizes ts ON e.id = ts.id\nGROUP BY e.id, e.name, e.department, e.salary\nORDER BY total_team_size DESC, e.name",
+    "expected": "| name    | department  | salary | total_team_size |\n| ------- | ----------- | ------ | --------------- |\n| Eve     | Engineering | 85000  | 4               |\n| David   | Engineering | 80000  | 3               |\n| Bob     | Engineering | 90000  | 2               |\n| Charlie | Engineering | 95000  | 2               |\n| Grace   | Sales       | 75000  | 2               |\n| Henry   | Sales       | 70000  | 2               |\n| Alice   | Engineering | 120000 | 1               |\n| Frank   | Sales       | 110000 | 1               |",
+    "input_data": "data.json"
+}

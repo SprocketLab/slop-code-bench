@@ -1,0 +1,10 @@
+{
+    "start": "Ami XI - Moon 1 - Emperor Family Bureau",
+    "end": "Kor-Azor Prime II - Kor-Azor Family Bureau",
+    "cases": [
+        {
+            "extra": 0,
+            "expected": "START: Ami XI - Moon 1 - Emperor Family Bureau\nUNDOCK\nGO: Ami (0.4) -> Amdonen (0.6) -> Kor-Azor Prime (0.9)\nDOCK: Kor-Azor Prime II - Kor-Azor Family Bureau\nSUMMARY:\n  End Cooldown: 00:00\n  End Fatigue: 00:00\n  Isotopes Used: 0K\n  Time Waiting: 00:00\n  Total LY: 0.00"
+        }
+    ]
+}

@@ -1,0 +1,7 @@
+sources:
+  - name: main
+    inputs:
+      - "input.csv"
+    format: auto
+    schema: WidenedSale
+    precedence: 10

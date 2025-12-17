@@ -1,0 +1,31 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "frontend",
+        "env": "dev"
+      },
+      "status": "merged"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "list_proposals_frontend_approved",
+    "method": "POST",
+    "path": "/v1/configs/frontend/proposals:list"
+  },
+  "expected": {
+    "output": {
+      "proposals": [
+        {
+          "proposal_id": 5,
+          "status": "merged",
+          "author": "dave",
+          "draft_version": 1,
+          "base_version": 0
+        }
+      ]
+    },
+    "status_code": 200
+  }
+}

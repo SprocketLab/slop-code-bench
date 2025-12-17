@@ -1,0 +1,46 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "rule_id": "rust_functions",
+      "file": "code.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 3,
+        "col": 2
+      },
+      "match": "fn main() {\n    println!(\"test\");\n}"
+    },
+    {
+      "rule_id": "rust_functions",
+      "file": "code.rs",
+      "language": "rust",
+      "start": {
+        "line": 5,
+        "col": 1
+      },
+      "end": {
+        "line": 7,
+        "col": 2
+      },
+      "match": "fn helper(x: i32) -> i32 {\n    x + 1\n}"
+    }
+  ],
+  "input_files": {
+    "proj/code.rs": "fn main() {\n    println!(\"test\");\n}\n\nfn helper(x: i32) -> i32 {\n    x + 1\n}"
+  },
+  "rules.json": [
+    {
+      "id": "rust_functions",
+      "kind": "selector",
+      "languages": [
+        "rust"
+      ],
+      "selector": "function_item"
+    }
+  ]
+}

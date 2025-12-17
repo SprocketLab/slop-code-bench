@@ -1,0 +1,16 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "bad_regex": {
+      "type": "conditional_replace",
+      "key": "details.note",
+      "value": "noop",
+      "condition": {
+        "current_value_matches": "["
+      }
+    }
+  },
+  "status_code": 1,
+  "expected_stderr": "^Error: invalid regex for rule \\\"bad_regex\\\":.*"
+}

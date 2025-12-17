@@ -1,0 +1,297 @@
+{
+    "missing_definition": {
+        "stdin": {
+            "defs": {},
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "call",
+                        "name": "Missing",
+                        "params": {}
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "UNKNOWN_DEF",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].name"
+        }
+    },
+    "indirect_recursion_error": {
+        "stdin": {
+            "defs": {
+                "A": {
+                    "steps": [
+                        {
+                            "op": "call",
+                            "name": "B",
+                            "params": {}
+                        }
+                    ]
+                },
+                "B": {
+                    "steps": [
+                        {
+                            "op": "call",
+                            "name": "A",
+                            "params": {}
+                        }
+                    ]
+                }
+            },
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "call",
+                        "name": "A",
+                        "params": {}
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "RECURSION_FORBIDDEN",
+            "message": "ETL_ERROR:.*",
+            "path": "defs[B].steps[0].name"
+        }
+    },
+    "call_missing_definition_error": {
+        "stdin": {
+            "defs": {},
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "call",
+                        "name": "Missing",
+                        "params": {}
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "UNKNOWN_DEF",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].name"
+        }
+    },
+    "call_name_regex_error": {
+        "stdin": {
+            "defs": {
+                "A": {
+                    "steps": []
+                }
+            },
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "call",
+                        "name": "123Bad",
+                        "params": {}
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "SCHEMA_VALIDATION_FAILED",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].name"
+        }
+    },
+    "call_params_not_object_error": {
+        "stdin": {
+            "defs": {
+                "A": {
+                    "steps": []
+                }
+            },
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "call",
+                        "name": "A",
+                        "params": 42
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "SCHEMA_VALIDATION_FAILED",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].params"
+        }
+    },
+    "call_param_value_object_error": {
+        "stdin": {
+            "defs": {
+                "A": {
+                    "steps": [
+                        {
+                            "op": "map",
+                            "as": "x",
+                            "expr": "params.config"
+                        }
+                    ]
+                }
+            },
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "call",
+                        "name": "A",
+                        "params": {
+                            "config": {
+                                "x": 1
+                            }
+                        }
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "SCHEMA_VALIDATION_FAILED",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].params.config"
+        }
+    },
+    "direct_recursion": {
+        "stdin": {
+            "defs": {
+                "Loop": {
+                    "steps": [
+                        {
+                            "op": "call",
+                            "name": "Loop",
+                            "params": {}
+                        }
+                    ]
+                }
+            },
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "call",
+                        "name": "Loop",
+                        "params": {}
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "RECURSION_FORBIDDEN",
+            "message": "ETL_ERROR:.*",
+            "path": "defs[Loop].steps[0].name"
+        }
+    },
+    "invalid_name_and_params": {
+        "stdin": {
+            "defs": {
+                "A": {
+                    "steps": []
+                }
+            },
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "call",
+                        "name": "123Bad",
+                        "params": {}
+                    },
+                    {
+                        "op": "call",
+                        "name": "A",
+                        "params": 42
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "SCHEMA_VALIDATION_FAILED",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].name"
+        }
+    },
+    "call_direct_recursion_error": {
+        "stdin": {
+            "defs": {
+                "Loop": {
+                    "steps": [
+                        {
+                            "op": "call",
+                            "name": "Loop",
+                            "params": {}
+                        }
+                    ]
+                }
+            },
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "call",
+                        "name": "Loop",
+                        "params": {}
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "RECURSION_FORBIDDEN",
+            "message": "ETL_ERROR:.*",
+            "path": "defs[Loop].steps[0].name"
+        }
+    }
+}

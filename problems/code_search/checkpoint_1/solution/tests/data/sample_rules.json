@@ -1,0 +1,10 @@
+[
+  {"id": "todo", "kind": "exact", "pattern": "TODO"},
+  {
+    "id": "urls",
+    "kind": "regex",
+    "pattern": "https?://[\\w./-]+",
+    "regex_flags": ["i"],
+    "languages": ["python"]
+  }
+]

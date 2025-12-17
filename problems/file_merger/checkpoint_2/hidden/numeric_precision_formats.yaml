@@ -1,0 +1,52 @@
+case:
+  arguments: --output output.csv --key id a.csv b.jsonl c.parquet
+  input_files:
+  - content:
+    - id: '1'
+      big_int: '999999999999'
+      small_float: '0.000001'
+    - id: '2'
+      big_int: '-999999999999'
+      small_float: '-0.000001'
+    file_type: csv
+    path: a.csv
+  - content:
+    - id: 3
+      big_int: 888888888888
+      small_float: 0.0000001
+    - id: 4
+      big_int: -888888888888
+      small_float: -0.0000001
+    file_type: jsonl
+    path: b.jsonl
+  - content:
+    - id: 5
+      big_int: 777777777777
+      small_float: 0.00000001
+    - id: 6
+      big_int: -777777777777
+      small_float: -0.00000001
+    file_type: parquet
+    path: c.parquet
+expected:
+  files:
+    output.csv:
+    - big_int: 999999999999
+      id: 1
+      small_float: 0.000001
+    - big_int: -999999999999
+      id: 2
+      small_float: -0.000001
+    - big_int: 888888888888
+      id: 3
+      small_float: 0.0000001
+    - big_int: -888888888888
+      id: 4
+      small_float: -0.0000001
+    - big_int: 777777777777
+      id: 5
+      small_float: 0.00000001
+    - big_int: -777777777777
+      id: 6
+      small_float: -0.00000001
+  status_code: 0

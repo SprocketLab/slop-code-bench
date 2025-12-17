@@ -1,0 +1,10 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "normalize_service_hosts": {
+      "type": "pattern_replace",
+      "key_pattern": "services.$name.host",
+      "value": "${name}.internal.example.com"
+    }
+  }
+}

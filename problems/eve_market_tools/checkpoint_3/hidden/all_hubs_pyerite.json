@@ -1,0 +1,125 @@
+{
+  "order": 3,
+  "input": {
+    "body": {
+      "materials": {
+        "Pyerite": 1000000
+      },
+      "hubs": [
+        "jita",
+        "amarr",
+        "dodixie",
+        "rens",
+        "hek"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Compressed Brimful Zeolites": {
+          "quantity": 10200,
+          "cost": 18870000.0,
+          "volume": 1020.0,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 10200,
+              "total": 18870000.0,
+              "avg_price": 1850.0
+            }
+          }
+        },
+        "Compressed Condensed Scordite": {
+          "quantity": 5300,
+          "cost": 107356.45,
+          "volume": 7.95,
+          "category": "ore",
+          "purchases": {
+            "Rens VI - Moon 8 - Brutor Tribe Treasury": {
+              "quantity": 5300,
+              "total": 107356.45,
+              "avg_price": 20.26
+            }
+          }
+        },
+        "Batch Compressed Condensed Scordite": {
+          "quantity": 1548,
+          "cost": 3111.48,
+          "volume": 294.12,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 1548,
+              "total": 3111.48,
+              "avg_price": 2.01
+            }
+          }
+        },
+        "Compressed Mordunium": {
+          "quantity": 100,
+          "cost": 1900.0,
+          "volume": 0.1,
+          "category": "ore",
+          "purchases": {
+            "Dodixie IX - Moon 20 - Federation Navy Assembly Plant": {
+              "quantity": 100,
+              "total": 1900.0,
+              "avg_price": 19.0
+            }
+          }
+        }
+      },
+      "total": 19445127.43,
+      "shipping": 462759.5,
+      "collateral_tax": 0.0,
+      "items": 18982367.93,
+      "raw_ship": 3500000.0,
+      "material_value": 23704572.83,
+      "excess_value": 6106485.72,
+      "yields": {
+        "Atmospheric Gases": {
+          "target": null,
+          "actual": 6933,
+          "buy": 2613502.19,
+          "sell": 2756860.24
+        },
+        "Tritanium": {
+          "target": null,
+          "actual": 229255,
+          "buy": 892003.0,
+          "sell": 757677.28
+        },
+        "Pyerite": {
+          "target": 1000000,
+          "actual": 1000001,
+          "buy": 26579391.75,
+          "sell": 23704596.54
+        },
+        "Mexallon": {
+          "target": null,
+          "actual": 42523,
+          "buy": 2265209.78,
+          "sell": 2591924.5
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "legacy-app",
+  "new_key": "value",
+  "timeout": 30,
+  "environment": "production"
+}

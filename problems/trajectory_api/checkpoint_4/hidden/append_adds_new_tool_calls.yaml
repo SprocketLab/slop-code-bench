@@ -1,0 +1,28 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: append_adds_new_tool_calls
+  method: GET
+  path: /trajectories/{{store.hidden_create_in_progress_for_append}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.hidden_create_in_progress_for_append}}"
+      derived:
+        properties:
+          tool_calls:
+            type: array
+            minItems: 2
+          tool_call_count:
+            type: integer
+            minimum: 2
+        required:
+          - tool_calls
+          - tool_call_count
+        type: object
+    required:
+      - id
+      - derived
+    type: object
+  status_code: 200

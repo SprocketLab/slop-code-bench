@@ -1,0 +1,23 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+  rules:
+    expected_ca_sj.csv:
+      dest: ["expected", "files", "out/state=CA/city=San%20Jose/part-00000.csv"]
+      loader: text
+    expected_ny_null.csv:
+      dest: ["expected", "files", "out/state=NY/city=_null/part-00000.csv"]
+      loader: text
+verifiers:
+  success:
+    type: status_code
+    value: 0
+  ca_sj:
+    type: exact_match
+    result_attr: [files, "out/state=CA/city=San%20Jose/part-00000.csv"]
+    expected_attr: [files, "out/state=CA/city=San%20Jose/part-00000.csv"]
+  ny_null:
+    type: exact_match
+    result_attr: [files, "out/state=NY/city=_null/part-00000.csv"]
+    expected_attr: [files, "out/state=NY/city=_null/part-00000.csv"]

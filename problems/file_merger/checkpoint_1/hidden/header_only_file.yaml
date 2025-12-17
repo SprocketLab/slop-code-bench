@@ -1,0 +1,23 @@
+case:
+  arguments: --output output.csv --key id data.csv empty.csv
+  input_files:
+  - content:
+    - id: '1'
+      name: Alice
+    - id: '2'
+      name: Bob
+    file_type: csv
+    path: data.csv
+  - content: "id,name,extra\n"
+    file_type: text
+    path: empty.csv
+expected:
+  files:
+    output.csv:
+    - extra: null
+      id: 1
+      name: Alice
+    - extra: null
+      id: 2
+      name: Bob
+  status_code: 0

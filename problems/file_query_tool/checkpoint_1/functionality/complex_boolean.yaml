@@ -1,0 +1,17 @@
+id: complex_boolean
+files:
+  query.sql: "SELECT first_name, country, car FROM users WHERE (country = 'AR' AND\
+    \ (car = 'Ford' OR car = 'Toyota')) \n   OR (country = 'CH' AND car = 'Ferarri')\n"
+expected: '| first_name   | country   | car     |
+
+  |--------------|-----------|---------|
+
+  | Cristabel    | CH        | Ferarri |
+
+  | Gaylene      | AR        | Toyota  |
+
+  | Mirelle      | AR        | Toyota  |
+
+  | Osmond       | AR        | Ford    |
+
+  | Wilden       | AR        | Ford    |'

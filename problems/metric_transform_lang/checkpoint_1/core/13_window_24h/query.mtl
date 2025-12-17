@@ -1,0 +1,3 @@
+window(24h)
+aggregate count(*) as n,
+          sum(quantity) as total_qty

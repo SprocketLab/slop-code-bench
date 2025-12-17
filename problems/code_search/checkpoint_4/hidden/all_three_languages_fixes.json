@@ -1,0 +1,114 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "a.py",
+      "language": "python",
+      "match": "x",
+      "rule_id": "add_prefix",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "a.py",
+      "language": "python",
+      "replacement": "new_x",
+      "rule_id": "add_prefix",
+      "skipped_reason": null,
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "b.js",
+      "language": "javascript",
+      "match": "y",
+      "rule_id": "add_prefix",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "b.js",
+      "language": "javascript",
+      "replacement": "new_y",
+      "rule_id": "add_prefix",
+      "skipped_reason": null,
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "c.cpp",
+      "language": "cpp",
+      "match": "z",
+      "rule_id": "add_prefix",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "c.cpp",
+      "language": "cpp",
+      "replacement": "new_z",
+      "rule_id": "add_prefix",
+      "skipped_reason": null,
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/a.py": "x",
+    "proj/b.js": "y",
+    "proj/c.cpp": "z"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "new_$MATCH"
+      },
+      "id": "add_prefix",
+      "kind": "selector",
+      "selector": "identifier"
+    }
+  ]
+}

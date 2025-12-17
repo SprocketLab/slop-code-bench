@@ -1,0 +1,13 @@
+case:
+  arguments: --output out.csv --key id --compression gzip data.csv
+  input_files:
+  - content:
+    - id: '1'
+      name: Alice
+    - id: '2'
+      name: Bob
+    file_type: csv
+    path: data.csv
+expected:
+  status_code: 5
+  stderr: ^ERR 5.*

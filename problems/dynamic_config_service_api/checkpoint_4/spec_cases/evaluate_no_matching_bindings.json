@@ -1,0 +1,53 @@
+{
+  "case": {
+    "body": {
+      "include_graph": true,
+      "name": "frontend",
+      "scope": {
+        "env": "dev",
+        "tenant": "test-corp"
+      },
+      "version": 1
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "evaluate_no_matching_bindings",
+    "method": "POST",
+    "path": "/v1/policies/evaluate"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "policy_stack": {
+          "const": []
+        },
+        "violations": {
+          "const": []
+        },
+        "tally": {
+          "properties": {
+            "errors": {
+              "const": 0
+            },
+            "warnings": {
+              "const": 0
+            }
+          },
+          "required": [
+            "errors",
+            "warnings"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "policy_stack",
+        "violations",
+        "tally"
+      ],
+      "type": "object"
+    },
+    "status_code": 200
+  }
+}

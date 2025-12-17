@@ -1,0 +1,28 @@
+case:
+  body: {}
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: wrong-format
+  id: finalize_if_match_wrong_format
+  method: POST
+  path: /trajectories/{{store.hidden_create_in_progress}}/finalize
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: REV_CONFLICT
+          message:
+            const: rev mismatch; fetch latest trajectory and retry
+          field_path:
+            const: null
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 409

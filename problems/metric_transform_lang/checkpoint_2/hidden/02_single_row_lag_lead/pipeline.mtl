@@ -1,0 +1,12 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+}
+
+pipeline SingleRow using Sale {
+  window(1h)
+  aggregate sum(price) as total
+
+  calc prev = lag(total, 1) : float @stage(post_agg)
+  calc next = lead(total, 1) : float @stage(post_agg)
+}

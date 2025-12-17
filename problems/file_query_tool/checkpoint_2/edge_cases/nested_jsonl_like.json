@@ -1,0 +1,10 @@
+{
+  "expected": "| first   |   sessions |   total_minutes |\n|---------|------------|-----------------|\n| Ana     |          1 |              15 |\n| Erin    |          1 |               9 |",
+  "query": "SELECT u.first,\n       COUNT(*) AS sessions,\n       SUM(s.minutes) AS total_minutes\nFROM traffic.sessions AS s\nINNER JOIN users AS u ON s.user_id = u.user_id\nWHERE s.browser LIKE '%Chrome%'\nGROUP BY u.first\nORDER BY total_minutes DESC\n",
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ]
+}

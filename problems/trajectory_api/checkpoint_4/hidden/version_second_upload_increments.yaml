@@ -1,0 +1,25 @@
+case:
+  body:
+    grammar: "TOOL_CALL = '<tool ', TOOL_NAME, ' args=\"', TOOL_ARGS, '\"/>'; TOOL_NAME = letter , { letter | digit | '_' }; TOOL_ARGS = { ? any char except '\"' ? };"
+    activate: false
+    notes: "Third version for local-sim"
+  headers:
+    content-type: application/json; charset=utf-8
+  id: version_second_upload_increments
+  method: POST
+  path: /environments/local-sim/versions
+expected:
+  output:
+    properties:
+      environment:
+        const: local-sim
+      version:
+        const: 3
+      active:
+        const: false
+    required:
+      - environment
+      - version
+      - active
+    type: object
+  status_code: 201

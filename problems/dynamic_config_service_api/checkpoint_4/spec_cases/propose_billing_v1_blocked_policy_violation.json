@@ -1,0 +1,81 @@
+{
+  "case": {
+    "body": {
+      "author": "alice",
+      "base_version": 0,
+      "description": "Should be blocked by guardrails",
+      "scope": {
+        "app": "billing",
+        "env": "prod",
+        "tenant": "acme"
+      },
+      "title": "Propose billing v1 with TLS disabled"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "propose_billing_v1_blocked_policy_violation",
+    "method": "POST",
+    "path": "/v1/configs/billing/1:propose"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "policy_violation"
+            },
+            "details": {
+              "properties": {
+                "policy_stack": {
+                  "type": "array"
+                },
+                "tally": {
+                  "properties": {
+                    "errors": {
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "errors"
+                  ],
+                  "type": "object"
+                },
+                "violations": {
+                  "items": {
+                    "type": "object"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                }
+              },
+              "required": [
+                "policy_stack",
+                "violations",
+                "tally"
+              ],
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "status_code": 422
+  }
+}

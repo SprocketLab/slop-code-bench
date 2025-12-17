@@ -1,0 +1,39 @@
+case:
+  body:
+    steps:
+      - role: user
+        content: Question 1
+        input_tokens: null
+        output_tokens: null
+        cost: null
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"2"
+  id: sequential_appends_rev_increments
+  method: POST
+  path: /trajectories/{{store.create_in_progress_trajectory}}/steps
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.create_in_progress_trajectory}}"
+      status:
+        const: in_progress
+      rev:
+        const: 3
+      appended:
+        const: 1
+      steps:
+        const: 6
+      updated_at:
+        type: string
+        pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+    required:
+    - id
+    - status
+    - rev
+    - appended
+    - steps
+    - updated_at
+    type: object
+  status_code: 200

@@ -1,0 +1,11 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "bucketize_regions": {
+      "type": "relocate_files",
+      "scope": "file",
+      "source_pattern": "relocate_src/$city/*.yaml",
+      "destination": "archives/${city}/"
+    }
+  }
+}

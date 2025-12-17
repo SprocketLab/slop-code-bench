@@ -1,0 +1,10 @@
+[
+  {
+    "window_start": "2024-05-01T09:00:00Z",
+    "window_end": "2024-05-01T10:00:00Z",
+    "location": "LA",
+    "item": "grapes",
+    "web_units": 6.0,
+    "store_units": 16.0
+  }
+]

@@ -1,0 +1,27 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --type-alias-file aliases.json
+    a.jsonl
+  input_files:
+  - content:
+      aliases:
+        mediumint: smallint
+        smallint: int
+    file_type: json
+    path: aliases.json
+  - content:
+      columns:
+      - name: id
+        type: mediumint
+    file_type: json
+    path: schema.json
+  - content:
+    - id: 2
+    - id: 1
+    file_type: jsonl
+    path: a.jsonl
+expected:
+  files:
+    out.csv:
+    - id: 1
+    - id: 2
+  status_code: 0

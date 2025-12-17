@@ -1,0 +1,82 @@
+case:
+  arguments: --output out.csv --key user.age,event_time --schema schema.json --on-type-error
+    coerce-null inputs.jsonl more.csv
+  input_files:
+  - content: 'id,user,items,event_time
+
+      3,"{\"name\":\"Carol\",\"age\":25}","[{\"sku\":\"w\",\"qty\":3}]",2024-07-01T08:00:00Z
+
+      '
+    file_type: text
+    path: more.csv
+  - content:
+    - event_time: '2024-07-01T10:00:00+01:00'
+      id: 2
+      items:
+      - qty: 1
+        sku: x
+      user:
+        age: 30
+        name: Bob
+        prefs:
+          a: '1'
+          b: '2'
+    - event_time: '2024-07-01T09:00:00Z'
+      id: 1
+      items:
+      - qty: 2
+        sku: y
+      - qty: bad
+        sku: z
+      user:
+        age: x
+        name: Alice
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: name
+              type: string
+            - name: age
+              type: int
+            - name: prefs
+              type:
+                map:
+                  key: string
+                  value: string
+      - name: items
+        type:
+          array:
+            element:
+              struct:
+                fields:
+                - name: sku
+                  type: string
+                - name: qty
+                  type: int
+      - name: event_time
+        type: timestamp
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - event_time: '2024-07-01T09:00:00Z'
+      id: 1
+      items: '[{"sku":"y","qty":2},{"sku":"z","qty":null}]'
+      user: '{"name":"Alice","age":null,"prefs":null}'
+    - event_time: '2024-07-01T08:00:00Z'
+      id: 3
+      items: '[{"sku":"w","qty":3}]'
+      user: '{"name":"Carol","age":25,"prefs":null}'
+    - event_time: '2024-07-01T09:00:00Z'
+      id: 2
+      items: '[{"sku":"x","qty":1}]'
+      user: '{"name":"Bob","age":30,"prefs":{"a":"1","b":"2"}}'
+  status_code: 0

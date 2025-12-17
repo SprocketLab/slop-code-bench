@@ -1,0 +1,35 @@
+case:
+  arguments: --output out --key id --partition-by user.address --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 1
+      user:
+        name: Alice
+        address:
+          city: NYC
+          zip: '10001'
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: name
+              type: string
+            - name: address
+              type:
+                struct:
+                  fields:
+                  - name: city
+                    type: string
+                  - name: zip
+                    type: string
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 3
+  stderr: ^ERR 3.*does not resolve to a primitive.*

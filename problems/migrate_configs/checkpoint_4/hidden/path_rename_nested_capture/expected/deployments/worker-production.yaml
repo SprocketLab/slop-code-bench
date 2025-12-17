@@ -1,0 +1,2 @@
+env: production
+image: worker:production

@@ -1,0 +1,13 @@
+{
+    "case": {
+        "arguments": [
+            "recipe",
+            "'Barrage L Blueprint'",
+            "--sde",
+            "{{static:sde_dir}}"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

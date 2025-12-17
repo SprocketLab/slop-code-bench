@@ -1,0 +1,32 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json --csv-null-literal N/A data.csv
+  input_files:
+  - content:
+    - id: '1'
+      name: Alice
+      score: '100'
+    - id: '2'
+      name: Bob
+      score: ''
+    file_type: csv
+    path: data.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: name
+        type: string
+      - name: score
+        type: int
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - id: 1
+      name: Alice
+      score: 100
+    - id: 2
+      name: Bob
+      score: null
+  status_code: 0

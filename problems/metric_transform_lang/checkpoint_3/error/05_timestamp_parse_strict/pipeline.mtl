@@ -1,0 +1,7 @@
+schema Base {
+  timestamp: timestamp
+}
+
+pipeline P using Base {
+  aggregate count(*) as n
+}

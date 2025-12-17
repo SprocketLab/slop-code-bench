@@ -1,0 +1,21 @@
+{
+  "case": {
+    "body": {
+      "raw_schema": "$schema: https://json-schema.org/draft/2020-12/schema\ntype: object\nproperties:\n  api:\n    type: object\n    properties:\n      version:\n        type: string\n      timeout:\n        type: integer\n    required:\n      - version\n",
+      "raw_format": "yaml"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_schema_yaml",
+    "method": "POST",
+    "path": "/v1/schemas/api_config"
+  },
+  "expected": {
+    "status_code": 201,
+    "output": {
+      "name": "api_config",
+      "version": 1
+    }
+  }
+}

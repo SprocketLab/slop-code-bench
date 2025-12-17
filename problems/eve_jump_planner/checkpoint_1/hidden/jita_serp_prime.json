@@ -1,0 +1,9 @@
+{
+    "end": "Serpentis Prime II - Archangels Testing Facilities",
+    "start": "Jita IV - Moon 4 - Caldari Navy Assembly Plant",
+    "cases": [
+        {
+            "expected": "START: Jita IV - Moon 4 - Caldari Navy Assembly Plant\nUNDOCK\nJUMP 9.48 LY: Yvangier (95K isotopes)\nDOCK: Yvangier V - TransStellar Shipping Storage\nUNDOCK\nJUMP 9.48 LY: A-ZLHX (95K isotopes)\nDOCK: A-ZLHX VII - Moon 2 - Intaki Syndicate Bureau\nUNDOCK\nJUMP 9.03 LY: Shirshocin (91K isotopes)\nDOCK: Shirshocin III - Moon 2 - Amarr Constructions Warehouse\nUNDOCK\nJUMP 9.80 LY: Karan (99K isotopes)\nDOCK: Karan VIII - Royal Amarr Institute School\nUNDOCK\nJUMP 7.29 LY: Serpentis Prime (73K isotopes)\nDOCK: Serpentis Prime II - Archangels Testing Facilities\nSUMMARY:\n  End Cooldown: 00:11\n  End Fatigue: 03:08\n  Isotopes Used: 451K\n  Time Waiting: 00:14\n  Total LY: 45.08"
+        }
+    ]
+}

@@ -1,0 +1,36 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "list_versions_after_second",
+    "method": "POST",
+    "path": "/v1/configs/billing:versions"
+  },
+  "expected": {
+    "output": {
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "versions": [
+        {
+          "active": false,
+          "version": 1
+        },
+        {
+          "active": true,
+          "version": 2
+        }
+      ]
+    },
+    "status_code": 200
+  }
+}

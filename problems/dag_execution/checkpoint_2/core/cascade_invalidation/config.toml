@@ -1,0 +1,5 @@
+# Test cascade invalidation of dependent caches
+# When upstream changes, downstream caches should invalidate
+
+entry = "orchestrate"
+clean_cwd=true

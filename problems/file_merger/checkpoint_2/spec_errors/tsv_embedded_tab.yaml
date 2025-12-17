@@ -1,0 +1,9 @@
+case:
+  arguments: --output out.csv --key id bad.tsv
+  input_files:
+  - content: "id\tname\n1\tbad\trow\n"
+    file_type: text
+    path: bad.tsv
+expected:
+  status_code: 5
+  stderr: ^ERR 5.*

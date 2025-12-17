@@ -1,0 +1,59 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: get_trajectory_with_tool_calls
+  method: GET
+  path: /trajectories/{{store.create_trajectory_with_tools}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.create_trajectory_with_tools}}"
+      record:
+        type: object
+      derived:
+        properties:
+          steps:
+            const: 4
+          final_output_tokens:
+            const: 35
+          final_cost:
+            const: 0.0045
+          tool_calls:
+            type: array
+            items:
+              properties:
+                step_index:
+                  const: 2
+                name:
+                  const: search_wiki
+                args_raw:
+                  const: q=Euler characteristic
+                span:
+                  properties:
+                    start:
+                      const: 0
+                    end:
+                      const: 49
+                  required:
+                  - start
+                  - end
+                  type: object
+              required:
+              - step_index
+              - name
+              - args_raw
+              - span
+              type: object
+          tool_call_count:
+            const: 1
+        type: object
+      environment_version:
+        const: 1
+    required:
+    - id
+    - record
+    - derived
+    - environment_version
+    type: object
+  status_code: 200

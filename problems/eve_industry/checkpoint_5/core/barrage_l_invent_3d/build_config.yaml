@@ -1,0 +1,7 @@
+split_days: 3 # <float < 30>
+
+component_bpo_defaults: 
+  me: 10
+  te: 20
+
+te_bonus: 20

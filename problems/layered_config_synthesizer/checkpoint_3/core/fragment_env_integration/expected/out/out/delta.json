@@ -1,0 +1,1 @@
+{"experiment_name":"delta","logging":{"destination":"syslog","format":"json"},"metadata":{"owner":"infra","tags":["prod","shared"]},"resources":{"accelerators":[{"count":2,"type":"h100"}],"profile":"shared","world_size":4},"training":{"batch_size":20,"description":"Stage prod","extra":"delta-prod","optimizer":"adam"}}

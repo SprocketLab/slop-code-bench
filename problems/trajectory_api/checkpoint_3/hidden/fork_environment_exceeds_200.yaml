@@ -1,0 +1,31 @@
+case:
+  body:
+    up_to_step: 1
+    status: in_progress
+    environment: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: fork_environment_exceeds_200
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_fork_basic}}/fork
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: VALIDATION_FAILED
+          message:
+            type: string
+          field_path:
+            const: environment
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 422

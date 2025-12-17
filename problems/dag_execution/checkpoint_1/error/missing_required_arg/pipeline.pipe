@@ -1,0 +1,19 @@
+task A {
+    params: {
+        x: int
+        y: int = 1
+    }
+    run: {
+        echo "A"
+    }
+}
+
+
+task main {
+    run: {
+        echo "Hello"
+    }
+    requires: {
+        A(y=2)
+    }
+}

@@ -1,0 +1,39 @@
+case:
+  body:
+    steps:
+      - role: assistant
+        content: "First assistant step"
+        input_tokens: 12
+        output_tokens: 120
+        cost: 0.015
+      - role: assistant
+        content: "Second assistant step with lower totals"
+        input_tokens: 15
+        output_tokens: 110
+        cost: 0.012
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"2"
+  id: append_multiple_assistants_internal_violation
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_multi_assistant}}/steps
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: VALIDATION_FAILED
+          message:
+            type: string
+          field_path:
+            const: steps[1].output_tokens
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 422

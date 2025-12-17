@@ -1,0 +1,19 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "expected_stdout": "",
+  "rules": {},
+  "status_code": 1,
+  "expected_stderr": "^Error: failed to parse parent config: .*parent_bad\\.yaml$",
+  "input_files": [
+    {
+      "path": "configs/inheritance/invalid/app.yaml",
+      "file_type": "yaml",
+      "content": "extends: parent_bad.yaml\\napp: bad-parent\\n"
+    },
+    {
+      "path": "configs/inheritance/invalid/parent_bad.yaml",
+      "file_type": "yaml",
+      "content": "timeout: [unterminated\\n"
+    }
+  ]
+}

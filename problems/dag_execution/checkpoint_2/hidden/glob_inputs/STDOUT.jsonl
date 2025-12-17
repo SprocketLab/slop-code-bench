@@ -1,0 +1,30 @@
+{"event": "TASK_STARTED", "job_id": 1, "task": "aggregate_environments", "parent": null}
+{"event": "TASK_STARTED", "job_id": 2, "task": "create_configs", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 2, "task": "create_configs", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 2, "task": "create_configs", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 3, "task": "process_configs", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 3, "task": "process_configs", "parent": 1, "cache_key": "bbe1d5852b5841b4d7c2bf11ca379c09315e084b711fad59ea876f1e3efa9e9b"}
+{"event": "CACHE_MISS", "job_id": 3, "task": "process_configs", "parent": 1, "cache_key": "bbe1d5852b5841b4d7c2bf11ca379c09315e084b711fad59ea876f1e3efa9e9b", "reason": "first_execution"}
+{"event": "TASK_RUNNING", "job_id": 3, "task": "process_configs", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 3, "task": "process_configs", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 4, "task": "process_configs", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 4, "task": "process_configs", "parent": 1, "cache_key": "bbe1d5852b5841b4d7c2bf11ca379c09315e084b711fad59ea876f1e3efa9e9b"}
+{"event": "CACHE_HIT", "job_id": 4, "task": "process_configs", "parent": 1, "cache_key": "bbe1d5852b5841b4d7c2bf11ca379c09315e084b711fad59ea876f1e3efa9e9b"}
+{"event": "TASK_COMPLETED", "job_id": 4, "task": "process_configs", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 5, "task": "non_cache_break", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 5, "task": "non_cache_break", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 5, "task": "non_cache_break", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 6, "task": "process_configs", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 6, "task": "process_configs", "parent": 1, "cache_key": "bbe1d5852b5841b4d7c2bf11ca379c09315e084b711fad59ea876f1e3efa9e9b"}
+{"event": "CACHE_HIT", "job_id": 6, "task": "process_configs", "parent": 1, "cache_key": "bbe1d5852b5841b4d7c2bf11ca379c09315e084b711fad59ea876f1e3efa9e9b"}
+{"event": "TASK_COMPLETED", "job_id": 6, "task": "process_configs", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 7, "task": "add_configs", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 7, "task": "add_configs", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 7, "task": "add_configs", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 8, "task": "process_configs", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 8, "task": "process_configs", "parent": 1, "cache_key": "842cc3493fa1b9720399301c123342e239c84b67f59bd7307db8f7763336e075"}
+{"event": "CACHE_MISS", "job_id": 8, "task": "process_configs", "parent": 1, "cache_key": "842cc3493fa1b9720399301c123342e239c84b67f59bd7307db8f7763336e075", "reason": "not_found"}
+{"event": "TASK_RUNNING", "job_id": 8, "task": "process_configs", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 8, "task": "process_configs", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 1, "task": "aggregate_environments", "parent": null}
+{"event": "TASK_COMPLETED", "job_id": 1, "task": "aggregate_environments", "parent": null}

@@ -1,0 +1,32 @@
+[
+  {
+    "window_start": "2024-01-01T10:00:00Z",
+    "window_end": "2024-01-01T11:00:00Z",
+    "location": null,
+    "item": null,
+    "web_rev": null,
+    "pos_total": 8.0,
+    "pos_count": 1,
+    "web_count": 0
+  },
+  {
+    "window_start": "2024-01-01T10:00:00Z",
+    "window_end": "2024-01-01T11:00:00Z",
+    "location": "NYC",
+    "item": "apple",
+    "web_rev": 1.5,
+    "pos_total": 12.0,
+    "pos_count": 1,
+    "web_count": 1
+  },
+  {
+    "window_start": "2024-01-01T10:00:00Z",
+    "window_end": "2024-01-01T11:00:00Z",
+    "location": "NYC",
+    "item": "banana",
+    "web_rev": 0.8,
+    "pos_total": null,
+    "pos_count": 0,
+    "web_count": 1
+  }
+]

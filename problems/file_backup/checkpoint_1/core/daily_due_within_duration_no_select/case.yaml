@@ -1,0 +1,16 @@
+arguments: --now 2025-09-10T02:00:00Z --schedule schedule.yaml --duration 2 --mount {{static:files}}
+input_files:
+- content:
+    jobs:
+    - destination: ignored://sink
+      exclude:
+      - '**/*'
+      id: daily-job
+      source: mount://
+      when:
+        at: 03:30
+        kind: daily
+    timezone: UTC
+    version: 1
+  file_type: yaml
+  path: schedule.yaml

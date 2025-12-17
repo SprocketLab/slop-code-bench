@@ -1,0 +1,114 @@
+{
+  "order": 4,
+  "input": {
+    "method": "POST",
+    "path": "/v1/profit/reprocess",
+    "body": {
+      "k": 10,
+      "hub": "jita",
+      "sort_by": "roi",
+      "sales_tax": 0.036,
+      "scrap_efficiency": 0.55
+    }
+  },
+  "expected": {
+    "output": {
+      "cost": 172942964.0,
+      "revenue": 198491048.97,
+      "profit": 19322138.27,
+      "items": [
+        {
+          "item": "720mm Prototype Siege Cannon",
+          "quantity": 3,
+          "cost": 165150.0,
+          "value": 219660.99,
+          "profit": 48565.59,
+          "roi": 28.39,
+          "max_price": 70675.99
+        },
+        {
+          "item": "Small Radiative Scoped Remote Capacitor Transmitter",
+          "quantity": 5,
+          "cost": 36445.0,
+          "value": 46660.25,
+          "profit": 8903.23,
+          "roi": 23.58,
+          "max_price": 9007.77
+        },
+        {
+          "item": "Corpum C-Type EM Energized Membrane",
+          "quantity": 1,
+          "cost": 75050.0,
+          "value": 94834.29,
+          "profit": 17082.49,
+          "roi": 21.97,
+          "max_price": 91538.89
+        },
+        {
+          "item": "Medium ACM Compact Armor Repairer",
+          "quantity": 1,
+          "cost": 16520.0,
+          "value": 20140.14,
+          "profit": 3025.42,
+          "roi": 17.68,
+          "max_price": 19440.29
+        },
+        {
+          "item": "Dark Blood Kinetic Energized Membrane",
+          "quantity": 1,
+          "cost": 78360.0,
+          "value": 94834.29,
+          "profit": 13653.33,
+          "roi": 16.82,
+          "max_price": 91538.89
+        },
+        {
+          "item": "Spatial Attunement Unit",
+          "quantity": 79,
+          "cost": 702489.0,
+          "value": 839715.09,
+          "profit": 111936.49,
+          "roi": 15.38,
+          "max_price": 10259.95
+        },
+        {
+          "item": "1200mm Heavy Prototype Siege Cannon",
+          "quantity": 1,
+          "cost": 466700.0,
+          "value": 553858.46,
+          "profit": 70357.26,
+          "roi": 14.55,
+          "max_price": 534612.41
+        },
+        {
+          "item": "Gamma L",
+          "quantity": 1740,
+          "cost": 129442830.0,
+          "value": 148491167.88,
+          "profit": 14388396.0,
+          "roi": 10.73,
+          "max_price": 82420.59
+        },
+        {
+          "item": "Standup Signal Amplifier I",
+          "quantity": 10,
+          "cost": 40740000.0,
+          "value": 46734964.86,
+          "profit": 4528324.86,
+          "roi": 10.73,
+          "max_price": 4511096.99
+        },
+        {
+          "item": "Explosive Shield Amplifier I",
+          "quantity": 45,
+          "cost": 1219420.0,
+          "value": 1395212.72,
+          "profit": 131893.6,
+          "roi": 10.44,
+          "max_price": 29927.34
+        }
+      ]
+    },
+    "status_code": 200
+  }
+}

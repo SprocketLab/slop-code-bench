@@ -1,0 +1,38 @@
+{
+  "case": {
+    "body": {},
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "get_nonexistent_schema",
+    "method": "POST",
+    "path": "/v1/schemas/nonexistent_schema/versions"
+  },
+  "expected": {
+    "status_code": 404,
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "not_found"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    }
+  }
+}

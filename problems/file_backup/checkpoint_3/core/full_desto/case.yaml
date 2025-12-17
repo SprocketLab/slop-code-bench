@@ -1,0 +1,18 @@
+arguments: --now 2025-01-15T04:00:00Z --schedule schedule.yaml --duration 1 --mount
+  {{static:files}} --backup backup
+input_files:
+- content:
+    jobs:
+      - id: "verify-all"
+        enabled: true
+        when: { kind: "daily", at: "04:00" }
+        strategy:
+          kind: "verify"
+        source: mount://A/B
+        destination: backup://vault
+        exclude: []
+    version: 1
+    timezone: UTC
+  file_type: yaml
+  path: schedule.yaml
+  

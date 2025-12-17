@@ -1,0 +1,11 @@
+{
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "query": "SELECT \n    name,\n    salary,\n    department,\n    (SELECT AVG(salary) \n     FROM employees e2 \n     WHERE e2.department = e1.department) as dept_avg\nFROM employees e1\nWHERE salary > (\n    SELECT AVG(salary) \n    FROM employees e2 \n    WHERE e2.department = e1.department\n)\nORDER BY department, salary DESC",
+  "expected": "| name    | salary | department  | dept_avg |\n| ------- | ------ | ----------- | -------- |\n| Alice   | 120000 | Engineering | 94000    |\n| Charlie | 95000  | Engineering | 94000    |\n| Frank   | 110000 | Sales       | 85000    |",
+  "input_data": "data.json"
+}

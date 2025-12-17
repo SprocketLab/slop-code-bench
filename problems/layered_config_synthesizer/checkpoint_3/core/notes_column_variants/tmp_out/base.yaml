@@ -1,0 +1,6 @@
+experiment_name: base
+training:
+  optimizer: adam
+resources:
+  profile: shared
+  world_size: 2

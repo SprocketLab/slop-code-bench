@@ -1,0 +1,82 @@
+arguments: migrate-all --migrations-dir migrations/ app.db
+input_files:
+- path: seed.db
+  file_type: sqlite
+- content: |
+    {
+      "version": 1,
+      "description": "Create users table",
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "users",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true},
+            {"name": "email", "type": "TEXT", "not_null": true, "unique": true}
+          ]
+        }
+      ]
+    }
+  file_type: json
+  path: migrations/migration_v1.json
+- content: |
+    {
+      "version": 2,
+      "description": "Add age column",
+      "depends_on": [1],
+      "operations": [
+        {
+          "type": "add_column",
+          "table": "users",
+          "column": {
+            "name": "age",
+            "type": "INTEGER",
+            "not_null": false
+          }
+        }
+      ]
+    }
+  file_type: json
+  path: migrations/migration_v3.json
+- content: |
+    {
+      "version": 3,
+      "description": "Add name column",
+      "depends_on": [1],
+      "operations": [
+        {
+          "type": "add_column",
+          "table": "users",
+          "column": {
+            "name": "name",
+            "type": "TEXT",
+            "not_null": false
+          }
+        }
+      ]
+    }
+  file_type: json
+  path: migrations/migration_v2.json
+- content: |
+    {
+      "version": 4,
+      "description": "Create posts",
+      "depends_on": [2, 3],
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "posts",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true},
+            {"name": "user_id", "type": "INTEGER", "not_null": true},
+            {"name": "title", "type": "TEXT", "not_null": true}
+          ]
+        }
+      ]
+    }
+  file_type: json
+  path: migrations/migration_v4.json
+tracked_files:
+- app.db
+expected_status: 0
+

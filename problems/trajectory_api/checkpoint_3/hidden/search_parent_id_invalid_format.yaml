@@ -1,0 +1,26 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_parent_id_invalid_format
+  method: GET
+  path: /trajectories?parent_id=not-a-uuid
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: INVALID_QUERY
+          message:
+            type: string
+          field_path:
+            const: parent_id
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 400

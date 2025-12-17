@@ -1,0 +1,6 @@
+environment = "production"
+timeout = 30
+[server]
+host = "localhost"
+port = 8080
+mode = "development"

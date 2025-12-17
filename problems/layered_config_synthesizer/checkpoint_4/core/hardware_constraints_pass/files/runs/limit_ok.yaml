@@ -1,0 +1,5 @@
+experiment_name: limit_ok
+resources:
+  world_size: 8
+training:
+  learning_rate: 0.02

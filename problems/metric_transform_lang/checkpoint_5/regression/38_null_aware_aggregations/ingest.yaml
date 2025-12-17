@@ -1,0 +1,7 @@
+sources:
+  - name: main
+    inputs:
+      - "input.csv"
+    format: auto
+    schema: Data
+    precedence: 10

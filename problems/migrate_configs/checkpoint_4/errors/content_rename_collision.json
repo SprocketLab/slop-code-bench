@@ -1,0 +1,17 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "same_name_by_env": {
+      "type": "content_rename",
+      "scope": "file",
+      "file_pattern": "services/*/config.yaml",
+      "variables": {
+        "env": "environment"
+      },
+      "new_path": "../${env}.yaml"
+    }
+  },
+  "status_code": 1,
+  "expected_stderr": "^Error: destination already exists: services/development\\.yaml$"
+}

@@ -1,0 +1,25 @@
+case:
+  body:
+    grammar: "TOOL_CALL = '<function name=\"', TOOL_NAME, '\">', '<arguments>', TOOL_ARGS, '</arguments>', '</function>'; TOOL_NAME = letter , { letter | digit | '_' | '-' }; TOOL_ARGS = { ? any char except '<' ? }; WHITESPACE = ' ' | '\\t' | '\\n';"
+    activate: false
+    notes: "Complex nested XML-style grammar"
+  headers:
+    content-type: application/json; charset=utf-8
+  id: grammar_valid_complex_nested
+  method: POST
+  path: /environments/complex-nested-env/versions
+expected:
+  output:
+    properties:
+      environment:
+        const: complex-nested-env
+      version:
+        type: integer
+      active:
+        const: false
+    required:
+      - environment
+      - version
+      - active
+    type: object
+  status_code: 201

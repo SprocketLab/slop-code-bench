@@ -1,0 +1,15 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [],
+  "input_files": {
+    "proj/a.py": "print('hello')",
+    "proj/b.js": "console.log('world')"
+  },
+  "rules.json": [
+    {
+      "id": "nonexistent",
+      "kind": "exact",
+      "pattern": "NONEXISTENT_PATTERN_12345"
+    }
+  ]
+}

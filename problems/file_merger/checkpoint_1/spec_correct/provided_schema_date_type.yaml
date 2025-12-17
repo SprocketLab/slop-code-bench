@@ -1,0 +1,41 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json data1.csv data2.csv
+  input_files:
+  - content:
+    - id: '1'
+      birth_date: '2000-01-15'
+      name: Alice
+    - id: '2'
+      birth_date: '1995-12-31'
+      name: Bob
+    file_type: csv
+    path: data1.csv
+  - content:
+    - id: '3'
+      birth_date: '2005-06-20'
+      name: Charlie
+    file_type: csv
+    path: data2.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: name
+        type: string
+      - name: birth_date
+        type: date
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - birth_date: '2000-01-15'
+      id: 1
+      name: Alice
+    - birth_date: '1995-12-31'
+      id: 2
+      name: Bob
+    - birth_date: '2005-06-20'
+      id: 3
+      name: Charlie
+  status_code: 0

@@ -1,0 +1,25 @@
+case:
+  body:
+    grammar: "TOOL_CALL = '<tool ', TOOL_NAME, ' args=\"', TOOL_ARGS, '\"/>'; TOOL_NAME = letter , { letter | digit | '_' }; TOOL_ARGS = { ? any char except '\"' ? };"
+    activate: false
+    notes: "Test charset=utf-8 is accepted"
+  headers:
+    content-type: application/json; charset=utf-8
+  id: upload_charset_utf8_accepted
+  method: POST
+  path: /environments/charset-test-env/versions
+expected:
+  output:
+    properties:
+      environment:
+        const: charset-test-env
+      version:
+        type: integer
+      active:
+        const: false
+    required:
+      - environment
+      - version
+      - active
+    type: object
+  status_code: 201

@@ -1,0 +1,19 @@
+id: where_clauses
+files:
+  query.sql: 'SELECT first_name, country, car FROM users WHERE country = ''AR'' AND
+    car LIKE ''%F%''
+
+    '
+expected: '| first_name   | country   | car     |
+
+  |--------------|-----------|---------|
+
+  | Darin        | AR        | Ferarri |
+
+  | Olivia       | AR        | Ferarri |
+
+  | Osmond       | AR        | Ford    |
+
+  | Othilia      | AR        | Ferarri |
+
+  | Wilden       | AR        | Ford    |'

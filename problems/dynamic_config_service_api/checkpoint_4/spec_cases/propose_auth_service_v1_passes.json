@@ -1,0 +1,105 @@
+{
+  "case": {
+    "body": {
+      "author": "dave",
+      "base_version": 0,
+      "description": "Auth service config with all policies passing",
+      "scope": {
+        "app": "auth-service",
+        "env": "prod",
+        "tenant": "acme"
+      },
+      "title": "Propose auth-service v1 (passes all policies)"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "propose_auth_service_v1_passes",
+    "method": "POST",
+    "path": "/v1/configs/auth-service/1:propose"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "proposal_id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "name": {
+          "const": "auth-service"
+        },
+        "draft_version": {
+          "const": 1
+        },
+        "scope": {
+          "properties": {
+            "app": {
+              "const": "auth-service"
+            },
+            "env": {
+              "const": "prod"
+            },
+            "tenant": {
+              "const": "acme"
+            }
+          },
+          "required": [
+            "env",
+            "tenant",
+            "app"
+          ],
+          "type": "object"
+        },
+        "author": {
+          "const": "dave"
+        },
+        "status": {
+          "const": "open"
+        },
+        "policy_summary": {
+          "properties": {
+            "policy_stack": {
+              "minItems": 2,
+              "type": "array"
+            },
+            "violations": {
+              "const": []
+            },
+            "tally": {
+              "properties": {
+                "errors": {
+                  "const": 0
+                },
+                "warnings": {
+                  "const": 0
+                }
+              },
+              "required": [
+                "errors",
+                "warnings"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "policy_stack",
+            "violations",
+            "tally"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "proposal_id",
+        "name",
+        "draft_version",
+        "scope",
+        "author",
+        "status",
+        "policy_summary"
+      ],
+      "type": "object"
+    },
+    "status_code": 201
+  }
+}

@@ -1,0 +1,5 @@
+# Test all comparison operators: <, <=, >, >=, ==, !=
+filter(price < 2.0 | price > 3.0)
+filter(quantity >= 2)
+filter(price != 2.5)
+aggregate count(*) as n

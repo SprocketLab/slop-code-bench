@@ -1,0 +1,16 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json data.csv
+  input_files:
+  - content:
+    - id: '1'
+    file_type: csv
+    path: data.csv
+  - content:
+      columns:
+      - name: id
+        type: invalid_type
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 2
+  stderr: "^ERR 2"

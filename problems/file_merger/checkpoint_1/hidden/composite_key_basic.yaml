@@ -1,0 +1,34 @@
+case:
+  arguments: --output output.csv --key department,name data.csv
+  input_files:
+  - content:
+    - department: Engineering
+      id: '3'
+      name: Charlie
+    - department: Sales
+      id: '1'
+      name: Alice
+    - department: Engineering
+      id: '2'
+      name: Alice
+    - department: Sales
+      id: '4'
+      name: Bob
+    file_type: csv
+    path: data.csv
+expected:
+  files:
+    output.csv:
+    - department: Engineering
+      id: 2
+      name: Alice
+    - department: Engineering
+      id: 3
+      name: Charlie
+    - department: Sales
+      id: 1
+      name: Alice
+    - department: Sales
+      id: 4
+      name: Bob
+  status_code: 0

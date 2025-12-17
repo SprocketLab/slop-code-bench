@@ -1,0 +1,49 @@
+{
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/sales.csv",
+      "content": [
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "800"
+        },
+        {
+          "region": "EU",
+          "product": "Widget B",
+          "sales": "1200"
+        },
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "900"
+        },
+        {
+          "region": "NA",
+          "product": "Widget A",
+          "sales": "1000"
+        },
+        {
+          "region": "NA",
+          "product": "Widget B",
+          "sales": "1500"
+        },
+        {
+          "region": "NA",
+          "product": "Widget A",
+          "sales": "1200"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT \n    region,\n    product,\n    sales,\n    RANK() OVER (PARTITION BY region ORDER BY sales DESC) as sales_rank,\n    ROW_NUMBER() OVER (PARTITION BY region ORDER BY sales DESC, product) as row_num\nFROM sales\nORDER BY region, sales_rank",
+  "expected": "| region   | product   |   sales |   sales_rank |   row_num |\n|----------|-----------|---------|--------------|-----------|\n| EU       | Widget B  |    1200 |            1 |         1 |\n| EU       | Widget A  |     900 |            2 |         2 |\n| EU       | Widget A  |     800 |            3 |         3 |\n| NA       | Widget B  |    1500 |            1 |         1 |\n| NA       | Widget A  |    1200 |            2 |         2 |\n| NA       | Widget A  |    1000 |            3 |         3 |"
+}

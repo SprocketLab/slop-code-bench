@@ -1,0 +1,23 @@
+schema WebSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+}
+
+schema PosSale {
+  timestamp: timestamp
+  location: string
+  item: int
+  price: float
+  quantity: float
+}
+
+pipeline CrossStream using WebSale {
+  sources { web as W, pos as P }
+  join W with P on (W.item == P.item) type inner project { W.timestamp as timestamp, W.item as item }
+  window(1h)
+  aggregate count(*) as n
+}
+

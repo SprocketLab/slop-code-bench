@@ -1,0 +1,11 @@
+id: having_clause
+files:
+  query.sql: 'SELECT country, COUNT(*) as user_count FROM users GROUP BY country HAVING
+    COUNT(*) > 5
+
+    '
+expected: '| country   |   user_count |
+
+  |-----------|--------------|
+
+  | AR        |           11 |'

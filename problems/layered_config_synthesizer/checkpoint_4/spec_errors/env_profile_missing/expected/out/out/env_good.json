@@ -1,0 +1,1 @@
+{"experiment_name":"env_good","resources":{"accelerators":[{"count":4,"type":"l4"}],"profile":"train_l4","world_size":4},"training":{"batch_size":17,"launcher":"torchrun","optimizer":"adamw"}}

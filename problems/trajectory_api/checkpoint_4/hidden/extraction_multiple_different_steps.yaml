@@ -1,0 +1,47 @@
+case:
+  body:
+    date: "2025-10-06T00:00:00Z"
+    task: multi_step_tools_task
+    environment: local-sim
+    model: model-multi
+    framework: framework-multi
+    metrics: {}
+    trajectory:
+      - role: user
+        content: Do multiple things
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: '<tool first_tool args="arg1"/> First result'
+        input_tokens: 10
+        output_tokens: 15
+        cost: 0.001
+      - role: user
+        content: Continue
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: '<tool second_tool args="arg2"/> Second result'
+        input_tokens: 12
+        output_tokens: 18
+        cost: 0.0015
+  headers:
+    content-type: application/json; charset=utf-8
+  id: extraction_multiple_different_steps
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      environment_version:
+        const: 1
+    required:
+      - id
+      - environment_version
+    type: object
+  status_code: 201

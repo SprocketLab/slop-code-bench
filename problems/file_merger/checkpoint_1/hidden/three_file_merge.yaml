@@ -1,0 +1,52 @@
+case:
+  arguments: --output output.csv --key id file1.csv file2.csv file3.csv
+  input_files:
+  - content:
+    - id: '3'
+      name: Charlie
+      source: file1
+    - id: '1'
+      name: Alice
+      source: file1
+    file_type: csv
+    path: file1.csv
+  - content:
+    - id: '5'
+      name: Eve
+      source: file2
+    - id: '2'
+      name: Bob
+      source: file2
+    file_type: csv
+    path: file2.csv
+  - content:
+    - id: '4'
+      name: David
+      source: file3
+    - id: '6'
+      name: Frank
+      source: file3
+    file_type: csv
+    path: file3.csv
+expected:
+  files:
+    output.csv:
+    - id: 1
+      name: Alice
+      source: file1
+    - id: 2
+      name: Bob
+      source: file2
+    - id: 3
+      name: Charlie
+      source: file1
+    - id: 4
+      name: David
+      source: file3
+    - id: 5
+      name: Eve
+      source: file2
+    - id: 6
+      name: Frank
+      source: file3
+  status_code: 0

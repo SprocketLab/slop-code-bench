@@ -1,0 +1,7 @@
+experiment_name: bad-accel
+training:
+  optimizer: adam
+resources:
+  accelerators:
+    - type: a100
+      count: 0

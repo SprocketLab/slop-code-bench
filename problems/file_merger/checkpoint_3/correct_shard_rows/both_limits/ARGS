@@ -1,0 +1,1 @@
+--output out --key id --max-rows-per-file 1 --max-bytes-per-file 1000 data.csv

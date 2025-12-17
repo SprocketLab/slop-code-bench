@@ -1,0 +1,4 @@
+limits:
+  enabled: true
+  retries: 3
+environment: qa

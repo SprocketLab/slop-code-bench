@@ -1,0 +1,35 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: regression_totals_endpoint_on_fork
+  method: GET
+  path: /trajectories/{{store.regression_fork_then_append}}/totals
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.regression_fork_then_append}}"
+      running_totals:
+        type: array
+        minItems: 1
+        items:
+          properties:
+            step_index:
+              type: integer
+            role:
+              type: string
+            cumulative_output_tokens:
+              type: integer
+            cumulative_cost:
+              type: number
+          required:
+            - step_index
+            - role
+            - cumulative_output_tokens
+            - cumulative_cost
+          type: object
+    required:
+      - id
+      - running_totals
+    type: object
+  status_code: 200

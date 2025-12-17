@@ -1,0 +1,17 @@
+[
+  {
+    "item": "apple",
+    "qty": 5.0,
+    "prev_qty": null
+  },
+  {
+    "item": "banana",
+    "qty": 7.0,
+    "prev_qty": 5.0
+  },
+  {
+    "item": "cherry",
+    "qty": 6.0,
+    "prev_qty": 7.0
+  }
+]

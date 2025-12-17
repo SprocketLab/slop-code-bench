@@ -1,0 +1,30 @@
+case:
+  arguments: --output output.csv --key id data.csv
+  input_files:
+  - content:
+    - description: 'Simple text'
+      id: '1'
+    - description: 'Text with, comma'
+      id: '2'
+    - description: 'Text with "quotes"'
+      id: '3'
+    - description: 'Mixed: comma, and "quotes"'
+      id: '4'
+    - description: 'He said "Hello, World!"'
+      id: '5'
+    file_type: csv
+    path: data.csv
+expected:
+  files:
+    output.csv:
+    - description: 'Simple text'
+      id: 1
+    - description: 'Text with, comma'
+      id: 2
+    - description: 'Text with "quotes"'
+      id: 3
+    - description: 'Mixed: comma, and "quotes"'
+      id: 4
+    - description: 'He said "Hello, World!"'
+      id: 5
+  status_code: 0

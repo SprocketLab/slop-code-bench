@@ -1,0 +1,13 @@
+id: groupby
+files:
+  query.sql: 'SELECT country, COUNT(*) as "People" FROM users WHERE users.job LIKE
+    ''%Assistant%'' GROUP BY users.country
+
+    '
+expected: '| country   |   People |
+
+  |-----------|----------|
+
+  | AR        |        3 |
+
+  | FR        |        1 |'

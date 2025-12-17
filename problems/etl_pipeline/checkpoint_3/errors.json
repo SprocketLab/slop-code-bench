@@ -1,0 +1,237 @@
+{
+    "missing_column_in_branch": {
+        "stdin": {
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "branch",
+                        "branches": [
+                            {
+                                "id": "s1",
+                                "when": "qty >= 1",
+                                "steps": [
+                                    {
+                                        "op": "select",
+                                        "columns": [
+                                            "id",
+                                            "missing"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "otherwise",
+                                "when": "otherwise",
+                                "steps": []
+                            }
+                        ],
+                        "merge": {
+                            "strategy": "concat"
+                        }
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1,
+                    "qty": 2
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "MISSING_COLUMN",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].branches[0].steps[0].columns[1]"
+        }
+    },
+    "otherwise_not_last_malformed": {
+        "stdin": {
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "branch",
+                        "branches": [
+                            {
+                                "id": "else",
+                                "when": "otherwise",
+                                "steps": []
+                            },
+                            {
+                                "id": "later",
+                                "when": "qty > 0",
+                                "steps": []
+                            }
+                        ],
+                        "merge": {
+                            "strategy": "concat"
+                        }
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "MALFORMED_STEP",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].branches"
+        }
+    },
+    "branch_steps_not_array_error": {
+        "stdin": {
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "branch",
+                        "branches": [
+                            {
+                                "id": "bad",
+                                "when": "true",
+                                "steps": {
+                                    "op": "map",
+                                    "as": "flag",
+                                    "expr": "\"x\""
+                                }
+                            }
+                        ],
+                        "merge": {
+                            "strategy": "concat"
+                        }
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "SCHEMA_VALIDATION_FAILED",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].branches[0].steps"
+        }
+    },
+    "branch_bad_expr_error": {
+        "stdin": {
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "branch",
+                        "branches": [
+                            {
+                                "id": "bad",
+                                "when": "price ** 2",
+                                "steps": []
+                            }
+                        ],
+                        "merge": {
+                            "strategy": "concat"
+                        }
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1,
+                    "price": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "BAD_EXPR",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].branches[0].when"
+        }
+    },
+    "branch_otherwise_not_last_error": {
+        "stdin": {
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "branch",
+                        "branches": [
+                            {
+                                "id": "else",
+                                "when": "otherwise",
+                                "steps": []
+                            },
+                            {
+                                "id": "later",
+                                "when": "qty > 0",
+                                "steps": []
+                            }
+                        ],
+                        "merge": {
+                            "strategy": "concat"
+                        }
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "MALFORMED_STEP",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].branches"
+        }
+    },
+    "branch_select_missing_column_error": {
+        "stdin": {
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "branch",
+                        "branches": [
+                            {
+                                "id": "hit",
+                                "when": "qty > 0",
+                                "steps": [
+                                    {
+                                        "op": "select",
+                                        "columns": [
+                                            "id",
+                                            "missing"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "otherwise",
+                                "when": "otherwise",
+                                "steps": []
+                            }
+                        ],
+                        "merge": {
+                            "strategy": "concat"
+                        }
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1,
+                    "qty": 2
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "MISSING_COLUMN",
+            "message": "ETL_ERROR:.*",
+            "path": "pipeline.steps[0].branches[0].steps[0].columns[1]"
+        }
+    }
+}

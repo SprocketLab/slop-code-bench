@@ -1,0 +1,19 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+
+verifiers:
+  success:
+    type: status_code
+    value: 0
+  output_match:
+    type: exact_match
+    result_attr: output
+    expected_attr: output
+
+normalizers:
+  - "load_json(output)"
+expected_normalizers:
+  - "load_json(output)"
+

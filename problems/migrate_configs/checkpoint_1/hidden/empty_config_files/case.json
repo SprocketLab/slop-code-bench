@@ -1,0 +1,30 @@
+{
+  "rules": {
+    "add_initial_config": {
+      "type": "merge_data",
+      "glob": "**/*",
+      "data": {
+        "app": {
+          "name": "myapp",
+          "version": "1.0.0"
+        },
+        "server": {
+          "port": 8080,
+          "host": "0.0.0.0"
+        }
+      }
+    },
+    "replace_nonexistent": {
+      "type": "replace_value",
+      "key": "missing.key",
+      "value": "should_not_appear"
+    }
+  },
+  "files": {
+    "configs/empty.json": "{}",
+    "configs/empty.yaml": "---",
+    "configs/empty.toml": "",
+    "configs/empty.ini": "",
+    "configs/partial.json": "{\"existing\": \"value\"}"
+  }
+}

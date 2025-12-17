@@ -1,0 +1,7 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/not_found.json",
+  "expected_stdout": "",
+  "rules": {},
+  "status_code": 1,
+  "expected_stderr": "^Error: invalid inheritance config: .*not_found\\.json$"
+}

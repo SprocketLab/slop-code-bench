@@ -1,0 +1,20 @@
+arguments: --now 2025-01-15T02:00:00Z --schedule schedule.yaml --duration 1 --mount source --backup backup
+input_files:
+- content:
+    version: 1
+    timezone: UTC
+    jobs:
+    - id: shrink-packs
+      enabled: true
+      when:
+        kind: daily
+        at: '02:00'
+      strategy:
+        kind: pack
+        options:
+          max_pack_bytes: 3
+      source: mount://
+      destination: backup://
+      exclude: []
+  file_type: yaml
+  path: schedule.yaml

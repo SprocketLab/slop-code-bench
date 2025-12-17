@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "rename_deep_connection": {
+      "type": "rename_key",
+      "old_key": "database.connection.pool.max_size",
+      "new_key": "database.connection.pool.maximum"
+    },
+    "rename_nested_timeout": {
+      "type": "rename_key",
+      "old_key": "services.api.settings.timeout_ms",
+      "new_key": "services.api.settings.timeout_milliseconds"
+    },
+    "rename_deeply_nested": {
+      "type": "rename_key",
+      "old_key": "app.features.beta.users.allowed_list",
+      "new_key": "app.features.beta.users.whitelist"
+    }
+  },
+  "files": {
+    "configs/database.json": "{\"database\": {\"connection\": {\"host\": \"localhost\", \"pool\": {\"max_size\": 100, \"min_size\": 10}}}}",
+    "configs/services.toml": "[services.api.settings]\ntimeout_ms = 5000\nretry_count = 3\n\n[services.worker.settings]\ntimeout_ms = 10000",
+    "configs/features.yaml": "app:\n  features:\n    beta:\n      enabled: true\n      users:\n        allowed_list:\n          - user1\n          - user2\n        max_count: 100"
+  }
+}

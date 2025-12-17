@@ -1,0 +1,7 @@
+experiment_name: conflict-run
+training:
+  optimizer: adam
+resources:
+  profile: conflict
+  world_size: 1
+tracing: "{{static:trace_defaults}}"

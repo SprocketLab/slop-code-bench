@@ -1,0 +1,74 @@
+{
+  "expected": {
+    "output": {
+      "inputs": {
+        "volume": 30110.0,
+        "buy": 75582400.0,
+        "sell": 81686400.0,
+        "buy_5pct": 75582400.0,
+        "sell_5pct": 81701799.2
+      },
+      "outputs": {
+        "volume": 31115.69,
+        "buy": 91201546.75,
+        "sell": 97562195.09,
+        "buy_5pct": 91173930.54,
+        "sell_5pct": 98033994.49
+      },
+      "yields": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "products": {
+        "Pyerite": {
+          "quantity": 2688290,
+          "volume": 26882.9,
+          "buy": 24.3,
+          "sell": 25.5
+        },
+        "Mexallon": {
+          "quantity": 185328,
+          "volume": 1853.28,
+          "buy": 51.38,
+          "sell": 58.47
+        },
+        "Hydrocarbons": {
+          "quantity": 28924,
+          "volume": 1446.2,
+          "buy": 519.0,
+          "sell": 577.0
+        },
+        "Tritanium": {
+          "quantity": 73331,
+          "volume": 733.31,
+          "buy": 3.81,
+          "sell": 4.03
+        },
+        "Fullerite-C28": {
+          "quantity": 100,
+          "volume": 200.0,
+          "buy": 10630.0,
+          "sell": 11900.0
+        }
+      }
+    },
+    "status_code": 201
+  },
+  "input": {
+    "body": {
+      "items": {
+        "Compressed Bitumens": 49100,
+        "Rifter": 10,
+        "Fullerite-C28": 100
+      },
+      "market": "Jita"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "method": "POST",
+    "path": "/v1/reprocess"
+  },
+  "order": 10
+}

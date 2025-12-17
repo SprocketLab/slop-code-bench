@@ -1,0 +1,19 @@
+arguments: --now 2025-01-15T14:00:00Z --schedule schedule.yaml --duration 1 --mount {{static:files}} --backup backup
+input_files:
+- content:
+    jobs:
+    - destination: backup://verify-new
+      exclude:
+      - '**/*.py'
+      - '**/*.bin'
+      id: verify-new-job
+      source: mount://
+      when:
+        at: '14:00'
+        kind: daily
+      strategy:
+        kind: verify
+    timezone: UTC
+    version: 1
+  file_type: yaml
+  path: schedule.yaml

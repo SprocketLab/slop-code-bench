@@ -1,0 +1,20 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"temp/app.yaml\",\"rules_applied\":[\"set_production\"]}\\n{\"event\":\"file_relocated\",\"from\":\"temp/app.yaml\",\"to\":\"deploy/app.yaml\"}\\n",
+  "rules": {
+    "set_production": {
+      "type": "replace_value",
+      "key": "environment",
+      "value": "production"
+    },
+    "move_temp_configs": {
+      "type": "path_rename",
+      "scope": "file",
+      "path_pattern": "temp/$name.yaml",
+      "new_path": "deploy/${name}.yaml"
+    }
+  },
+  "expected_files": {
+    "configs/deploy/app.yaml": "app: myapp\\nenvironment: production\\n"
+  }
+}

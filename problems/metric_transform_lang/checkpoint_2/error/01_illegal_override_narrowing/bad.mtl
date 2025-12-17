@@ -1,0 +1,18 @@
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+schema BadSale extends BaseSale {
+  # Illegal narrowing: float -> int
+  quantity: int
+}
+
+pipeline P using BadSale {
+  aggregate count(*) as n
+}

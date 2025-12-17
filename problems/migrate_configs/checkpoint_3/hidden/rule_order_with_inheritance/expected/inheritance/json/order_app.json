@@ -1,0 +1,6 @@
+{
+  "name": "order-app",
+  "description": "qa-service",
+  "timeout": 30,
+  "environment": "qa"
+}

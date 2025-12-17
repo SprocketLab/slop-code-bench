@@ -1,0 +1,25 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --on-type-error fail data1.csv
+    data2.csv
+  input_files:
+  - content:
+    - amount: abc
+      id: '2'
+    file_type: csv
+    path: data2.csv
+  - content:
+    - amount: '10'
+      id: '1'
+    file_type: csv
+    path: data1.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: amount
+        type: int
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 4
+  stderr: "^ERR 4"

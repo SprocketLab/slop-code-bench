@@ -1,0 +1,18 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline ComparisonOps using Sale {
+  # Test all comparison operators: <, <=, >, >=, ==, !=
+  filter(price < 2.0 | price > 3.0)
+  filter(quantity >= 2)
+  filter(price != 2.5)
+  aggregate count(*) as n
+}

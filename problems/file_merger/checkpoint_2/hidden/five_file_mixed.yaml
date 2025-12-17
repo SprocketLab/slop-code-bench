@@ -1,0 +1,43 @@
+case:
+  arguments: --output output.csv --key id a.csv b.jsonl c.tsv d.parquet e.jsonl.gz
+  input_files:
+  - content:
+    - id: '1'
+      value: '10'
+    file_type: csv
+    path: a.csv
+  - content:
+    - id: 2
+      value: 20
+    file_type: jsonl
+    path: b.jsonl
+  - content:
+    - id: '3'
+      value: '30'
+    file_type: tsv
+    path: c.tsv
+  - content:
+    - id: 4
+      value: 40
+    file_type: parquet
+    path: d.parquet
+  - content:
+    - id: 5
+      value: 50
+    file_type: jsonl
+    compression: gzip
+    path: e.jsonl.gz
+expected:
+  files:
+    output.csv:
+    - id: 1
+      value: 10
+    - id: 2
+      value: 20
+    - id: 3
+      value: 30
+    - id: 4
+      value: 40
+    - id: 5
+      value: 50
+  status_code: 0

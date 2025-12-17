@@ -1,0 +1,5 @@
+experiment_name: multi_b
+training:
+  learning_rate: 0.03
+resources:
+  profile: train_a100

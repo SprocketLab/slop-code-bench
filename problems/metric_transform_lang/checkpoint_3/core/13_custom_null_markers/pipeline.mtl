@@ -1,0 +1,10 @@
+schema Data {
+  timestamp: timestamp
+  value: float
+}
+
+pipeline CustomNulls using Data {
+  aggregate count(*) as total_rows,
+            count(value) as value_count,
+            sum(value) as total
+}

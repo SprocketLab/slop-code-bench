@@ -1,0 +1,17 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  price: float
+  quantity: float
+  tax_rate: float
+}
+
+pipeline MultiPreCalc using Sale {
+  calc revenue = price * quantity : float @stage(pre)
+  calc tax = revenue * tax_rate : float @stage(pre)
+  calc total = revenue + tax : float @stage(pre)
+
+  filter(total > 100.0)
+  group_by(['tax_rate'])
+  aggregate sum(total) as grand_total, count(*) as n
+}

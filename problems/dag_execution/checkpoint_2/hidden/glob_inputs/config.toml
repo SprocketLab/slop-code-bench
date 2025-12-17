@@ -1,0 +1,4 @@
+# Test glob patterns in inputs field
+# Cache should work with glob patterns
+
+entry = "aggregate_environments"

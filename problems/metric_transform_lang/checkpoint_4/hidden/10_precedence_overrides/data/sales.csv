@@ -1,0 +1,2 @@
+timestamp,location,item,price,quantity,unit,category
+2024-01-01T10:00:00-05:00,NYC,apple,1.5,10,lb,fruit

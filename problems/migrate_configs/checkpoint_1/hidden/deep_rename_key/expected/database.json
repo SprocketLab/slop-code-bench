@@ -1,0 +1,11 @@
+{
+  "database": {
+    "connection": {
+      "host": "localhost",
+      "pool": {
+        "maximum": 100,
+        "min_size": 10
+      }
+    }
+  }
+}

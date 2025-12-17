@@ -1,0 +1,23 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --type-alias-file aliases.json
+    input.jsonl
+  input_files:
+  - content:
+      aliases:
+        a: b
+        b: a
+    file_type: json
+    path: aliases.json
+  - content:
+    - id: 1
+    file_type: jsonl
+    path: input.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 2
+  stderr: ERR 2 alias cycle detected in --type-alias-file

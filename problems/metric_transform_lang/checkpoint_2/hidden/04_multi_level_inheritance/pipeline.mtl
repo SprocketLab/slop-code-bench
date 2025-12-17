@@ -1,0 +1,22 @@
+schema Base {
+  timestamp: timestamp
+  price: float
+  quantity: int
+}
+
+schema Middle extends Base {
+  category: string
+  revenue: float = price * quantity
+}
+
+schema Final extends Middle {
+  location: string
+  tax_rate: float
+  total: float = revenue * (1.0 + tax_rate)
+}
+
+pipeline ThreeLevel using Final {
+  filter(total > 100.0)
+  group_by(['location'])
+  aggregate sum(total) as grand_total, count(*) as n
+}

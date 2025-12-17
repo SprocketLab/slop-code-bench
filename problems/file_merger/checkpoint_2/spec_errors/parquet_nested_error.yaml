@@ -1,0 +1,17 @@
+case:
+  arguments: --output out.csv --key id data.parquet
+  input_files:
+  - content:
+    - id: 1
+      details:
+        city: NYC
+        zip: '10001'
+    - id: 2
+      details:
+        city: LA
+        zip: '90001'
+    file_type: parquet
+    path: data.parquet
+expected:
+  status_code: 6
+  stderr: ^ERR 6.*

@@ -1,0 +1,14 @@
+greeting: Hello 世界! 🌍
+localization:
+  日本語: こんにちは
+  English: English
+messages:
+  歡迎訊息: Welcome
+symbols:
+  currency: €
+  math: ∑∏∫
+  emoji: 😀🎉🚀
+languages:
+  中文: Chinese
+  Русский: Russian
+  العربية: Arabic

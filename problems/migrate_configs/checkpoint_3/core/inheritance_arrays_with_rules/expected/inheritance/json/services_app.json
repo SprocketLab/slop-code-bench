@@ -1,0 +1,15 @@
+{
+  "app": "services-app",
+  "services": [
+    {
+      "enabled": true,
+      "host": "prod.example.com",
+      "name": "api"
+    },
+    {
+      "enabled": false,
+      "host": "localhost",
+      "name": "worker"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+  rules:
+    expected_out.csv:
+      dest: ["expected", "files", "out.csv"]
+      loader: text
+verifiers:
+  success:
+    type: status_code
+    value: 0
+  file_match:
+    type: exact_match
+    result_attr: [files, "out.csv"]
+    expected_attr: [files, "out.csv"]

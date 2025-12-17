@@ -1,0 +1,16 @@
+{
+    "case": {
+        "arguments": [
+            "recipe",
+            "'Proteus'",
+            "-me",
+            "5",
+            "--sde",
+            "{{static:sde_dir}}",
+            "-waste"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

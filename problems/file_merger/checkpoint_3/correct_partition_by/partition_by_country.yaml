@@ -1,0 +1,38 @@
+case:
+  arguments: --output out --key id --partition-by country d1.csv d2.csv
+  input_files:
+  - content: 'country,id,name
+
+      US,3,c
+
+      CA,4,d
+
+      '
+    file_type: text
+    path: d2.csv
+  - content: 'country,id,name
+
+      US,2,b
+
+      CA,1,a
+
+      '
+    file_type: text
+    path: d1.csv
+expected:
+  files:
+    out/country=CA/part-00000.csv:
+    - country: CA
+      id: 1
+      name: a
+    - country: CA
+      id: 4
+      name: d
+    out/country=US/part-00000.csv:
+    - country: US
+      id: 2
+      name: b
+    - country: US
+      id: 3
+      name: c
+  status_code: 0

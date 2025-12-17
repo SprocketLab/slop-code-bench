@@ -1,0 +1,30 @@
+case:
+  body:
+    up_to_step: 1
+    status: in_progress
+    branch: regression-fork-for-append
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: regression_fork_then_append
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_regression}}/fork
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      rev:
+        const: 1
+      steps:
+        const: 2
+    required:
+      - id
+      - status
+      - rev
+      - steps
+    type: object
+  status_code: 201

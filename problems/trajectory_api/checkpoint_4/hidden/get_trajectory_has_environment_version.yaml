@@ -1,0 +1,29 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: get_trajectory_has_environment_version
+  method: GET
+  path: /trajectories/{{store.hidden_create_for_search_tests}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.hidden_create_for_search_tests}}"
+      environment_version:
+        type: integer
+      derived:
+        properties:
+          tool_calls:
+            type: array
+          tool_call_count:
+            type: integer
+        required:
+          - tool_calls
+          - tool_call_count
+        type: object
+    required:
+      - id
+      - environment_version
+      - derived
+    type: object
+  status_code: 200

@@ -1,0 +1,1 @@
+--dsl pipeline.mtl --ingest-config ingest.yaml --out out.json --meta-out out.meta.json --state-dir ./.mtl_state

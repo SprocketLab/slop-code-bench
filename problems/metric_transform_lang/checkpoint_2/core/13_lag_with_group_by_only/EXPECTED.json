@@ -1,0 +1,5 @@
+[
+  {"category": "books", "total": 50.0, "prev_total": null},
+  {"category": "electronics", "total": 250.0, "prev_total": 50.0},
+  {"category": "furniture", "total": 200.0, "prev_total": 250.0}
+]

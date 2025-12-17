@@ -1,0 +1,14 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "files": {
+    "configs/inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n",
+    "configs/inheritance/missing/child.yaml": "extends: absent.yaml\nname: orphan\nenvironment: staging\n"
+  },
+  "rules": {
+    "force_env": {
+      "type": "replace_value",
+      "key": "environment",
+      "value": "production"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "services": [
+    {
+      "name": "api",
+      "env": "production",
+      "type": "api",
+      "replicas": 5
+    },
+    {
+      "name": "worker",
+      "env": "production",
+      "type": "worker",
+      "replicas": 1
+    },
+    {
+      "name": "api",
+      "env": "staging",
+      "type": "api",
+      "replicas": 1
+    }
+  ]
+}

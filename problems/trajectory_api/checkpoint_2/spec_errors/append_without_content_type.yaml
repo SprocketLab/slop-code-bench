@@ -1,0 +1,28 @@
+case:
+  body: '{"steps": [{"role": "user", "content": "Test without content type", "input_tokens": null, "output_tokens": null, "cost": null}]}'
+  headers:
+    if-match: W/"1"
+  id: append_without_content_type
+  method: POST
+  path: /trajectories/{{store.create_in_progress_trajectory}}/steps
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            type: string
+            const: UNSUPPORTED_MEDIA_TYPE
+          message:
+            type: string
+          field_path:
+            const: null
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 415

@@ -1,0 +1,83 @@
+{
+  "case": {
+    "body": {
+      "bundle": {
+        "name": "org-defaults",
+        "version": 1
+      },
+      "graph_keys": [
+        "env",
+        "tenant"
+      ],
+      "priority": 100,
+      "selector": {
+        "env": "prod",
+        "tenant": "acme"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_binding_prod_acme",
+    "method": "POST",
+    "path": "/v1/policies/bindings"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "binding_id": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "bundle": {
+          "properties": {
+            "name": {
+              "const": "org-defaults"
+            },
+            "version": {
+              "const": 1
+            }
+          },
+          "required": [
+            "name",
+            "version"
+          ],
+          "type": "object"
+        },
+        "graph_keys": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "priority": {
+          "const": 100
+        },
+        "selector": {
+          "properties": {
+            "env": {
+              "const": "prod"
+            },
+            "tenant": {
+              "const": "acme"
+            }
+          },
+          "required": [
+            "env",
+            "tenant"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "binding_id",
+        "bundle",
+        "selector",
+        "graph_keys",
+        "priority"
+      ],
+      "type": "object"
+    },
+    "status_code": 201
+  }
+}

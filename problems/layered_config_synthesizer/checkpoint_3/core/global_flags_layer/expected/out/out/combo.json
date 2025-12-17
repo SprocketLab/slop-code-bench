@@ -1,0 +1,1 @@
+{"experiment_name":"combo","resources":{"accelerators":[{"count":2,"type":"t4"}],"profile":"shared","world_size":2},"training":{"batch_size":26,"optimizer":"tiger"}}

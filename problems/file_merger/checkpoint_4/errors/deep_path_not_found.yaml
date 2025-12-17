@@ -1,0 +1,27 @@
+case:
+  arguments: --output out.csv --key user.nonexistent.field --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 1
+      user:
+        name: Alice
+        age: 30
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: name
+              type: string
+            - name: age
+              type: int
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 3
+  stderr: ^ERR 3.*user.nonexistent.field.*not present in resolved schema.*

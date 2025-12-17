@@ -1,0 +1,4 @@
+start_cargo: 12500
+waypoints:
+  - name: Niyabainen IV - Moon 1 - Caldari Navy Assembly Plant
+    cargo: 2500

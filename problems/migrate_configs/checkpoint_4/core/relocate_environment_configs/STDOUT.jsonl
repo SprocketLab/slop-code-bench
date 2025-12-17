@@ -1,0 +1,4 @@
+{"event":"file_relocated","from":"environments/production/app.yaml","to":"flattened_env/production/app.yaml"}
+{"event":"file_relocated","from":"environments/production/db.yaml","to":"flattened_env/production/db.yaml"}
+{"event":"file_relocated","from":"environments/staging/app.yaml","to":"flattened_env/staging/app.yaml"}
+{"event":"file_relocated","from":"environments/staging/db.yaml","to":"flattened_env/staging/db.yaml"}

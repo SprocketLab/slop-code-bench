@@ -1,0 +1,14 @@
+case:
+  arguments: --output out.csv --key id a.jsonl b.csv
+  input_files:
+  - content:
+    - name: bob
+    file_type: csv
+    path: b.csv
+  - content:
+    - name: alice
+    file_type: jsonl
+    path: a.jsonl
+expected:
+  status_code: 3
+  stderr: ^ERR 3.*

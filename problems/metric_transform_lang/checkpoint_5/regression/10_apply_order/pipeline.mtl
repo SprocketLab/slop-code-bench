@@ -1,0 +1,17 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline ApplyOrder using Sale {
+  apply(len(item), item_len)
+  filter(item_len > 4)
+  aggregate count(*) as n,
+            sum(price) as total
+}

@@ -1,0 +1,15 @@
+case:
+  arguments: --output out.csv --key id --schema bad.json a.csv
+  input_files:
+  - content:
+    - id: '1'
+    file_type: csv
+    path: a.csv
+  - content: '{ not valid json
+
+      '
+    file_type: text
+    path: bad.json
+expected:
+  status_code: 2
+  stderr: ^ERR 2

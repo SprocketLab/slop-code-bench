@@ -1,0 +1,45 @@
+{
+  "arguments": "--sql query.sql --sharded users=test_data/users_part*.csv --data test_data",
+  "input_files": [
+    {
+      "path": "test_data/users_part1.csv",
+      "content": [
+        {
+          "id": "1",
+          "name": "John",
+          "email": "john@example.com",
+          "age": "25"
+        },
+        {
+          "id": "2",
+          "name": "Jane",
+          "email": "jane@example.com",
+          "age": "30"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/users_part2.csv",
+      "content": [
+        {
+          "id": "3",
+          "name": "Bob",
+          "email": "bob@example.com",
+          "age": "35"
+        },
+        {
+          "id": "4",
+          "name": "Alice",
+          "email": "alice@example.com",
+          "age": "28"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT name, age\nFROM users\nWHERE age >= 25\nORDER BY age DESC",
+  "expected": "| name   |   age |\n|--------|-------|\n| Bob    |    35 |\n| Jane   |    30 |\n| Alice  |    28 |\n| John   |    25 |"
+}

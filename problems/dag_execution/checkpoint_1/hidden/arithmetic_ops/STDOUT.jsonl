@@ -1,0 +1,12 @@
+{"event": "TASK_STARTED", "job_id": 1, "task": "main", "parent": null}
+{"event": "TASK_STARTED", "job_id": 2, "task": "Calculate", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 2, "task": "Calculate", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 2, "task": "Calculate", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 3, "task": "Calculate", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 3, "task": "Calculate", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 3, "task": "Calculate", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 4, "task": "Calculate", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 4, "task": "Calculate", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 4, "task": "Calculate", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 1, "task": "main", "parent": null}
+{"event": "TASK_COMPLETED", "job_id": 1, "task": "main", "parent": null}

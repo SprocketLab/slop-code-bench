@@ -1,0 +1,10 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "assign_metadata_hosts": {
+      "type": "pattern_replace",
+      "key_pattern": "services.$name.metadata.host",
+      "value": "${name}.prod.internal"
+    }
+  }
+}

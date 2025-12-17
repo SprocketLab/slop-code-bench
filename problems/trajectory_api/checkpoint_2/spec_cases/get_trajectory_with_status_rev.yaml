@@ -1,0 +1,37 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: get_trajectory_with_status_rev
+  method: GET
+  path: /trajectories/{{store.create_in_progress_trajectory}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.create_in_progress_trajectory}}"
+      record:
+        properties:
+          status:
+            const: finalized
+        type: object
+      derived:
+        properties:
+          steps:
+            const: 6
+          final_output_tokens:
+            const: 25
+          final_cost:
+            const: 0.0032
+        type: object
+      status:
+        const: finalized
+      rev:
+        const: 4
+    required:
+    - id
+    - record
+    - derived
+    - status
+    - rev
+    type: object
+  status_code: 200

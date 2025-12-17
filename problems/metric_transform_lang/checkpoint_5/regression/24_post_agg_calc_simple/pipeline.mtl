@@ -1,0 +1,14 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  location: string
+  price: float
+}
+
+pipeline SimplePostCalc using Sale {
+  group_by(['location'])
+  aggregate sum(price) as total, count(*) as n
+
+  calc avg_price = total / n : float @stage(post_agg)
+  calc total_doubled = total * 2.0 : float @stage(post_agg)
+}

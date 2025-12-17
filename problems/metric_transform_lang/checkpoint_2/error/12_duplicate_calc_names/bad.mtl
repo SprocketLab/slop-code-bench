@@ -1,0 +1,11 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+}
+
+pipeline DupCalc using Sale {
+  calc doubled = price * 2.0 : float @stage(pre)
+  # Duplicate name - should error
+  calc doubled = price * 3.0 : float @stage(pre)
+  aggregate sum(doubled) as total
+}

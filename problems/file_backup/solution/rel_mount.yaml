@@ -1,0 +1,14 @@
+jobs:
+- destination: ignored://sink
+  exclude:
+  - data/**
+  - '*.py'
+  - A/*
+  - '**/*.bin'
+  id: daily-home
+  source: mount://A/B
+  when:
+    at: 03:30
+    kind: daily
+timezone: UTC
+version: 1

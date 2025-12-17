@@ -1,0 +1,32 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "input_files": [
+    {
+      "path": "configs/inheritance/default.json",
+      "file_type": "text",
+      "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+    },
+    {
+      "path": "configs/inheritance/json/legacy_app.json",
+      "file_type": "text",
+      "content": "{\n  \"extends\": \"base.json\",\n  \"name\": \"legacy-app\",\n  \"old_key\": \"value\"\n}\n"
+    },
+    {
+      "path": "configs/inheritance/json/base.json",
+      "file_type": "text",
+      "content": "{\n  \"timeout\": 30,\n  \"environment\": \"development\"\n}\n"
+    }
+  ],
+  "rules": {
+    "a_rename_old_key": {
+      "type": "rename_key",
+      "old_key": "old_key",
+      "new_key": "new_key"
+    },
+    "b_force_env": {
+      "type": "replace_value",
+      "key": "environment",
+      "value": "production"
+    }
+  }
+}

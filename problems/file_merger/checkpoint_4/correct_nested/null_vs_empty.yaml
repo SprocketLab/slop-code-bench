@@ -1,0 +1,54 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 1
+      items: []
+      meta: null
+      tags: {}
+    - id: 2
+      items:
+      - x
+      meta:
+        created: '2024-01-01'
+      tags:
+        a: '1'
+    - id: 3
+      items: null
+      meta: {}
+      tags: null
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: items
+        type:
+          array:
+            element: string
+      - name: meta
+        type:
+          struct:
+            fields:
+            - name: created
+              type: string
+      - name: tags
+        type:
+          map:
+            key: string
+            value: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv: 'id,items,meta,tags
+
+      1,"[]",null,"{}"
+
+      2,"[\"x\"]","{\"created\":\"2024-01-01\"}","{\"a\":\"1\"}"
+
+      3,null,"{\"created\":null}",null
+
+      '
+  status_code: 0

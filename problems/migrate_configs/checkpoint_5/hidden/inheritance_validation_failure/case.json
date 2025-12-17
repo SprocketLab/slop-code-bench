@@ -1,0 +1,30 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance.json",
+  "status_code": 1,
+  "rules": {
+    "require_timeout": {
+      "type": "require_keys",
+      "scope": "validation",
+      "keys": [
+        "timeout"
+      ]
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/inheritance/app.yaml",
+      "file_type": "text",
+      "content": "extends: base.yaml\nenvironment: staging\n"
+    },
+    {
+      "path": "configs/inheritance/base.yaml",
+      "file_type": "text",
+      "content": "region: us-west-2\n"
+    },
+    {
+      "path": "configs/inheritance.json",
+      "file_type": "text",
+      "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  }\n}\n"
+    }
+  ]
+}

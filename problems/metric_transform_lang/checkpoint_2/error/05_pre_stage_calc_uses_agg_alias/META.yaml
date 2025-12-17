@@ -1,0 +1,3 @@
+expected:
+  status_code: 1
+  stderr: ERROR:type_error:.*n.*

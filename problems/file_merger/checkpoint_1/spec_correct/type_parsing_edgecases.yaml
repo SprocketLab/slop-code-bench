@@ -1,0 +1,44 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json data.csv
+  input_files:
+  - content:
+    - amount: 1.5e2
+      flag: 'TRUE'
+      id: '+1'
+      score: '-42'
+      ts: '2024-07-01T12:00:00.123456Z'
+    - amount: 3.14e-1
+      flag: 'False'
+      id: '-2'
+      score: '+100'
+      ts: '2024-07-01T14:00:00+02:00'
+    file_type: csv
+    path: data.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: score
+        type: int
+      - name: amount
+        type: float
+      - name: flag
+        type: bool
+      - name: ts
+        type: timestamp
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - amount: 0.314
+      flag: false
+      id: -2
+      score: 100
+      ts: '2024-07-01T12:00:00Z'
+    - amount: 150.0
+      flag: true
+      id: 1
+      score: -42
+      ts: '2024-07-01T12:00:00.123456Z'
+  status_code: 0

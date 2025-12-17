@@ -1,0 +1,16 @@
+{
+    "end": "Serpentis Prime II - Archangels Testing Facilities",
+    "start": "Jita IV - Moon 4 - Caldari Navy Assembly Plant",
+    "cases": [
+        {
+            "extra": 1,
+            "cloak": true,
+            "expected": "START: Jita IV - Moon 4 - Caldari Navy Assembly Plant\nUNDOCK\nGO: Jita (0.9) -> Niyabainen (1.0)\nJUMP 4.90 LY: Tannolen (50K isotopes)\nDOCK: Tannolen VI - Moon 14 - Republic Security Services Testing Facilities\nUNDOCK\nGO: Tannolen (0.3) -> Tierijev (0.8)\nJUMP 9.65 LY: Sarline (97K isotopes)\nDOCK: Sarline IX - Moon 10 - Bank of Luminaire Depository\nUNDOCK\nGO: Sarline (0.4) -> Harner (0.1)\nJUMP 4.97 LY: Balas (50K isotopes)\nDOCK: Balas I - Moon 11 - Inherent Implants Biotech Production\nUNDOCK\nGO: Balas (0.0) -> Ertoo (0.1)\nJUMP 9.40 LY: WY-9LL (95K isotopes)\nDOCK: WY-9LL IX - Moon 1 - Salvation Angels Reprocessing Facility\nUNDOCK\nGO: WY-9LL (-0.2) -> 75FA-Z (-0.1)\nJUMP 1.53 LY: Serpentis Prime (16K isotopes)\nDOCK: Serpentis Prime II - Archangels Testing Facilities\nSUMMARY:\n  End Cooldown: 00:07\n  End Fatigue: 01:13\n  Isotopes Used: 305K\n  Time Waiting: 00:10\n  Total LY: 30.46"
+        },
+        {
+            "cloak": true,
+            "extra": 2,
+            "expected": "START: Jita IV - Moon 4 - Caldari Navy Assembly Plant\nUNDOCK\nGO: Jita (0.9) -> Niyabainen (1.0)\nJUMP 4.90 LY: Tannolen (50K isotopes)\nDOCK: Tannolen VI - Moon 14 - Republic Security Services Testing Facilities\nUNDOCK\nGO: Tannolen (0.3) -> Tierijev (0.8)\nJUMP 9.65 LY: Sarline (97K isotopes)\nDOCK: Sarline IX - Moon 10 - Bank of Luminaire Depository\nUNDOCK\nGO: Sarline (0.4) -> Harner (0.1)\nJUMP 4.97 LY: Balas (50K isotopes)\nDOCK: Balas I - Moon 11 - Inherent Implants Biotech Production\nUNDOCK\nGO: Balas (0.0) -> Ertoo (0.1)\nJUMP 9.40 LY: WY-9LL (95K isotopes)\nDOCK: WY-9LL IX - Moon 1 - Salvation Angels Reprocessing Facility\nUNDOCK\nGO: WY-9LL (-0.2) -> 75FA-Z (-0.1)\nJUMP 1.53 LY: Serpentis Prime (16K isotopes)\nDOCK: Serpentis Prime II - Archangels Testing Facilities\nSUMMARY:\n  End Cooldown: 00:07\n  End Fatigue: 01:13\n  Isotopes Used: 305K\n  Time Waiting: 00:10\n  Total LY: 30.46"
+        }
+    ]
+}

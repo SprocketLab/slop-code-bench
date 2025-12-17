@@ -1,0 +1,6 @@
+timestamp,location,item,price,quantity,unit,category
+2025-09-14T08:10:00Z,NYC,apple,1.5,2,pcs,fruit
+2025-09-14T08:35:00Z,NYC,banana,0.8,5,pcs,fruit
+2025-09-14T09:05:00Z,SF,apple,1.6,3,pcs,fruit
+2025-09-14T09:25:00Z,SF,apple,2.0,1,pcs,fruit
+2025-09-15T08:05:00Z,NYC,apple,2.5,1,pcs,fruit

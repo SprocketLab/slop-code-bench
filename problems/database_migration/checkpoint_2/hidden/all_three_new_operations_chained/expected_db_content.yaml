@@ -1,0 +1,36 @@
+tables:
+  employees:
+    columns:
+    - id
+    - temp_email
+    - salary
+    - first_name
+    - last_name
+    - email
+    - full_name
+    - bonus
+    rows:
+    - id: 1
+      temp_email: alice@old.com
+      salary: 50000
+      first_name: Alice
+      last_name: Anderson
+      email: alice@old.com
+      full_name: Alice Anderson
+      bonus: 5000
+    - id: 2
+      temp_email: null
+      salary: 60000
+      first_name: Bob
+      last_name: Brown
+      email: noemail@company.com
+      full_name: Bob Brown
+      bonus: 6000
+    - id: 3
+      temp_email: charlie@old.com
+      salary: 55000
+      first_name: Charlie
+      last_name: Clark
+      email: charlie@old.com
+      full_name: Charlie Clark
+      bonus: 5500

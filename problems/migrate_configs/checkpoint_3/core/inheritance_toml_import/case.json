@@ -1,0 +1,21 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "input_files": [
+    {
+      "path": "configs/inheritance/default.json",
+      "file_type": "text",
+      "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+    },
+    {
+      "path": "configs/inheritance/toml/app.toml",
+      "file_type": "text",
+      "content": "[import]\nbase = \"base.toml\"\n\n[server]\nport = 9000\n"
+    },
+    {
+      "path": "configs/inheritance/toml/base.toml",
+      "file_type": "text",
+      "content": "timeout = 30\n\n[server]\nport = 8080\n"
+    }
+  ],
+  "rules": {}
+}

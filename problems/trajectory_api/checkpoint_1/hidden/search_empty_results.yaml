@@ -1,0 +1,19 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_empty_results
+  method: GET
+  path: /trajectories?task=nonexistent_task_that_does_not_exist_xyz123
+expected:
+  output:
+    properties:
+      items:
+        type: array
+        maxItems: 0
+      next_cursor:
+        const: null
+    required:
+    - items
+    - next_cursor
+    type: object
+  status_code: 200

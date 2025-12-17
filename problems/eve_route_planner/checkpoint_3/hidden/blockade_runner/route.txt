@@ -1,0 +1,17 @@
+SHIP: Prowler
+START: Hek VIII - Moon 12 - Boundless Creation Factory
+LOAD Kovy Viliana (id=1): 5.00M ISK | 5,000.00 m3
+UNDOCK
+GO: Hek (0.8) -> Nakugard (0.5) -> Lanngisi (0.5)
+DOCK: Lanngisi III - Moon 2 - Sisters of EVE Bureau
+UNLOAD Kovy Viliana (id=1): 2 Jumps | 5,000.00 m3
+UNDOCK
+GO: Lanngisi (0.5) -> Nakugard (0.5) -> Hek (0.8)
+DOCK: Hek VIII - Moon 12 - Boundless Creation Factory
+DONE: 00:03
+MOVED: 5,000.00 m3
+NUM CONTRACTS: 1
+PROFIT: 5.00M
+ISK/M3: 1000.00
+ISK/Jump: 1.25M
+ISK/Hour: 118.08M

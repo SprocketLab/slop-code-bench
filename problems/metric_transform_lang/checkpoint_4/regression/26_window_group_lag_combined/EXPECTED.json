@@ -1,0 +1,34 @@
+[
+  {
+    "window_start": "2025-09-14T08:00:00Z",
+    "window_end": "2025-09-14T09:00:00Z",
+    "location": "NYC",
+    "total": 40.0,
+    "change": 40.0,
+    "prev": null
+  },
+  {
+    "window_start": "2025-09-14T08:00:00Z",
+    "window_end": "2025-09-14T09:00:00Z",
+    "location": "SF",
+    "total": 20.0,
+    "change": -20.0,
+    "prev": 40.0
+  },
+  {
+    "window_start": "2025-09-14T09:00:00Z",
+    "window_end": "2025-09-14T10:00:00Z",
+    "location": "NYC",
+    "total": 40.0,
+    "change": 20.0,
+    "prev": 20.0
+  },
+  {
+    "window_start": "2025-09-14T09:00:00Z",
+    "window_end": "2025-09-14T10:00:00Z",
+    "location": "SF",
+    "total": 50.0,
+    "change": 10.0,
+    "prev": 40.0
+  }
+]

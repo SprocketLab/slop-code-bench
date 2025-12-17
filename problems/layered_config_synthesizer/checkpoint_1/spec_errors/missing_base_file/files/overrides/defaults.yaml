@@ -1,0 +1,4 @@
+training:
+  optimizer: adam
+resources:
+  profile: base-missing

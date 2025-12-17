@@ -1,0 +1,4 @@
+{"job_id": 2, "task": "CreateFiles", "params": {"filename": "file1.txt"}, "stdout": "Created file1.txt\n", "stderr": "", "timed_out": false, "success": {"check_created": true}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.017852991999461665}
+{"job_id": 3, "task": "CreateFiles", "params": {"filename": "file2.dat"}, "stdout": "Created file2.dat\n", "stderr": "", "timed_out": false, "success": {"check_created": true}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.020732961000248906}
+{"job_id": 4, "task": "CheckMultiple", "params": {}, "stdout": "Checking files...\n", "stderr": "", "timed_out": false, "success": {"file1": true, "file2": true, "nested": false, "nonexistent": true}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.017241303999981028}
+{"job_id": 1, "task": "main", "params": {}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 1, "parent": null, "duration": 0.0563328830012324}

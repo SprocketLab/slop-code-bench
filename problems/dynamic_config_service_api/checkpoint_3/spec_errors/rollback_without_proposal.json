@@ -1,0 +1,44 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "version": 1
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "rollback_without_proposal",
+    "method": "POST",
+    "path": "/v1/configs/billing:rollback"
+  },
+  "expected": {
+    "status_code": 409,
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "approval_required"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    }
+  }
+}

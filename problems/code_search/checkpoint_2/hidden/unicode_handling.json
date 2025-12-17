@@ -1,0 +1,48 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 4,
+        "line": 1
+      },
+      "file": "test.py",
+      "language": "python",
+      "match": "\ud83d\ude80",
+      "rule_id": "emoji",
+      "start": {
+        "col": 3,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 11,
+        "line": 2
+      },
+      "file": "test.py",
+      "language": "python",
+      "match": "\u4e2d\u6587",
+      "rule_id": "chinese",
+      "start": {
+        "col": 9,
+        "line": 2
+      }
+    }
+  ],
+  "input_files": {
+    "proj/test.py": "# \ud83d\ude80 Launch\ntext = '\u4e2d\u6587\u6d4b\u8bd5'"
+  },
+  "rules.json": [
+    {
+      "id": "emoji",
+      "kind": "exact",
+      "pattern": "\ud83d\ude80"
+    },
+    {
+      "id": "chinese",
+      "kind": "exact",
+      "pattern": "\u4e2d\u6587"
+    }
+  ]
+}

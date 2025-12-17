@@ -1,0 +1,9 @@
+schema Event {
+  timestamp: timestamp
+  value: float
+}
+
+pipeline OutOfOrder using Event {
+  window(1h)
+  aggregate sum(value) as total
+}

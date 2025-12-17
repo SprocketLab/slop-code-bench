@@ -1,0 +1,14 @@
+{
+    "start": "N5Y-4N VII - Moon 20 - Guristas Logistic Support",
+    "end": "Kor-Azor Prime II - Kor-Azor Family Bureau",
+    "cases": [
+        {
+            "extra": 0,
+            "expected": "START: N5Y-4N VII - Moon 20 - Guristas Logistic Support\nUNDOCK\nJUMP 2.01 LY: K3JR-J (21K isotopes)\nDOCK: K3JR-J VIII - Guristas Assembly Plant\nUNDOCK\nJUMP 9.71 LY: 5ZXX-K (98K isotopes)\nDOCK: 5ZXX-K V - Moon 17 - Mordu's Legion Testing Facilities\nUNDOCK\nJUMP 8.07 LY: Pavanakka (81K isotopes)\nDOCK: Pavanakka III - Caldari Constructions Warehouse\nUNDOCK\nJUMP 9.71 LY: Costolle (98K isotopes)\nDOCK: Costolle III - Moon 1 - Federation Customs Logistic Support\nUNDOCK\nJUMP 8.92 LY: Ziasad (90K isotopes)\nDOCK: Ziasad IX - Moon 3 - Genolution Biotech Production\nUNDOCK\nJUMP 7.45 LY: Ami (75K isotopes)\nDOCK: Ami XI - Moon 1 - Emperor Family Bureau\nUNDOCK\nGO: Ami (0.4) -> Amdonen (0.6) -> Kor-Azor Prime (0.9)\nDOCK: Kor-Azor Prime II - Kor-Azor Family Bureau\nSUMMARY:\n  End Cooldown: 00:12\n  End Fatigue: 03:12\n  Isotopes Used: 459K\n  Time Waiting: 00:16\n  Total LY: 45.87"
+        },
+        {
+            "extra": 3,
+            "expected": "START: N5Y-4N VII - Moon 20 - Guristas Logistic Support\nUNDOCK\nJUMP 2.01 LY: K3JR-J (21K isotopes)\nDOCK: K3JR-J VIII - Guristas Assembly Plant\nUNDOCK\nJUMP 9.71 LY: 5ZXX-K (98K isotopes)\nDOCK: 5ZXX-K V - Moon 17 - Mordu's Legion Testing Facilities\nUNDOCK\nJUMP 9.45 LY: Prism (95K isotopes)\nDOCK: Prism VII - Wiyrkomi Peace Corps Assembly Plant\nUNDOCK\nJUMP 9.37 LY: Ane (94K isotopes)\nDOCK: Ane III - Moon 1 - FedMart Warehouse\nUNDOCK\nJUMP 7.59 LY: Naguton (76K isotopes)\nDOCK: Naguton VIII - Moon 1 - Sisters of EVE Academy\nUNDOCK\nGO: Naguton (0.3) -> Sayartchen (0.8) -> Teshi (0.9) -> Ashab (0.9) -> Amarr (1.0) -> Kor-Azor Prime (0.9)\nDOCK: Kor-Azor Prime II - Kor-Azor Family Bureau\nSUMMARY:\n  End Cooldown: 00:07\n  End Fatigue: 01:55\n  Isotopes Used: 382K\n  Time Waiting: 00:09\n  Total LY: 38.13"
+        }
+    ]
+}

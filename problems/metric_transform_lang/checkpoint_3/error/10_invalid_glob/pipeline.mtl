@@ -1,0 +1,8 @@
+schema Data {
+  timestamp: timestamp
+  value: float
+}
+
+pipeline InvalidGlob using Data {
+  aggregate sum(value) as total
+}

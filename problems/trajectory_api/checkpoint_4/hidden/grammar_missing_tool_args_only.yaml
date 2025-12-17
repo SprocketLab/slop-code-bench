@@ -1,0 +1,29 @@
+case:
+  body:
+    grammar: "TOOL_CALL = '<tool ', TOOL_NAME, '/>'; TOOL_NAME = letter , { letter | digit | '_' };"
+    activate: false
+  headers:
+    content-type: application/json; charset=utf-8
+  id: grammar_missing_tool_args_only
+  method: POST
+  path: /environments/missing-tool-args-env/versions
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: INVALID_GRAMMAR
+          message:
+            type: string
+          field_path:
+            type: [string, "null"]
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 422

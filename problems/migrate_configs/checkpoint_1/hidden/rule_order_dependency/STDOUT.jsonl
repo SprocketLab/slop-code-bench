@@ -1,0 +1,2 @@
+{"event":"file_updated","file":"services/api.yaml","rules_applied":["a_rename_hostname","b_update_host_value"]}
+{"event":"file_updated","file":"services/cache.yaml","rules_applied":["a_rename_hostname","b_update_host_value","c_update_metrics"]}

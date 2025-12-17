@@ -1,0 +1,1 @@
+{"job_id": 1, "task": "main", "params": {}, "stdout": "Hello\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": null, "duration": 0.018493353998565}

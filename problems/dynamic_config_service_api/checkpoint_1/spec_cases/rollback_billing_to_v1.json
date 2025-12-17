@@ -1,0 +1,29 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "to_version": 1
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "rollback_billing_to_v1",
+    "method": "POST",
+    "path": "/v1/configs/billing:rollback"
+  },
+  "expected": {
+    "output": {
+      "active": true,
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "version": 1
+    },
+    "status_code": 200
+  }
+}

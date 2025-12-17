@@ -1,0 +1,37 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "expected_stdout": "{\"event\":\"validation_failed\",\"file\":\"app.yaml\",\"rule\":\"require_environment\",\"error\":\"missing required key: environment\"}\\n{\"event\":\"validation_failed\",\"file\":\"worker.yaml\",\"rule\":\"validate_env_values\",\"error\":\"value 'testing' at key 'environment' not in allowed values: [development, production]\"}\\n",
+  "rules": {
+    "require_environment": {
+      "type": "require_keys",
+      "scope": "validation",
+      "keys": [
+        "environment"
+      ]
+    },
+    "validate_env_values": {
+      "type": "validate_value",
+      "scope": "validation",
+      "key": "environment",
+      "constraint": {
+        "enum": [
+          "development",
+          "production"
+        ]
+      }
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "yaml",
+      "content": "timeout: 30\\n"
+    },
+    {
+      "path": "configs/worker.yaml",
+      "file_type": "yaml",
+      "content": "environment: testing\\n"
+    }
+  ]
+}

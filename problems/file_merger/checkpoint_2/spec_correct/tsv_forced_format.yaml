@@ -1,0 +1,14 @@
+case:
+  arguments: --output output.csv --key id --input-format tsv data.data
+  input_files:
+  - content: "id\tname\n2\tb\n1\ta"
+    file_type: text
+    path: data.data
+expected:
+  files:
+    output.csv:
+    - id: 1
+      name: a
+    - id: 2
+      name: b
+  status_code: 0

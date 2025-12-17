@@ -1,0 +1,75 @@
+{
+  "case": {
+    "body": {
+      "actor": "alice",
+      "decision": "approve",
+      "message": "LGTM"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "review_alice_approve_proposal_4",
+    "method": "POST",
+    "path": "/v1/proposals/4:review"
+  },
+  "expected": {
+    "output": {
+      "author": "carol",
+      "base_version": 2,
+      "description": "Better description for pool increase",
+      "diffs": {
+        "human": [
+          "REPLACE /db/pool: 8 -> 12"
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ]
+      },
+      "draft_version": 3,
+      "labels": [
+        "urgent"
+      ],
+      "name": "billing",
+      "proposal_id": 4,
+      "quorum": {
+        "allow_author_approval": false,
+        "allowed_reviewers": [
+          "alice",
+          "bob",
+          "carol"
+        ],
+        "required_approvals": 2
+      },
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "status": "open",
+      "tally": {
+        "approvals": 1,
+        "by_actor": [
+          {
+            "actor": "alice",
+            "decision": "approve",
+            "message": "LGTM"
+          }
+        ],
+        "rejections": 0
+      },
+      "title": "Pool increase v3"
+    },
+    "status_code": 200
+  }
+}

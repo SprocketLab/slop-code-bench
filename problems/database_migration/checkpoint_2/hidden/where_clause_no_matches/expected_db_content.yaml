@@ -1,0 +1,16 @@
+tables:
+  products:
+    columns:
+    - id
+    - name
+    - status
+    rows:
+    - id: 1
+      name: Widget
+      status: active
+    - id: 2
+      name: Gadget
+      status: active
+    - id: 3
+      name: Doohickey
+      status: active

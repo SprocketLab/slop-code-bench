@@ -1,0 +1,51 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 7,
+        "line": 1
+      },
+      "file": "test.go",
+      "language": "go",
+      "match": "return",
+      "rule_id": "return_keyword",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 7,
+        "line": 1
+      },
+      "file": "test.rs",
+      "language": "rust",
+      "match": "return",
+      "rule_id": "return_keyword",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/test.go": "return 42",
+    "proj/test.hs": "return \"hello\"",
+    "proj/test.java": "return true;",
+    "proj/test.py": "return False",
+    "proj/test.rs": "return 42"
+  },
+  "rules.json": [
+    {
+      "id": "return_keyword",
+      "kind": "exact",
+      "languages": [
+        "rust",
+        "go"
+      ],
+      "pattern": "return"
+    }
+  ]
+}

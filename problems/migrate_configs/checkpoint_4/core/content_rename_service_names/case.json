@@ -1,0 +1,14 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "name_by_service": {
+      "type": "content_rename",
+      "scope": "file",
+      "file_pattern": "services/*/config.yaml",
+      "variables": {
+        "svc": "service.name"
+      },
+      "new_path": "${svc}.yaml"
+    }
+  }
+}

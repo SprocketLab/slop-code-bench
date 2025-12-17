@@ -1,0 +1,11 @@
+schema A extends B {
+  x: int
+}
+
+schema B extends A {
+  y: int
+}
+
+pipeline P using A {
+  aggregate count(*) as n
+}

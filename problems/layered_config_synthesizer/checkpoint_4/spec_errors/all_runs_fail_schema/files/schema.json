@@ -1,0 +1,74 @@
+{
+  "type": "object",
+  "required": [
+    "experiment_name",
+    "training",
+    "resources"
+  ],
+  "properties": {
+    "experiment_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "training": {
+      "type": "object",
+      "required": [
+        "optimizer"
+      ],
+      "properties": {
+        "optimizer": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "launcher": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "resources": {
+      "type": "object",
+      "required": [
+        "profile",
+        "world_size"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string"
+        },
+        "world_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "accelerators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "count"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,8 @@
+schema Data {
+  timestamp: timestamp
+  value: float
+}
+
+pipeline MixedNulls using Data {
+  aggregate count(*) as n, count(value) as val_count, sum(value) as total
+}

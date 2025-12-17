@@ -1,0 +1,10 @@
+app: migrate-configs
+logging:
+  level: info
+  format: json
+  handlers:
+  - console
+  - file
+cache:
+  ttl: 300
+  enabled: true

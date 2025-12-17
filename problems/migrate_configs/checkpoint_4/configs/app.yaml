@@ -1,0 +1,3 @@
+extends: base.yaml
+app: myapp
+environment: staging

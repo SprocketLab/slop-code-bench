@@ -1,0 +1,10 @@
+{
+  "expected": "| region   | currency   |   orders |   total_spent |\n|----------|------------|----------|---------------|\n| EU       | EUR        |        3 |         36.95 |\n| NA       | USD        |        2 |         29.5  |",
+  "query": "SELECT u.region,\n       r.currency,\n       COUNT(*) AS orders,\n       ROUND(SUM(o.total),2) AS total_spent\nFROM users AS u\nINNER JOIN orders AS o ON u.user_id = o.user_id\nLEFT JOIN regions.currency AS r ON u.region = r.region\nGROUP BY u.region, r.currency\nORDER BY total_spent DESC\n",
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ]
+}

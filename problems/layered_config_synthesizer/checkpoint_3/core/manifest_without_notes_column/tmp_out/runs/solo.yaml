@@ -1,0 +1,3 @@
+experiment_name: solo
+resources:
+  world_size: 4

@@ -1,0 +1,56 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "end": {
+        "col": 14,
+        "line": 2
+      },
+      "file": "code.py",
+      "language": "python",
+      "match": "return 42",
+      "rule_id": "multiline_fix",
+      "start": {
+        "col": 5,
+        "line": 2
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 14,
+        "line": 2
+      },
+      "event": "fix",
+      "file": "code.py",
+      "language": "python",
+      "replacement": "# TODO: refactor\n    result = 42\n    return result",
+      "rule_id": "multiline_fix",
+      "skipped_reason": null,
+      "start": {
+        "col": 5,
+        "line": 2
+      }
+    }
+  ],
+  "expected_files": {
+    "proj/code.py": "def foo():\n    # TODO: refactor\n    result = 42\n    return result"
+  },
+  "input_files": {
+    "proj/code.py": "def foo():\n    return 42"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "# TODO: refactor\n    result = 42\n    return result"
+      },
+      "id": "multiline_fix",
+      "kind": "selector",
+      "languages": [
+        "python"
+      ],
+      "selector": "return_statement"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+id: left_join
+files:
+  query.sql: 'SELECT u.id, u.first_name, p.price FROM users u LEFT JOIN payments.pampas
+    p ON u.id = p.id WHERE u.country = ''DE'' ORDER BY u.id
+
+    '
+expected: '|   id | first_name   | price   |
+
+  |------|--------------|---------|
+
+  |   43 | Willard      | NULL    |
+
+  |   46 | Joice        | NULL    |'

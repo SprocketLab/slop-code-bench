@@ -1,0 +1,4 @@
+CONFLICT omega /training/optimizer base.yaml -> runs/omega.yaml
+CONFLICT omega /training/optimizer runs/omega.yaml -> run_flags/omega.json
+FRAGMENT_DEPRECATED omega legacy_logger Use structured_logger
+FRAGMENT_DEPRECATED psi legacy_logger Use structured_logger

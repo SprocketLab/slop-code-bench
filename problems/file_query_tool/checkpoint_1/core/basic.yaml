@@ -1,0 +1,12 @@
+id: basic
+files:
+  query.sql: 'SELECT DISTINCT country FROM users WHERE users.job LIKE ''%Assistant%''
+
+    '
+expected: '| country   |
+
+  |-----------|
+
+  | AR        |
+
+  | FR        |'

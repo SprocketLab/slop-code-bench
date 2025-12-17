@@ -1,0 +1,25 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_status_in_progress_only
+  method: GET
+  path: /trajectories?status=in_progress&limit=100
+expected:
+  output:
+    properties:
+      items:
+        type: array
+        items:
+          properties:
+            status:
+              const: in_progress
+            rev:
+              type: integer
+          required:
+            - status
+            - rev
+          type: object
+    required:
+      - items
+    type: object
+  status_code: 200

@@ -1,0 +1,29 @@
+case:
+  body:
+    grammar: "tool_call = '<tool ', tool_name, ' args=\"', tool_args, '\"/>'; tool_name = letter; tool_args = letter;"
+    activate: false
+  headers:
+    content-type: application/json; charset=utf-8
+  id: grammar_case_sensitive_nonterminals
+  method: POST
+  path: /environments/case-sensitive-env/versions
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: INVALID_GRAMMAR
+          message:
+            type: string
+          field_path:
+            type: [string, "null"]
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 422

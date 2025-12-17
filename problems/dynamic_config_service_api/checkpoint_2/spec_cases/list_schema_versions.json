@@ -1,0 +1,25 @@
+{
+  "case": {
+    "body": {},
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "list_schema_versions",
+    "method": "POST",
+    "path": "/v1/schemas/cfg/versions"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "name": "cfg",
+      "versions": [
+        {
+          "version": 1
+        },
+        {
+          "version": 2
+        }
+      ]
+    }
+  }
+}

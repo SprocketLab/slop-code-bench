@@ -1,0 +1,17 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Migrate email to email_address\"\
+    ,\n  \"operations\": [\n    {\n      \"type\": \"add_column\",\n      \"table\"\
+    : \"users\",\n      \"column\": {\n        \"name\": \"email_address\",\n    \
+    \    \"type\": \"TEXT\",\n        \"not_null\": false\n      }\n    },\n    {\n\
+    \      \"type\": \"migrate_column_data\",\n      \"table\": \"users\",\n     \
+    \ \"from_column\": \"email\",\n      \"to_column\": \"email_address\"\n    },\n\
+    \    {\n      \"type\": \"drop_column\",\n      \"table\": \"users\",\n      \"\
+    column\": \"email\"\n    }\n  ]\n}\n"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

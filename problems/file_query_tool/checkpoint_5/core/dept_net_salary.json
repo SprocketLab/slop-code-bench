@@ -1,0 +1,11 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "query": "WITH dept_totals AS (\n    SELECT\n        department,\n        SUM(salary) as total_salary,\n        COUNT(*) as employee_count\n    FROM employees\n    GROUP BY department\n)\nSELECT\n    department,\n    total_salary,\n    employee_count\nFROM dept_totals\nORDER BY total_salary DESC",
+    "expected": "| department  | total_salary | employee_count |\n| ----------- | ------------ | -------------- |\n| Engineering | 470000       | 5              |\n| Sales       | 255000       | 3              |",
+    "input_data": "data.json"
+}

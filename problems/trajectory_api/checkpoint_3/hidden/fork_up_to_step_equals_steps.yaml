@@ -1,0 +1,30 @@
+case:
+  body:
+    up_to_step: 5
+    status: in_progress
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: fork_up_to_step_equals_steps
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_fork_basic}}/fork
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: INVALID_FORK_POINT
+          message:
+            const: up_to_step must be within [0, parent.steps-1]
+          field_path:
+            const: up_to_step
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 422

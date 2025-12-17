@@ -1,0 +1,24 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"app.yaml\",\"rules_applied\":[\"add_environment\"]}\\n{\"event\":\"file_relocated\",\"from\":\"app.yaml\",\"to\":\"deploy/production.yaml\"}\\n{\"event\":\"file_updated\",\"file\":\"deploy/production.yaml\",\"rules_applied\":[],\"reason\":\"inheritance_reference_update\"}\\n",
+  "rules": {
+    "add_environment": {
+      "type": "merge_data",
+      "data": {
+        "environment": "production"
+      }
+    },
+    "move_to_deploy": {
+      "type": "content_rename",
+      "scope": "file",
+      "file_pattern": "app.yaml",
+      "variables": {
+        "env": "environment"
+      },
+      "new_path": "deploy/${env}.yaml"
+    }
+  },
+  "expected_files": {
+    "configs/deploy/production.yaml": "extends: ../base.yaml\\napp: myapp\\nenvironment: production\\ntimeout: 30\\nregion: us-west-2\\n"
+  }
+}

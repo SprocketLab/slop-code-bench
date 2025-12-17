@@ -1,0 +1,12 @@
+[
+  {
+    "location": "BOS",
+    "web_rev": 2.0,
+    "store_units": 20.0
+  },
+  {
+    "location": "NYC",
+    "web_rev": 5.5,
+    "store_units": 40.0
+  }
+]

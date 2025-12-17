@@ -1,0 +1,13 @@
+{
+    "end": "Jita IV - Moon 4 - Caldari Navy Assembly Plant",
+    "start": "Turnur III - Moon 18 - Freedom Extension Storage",
+    "cases": [
+        {
+            "expected": "START: Turnur III - Moon 18 - Freedom Extension Storage\nUNDOCK\nJUMP 6.47 LY: Ignoitton (65K isotopes)\nDOCK: Ignoitton V - Moon 13 - Federation Customs Logistic Support\nUNDOCK\nGO: Ignoitton (0.4) -> Iyen-Oursta (0.8) -> Perimeter (1.0) -> Jita (0.9)\nDOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant\nSUMMARY:\n  End Cooldown: 00:02\n  End Fatigue: 00:17\n  Isotopes Used: 65K\n  Time Waiting: 00:00\n  Total LY: 6.47"
+        },
+        {
+            "extra": 5,
+            "expected": "START: Turnur III - Moon 18 - Freedom Extension Storage\nUNDOCK\nJUMP 4.84 LY: Olettiers (49K isotopes)\nDOCK: Olettiers VII - Moon 2 - Expert Distribution Retail Center\nUNDOCK\nGO: Olettiers (0.4) -> Ambeke (0.5) -> Faurent (0.5) -> Iyen-Oursta (0.8) -> Perimeter (1.0) -> Jita (0.9)\nDOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant\nSUMMARY:\n  End Cooldown: 00:02\n  End Fatigue: 00:15\n  Isotopes Used: 49K\n  Time Waiting: 00:00\n  Total LY: 4.84"
+        }
+    ]
+}

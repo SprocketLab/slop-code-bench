@@ -1,0 +1,14 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "format_build_version": {
+      "type": "template_string",
+      "key": "details.build.version",
+      "variables": {
+        "owner": "metadata.owner"
+      },
+      "template": "${owner}-v1"
+    }
+  }
+}

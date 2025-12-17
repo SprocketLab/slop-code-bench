@@ -1,0 +1,4 @@
+timestamp,location,item,price,quantity,unit,category
+2024-03-05T09:00:00Z,NYC,apple,1.5,1,ea,fruit
+2024-03-05T09:15:00Z,NYC,apple,1.1,1,ea,fruit
+2024-03-05T09:30:00Z,LA,orange,0.9,1,ea,fruit

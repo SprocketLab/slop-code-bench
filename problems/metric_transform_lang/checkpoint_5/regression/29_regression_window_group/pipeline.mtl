@@ -1,0 +1,13 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  location: string
+  category: string
+  price: float
+}
+
+pipeline WinGroup using Sale {
+  window(1h)
+  group_by(['location', 'category'])
+  aggregate sum(price) as total, count(*) as n, average(price) as avg
+}

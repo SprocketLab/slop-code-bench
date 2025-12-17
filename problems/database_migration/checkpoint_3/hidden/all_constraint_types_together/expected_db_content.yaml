@@ -1,0 +1,29 @@
+tables:
+  accounts:
+    columns:
+    - id
+    - account_number
+    rows:
+    - id: 1
+      account_number: ACC-001
+    - id: 2
+      account_number: ACC-002
+  transactions:
+    columns:
+    - id
+    - account_id
+    - transaction_id
+    - amount
+    rows:
+    - id: 1
+      account_id: 1
+      transaction_id: TXN-001
+      amount: 100.5
+    - id: 2
+      account_id: 1
+      transaction_id: TXN-002
+      amount: 250.0
+    - id: 3
+      account_id: 2
+      transaction_id: TXN-003
+      amount: 75.25

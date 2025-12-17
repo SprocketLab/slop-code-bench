@@ -1,0 +1,20 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "expected_stdout": "{\"event\":\"validation_failed\",\"file\":\"app.yaml\",\"rule\":\"unique_service_names\",\"error\":\"duplicate values for field 'name' in array at 'services': api\"}\\n",
+  "rules": {
+    "unique_service_names": {
+      "type": "unique_array_values",
+      "scope": "validation",
+      "array_path": "services",
+      "field": "name"
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "yaml",
+      "content": "services:\\n  - name: api\\n    port: 8080\\n  - name: worker\\n    port: 8081\\n  - name: api\\n    port: 8082\\n"
+    }
+  ]
+}

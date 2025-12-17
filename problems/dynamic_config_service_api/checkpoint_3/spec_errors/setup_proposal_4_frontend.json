@@ -1,0 +1,80 @@
+{
+  "case": {
+    "body": {
+      "author": "dave",
+      "base_version": 0,
+      "description": "Initial frontend config",
+      "labels": [],
+      "scope": {
+        "app": "frontend",
+        "env": "prod"
+      },
+      "title": "Frontend v1"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "setup_proposal_4_frontend",
+    "method": "POST",
+    "path": "/v1/configs/frontend/1:propose"
+  },
+  "expected": {
+    "output": {
+      "author": "dave",
+      "base_version": 0,
+      "description": "Initial frontend config",
+      "labels": [],
+      "scope": {
+        "app": "frontend",
+        "env": "prod"
+      },
+      "title": "Frontend v1",
+      "diffs": {
+        "human": [
+          "SET /cache_ttl: 300",
+          "SET /theme: \"dark\""
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "add",
+            "path": "/cache_ttl",
+            "value": 300
+          },
+          {
+            "op": "add",
+            "path": "/theme",
+            "value": "dark"
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "add",
+            "path": "/cache_ttl",
+            "value": 300
+          },
+          {
+            "op": "add",
+            "path": "/theme",
+            "value": "dark"
+          }
+        ]
+      },
+      "draft_version": 1,
+      "name": "frontend",
+      "proposal_id": 4,
+      "quorum": {
+        "allow_author_approval": false,
+        "allowed_reviewers": null,
+        "required_approvals": 2
+      },
+      "status": "open",
+      "tally": {
+        "approvals": 0,
+        "by_actor": [],
+        "rejections": 0
+      }
+    },
+    "status_code": 201
+  }
+}

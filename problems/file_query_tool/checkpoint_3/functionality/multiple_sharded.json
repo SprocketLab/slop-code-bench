@@ -1,0 +1,113 @@
+{
+  "arguments": "--sql query.sql --sharded orders=test_data/orders/orders_*.csv --sharded products=test_data/products/products_*.csv --data test_data",
+  "input_files": [
+    {
+      "path": "test_data/products/products_a.csv",
+      "content": [
+        {
+          "product_id": "1",
+          "name": "Laptop",
+          "category": "Electronics",
+          "price": "999.99"
+        },
+        {
+          "product_id": "2",
+          "name": "Mouse",
+          "category": "Electronics",
+          "price": "29.99"
+        },
+        {
+          "product_id": "3",
+          "name": "Keyboard",
+          "category": "Electronics",
+          "price": "19.99"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/products/products_b.csv",
+      "content": [
+        {
+          "product_id": "4",
+          "name": "Monitor",
+          "category": "Electronics",
+          "price": "299.99"
+        },
+        {
+          "product_id": "5",
+          "name": "Headphones",
+          "category": "Electronics",
+          "price": "79.99"
+        },
+        {
+          "product_id": "6",
+          "name": "Webcam",
+          "category": "Electronics",
+          "price": "49.99"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/orders/orders_002.csv",
+      "content": [
+        {
+          "order_id": "104",
+          "product_id": "1",
+          "customer_id": "4",
+          "quantity": "1",
+          "price": "9.99"
+        },
+        {
+          "order_id": "105",
+          "product_id": "2",
+          "customer_id": "5",
+          "quantity": "2",
+          "price": "59.98"
+        },
+        {
+          "order_id": "106",
+          "product_id": "3",
+          "customer_id": "6",
+          "quantity": "1",
+          "price": "19.99"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/orders/orders_001.csv",
+      "content": [
+        {
+          "order_id": "101",
+          "product_id": "1",
+          "customer_id": "1",
+          "quantity": "2",
+          "price": "19.98"
+        },
+        {
+          "order_id": "102",
+          "product_id": "2",
+          "customer_id": "2",
+          "quantity": "1",
+          "price": "29.99"
+        },
+        {
+          "order_id": "103",
+          "product_id": "3",
+          "customer_id": "3",
+          "quantity": "3",
+          "price": "59.97"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT p.name, p.category, SUM(o.quantity) as total_quantity, SUM(o.price) as total_revenue\nFROM orders o\nJOIN products p ON o.product_id = p.product_id\nGROUP BY p.product_id, p.name, p.category\nORDER BY total_revenue DESC",
+  "expected": "| name     | category    |   total_quantity |   total_revenue |\n|----------|-------------|------------------|-----------------|\n| Mouse    | Electronics |                3 |           89.97 |\n| Keyboard | Electronics |                4 |           79.96 |\n| Laptop   | Electronics |                3 |           29.97 |"
+}

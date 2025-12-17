@@ -1,0 +1,9 @@
+schema BaseSale {
+  timestamp: timestamp
+  promo_code: string
+}
+
+pipeline P using BaseSale {
+  filter(promo_code == 'X')
+  aggregate count(*) as n
+}

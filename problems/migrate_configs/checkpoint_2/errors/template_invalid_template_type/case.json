@@ -1,0 +1,16 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "bad_template": {
+      "type": "template_string",
+      "key": "description",
+      "variables": {
+        "env": "environment"
+      },
+      "template": 123
+    }
+  },
+  "status_code": 1,
+  "expected_stderr": "^Error: template_string rule \\\"bad_template\\\" requires a string template"
+}

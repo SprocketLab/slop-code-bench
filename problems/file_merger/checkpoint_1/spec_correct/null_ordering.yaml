@@ -1,0 +1,37 @@
+case:
+  arguments: --output output.csv --key score --schema schema.json data1.csv data2.csv
+  input_files:
+  - content:
+    - id: '1'
+      score: '100'
+    - id: '2'
+      score: ''
+    file_type: csv
+    path: data1.csv
+  - content:
+    - id: '3'
+      score: '50'
+    - id: '4'
+      score: ''
+    file_type: csv
+    path: data2.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: score
+        type: int
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - id: 2
+      score: null
+    - id: 4
+      score: null
+    - id: 3
+      score: 50
+    - id: 1
+      score: 100
+  status_code: 0

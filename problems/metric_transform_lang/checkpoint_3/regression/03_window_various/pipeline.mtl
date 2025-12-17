@@ -1,0 +1,15 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline WindowVarious using Sale {
+  window(10m)
+  aggregate count(*) as n,
+            sum(price) as total_price
+}

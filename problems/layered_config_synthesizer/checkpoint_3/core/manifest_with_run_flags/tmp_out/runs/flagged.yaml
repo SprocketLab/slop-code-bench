@@ -1,0 +1,5 @@
+experiment_name: flagged
+training:
+  optimizer: adamw
+resources:
+  world_size: 5

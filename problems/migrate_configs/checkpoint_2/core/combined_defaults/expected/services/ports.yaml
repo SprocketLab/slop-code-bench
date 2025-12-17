@@ -1,0 +1,15 @@
+services:
+  archive:
+    metadata:
+      host: archive.dev.internal
+      port: 7200
+  payments:
+    host: payments.dev.internal
+    port: 9000
+  worker:
+    metadata:
+      host: worker.dev.internal
+      region: us-east-1
+    port: 9000
+environment: production
+timeout: 30

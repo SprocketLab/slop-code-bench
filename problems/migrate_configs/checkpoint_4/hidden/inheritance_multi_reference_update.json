@@ -1,0 +1,17 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "expected_stdout": "{\"event\":\"file_relocated\",\"from\":\"base.yaml\",\"to\":\"shared/base.yaml\"}\\n{\"event\":\"file_updated\",\"file\":\"apps/service_refs/api.yaml\",\"rules_applied\":[],\"reason\":\"inheritance_reference_update\"}\\n{\"event\":\"file_updated\",\"file\":\"apps/service_refs/worker.yaml\",\"rules_applied\":[],\"reason\":\"inheritance_reference_update\"}\\n",
+  "rules": {
+    "move_shared_base": {
+      "type": "relocate_files",
+      "scope": "file",
+      "source_pattern": "base.yaml",
+      "destination": "shared/"
+    }
+  },
+  "expected_files": {
+    "configs/shared/base.yaml": "timeout: 30\\nregion: us-west-2\\n",
+    "configs/apps/service_refs/api.yaml": "extends: ../../shared/base.yaml\\nservice: api\\n",
+    "configs/apps/service_refs/worker.yaml": "extends: ../../shared/base.yaml\\nservice: worker\\n"
+  }
+}

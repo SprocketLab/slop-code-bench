@@ -1,0 +1,29 @@
+[
+  {
+    "window_start": "2024-01-01T10:00:00Z",
+    "window_end": "2024-01-01T11:00:00Z",
+    "location": "LA",
+    "item": "apple",
+    "web_rev": 1.6,
+    "pos_total": 18.0,
+    "web_count": 1
+  },
+  {
+    "window_start": "2024-01-01T10:00:00Z",
+    "window_end": "2024-01-01T11:00:00Z",
+    "location": "NYC",
+    "item": "apple",
+    "web_rev": 1.5,
+    "pos_total": 12.0,
+    "web_count": 1
+  },
+  {
+    "window_start": "2024-01-01T10:00:00Z",
+    "window_end": "2024-01-01T11:00:00Z",
+    "location": "NYC",
+    "item": "orange",
+    "web_rev": null,
+    "pos_total": 8.0,
+    "web_count": 0
+  }
+]

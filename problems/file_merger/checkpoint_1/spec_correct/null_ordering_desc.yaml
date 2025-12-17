@@ -1,0 +1,30 @@
+case:
+  arguments: --output output.csv --key score --desc data.csv
+  input_files:
+  - content:
+    - id: '1'
+      score: '80'
+    - id: '2'
+      score: ''
+    - id: '3'
+      score: '100'
+    - id: '4'
+      score: ''
+    - id: '5'
+      score: '90'
+    file_type: csv
+    path: data.csv
+expected:
+  files:
+    output.csv:
+    - id: 3
+      score: 100
+    - id: 5
+      score: 90
+    - id: 1
+      score: 80
+    - id: 2
+      score: null
+    - id: 4
+      score: null
+  status_code: 0

@@ -1,0 +1,13 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  category: string
+  price: float
+}
+
+pipeline LagByGroup using Sale {
+  group_by(['category'])
+  aggregate sum(price) as total
+
+  calc prev_total = lag(total, 1) : float @stage(post_agg)
+}

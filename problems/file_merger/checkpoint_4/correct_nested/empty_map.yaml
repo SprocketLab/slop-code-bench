@@ -1,0 +1,36 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 2
+      name: Bob
+      attrs: {}
+    - id: 1
+      name: Alice
+      attrs:
+        role: admin
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: name
+        type: string
+      - name: attrs
+        type:
+          map:
+            key: string
+            value: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv: 'attrs,id,name
+
+      "{\"role\":\"admin\"}",1,Alice
+
+      "{}",2,Bob
+
+      '
+  status_code: 0

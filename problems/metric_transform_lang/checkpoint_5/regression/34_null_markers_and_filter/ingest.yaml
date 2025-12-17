@@ -1,0 +1,8 @@
+sources:
+  - name: main
+    inputs:
+      - "input.csv"
+      - "\"NULL,NaN\""
+    format: auto
+    schema: BaseSale
+    precedence: 10

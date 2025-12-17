@@ -1,0 +1,35 @@
+{
+  "case": {
+    "body": {
+      "config": {
+        "db": {
+          "pool": 4
+        }
+      },
+      "includes": [],
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "setup_billing_v1_draft",
+    "method": "POST",
+    "path": "/v1/configs/billing"
+  },
+  "expected": {
+    "output": {
+      "active": false,
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "status": "draft",
+      "version": 1
+    },
+    "status_code": 201
+  }
+}

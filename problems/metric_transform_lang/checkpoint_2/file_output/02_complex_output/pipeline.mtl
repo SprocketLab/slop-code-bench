@@ -1,0 +1,21 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  category: string
+  price: float
+  quantity: int
+}
+
+pipeline ComplexOutput using Sale {
+  calc revenue = price * quantity : float @stage(pre)
+
+  window(1h)
+  group_by(['location', 'category'])
+  aggregate sum(revenue) as total_rev,
+            count(*) as n,
+            average(price) as avg_price
+
+  calc prev_rev = lag(total_rev, 1) : float @stage(post_agg)
+  calc growth = total_rev - coalesce(prev_rev, 0.0) : float @stage(post_agg)
+  calc growth_pct = (growth / coalesce(prev_rev, total_rev)) * 100.0 : float @stage(post_agg)
+}

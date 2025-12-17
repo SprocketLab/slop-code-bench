@@ -1,0 +1,27 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 1
+      prefs:
+        a: y
+        "\xE9": x
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: prefs
+        type:
+          map:
+            key: string
+            value: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      prefs: '{"a":"y","é":"x"}'
+  status_code: 0

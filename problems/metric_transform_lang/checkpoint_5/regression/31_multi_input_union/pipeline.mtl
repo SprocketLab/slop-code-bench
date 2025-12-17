@@ -1,0 +1,19 @@
+mtl_version 1.5
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+schema WideSale extends BaseSale {
+  revenue: float = price * quantity
+}
+
+pipeline UnionAgg using WideSale {
+  aggregate sum(revenue) as total_rev,
+            count(*) as n
+}

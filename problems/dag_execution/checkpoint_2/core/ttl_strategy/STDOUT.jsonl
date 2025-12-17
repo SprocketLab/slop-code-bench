@@ -1,0 +1,47 @@
+{"event": "TASK_STARTED", "job_id": 1, "task": "create_app", "parent": null}
+{"event": "TASK_STARTED", "job_id": 2, "task": "build_module_1s", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 2, "task": "build_module_1s", "parent": 1, "cache_key": "c54d85abea10986d5d8e17bde65e2298985498564dee9c9b87eb6b539b9f445d"}
+{"event": "CACHE_MISS", "job_id": 2, "task": "build_module_1s", "parent": 1, "cache_key": "c54d85abea10986d5d8e17bde65e2298985498564dee9c9b87eb6b539b9f445d", "reason": "first_execution"}
+{"event": "TASK_RUNNING", "job_id": 2, "task": "build_module_1s", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 2, "task": "build_module_1s", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 3, "task": "build_module_1s", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 3, "task": "build_module_1s", "parent": 1, "cache_key": "8f466e2c77882cc2f74e532d39e222360ac99791296a6b4f8bd15abe44a2030e"}
+{"event": "CACHE_HIT", "job_id": 3, "task": "build_module_1s", "parent": 1, "cache_key": "8f466e2c77882cc2f74e532d39e222360ac99791296a6b4f8bd15abe44a2030e"}
+{"event": "TASK_COMPLETED", "job_id": 3, "task": "build_module_1s", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 4, "task": "build_module_1m", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 4, "task": "build_module_1m", "parent": 1, "cache_key": "f7e97252589a6b19302e51e518329ba05beec9bf9521cfb077760a571e460c67"}
+{"event": "CACHE_MISS", "job_id": 4, "task": "build_module_1m", "parent": 1, "cache_key": "f7e97252589a6b19302e51e518329ba05beec9bf9521cfb077760a571e460c67", "reason": "first_execution"}
+{"event": "TASK_RUNNING", "job_id": 4, "task": "build_module_1m", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 4, "task": "build_module_1m", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 5, "task": "build_module_1h", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 5, "task": "build_module_1h", "parent": 1, "cache_key": "9da466c3b5168902c1e3258d1724cb2facc3ff487361e6e7ca65f276c4ea1cb9"}
+{"event": "CACHE_MISS", "job_id": 5, "task": "build_module_1h", "parent": 1, "cache_key": "9da466c3b5168902c1e3258d1724cb2facc3ff487361e6e7ca65f276c4ea1cb9", "reason": "first_execution"}
+{"event": "TASK_RUNNING", "job_id": 5, "task": "build_module_1h", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 5, "task": "build_module_1h", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 6, "task": "build_module_1d", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 6, "task": "build_module_1d", "parent": 1, "cache_key": "4f59066ebee4a6ef07466052530339636d6d511187b6fbd25fcc4b257e95f19d"}
+{"event": "CACHE_MISS", "job_id": 6, "task": "build_module_1d", "parent": 1, "cache_key": "4f59066ebee4a6ef07466052530339636d6d511187b6fbd25fcc4b257e95f19d", "reason": "first_execution"}
+{"event": "TASK_RUNNING", "job_id": 6, "task": "build_module_1d", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 6, "task": "build_module_1d", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 7, "task": "sleepy_eepy", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 7, "task": "sleepy_eepy", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 7, "task": "sleepy_eepy", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 8, "task": "build_module_1s", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 8, "task": "build_module_1s", "parent": 1, "cache_key": "8f466e2c77882cc2f74e532d39e222360ac99791296a6b4f8bd15abe44a2030e"}
+{"event": "CACHE_MISS", "job_id": 8, "task": "build_module_1s", "parent": 1, "cache_key": "8f466e2c77882cc2f74e532d39e222360ac99791296a6b4f8bd15abe44a2030e", "reason": "ttl_expired"}
+{"event": "TASK_RUNNING", "job_id": 8, "task": "build_module_1s", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 8, "task": "build_module_1s", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 9, "task": "build_module_1m", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 9, "task": "build_module_1m", "parent": 1, "cache_key": "19ece42defb21e0ee261e6a94df3ce9bf1e31777b3f0ddf53725897098ed53af"}
+{"event": "CACHE_HIT", "job_id": 9, "task": "build_module_1m", "parent": 1, "cache_key": "19ece42defb21e0ee261e6a94df3ce9bf1e31777b3f0ddf53725897098ed53af"}
+{"event": "TASK_COMPLETED", "job_id": 9, "task": "build_module_1m", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 10, "task": "build_module_1h", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 10, "task": "build_module_1h", "parent": 1, "cache_key": "db9192d1dda18fcddd7c968c8491d7c429d069439754e0e4a359a22b81b8edb2"}
+{"event": "CACHE_HIT", "job_id": 10, "task": "build_module_1h", "parent": 1, "cache_key": "db9192d1dda18fcddd7c968c8491d7c429d069439754e0e4a359a22b81b8edb2"}
+{"event": "TASK_COMPLETED", "job_id": 10, "task": "build_module_1h", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 11, "task": "build_module_1d", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 11, "task": "build_module_1d", "parent": 1, "cache_key": "0d058765ec3469e6f032ab230f644a6bddd2bb4a61ce2c83bf5c566fe9b5250a"}
+{"event": "CACHE_HIT", "job_id": 11, "task": "build_module_1d", "parent": 1, "cache_key": "0d058765ec3469e6f032ab230f644a6bddd2bb4a61ce2c83bf5c566fe9b5250a"}
+{"event": "TASK_COMPLETED", "job_id": 11, "task": "build_module_1d", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 1, "task": "create_app", "parent": null}
+{"event": "TASK_COMPLETED", "job_id": 1, "task": "create_app", "parent": null}

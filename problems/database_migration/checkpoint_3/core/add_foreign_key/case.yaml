@@ -1,0 +1,56 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: |
+    {
+      "version": 1,
+      "description": "Create users table",
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "users",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true},
+            {"name": "email", "type": "TEXT", "not_null": true, "unique": true},
+            {"name": "name", "type": "TEXT", "not_null": true}
+          ]
+        }
+      ]
+    }
+  file_type: json
+  path: migration_v1.json
+- content: |
+    {
+      "version": 2,
+      "description": "Create posts table with foreign key to users",
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "posts",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true},
+            {"name": "user_id", "type": "INTEGER", "not_null": true},
+            {"name": "title", "type": "TEXT", "not_null": true},
+            {"name": "content", "type": "TEXT", "not_null": false}
+          ]
+        },
+        {
+          "type": "add_foreign_key",
+          "table": "posts",
+          "name": "fk_posts_user_id",
+          "columns": ["user_id"],
+          "references": {
+            "table": "users",
+            "columns": ["id"]
+          },
+          "on_delete": "CASCADE"
+        }
+      ]
+    }
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0
+

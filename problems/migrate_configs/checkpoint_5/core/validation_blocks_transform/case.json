@@ -1,0 +1,24 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "rules": {
+    "validate_port": {
+      "type": "validate_type",
+      "scope": "validation",
+      "key": "port",
+      "expected_type": "number"
+    },
+    "set_environment": {
+      "type": "replace_value",
+      "key": "environment",
+      "value": "production"
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "text",
+      "content": "port: \\\"8080\\\"\nenvironment: development\n"
+    }
+  ]
+}

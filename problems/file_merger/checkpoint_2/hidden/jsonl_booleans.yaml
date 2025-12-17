@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id data.jsonl
+  input_files:
+  - content:
+    - id: 1
+      name: Alice
+      active: true
+    - id: 2
+      name: Bob
+      active: false
+    - id: 3
+      name: Charlie
+      active: true
+    file_type: jsonl
+    path: data.jsonl
+expected:
+  files:
+    output.csv:
+    - active: true
+      id: 1
+      name: Alice
+    - active: false
+      id: 2
+      name: Bob
+    - active: true
+      id: 3
+      name: Charlie
+  status_code: 0

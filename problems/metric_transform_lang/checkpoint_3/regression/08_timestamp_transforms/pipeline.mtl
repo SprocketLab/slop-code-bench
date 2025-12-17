@@ -1,0 +1,19 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline TimestampTransforms using Sale {
+  apply(day(timestamp), ts_day)
+  apply(month(timestamp), ts_month)
+  apply(year(timestamp), ts_year)
+  aggregate sum(ts_day) as total_days,
+            sum(ts_month) as total_months,
+            sum(ts_year) as total_years,
+            count(*) as n
+}

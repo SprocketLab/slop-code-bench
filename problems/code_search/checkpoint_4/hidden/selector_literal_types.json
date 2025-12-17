@@ -1,0 +1,177 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "rule_id": "numbers",
+      "file": "code.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 1,
+        "col": 9
+      },
+      "end": {
+        "line": 1,
+        "col": 11
+      },
+      "match": "42"
+    },
+    {
+      "rule_id": "strings",
+      "file": "code.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 2,
+        "col": 17
+      },
+      "end": {
+        "line": 2,
+        "col": 24
+      },
+      "match": "\"hello\""
+    },
+    {
+      "rule_id": "arrays",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 1,
+        "col": 11
+      },
+      "end": {
+        "line": 1,
+        "col": 20
+      },
+      "match": "[1, 2, 3]"
+    },
+    {
+      "rule_id": "objects",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 2,
+        "col": 13
+      },
+      "end": {
+        "line": 2,
+        "col": 25
+      },
+      "match": "{a: 1, b: 2}"
+    },
+    {
+      "rule_id": "bools",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 3,
+        "col": 14
+      },
+      "end": {
+        "line": 3,
+        "col": 18
+      },
+      "match": "true"
+    },
+    {
+      "rule_id": "nulls",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 4,
+        "col": 13
+      },
+      "end": {
+        "line": 4,
+        "col": 17
+      },
+      "match": "null"
+    },
+    {
+      "rule_id": "arrays",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 11
+      },
+      "end": {
+        "line": 1,
+        "col": 20
+      },
+      "match": "[1, 2, 3]"
+    },
+    {
+      "rule_id": "numbers",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 6
+      },
+      "end": {
+        "line": 2,
+        "col": 10
+      },
+      "match": "3.14"
+    },
+    {
+      "rule_id": "strings",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 3,
+        "col": 8
+      },
+      "end": {
+        "line": 3,
+        "col": 14
+      },
+      "match": "\"test\""
+    }
+  ],
+  "input_files": {
+    "proj/code.cpp": "int x = 42;\nconst char* s = \"hello\";",
+    "proj/code.js": "const a = [1, 2, 3];\nconst obj = {a: 1, b: 2};\nconst flag = true;\nconst val = null;",
+    "proj/code.py": "my_list = [1, 2, 3]\npi = 3.14\ntext = \"test\""
+  },
+  "rules.json": [
+    {
+      "id": "strings",
+      "kind": "selector",
+      "selector": "string_literal"
+    },
+    {
+      "id": "numbers",
+      "kind": "selector",
+      "selector": "numeric_literal"
+    },
+    {
+      "id": "bools",
+      "kind": "selector",
+      "languages": [
+        "javascript"
+      ],
+      "selector": "boolean_literal"
+    },
+    {
+      "id": "nulls",
+      "kind": "selector",
+      "languages": [
+        "javascript"
+      ],
+      "selector": "null_literal"
+    },
+    {
+      "id": "arrays",
+      "kind": "selector",
+      "selector": "array_literal"
+    },
+    {
+      "id": "objects",
+      "kind": "selector",
+      "languages": [
+        "javascript"
+      ],
+      "selector": "object_literal"
+    }
+  ]
+}

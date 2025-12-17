@@ -1,0 +1,9 @@
+training:
+  optimizer: adam
+  batch_size: 32
+resources:
+  accelerators:
+    - type: t4
+      count: 1
+  profile: standard
+  world_size: 1

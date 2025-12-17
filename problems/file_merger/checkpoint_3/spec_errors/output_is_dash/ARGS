@@ -1,0 +1,1 @@
+--output - --key id --partition-by country INPUT1.csv

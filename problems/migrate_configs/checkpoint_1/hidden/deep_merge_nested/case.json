@@ -1,0 +1,33 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "expand_features": {
+      "type": "merge_data",
+      "glob": "**/*",
+      "data": {
+        "features": {
+          "flags": {
+            "rollout": 0.75,
+            "experimental": true,
+            "canary": true
+          },
+          "beta": {
+            "enabled": true,
+            "percentage": 50
+          }
+        },
+        "logging": {
+          "level": "info",
+          "handlers": [
+            "console",
+            "metrics"
+          ]
+        },
+        "cache": {
+          "enabled": true,
+          "ttl": 240
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1 @@
+{"experiment_name":"order-check","misc":{"alpha":2,"extra":true,"zeta":1},"resources":{"accelerators":[{"count":2,"type":"v100"}],"profile":"hi-perf","world_size":2},"training":{"batch_size":8,"optimizer":{"beta1":0.92,"beta2":0.999,"epsilon":2e-08}}}

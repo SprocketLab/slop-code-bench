@@ -1,0 +1,19 @@
+{
+  "settings": {
+    "max_retries": 5
+  },
+  "features": {
+    "enabled": true
+  },
+  "allowed_origins": [
+    "http://localhost",
+    "https://example.com"
+  ],
+  "database": {
+    "host": "db.example.com",
+    "port": 5432,
+    "ssl": true
+  },
+  "deprecated_feature": null,
+  "log_level": "debug"
+}

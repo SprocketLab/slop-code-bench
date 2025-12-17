@@ -1,0 +1,17 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Concatenate names with COALESCE\"\
+    ,\n  \"operations\": [\n    {\n      \"type\": \"add_column\",\n      \"table\"\
+    : \"users\",\n      \"column\": {\n        \"name\": \"full_name\",\n        \"\
+    type\": \"TEXT\"\n      }\n    },\n    {\n      \"type\": \"transform_data\",\n\
+    \      \"table\": \"users\",\n      \"transformations\": [\n        {\n      \
+    \    \"column\": \"full_name\",\n          \"expression\": \"first_name || ' '\
+    \ || COALESCE(middle_name || ' ', '') || last_name\"\n        }\n      ]\n   \
+    \ }\n  ]\n}"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

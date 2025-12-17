@@ -1,0 +1,10 @@
+description: production service
+details:
+  build:
+    version: 3
+  note: runs core workloads
+environment: production
+metadata:
+  owner: platform-team
+  tier: core
+timeout: 30

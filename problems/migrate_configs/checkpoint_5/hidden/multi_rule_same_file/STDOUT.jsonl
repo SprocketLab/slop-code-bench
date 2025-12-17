@@ -1,0 +1,2 @@
+{"event":"validation_failed","file":"app.yaml","rule":"a_require_database","error":"missing required key: database.port"}
+{"event":"validation_failed","file":"app.yaml","rule":"b_check_timeout_type","error":"expected type number at key 'timeout', got string"}

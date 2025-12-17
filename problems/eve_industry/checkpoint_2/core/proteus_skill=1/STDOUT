@@ -1,0 +1,40 @@
+ITEM: Proteus (29988)
+Group: Ship > Strategic Cruiser
+Market Group: Ships > Cruisers > Advanced Cruisers > Strategic Cruisers > Gallente
+Tech Level: Tech III
+
+Invention:
+Datacores: Datacore - Mechanical Engineering, Datacore - Plasma Physics
+Required Per Run: 3
+Skills: Mechanical Engineering, Plasma Physics, Sleeper Encryption Methods
+Time: 60
+Probabilities:
+| Invented From                | Decryptor                       | Probability | Runs | ME | TE |
+|------------------------------|---------------------------------|-------------|------|----|----|
+| Intact Hull Section          | None                            | 28.38       | 20   | 2  | 4  |
+| Intact Hull Section          | Accelerant Decryptor            | 34.06       | 21   | 4  | 14 |
+| Intact Hull Section          | Attainment Decryptor            | 51.09       | 24   | 1  | 8  |
+| Intact Hull Section          | Augmentation Decryptor          | 17.03       | 29   | 0  | 6  |
+| Intact Hull Section          | Optimized Attainment Decryptor  | 53.93       | 22   | 3  | 2  |
+| Intact Hull Section          | Optimized Augmentation Decryptor | 25.55       | 27   | 4  | 4  |
+| Intact Hull Section          | Parity Decryptor                | 42.57       | 23   | 3  | 2  |
+| Intact Hull Section          | Process Decryptor               | 31.22       | 20   | 5  | 10 |
+| Intact Hull Section          | Symmetry Decryptor              | 28.38       | 22   | 3  | 12 |
+| Malfunctioning Hull Section  | None                            | 22.92       | 10   | 2  | 4  |
+| Malfunctioning Hull Section  | Accelerant Decryptor            | 27.51       | 11   | 4  | 14 |
+| Malfunctioning Hull Section  | Attainment Decryptor            | 41.26       | 14   | 1  | 8  |
+| Malfunctioning Hull Section  | Augmentation Decryptor          | 13.75       | 19   | 0  | 6  |
+| Malfunctioning Hull Section  | Optimized Attainment Decryptor  | 43.56       | 12   | 3  | 2  |
+| Malfunctioning Hull Section  | Optimized Augmentation Decryptor | 20.63       | 17   | 4  | 4  |
+| Malfunctioning Hull Section  | Parity Decryptor                | 34.39       | 13   | 3  | 2  |
+| Malfunctioning Hull Section  | Process Decryptor               | 25.22       | 10   | 5  | 10 |
+| Malfunctioning Hull Section  | Symmetry Decryptor              | 22.92       | 12   | 3  | 12 |
+| Wrecked Hull Section         | None                            | 15.28       | 3    | 2  | 4  |
+| Wrecked Hull Section         | Accelerant Decryptor            | 18.34       | 4    | 4  | 14 |
+| Wrecked Hull Section         | Attainment Decryptor            | 27.51       | 7    | 1  | 8  |
+| Wrecked Hull Section         | Augmentation Decryptor          | 9.17        | 12   | 0  | 6  |
+| Wrecked Hull Section         | Optimized Attainment Decryptor  | 29.04       | 5    | 3  | 2  |
+| Wrecked Hull Section         | Optimized Augmentation Decryptor | 13.76       | 10   | 4  | 4  |
+| Wrecked Hull Section         | Parity Decryptor                | 22.92       | 6    | 3  | 2  |
+| Wrecked Hull Section         | Process Decryptor               | 16.81       | 3    | 5  | 10 |
+| Wrecked Hull Section         | Symmetry Decryptor              | 15.28       | 5    | 3  | 12 |

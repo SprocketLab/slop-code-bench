@@ -1,0 +1,15 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "describe_with_region": {
+      "type": "template_string",
+      "key": "description",
+      "variables": {
+        "env": "environment",
+        "region": "metadata.region"
+      },
+      "template": "${env}-${region} summary"
+    }
+  }
+}

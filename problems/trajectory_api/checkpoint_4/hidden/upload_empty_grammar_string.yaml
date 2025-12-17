@@ -1,0 +1,29 @@
+case:
+  body:
+    grammar: ""
+    activate: false
+  headers:
+    content-type: application/json; charset=utf-8
+  id: upload_empty_grammar_string
+  method: POST
+  path: /environments/empty-grammar-env/versions
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: INVALID_INPUT
+          message:
+            type: string
+          field_path:
+            type: [string, "null"]
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 400

@@ -1,0 +1,1 @@
+--input z_last.csv --input a_first.csv --input m_middle.csv --dsl pipeline.mtl

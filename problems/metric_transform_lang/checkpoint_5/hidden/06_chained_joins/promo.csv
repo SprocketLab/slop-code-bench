@@ -1,0 +1,3 @@
+timestamp,location,item,discount
+2024-01-01T10:00:00Z,NYC,apple,0.1
+2024-01-01T10:15:00Z,NYC,banana,0.15

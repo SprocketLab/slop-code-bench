@@ -1,0 +1,37 @@
+case:
+  arguments: --output output.csv --key id --infer loose A.csv B.csv
+  input_files:
+  - content:
+    - id: '1'
+      score: '100'
+      flag: 'true'
+    - id: '2'
+      score: '99.5'
+      flag: 'false'
+    file_type: csv
+    path: A.csv
+  - content:
+    - id: '3'
+      score: '88'
+      flag: '1'
+    - id: '4'
+      score: ''
+      flag: 'not_a_bool'
+    file_type: csv
+    path: B.csv
+expected:
+  files:
+    output.csv:
+    - flag: 'true'
+      id: 1
+      score: 100.0
+    - flag: 'false'
+      id: 2
+      score: 99.5
+    - flag: '1'
+      id: 3
+      score: 88.0
+    - flag: 'not_a_bool'
+      id: 4
+      score: null
+  status_code: 0

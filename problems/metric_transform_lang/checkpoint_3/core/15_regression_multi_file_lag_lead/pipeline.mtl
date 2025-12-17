@@ -1,0 +1,13 @@
+schema Event {
+  timestamp: timestamp
+  value: float
+}
+
+pipeline LagLeadMulti using Event {
+  window(1h)
+  aggregate sum(value) as total
+
+  calc prev = lag(total, 1) : float @stage(post_agg)
+  calc next = lead(total, 1) : float @stage(post_agg)
+  calc diff = total - coalesce(prev, 0.0) : float @stage(post_agg)
+}

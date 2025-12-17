@@ -1,0 +1,1 @@
+{"event":"validation_failed","file":"app.yaml","rule":"validate_environment","error":"value 'testing' at key 'environment' not in allowed values: [development, staging, production]"}

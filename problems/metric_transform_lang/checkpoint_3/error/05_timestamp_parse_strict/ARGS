@@ -1,0 +1,1 @@
+--input input.csv --dsl pipeline.mtl --timestamp-format \"%Y-%m-%dT%H:%M:%SZ\" --strict

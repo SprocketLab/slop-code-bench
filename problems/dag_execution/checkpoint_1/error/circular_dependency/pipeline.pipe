@@ -1,0 +1,34 @@
+task A {
+    run: {
+        echo "A"
+    }
+    requires {
+        B()
+    }
+}
+
+task B {
+    run: {
+        echo "B"
+    }
+    requires {
+        C()
+    }
+}
+task C {
+    run: {
+        echo "C"
+    }
+    requires: {
+        A()
+    }
+}
+
+task main {
+    run: {
+        echo "Hello"
+    }
+    requires: {
+        C()
+    }
+}

@@ -1,0 +1,4 @@
+aggregate count(*) as n,
+          sum(price) as total,
+          median(quantity) as median_qty,
+          std(price) as std_price

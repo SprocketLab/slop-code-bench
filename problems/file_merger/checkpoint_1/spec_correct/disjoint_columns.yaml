@@ -1,0 +1,29 @@
+case:
+  arguments: --output output.csv --key id A.csv B.csv
+  input_files:
+  - content:
+    - id: '1'
+      name: Alice
+      age: '30'
+    file_type: csv
+    path: A.csv
+  - content:
+    - id: '2'
+      city: NYC
+      country: USA
+    file_type: csv
+    path: B.csv
+expected:
+  files:
+    output.csv:
+    - age: 30
+      city: null
+      country: null
+      id: 1
+      name: Alice
+    - age: null
+      city: NYC
+      country: USA
+      id: 2
+      name: null
+  status_code: 0

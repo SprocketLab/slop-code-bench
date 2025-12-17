@@ -1,0 +1,7 @@
+schema BaseSale {
+  timestamp: timestamp
+}
+
+pipeline CountDir using BaseSale {
+  aggregate count(*) as n
+}

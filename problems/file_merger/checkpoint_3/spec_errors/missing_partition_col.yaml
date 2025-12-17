@@ -1,0 +1,13 @@
+case:
+  arguments: --output out --key id --partition-by city INPUT1.csv
+  input_files:
+  - content: 'id,name
+
+      1,a
+
+      '
+    file_type: text
+    path: INPUT1.csv
+expected:
+  status_code: 3
+  stderr: ERR 3 key column "city" not present in resolved schema

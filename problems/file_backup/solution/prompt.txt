@@ -1,0 +1,254 @@
+**Write a working solution to this take home hiring assessment in Python**. If you can solve the problem then you will be hired. 
+
+You are starting from scratch and your instructions are:
+- Write the python script that SOLVES this task completely.
+- Use a virtual environment and ensure that a `requirements.txt` is present with any dependencies you need to solve the problem.
+    - We will recreate your venv from the `requirements.txt` in a fresh environment. So you need to write all requirements there.
+
+- Remember this is to determine if we hire you, so you should ensure your solution is 100% correct.
+- You ONLY work in this directory.
+- You may only finish the task when there is a working python script.
+
+
+Your task is:
+Build a single-run, CLI-driven backup scheduler that parses a YAML file, decides which jobs are due “now”, runs it, applies exclusion rules, and emits event history as JSON Lines. 
+For now, we are _only_ simulating the backing up.
+
+# Deliverables
+
+Extend `backup_scheduler.py` that reads a YAML schedule, evaluates what is due at a specified time, simulates running those jobs, and writes an event history as JSON Lines.
+
+**Command-line interface (all flags optional, with defaults):**
+
+- `--schedule <path>`: Path to YAML schedule file.
+- `--now <iso8601>`: Wall clock used for scheduling decisions. RFC 3339 / ISO-8601 format, e.g. `2025-09-10T13:45:00Z`.
+- `--duration <hours>`: Duration to simulate for in hours. Default is `24`. This bound is INCLUSIVE. If an event should trigger at exactly `now`+`duration`, it will trigger.
+- `--mount`: Absolute path to the location where files are mounted.
+
+**Exit codes:**
+
+- `0` success; `3` YAML parse error (`E_PARSE`); `4` schema/validation error (`E_SCHEMA`).
+
+**Error printing (non-zero exit only):**
+
+- Print exactly one line to `stderr`:
+
+  ```
+  ERROR:<CODE>:<human-readable message>
+  ```
+
+  Where `<CODE>` ∈ `{E_PARSE,E_SCHEMA}`
+
+---
+
+## YAML Schedule Schema
+
+
+```yaml
+version: 1
+timezone: "UTC" # IANA TZ. Affects schedule interpretation. Default: "UTC" if omitted.
+jobs:
+  - id: "daily-home"
+    enabled: true # Default: true, can be missing
+    when:
+      kind: "daily" # One of: daily | weekly | once
+      at: "03:30" # 24h, HH:MM, interpreted in `timezone`, when kind=once needs to be an ISO timestamp without timezone, interpreted in schedule's timezone
+      days: ["Mon", "Tue"] # Only for kind=weekly; 3-letter English names, case-insensitive
+    # Path to the source directory you are working on. File paths after `://`
+    # are relative to where `mount` is. If it is just `mount://` then you are
+    # assumed to be working in the root. 
+    source: mount://
+    exclude:
+      - "**/*.bin" # Glob rules, see "Exclusion Rules"
+      - "tmp/**"
+    tags: ["home", "critical"] # Optional metadata array of strings. Can be omitted
+    destination: mount://backup # Optional destination path, must be valid mount:// path if present. ignored://sink is also valid
+```
+
+**Notes & validation:**
+
+- `version` must be `1`.
+- `timezone` must be a valid IANA zone (e.g., `America/Chicago`, `UTC`). If invalid → `E_SCHEMA`.
+- `jobs` must be a non-empty array. Each `id` is required, unique, non-empty, and ≤ 128 UTF-8 chars.
+- `when.kind` determines required/forbidden fields:
+
+  - `daily`: requires `at`; forbids `days`, `on`.
+  - `weekly`: requires `at` and `days` (1–7 distinct); forbids `on`.
+  - `once`: requires `at`; forbids `days`, `on`.
+- `source` must be a valid mount:// path pointing to an existing directory.
+- `destination` is optional; if present, must be a valid mount:// path.
+- `exclude` is optional; if omitted, defaults to empty list (no exclusions).
+---
+
+## Scheduling Semantics
+
+Given `--now` and `--duration`, determine which jobs are _due_:
+
+- Interpret `--now` in UTC, convert to `timezone` to evaluate times/days, then compare.
+- A job is **due** if:
+
+  - `daily`: `at`, in local time, is in the range of `now` + `duration`.
+  - `weekly`: `at`, in local time, is in `now` + `duration` **and** local weekday ∈ `days`. 
+  - `once`: local time instant equals `at` and is in the range of `now`+`duration`.
+
+- Seconds are ignored for matching; comparisons are minute-level.
+- Disabled jobs (`enabled:false`) are never due.
+- If multiple jobs are due, sort by `id` ascending.
+- Two jobs can backup the same file.
+
+---
+
+## Exclusion Rules
+
+Apply `exclude` to each jobs `source` location to decide which virtual files are selected:
+
+- Pattern syntax: glob with `*`, `?`, `**`, and character classes `[]` over POSIX-style `/` paths. `**` may cross `/`.
+- Matching is case-sensitive. Patterns are evaluated relative to the job’s `source`.
+- If any pattern matches a file path, that file is excluded; otherwise included.
+- Evaluate patterns in listed order for event reporting, but final inclusion is simply “any match → excluded”.
+
+Sort considered files by full relative path lexicographically before simulation so output is deterministic.
+
+---
+
+For each due job:
+
+1. Emit events that it started.
+2. For every **file** recursively in the source directory tree:
+   - If excluded → emit a `FILE_EXCLUDED` event with the _first_ matching pattern noted.
+   - Else → emit a `FILE_SELECTED` event.
+
+3. Emit a completed event with counts of selected/excluded.
+
+
+---
+
+## JSON Lines Event History (Write to stdout)
+
+- UTF-8, one JSON object per line, newline-terminated. No extra lines or pretty-printing.
+
+- Top-level fields (present on **every** line, in this exact key order when serialized):
+
+  1. `level` — one of `"INFO" | "WARN" | "ERROR"`.
+  2. `event` — one of:
+
+     - `"SCHEDULE_PARSED"`
+     - `"JOB_ELIGIBLE"` (job is due during the window)
+     - `"JOB_SKIPPED_NOT_DUE"`
+     - `"JOB_STARTED"`
+     - `"FILE_EXCLUDED"`
+     - `"FILE_SELECTED"`
+     - `"JOB_COMPLETED"`
+  3. `job_id` — string; `null` when not applicable (e.g., `SCHEDULE_PARSED`).
+
+- Additional fields by event:
+
+  - `SCHEDULE_PARSED`:
+
+    - `timezone` (string)
+    - `jobs_total` (int)
+
+  - `JOB_ELIGIBLE` and `JOB_SKIPPED_NOT_DUE`:
+
+    - `kind` (`"daily"|"weekly"|"once"`)
+    - `now_local` (ISO-8601 local _minute_, e.g., `"2025-09-10T03:30"`)
+
+  - `JOB_STARTED`:
+
+    - `exclude_count` (int number of patterns)
+
+  - `FILE_EXCLUDED`:
+
+    - `path` (string, relative to the source)
+    - `pattern` (string — the first matching pattern)
+
+  - `FILE_SELECTED`:
+
+    - `path` (string, relative to the source)
+
+  - `JOB_COMPLETED`:
+
+    - `selected` (int)
+    - `excluded` (int)
+
+
+
+---
+
+## Processing Rules & Determinism
+
+- Sort due jobs by `id` ascending before execution.
+- For each job, process files recursively in the source directory tree in lexicographic order by full relative path.
+- For `FILE_EXCLUDED`, the `pattern` is the **first** pattern (list order) that matches.
+- Always emit `SCHEDULE_PARSED` exactly once as the first event.
+
+# Examples
+
+`files` directory (we provided you with this):
+```txt
+files
+├──A
+│  ├── B
+│  │   ├── C
+│  │   │   └── D.py
+│  │   └── E.bin
+│  ├── F
+│  │   ├── G.bin
+│  │   └── H.py
+│  ├── I.py
+│  ├── J.bin
+│  ├── K.html
+│  └── L.md
+├──M.py
+├──N.py
+└──O.md
+```
+
+And the config:
+```yaml
+jobs:
+- destination: ignored://sink
+  exclude:
+  - A/*
+  - '*.py'
+  - data/**
+  - '**/*.bin'
+  id: daily-home
+  source: mount://files
+  enabled: true
+  when:
+    at: 03:30
+    kind: daily
+timezone: UTC
+version: 1
+```
+
+The output would be assuming `--mount /path/to/files`:
+```json
+{"event": "SCHEDULE_PARSED","jobs_total": 1,"timezone": "UTC"}
+{"event": "JOB_ELIGIBLE","job_id": "daily-home","kind": "daily","now_local": "2025-09-10T03:30"}
+{"event": "JOB_STARTED","exclude_count": 4,"job_id": "daily-home",}
+{"event": "FILE_SELECTED","job_id": "daily-home","path": "A/B/C/D.py"}
+{"event": "FILE_EXCLUDED","job_id": "daily-home","path": "A/B/E.bin","pattern": "**/*.bin"}
+{"event": "FILE_EXCLUDED","job_id": "daily-home","path": "A/F/G.bin","pattern": "**/*.bin"}
+{"event": "FILE_SELECTED","job_id": "daily-home","path": "A/F/H.py"}
+{"event": "FILE_EXCLUDED","job_id": "daily-home","path": "A/I.py","pattern": "A/*"}
+{"event": "FILE_EXCLUDED","job_id": "daily-home","path": "A/J.bin","pattern": "A/*"}
+{"event": "FILE_EXCLUDED","job_id": "daily-home","path": "A/K.html","pattern": "A/*"}
+{"event": "FILE_EXCLUDED","job_id": "daily-home","path": "A/L.md","pattern": "A/*"}
+{"event": "FILE_EXCLUDED","job_id": "daily-home","path": "M.py","pattern": "*.py"}
+{"event": "FILE_EXCLUDED","job_id": "daily-home","path": "N.py","pattern": "*.py"}
+{"event": "FILE_SELECTED","job_id": "daily-home","path": "O.md"}
+{"event": "JOB_COMPLETED","excluded": 8,"job_id": "daily-home","selected": 3}
+```
+
+
+But if we were to change `source` to `mount://A/B`, our result would be:
+```json
+{"event": "SCHEDULE_PARSED","jobs_total": 1,"timezone": "UTC"}
+{"event": "JOB_ELIGIBLE","job_id": "daily-home","kind": "daily","now_local": "2025-09-10T03:30"}
+{"event": "JOB_STARTED","exclude_count": 4,"job_id": "daily-home",}
+{"event": "FILE_SELECTED","job_id": "daily-home","path": "C/D.py"}
+{"event": "FILE_EXCLUDED","job_id": "daily-home","path": "E.bin","pattern": "**/*.bin"}
+{"event": "JOB_COMPLETED","excluded": 1,"job_id": "daily-home","selected": 1}
+```

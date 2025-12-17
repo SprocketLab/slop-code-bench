@@ -1,0 +1,5 @@
+training:
+  batch_size: 40
+resources:
+  profile: array
+  world_size: 8

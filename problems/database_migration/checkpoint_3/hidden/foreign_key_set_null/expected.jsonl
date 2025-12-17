@@ -1,0 +1,2 @@
+{"event": "operation_applied", "type": "add_foreign_key", "table": "products", "name": "fk_products_category", "version": 2}
+{"event": "migration_complete", "version": 2, "operations_count": 1}

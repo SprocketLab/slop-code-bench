@@ -1,0 +1,15 @@
+{"event":"SCHEDULE_PARSED","timezone":"America/New_York","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"ny-backup","kind":"daily","now_local":"2025-09-10T04:30:00-04:00"}
+{"event":"JOB_STARTED","exclude_count":1,"job_id":"ny-backup"}
+{"event":"FILE_EXCLUDED","job_id":"ny-backup","path":"A/B/C/D.py","pattern":"**/*.py"}
+{"event":"FILE_SELECTED","job_id":"ny-backup","path":"A/B/E.bin"}
+{"event":"FILE_SELECTED","job_id":"ny-backup","path":"A/F/G.bin"}
+{"event":"FILE_EXCLUDED","job_id":"ny-backup","path":"A/F/H.py","pattern":"**/*.py"}
+{"event":"FILE_EXCLUDED","job_id":"ny-backup","path":"A/I.py","pattern":"**/*.py"}
+{"event":"FILE_SELECTED","job_id":"ny-backup","path":"A/J.bin"}
+{"event":"FILE_SELECTED","job_id":"ny-backup","path":"A/K.html"}
+{"event":"FILE_SELECTED","job_id":"ny-backup","path":"A/L.md"}
+{"event":"FILE_EXCLUDED","job_id":"ny-backup","path":"M.py","pattern":"**/*.py"}
+{"event":"FILE_EXCLUDED","job_id":"ny-backup","path":"N.py","pattern":"**/*.py"}
+{"event":"FILE_SELECTED","job_id":"ny-backup","path":"O.md"}
+{"event":"JOB_COMPLETED","job_id":"ny-backup","selected":6,"excluded":5}

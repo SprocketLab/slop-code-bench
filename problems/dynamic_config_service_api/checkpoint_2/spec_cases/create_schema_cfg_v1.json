@@ -1,0 +1,46 @@
+{
+  "case": {
+    "body": {
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": true,
+        "properties": {
+          "db": {
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "pool": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "host"
+            ],
+            "type": "object"
+          },
+          "feature_flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_schema_cfg_v1",
+    "method": "POST",
+    "path": "/v1/schemas/cfg"
+  },
+  "expected": {
+    "output": {
+      "name": "cfg",
+      "version": 1
+    },
+    "status_code": 201
+  }
+}

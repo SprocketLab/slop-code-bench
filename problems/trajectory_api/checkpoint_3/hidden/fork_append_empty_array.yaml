@@ -1,0 +1,50 @@
+case:
+  body:
+    up_to_step: 1
+    status: in_progress
+    append: []
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: fork_append_empty_array
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_append_tests}}/fork
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      rev:
+        const: 1
+      steps:
+        const: 2
+      final_output_tokens:
+        const: 10
+      final_cost:
+        const: 0.0005
+      lineage:
+        properties:
+          parent_id:
+            const: "{{store.hidden_create_for_append_tests}}"
+          parent_rev:
+            const: 1
+          forked_from_step:
+            const: 1
+        required:
+          - parent_id
+          - parent_rev
+          - forked_from_step
+        type: object
+    required:
+      - id
+      - status
+      - rev
+      - steps
+      - final_output_tokens
+      - final_cost
+      - lineage
+    type: object
+  status_code: 201

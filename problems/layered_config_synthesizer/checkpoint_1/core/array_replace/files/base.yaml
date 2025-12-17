@@ -1,0 +1,11 @@
+experiment_name: array-swap
+training:
+  callbacks:
+    - early_stop
+    - checkpoint
+resources:
+  accelerators:
+    - type: a100
+      count: 4
+    - type: h100
+      count: 2

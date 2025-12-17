@@ -1,0 +1,1 @@
+{"experiment_name":"array-swap","resources":{"accelerators":[{"count":8,"type":"l4"}],"world_size":8},"training":{"callbacks":["tensorboard"]}}

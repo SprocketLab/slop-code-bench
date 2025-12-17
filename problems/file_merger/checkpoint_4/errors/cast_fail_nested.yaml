@@ -1,0 +1,25 @@
+case:
+  arguments: --output out.csv --key user.id --schema schema.json --on-type-error fail
+    input.jsonl
+  input_files:
+  - content:
+    - user:
+        age: x
+        id: 1
+    file_type: jsonl
+    path: input.jsonl
+  - content:
+      columns:
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: id
+              type: int
+            - name: age
+              type: int
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 4
+  stderr: ERR 4 cannot cast "x" to int in field "user.age" (file=input.jsonl line=1)

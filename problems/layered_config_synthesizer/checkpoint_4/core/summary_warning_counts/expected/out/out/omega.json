@@ -1,0 +1,1 @@
+{"experiment_name":"omega","logging":{"destination":"stdout","format":"text"},"metadata":{"owner":"ml"},"resources":{"accelerators":[{"count":4,"type":"l4"}],"profile":"train_l4","world_size":4},"training":{"batch_size":20,"extra":"yes","launcher":"torchrun","optimizer":"lion"}}

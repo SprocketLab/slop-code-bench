@@ -1,0 +1,287 @@
+{
+  "missing_environment_field": {
+    "order": 0,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo hello"
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "code"
+        ]
+      }
+    }
+  },
+  "empty_environment_field": {
+    "order": 1,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo hello",
+        "environment": ""
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "code"
+        ]
+      }
+    }
+  },
+  "invalid_environment_path": {
+    "order": 2,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo hello",
+        "environment": "../bad"
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "code"
+        ]
+      }
+    }
+  },
+  "unknown_environment": {
+    "order": 3,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": "echo hello",
+        "environment": "does-not-exist"
+      }
+    },
+    "expected": {
+      "status_code": 404,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "code"
+        ]
+      }
+    }
+  },
+  "setup_duplicate_environment": {
+    "order": 4,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "duplicate-target",
+        "files": {
+          "seed.txt": "seed"
+        }
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "name": "duplicate-target",
+        "concurrency_mode": "never",
+        "files": {
+          "seed.txt": {
+            "written_bytes": 4
+          }
+        }
+      }
+    }
+  },
+  "duplicate_environment_name": {
+    "order": 5,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "duplicate-target",
+        "files": {
+          "seed.txt": "seed"
+        }
+      }
+    },
+    "expected": {
+      "status_code": 404,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "code"
+        ]
+      }
+    }
+  },
+  "invalid_concurrency_type": {
+    "order": 6,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "bad-type",
+        "concurrency_mode": 42
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "code"
+        ]
+      }
+    }
+  },
+  "invalid_concurrency_value": {
+    "order": 7,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "bad-value",
+        "concurrency_mode": "sometimes"
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "code"
+        ]
+      }
+    }
+  },
+  "invalid_environment_name": {
+    "order": 8,
+    "input": {
+      "method": "POST",
+      "path": "/v1/environment",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "name": "",
+        "files": {}
+      }
+    },
+    "expected": {
+      "status_code": 400,
+      "output": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "code"
+        ]
+      }
+    }
+  }
+}

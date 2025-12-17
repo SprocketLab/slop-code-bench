@@ -1,0 +1,10 @@
+sources:
+  - name: main
+    inputs:
+      - "input.csv"
+      - "America/New_York"
+      - "\"%Y-%m-%d"
+      - "%H:%M:%S\""
+    format: auto
+    schema: Sale
+    precedence: 10

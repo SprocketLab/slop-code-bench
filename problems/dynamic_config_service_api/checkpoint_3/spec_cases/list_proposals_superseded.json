@@ -1,0 +1,31 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "status": "superseded"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "list_proposals_superseded",
+    "method": "POST",
+    "path": "/v1/configs/billing/proposals:list"
+  },
+  "expected": {
+    "output": {
+      "proposals": [
+        {
+          "proposal_id": 3,
+          "status": "superseded",
+          "author": "alice",
+          "draft_version": 3,
+          "base_version": 2
+        }
+      ]
+    },
+    "status_code": 200
+  }
+}

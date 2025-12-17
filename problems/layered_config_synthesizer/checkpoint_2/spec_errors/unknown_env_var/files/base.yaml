@@ -1,0 +1,6 @@
+experiment_name: ${RUN_ID}
+training:
+  optimizer: adam
+resources:
+  profile: env
+  world_size: 1

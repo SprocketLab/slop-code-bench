@@ -1,0 +1,8 @@
+id,cond_a,cond_b,value
+101,false,true,100
+102,false,false,110
+103,false,false,120
+104,true,false,130
+105,false,false,140
+106,false,true,150
+107,false,false,160

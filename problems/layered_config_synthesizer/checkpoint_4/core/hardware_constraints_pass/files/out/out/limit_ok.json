@@ -1,0 +1,1 @@
+{"experiment_name":"limit_ok","resources":{"accelerators":[{"count":4,"type":"l4"}],"profile":"train_l4","world_size":8},"training":{"batch_size":24,"launcher":"torchrun","learning_rate":0.02,"optimizer":"adam"}}

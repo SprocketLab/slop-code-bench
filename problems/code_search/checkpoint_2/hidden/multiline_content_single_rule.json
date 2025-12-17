@@ -1,0 +1,85 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 5,
+        "line": 1
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "line",
+      "rule_id": "line",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 5,
+        "line": 2
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "line",
+      "rule_id": "line",
+      "start": {
+        "col": 1,
+        "line": 2
+      }
+    },
+    {
+      "end": {
+        "col": 5,
+        "line": 3
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "line",
+      "rule_id": "line",
+      "start": {
+        "col": 1,
+        "line": 3
+      }
+    },
+    {
+      "end": {
+        "col": 5,
+        "line": 4
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "line",
+      "rule_id": "line",
+      "start": {
+        "col": 1,
+        "line": 4
+      }
+    },
+    {
+      "end": {
+        "col": 5,
+        "line": 5
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "line",
+      "rule_id": "line",
+      "start": {
+        "col": 1,
+        "line": 5
+      }
+    }
+  ],
+  "input_files": {
+    "proj/f.py": "line 1\nline 2\nline 3\nline 4\nline 5"
+  },
+  "rules.json": [
+    {
+      "id": "line",
+      "kind": "exact",
+      "pattern": "line"
+    }
+  ]
+}

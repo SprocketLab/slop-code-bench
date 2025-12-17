@@ -1,0 +1,1 @@
+{"experiment_name":"gamma","logging":{"destination":"stdout","format":"text"},"metadata":{"owner":"core"},"resources":{"accelerators":[{"count":2,"type":"a100"}],"profile":"shared","world_size":2},"training":{"batch_size":24,"optimizer":"lion"}}

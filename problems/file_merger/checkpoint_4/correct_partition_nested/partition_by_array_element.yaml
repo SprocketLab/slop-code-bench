@@ -1,0 +1,61 @@
+case:
+  arguments: --output out --key id --partition-by items.0.category --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 3
+      name: Charlie
+      items:
+      - category: books
+        qty: 2
+    - id: 1
+      name: Alice
+      items:
+      - category: electronics
+        qty: 1
+    - id: 4
+      name: Dave
+      items:
+      - category: books
+        qty: 5
+    - id: 2
+      name: Bob
+      items:
+      - category: electronics
+        qty: 3
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: name
+        type: string
+      - name: items
+        type:
+          array:
+            element:
+              struct:
+                fields:
+                - name: category
+                  type: string
+                - name: qty
+                  type: int
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out/items.0.category=books/part-00000.csv: 'id,items,name
+
+      3,"[{\"category\":\"books\",\"qty\":2}]",Charlie
+
+      4,"[{\"category\":\"books\",\"qty\":5}]",Dave
+
+      '
+    out/items.0.category=electronics/part-00000.csv: 'id,items,name
+
+      1,"[{\"category\":\"electronics\",\"qty\":1}]",Alice
+
+      2,"[{\"category\":\"electronics\",\"qty\":3}]",Bob
+
+      '
+  status_code: 0

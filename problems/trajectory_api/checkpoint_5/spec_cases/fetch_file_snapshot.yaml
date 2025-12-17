@@ -1,0 +1,8 @@
+case:
+  id: fetch_file_snapshot
+  method: GET
+  path: /trajectories/{{store.create_trajectory_with_tool_execution}}/files?step_index=2&path=answer.txt
+expected:
+  output:
+    const: "4\n"
+  status_code: 200

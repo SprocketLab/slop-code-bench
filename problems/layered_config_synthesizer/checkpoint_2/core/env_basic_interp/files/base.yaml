@@ -1,0 +1,8 @@
+experiment_name: ${RUN}-${ENV}
+training:
+  optimizer: adam
+  notes: "Run ${RUN} on ${ENV}"
+resources:
+  profile: ${PROFILE}
+  world_size: 4
+metadata: "{{static:meta_fragment}}"

@@ -1,0 +1,2 @@
+database: staging-db
+engine: postgres

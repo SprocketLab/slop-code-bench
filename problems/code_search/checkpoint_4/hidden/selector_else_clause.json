@@ -1,0 +1,59 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "rule_id": "elses",
+      "file": "code.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 3,
+        "col": 3
+      },
+      "end": {
+        "line": 5,
+        "col": 2
+      },
+      "match": "else {\n  y = 2;\n}"
+    },
+    {
+      "rule_id": "elses",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 3,
+        "col": 3
+      },
+      "end": {
+        "line": 5,
+        "col": 2
+      },
+      "match": "else {\n  return false;\n}"
+    },
+    {
+      "rule_id": "elses",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 3,
+        "col": 5
+      },
+      "end": {
+        "line": 4,
+        "col": 13
+      },
+      "match": "else:\n        pass"
+    }
+  ],
+  "input_files": {
+    "proj/code.cpp": "if (x) {\n  y = 1;\n} else {\n  y = 2;\n}",
+    "proj/code.js": "if (condition) {\n  return true;\n} else {\n  return false;\n}",
+    "proj/code.py": "    if x:\n        pass\n    else:\n        pass"
+  },
+  "rules.json": [
+    {
+      "id": "elses",
+      "kind": "selector",
+      "selector": "else_clause"
+    }
+  ]
+}

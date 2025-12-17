@@ -1,0 +1,73 @@
+{
+  "expected": {
+    "output": {
+      "inputs": {
+        "volume": 30110.0,
+        "buy": null,
+        "sell": null,
+        "buy_5pct": null,
+        "sell_5pct": null
+      },
+      "outputs": {
+        "volume": 31115.69,
+        "buy": null,
+        "sell": null,
+        "buy_5pct": null,
+        "sell_5pct": null
+      },
+      "yields": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "products": {
+        "Pyerite": {
+          "quantity": 2688290,
+          "volume": 26882.9,
+          "buy": null,
+          "sell": null
+        },
+        "Mexallon": {
+          "quantity": 185328,
+          "volume": 1853.28,
+          "buy": null,
+          "sell": null
+        },
+        "Hydrocarbons": {
+          "quantity": 28924,
+          "volume": 1446.2,
+          "buy": null,
+          "sell": null
+        },
+        "Tritanium": {
+          "quantity": 73331,
+          "volume": 733.31,
+          "buy": null,
+          "sell": null
+        },
+        "Fullerite-C28": {
+          "quantity": 100,
+          "volume": 200.0,
+          "buy": null,
+          "sell": null
+        }
+      }
+    },
+    "status_code": 201
+  },
+  "input": {
+    "body": {
+      "items": {
+        "Compressed Bitumens": 49100,
+        "Rifter": 10,
+        "Fullerite-C28": 100
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "method": "POST",
+    "path": "/v1/reprocess"
+  },
+  "order": 3
+}

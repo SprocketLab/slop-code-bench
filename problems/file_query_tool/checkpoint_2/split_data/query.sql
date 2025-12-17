@@ -1,0 +1,3 @@
+SELECT car
+FROM ud1
+LIMIT 1

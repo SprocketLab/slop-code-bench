@@ -1,0 +1,29 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 11,
+        "line": 1
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "a b c",
+      "rule_id": "spaces",
+      "start": {
+        "col": 6,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/f.py": "test a b c test"
+  },
+  "rules.json": [
+    {
+      "id": "spaces",
+      "kind": "exact",
+      "pattern": "a b c"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+experiment_name: bad
+resources:
+  world_size: 5

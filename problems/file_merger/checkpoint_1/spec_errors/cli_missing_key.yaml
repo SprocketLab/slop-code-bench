@@ -1,0 +1,10 @@
+case:
+  arguments: --output out.csv dummy.csv
+  input_files:
+  - content:
+    - id: '1'
+    file_type: csv
+    path: dummy.csv
+expected:
+  status_code: 2
+  stderr: ".*--key.*"

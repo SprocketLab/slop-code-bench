@@ -1,0 +1,25 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "require_environment": {
+      "type": "require_keys",
+      "scope": "validation",
+      "keys": [
+        "environment"
+      ]
+    },
+    "move_worker": {
+      "type": "path_rename",
+      "scope": "file",
+      "path_pattern": "worker.yaml",
+      "new_path": "validated/worker.yaml"
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/worker.yaml",
+      "file_type": "text",
+      "content": "environment: development\ntimeout: 45\ndatabase:\n  host: dev.db.internal\n  port: 5433\nservices:\n  - name: batch\n    port: 7000\n  - name: jobs\n    port: 7001\napp:\n  name: workerapp\n"
+    }
+  ]
+}

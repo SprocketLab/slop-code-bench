@@ -1,0 +1,15 @@
+features:
+  flags:
+    rollout: 0.25
+    experimental: false
+  beta:
+    enabled: false
+    percentage: 0
+logging:
+  level: info
+  handlers:
+  - console
+  - file
+cache:
+  enabled: true
+  ttl: 120

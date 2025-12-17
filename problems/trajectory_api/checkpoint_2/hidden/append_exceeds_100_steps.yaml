@@ -1,0 +1,535 @@
+case:
+  body:
+    steps:
+    - role: user
+      content: Step 1
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 2
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 3
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 4
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 5
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 6
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 7
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 8
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 9
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 10
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 11
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 12
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 13
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 14
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 15
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 16
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 17
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 18
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 19
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 20
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 21
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 22
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 23
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 24
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 25
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 26
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 27
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 28
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 29
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 30
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 31
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 32
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 33
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 34
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 35
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 36
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 37
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 38
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 39
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 40
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 41
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 42
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 43
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 44
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 45
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 46
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 47
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 48
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 49
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 50
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 51
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 52
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 53
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 54
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 55
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 56
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 57
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 58
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 59
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 60
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 61
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 62
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 63
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 64
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 65
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 66
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 67
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 68
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 69
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 70
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 71
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 72
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 73
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 74
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 75
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 76
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 77
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 78
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 79
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 80
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 81
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 82
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 83
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 84
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 85
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 86
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 87
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 88
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 89
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 90
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 91
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 92
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 93
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 94
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 95
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 96
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 97
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 98
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 99
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 100
+      input_tokens: null
+      output_tokens: null
+      cost: null
+    - role: user
+      content: Step 101
+      input_tokens: null
+      output_tokens: null
+      cost: null
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"3"
+  id: append_exceeds_100_steps
+  method: POST
+  path: /trajectories/{{store.hidden_create_in_progress}}/steps
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: VALIDATION_FAILED
+          message:
+            type: string
+          field_path:
+            type: string
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 422
+

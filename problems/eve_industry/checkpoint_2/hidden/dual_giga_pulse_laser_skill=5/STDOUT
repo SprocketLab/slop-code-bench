@@ -1,0 +1,23 @@
+ITEM: Dual Giga Pulse Laser II (37298)
+Group: Module > Energy Weapon
+Market Group: Ship Equipment > Turrets & Launchers > Energy Turrets > Pulse Lasers > Extra Large
+Tech Level: Tech II
+
+Invention:
+Base: Dual Giga Pulse Laser I Blueprint (20445)
+Datacores: Datacore - High Energy Physics, Datacore - Laser Physics
+Required Per Run: 8
+Skills: Amarr Encryption Methods, Capital Ship Construction, High Energy Physics, Laser Physics
+Time: 1200
+Probabilities:
+| Decryptor                       | Probability | Runs | ME | TE |
+|---------------------------------|-------------|------|----|----|
+| None                            | 55.25       | 5    | 2  | 4  |
+| Accelerant Decryptor            | 66.30       | 6    | 4  | 14 |
+| Attainment Decryptor            | 99.45       | 9    | 1  | 8  |
+| Augmentation Decryptor          | 33.15       | 14   | 0  | 6  |
+| Optimized Attainment Decryptor  | 100.00      | 7    | 3  | 2  |
+| Optimized Augmentation Decryptor | 49.73       | 12   | 4  | 4  |
+| Parity Decryptor                | 82.88       | 8    | 3  | 2  |
+| Process Decryptor               | 60.78       | 5    | 5  | 10 |
+| Symmetry Decryptor              | 55.25       | 7    | 3  | 12 |

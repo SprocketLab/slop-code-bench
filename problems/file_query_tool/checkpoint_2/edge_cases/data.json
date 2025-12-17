@@ -1,0 +1,173 @@
+{
+    "data/users.csv": {
+        "path": "test_data/users.csv",
+        "content": [
+            {
+                "user_id": "1",
+                "first": "Ana",
+                "last": "Lopez",
+                "region": "EU"
+            },
+            {
+                "user_id": "2",
+                "first": "Ben",
+                "last": "Tran",
+                "region": "NA"
+            },
+            {
+                "user_id": "3",
+                "first": "Carla",
+                "last": "Nash",
+                "region": "NA"
+            },
+            {
+                "user_id": "4",
+                "first": "Dev",
+                "last": "Patel",
+                "region": "AS"
+            },
+            {
+                "user_id": "5",
+                "first": "Erin",
+                "last": "Fong",
+                "region": "EU"
+            }
+        ],
+        "file_type": "csv",
+        "compression": "none"
+    },
+    "data/sales.json": {
+        "path": "test_data/sales.json",
+        "content": [
+            {
+                "sku": "A1",
+                "units": 3
+            },
+            {
+                "sku": "A3",
+                "units": 5
+            },
+            {
+                "sku": "A5",
+                "units": 2
+            }
+        ],
+        "file_type": "json",
+        "compression": "none"
+    },
+    "data/orders.tsv": {
+        "path": "test_data/orders.tsv",
+        "content": [
+            {
+                "order_id": "10",
+                "user_id": "1",
+                "total": "19.95"
+            },
+            {
+                "order_id": "11",
+                "user_id": "2",
+                "total": "8.50"
+            },
+            {
+                "order_id": "12",
+                "user_id": "3",
+                "total": "21"
+            },
+            {
+                "order_id": "13",
+                "user_id": "5",
+                "total": "9.25"
+            },
+            {
+                "order_id": "14",
+                "user_id": "5",
+                "total": "7.75"
+            }
+        ],
+        "file_type": "tsv",
+        "compression": "none"
+    },
+    "data/traffic/sessions.jsonl": {
+        "path": "test_data/traffic/sessions.jsonl",
+        "content": [
+            {
+                "user_id": 1,
+                "browser": "Chrome",
+                "minutes": 15
+            },
+            {
+                "user_id": 2,
+                "browser": "Firefox",
+                "minutes": 7
+            },
+            {
+                "user_id": 2,
+                "browser": "Safari",
+                "minutes": 3
+            },
+            {
+                "user_id": 5,
+                "browser": "Chrome",
+                "minutes": 9
+            },
+            {
+                "user_id": 3,
+                "browser": "Edge",
+                "minutes": 8
+            },
+            {
+                "user_id": 4,
+                "browser": "Brave",
+                "minutes": 6
+            }
+        ],
+        "file_type": "jsonl",
+        "compression": "none"
+    },
+    "data/inventory/products.parquet": {
+        "path": "test_data/inventory/products.parquet",
+        "content": [
+            {
+                "sku": "A1",
+                "category": "Laptop",
+                "price": 999.99
+            },
+            {
+                "sku": "A2",
+                "category": "Mouse",
+                "price": 25.49
+            },
+            {
+                "sku": "A3",
+                "category": "Keyboard",
+                "price": 49.99
+            },
+            {
+                "sku": "A4",
+                "category": "Monitor",
+                "price": 129.99
+            }
+        ],
+        "file_type": "parquet",
+        "compression": "none"
+    },
+    "data/regions/currency.json": {
+        "path": "test_data/regions/currency.json",
+        "content": [
+            {
+                "region": "NA",
+                "currency": "USD"
+            },
+            {
+                "region": "EU",
+                "currency": "EUR"
+            },
+            {
+                "region": "AS",
+                "currency": "JPY"
+            }
+        ],
+        "file_type": "json",
+        "compression": "none"
+    }
+}

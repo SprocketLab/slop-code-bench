@@ -1,0 +1,85 @@
+{
+  "arguments": "proj --rules rules.json --dry-run",
+  "expected": [
+    {
+      "captures": {
+        "$A": {
+          "ranges": [
+            {
+              "end": {
+                "col": 6,
+                "line": 1
+              },
+              "start": {
+                "col": 5,
+                "line": 1
+              }
+            }
+          ],
+          "text": "x"
+        },
+        "$B": {
+          "ranges": [
+            {
+              "end": {
+                "col": 10,
+                "line": 1
+              },
+              "start": {
+                "col": 9,
+                "line": 1
+              }
+            }
+          ],
+          "text": "y"
+        }
+      },
+      "end": {
+        "col": 10,
+        "line": 1
+      },
+      "file": "code.py",
+      "language": "python",
+      "match": "x + y",
+      "rule_id": "swap",
+      "start": {
+        "col": 5,
+        "line": 1
+      }
+    },
+    {
+      "applied": false,
+      "end": {
+        "col": 10,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "code.py",
+      "language": "python",
+      "replacement": "y+x",
+      "rule_id": "swap",
+      "skipped_reason": null,
+      "start": {
+        "col": 5,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/code.py": "    x + y"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "$B+$A"
+      },
+      "id": "swap",
+      "kind": "pattern",
+      "languages": [
+        "python"
+      ],
+      "pattern": "$A + $B"
+    }
+  ]
+}

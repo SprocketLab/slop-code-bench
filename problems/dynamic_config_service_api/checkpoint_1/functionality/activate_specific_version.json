@@ -1,0 +1,26 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "activate_specific_version",
+    "method": "POST",
+    "path": "/v1/configs/array_base/1:activate"
+  },
+  "expected": {
+    "output": {
+      "name": "array_base",
+      "scope": {
+        "env": "prod"
+      },
+      "version": 1,
+      "active": true
+    },
+    "status_code": 200
+  }
+}

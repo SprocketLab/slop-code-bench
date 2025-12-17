@@ -1,0 +1,19 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "beta_template_description": {
+      "type": "template_string",
+      "key": "description",
+      "variables": {
+        "env": "environment"
+      },
+      "template": "${env} service"
+    },
+    "alpha_merge_defaults": {
+      "type": "merge_data",
+      "data": {
+        "environment": "qa"
+      }
+    }
+  }
+}

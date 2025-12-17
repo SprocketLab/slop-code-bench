@@ -1,0 +1,29 @@
+tables:
+  users:
+    columns:
+    - id
+    - first_name
+    - middle_name
+    - last_name
+    - full_name
+    rows:
+    - id: 1
+      first_name: Alice
+      middle_name: Ann
+      last_name: Anderson
+      full_name: Alice Ann Anderson
+    - id: 2
+      first_name: Bob
+      middle_name: null
+      last_name: Brown
+      full_name: null
+    - id: 3
+      first_name: Charlie
+      middle_name: C
+      last_name: Clark
+      full_name: Charlie C Clark
+    - id: 4
+      first_name: Diana
+      middle_name: null
+      last_name: Davis
+      full_name: null

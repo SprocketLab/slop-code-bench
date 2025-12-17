@@ -1,0 +1,2 @@
+{"event": "operation_applied", "type": "drop_check_constraint", "table": "products", "name": "chk_price_positive", "version": 2}
+{"event": "migration_complete", "version": 2, "operations_count": 1}

@@ -1,0 +1,10 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+  quantity: int
+}
+
+pipeline DropBad using Sale {
+  calc revenue = price * quantity : float @stage(pre)
+  aggregate sum(revenue) as total, count(*) as n
+}

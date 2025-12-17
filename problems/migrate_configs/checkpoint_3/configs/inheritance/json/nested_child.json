@@ -1,0 +1,11 @@
+{
+  "extends": "nested_base.json",
+  "database": {
+    "host": "prod.db",
+    "options": {
+      "retries": 5
+    }
+  },
+  "features": ["release"],
+  "app": "nested-override"
+}

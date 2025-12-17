@@ -1,0 +1,38 @@
+{
+  "case": {
+    "body": {
+      "includes": [
+        {
+          "name": "base",
+          "scope": {
+            "env": "prod"
+          }
+        }
+      ],
+      "raw_config": "db:\n  host: prod.db\n  pool: 8\nfeature_flags: [a, b]\n",
+      "raw_format": "yaml",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_billing_v1_yaml",
+    "method": "POST",
+    "path": "/v1/configs/billing"
+  },
+  "expected": {
+    "output": {
+      "active": true,
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "version": 1
+    },
+    "status_code": 201
+  }
+}

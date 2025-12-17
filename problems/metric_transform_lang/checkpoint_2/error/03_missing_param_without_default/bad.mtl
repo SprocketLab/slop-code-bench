@@ -1,0 +1,12 @@
+schema BaseSale {
+  timestamp: timestamp
+  price: float
+}
+
+pipeline P using BaseSale {
+  params {
+    threshold: float
+  }
+  filter(price >= param("threshold"))
+  aggregate count(*) as n
+}

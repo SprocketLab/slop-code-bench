@@ -1,0 +1,4 @@
+timestamp,location,item,price,quantity,unit,category
+2024-10-15T11:00:00Z,NYC,bagel,2.5,5,ea,food
+2024-10-15T11:10:00Z,BOS,bagel,2.0,4,ea,food
+2024-10-15T11:20:00Z,NYC,coffee,3.0,6,ea,drink

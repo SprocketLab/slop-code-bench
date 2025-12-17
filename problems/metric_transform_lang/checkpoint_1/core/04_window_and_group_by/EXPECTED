@@ -1,0 +1,7 @@
+[
+  {"window_start": "2025-09-14T08:00:00Z", "window_end": "2025-09-14T09:00:00Z", "category": "fruit",  "n": 2},
+  {"window_start": "2025-09-14T09:00:00Z", "window_end": "2025-09-14T10:00:00Z", "category": "dairy",  "n": 1},
+  {"window_start": "2025-09-14T09:00:00Z", "window_end": "2025-09-14T10:00:00Z", "category": "fruit",  "n": 1},
+  {"window_start": "2025-09-15T08:00:00Z", "window_end": "2025-09-15T09:00:00Z", "category": "bakery", "n": 1},
+  {"window_start": "2025-09-15T08:00:00Z", "window_end": "2025-09-15T09:00:00Z", "category": "fruit",  "n": 1}
+]

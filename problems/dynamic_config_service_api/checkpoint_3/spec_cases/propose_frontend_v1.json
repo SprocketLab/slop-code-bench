@@ -1,0 +1,77 @@
+{
+  "case": {
+    "body": {
+      "author": "dave",
+      "base_version": 0,
+      "scope": {
+        "app": "frontend",
+        "env": "dev"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "propose_frontend_v1",
+    "method": "POST",
+    "path": "/v1/configs/frontend/1:propose"
+  },
+  "expected": {
+    "output": {
+      "author": "dave",
+      "base_version": 0,
+      "description": null,
+      "draft_version": 1,
+      "labels": [],
+      "name": "frontend",
+      "proposal_id": 5,
+      "scope": {
+        "app": "frontend",
+        "env": "dev"
+      },
+      "status": "open",
+      "title": null,
+      "diffs": {
+        "human": [
+          "SET /api_url: \"https://api.example.com\"",
+          "SET /theme: \"light\""
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "add",
+            "path": "/api_url",
+            "value": "https://api.example.com"
+          },
+          {
+            "op": "add",
+            "path": "/theme",
+            "value": "light"
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "add",
+            "path": "/api_url",
+            "value": "https://api.example.com"
+          },
+          {
+            "op": "add",
+            "path": "/theme",
+            "value": "light"
+          }
+        ]
+      },
+      "quorum": {
+        "allow_author_approval": true,
+        "allowed_reviewers": null,
+        "required_approvals": 1
+      },
+      "tally": {
+        "approvals": 0,
+        "by_actor": [],
+        "rejections": 0
+      }
+    },
+    "status_code": 201
+  }
+}

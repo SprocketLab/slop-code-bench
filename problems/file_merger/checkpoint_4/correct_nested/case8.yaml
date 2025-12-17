@@ -1,0 +1,33 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --on-type-error coerce-null
+    data.csv
+  input_files:
+  - content: 'id,user
+
+      1,{bad}
+
+      2,"{\"name\":\"ok\"}"
+
+      '
+    file_type: text
+    path: data.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: name
+              type: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      user: null
+    - id: 2
+      user: '{"name":"ok"}'
+  status_code: 0

@@ -1,0 +1,15 @@
+{
+    "case": {
+        "arguments": [
+            "recipe",
+            "'Fernite Carbide'",
+            "--time-efficiency",
+            "10",
+            "--sde",
+            "{{static:sde_dir}}"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

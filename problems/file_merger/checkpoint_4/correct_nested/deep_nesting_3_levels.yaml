@@ -1,0 +1,68 @@
+case:
+  arguments: --output out.csv --key user.address.city.name --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 3
+      user:
+        name: Charlie
+        address:
+          city:
+            name: LA
+            zip: '90001'
+          street: Oak Ave
+    - id: 1
+      user:
+        name: Alice
+        address:
+          city:
+            name: NYC
+            zip: '10001'
+          street: Main St
+    - id: 2
+      user:
+        name: Bob
+        address:
+          city:
+            name: NYC
+            zip: '10002'
+          street: Broadway
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: name
+              type: string
+            - name: address
+              type:
+                struct:
+                  fields:
+                  - name: street
+                    type: string
+                  - name: city
+                    type:
+                      struct:
+                        fields:
+                        - name: name
+                          type: string
+                        - name: zip
+                          type: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv: 'id,user
+
+      3,"{\"name\":\"Charlie\",\"address\":{\"street\":\"Oak Ave\",\"city\":{\"name\":\"LA\",\"zip\":\"90001\"}}}"
+
+      1,"{\"name\":\"Alice\",\"address\":{\"street\":\"Main St\",\"city\":{\"name\":\"NYC\",\"zip\":\"10001\"}}}"
+
+      2,"{\"name\":\"Bob\",\"address\":{\"street\":\"Broadway\",\"city\":{\"name\":\"NYC\",\"zip\":\"10002\"}}}"
+
+      '
+  status_code: 0

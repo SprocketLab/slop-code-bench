@@ -1,0 +1,4 @@
+timestamp,location,item,price,quantity,unit,category
+2024-09-01T08:00:00Z,NYC,book,10,1,ea,media
+2024-09-01T08:05:00Z,NYC,book,12,3,ea,media
+2024-09-01T08:10:00Z,NYC,book,14,2,ea,media

@@ -1,0 +1,16 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline GroupBySingle using Sale {
+  group_by(category)
+  aggregate sum(price) as total_revenue,
+            count(*) as n
+}

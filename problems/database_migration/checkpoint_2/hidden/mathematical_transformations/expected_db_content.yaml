@@ -1,0 +1,24 @@
+tables:
+  products:
+    columns:
+    - id
+    - price
+    - tax_rate
+    - final_price
+    rows:
+    - id: 1
+      price: 100.0
+      tax_rate: 0.08
+      final_price: 108.0
+    - id: 2
+      price: 50.5
+      tax_rate: 0.08
+      final_price: 54.54
+    - id: 3
+      price: 200.0
+      tax_rate: 0.1
+      final_price: 220.0
+    - id: 4
+      price: 75.25
+      tax_rate: 0.08
+      final_price: 81.27

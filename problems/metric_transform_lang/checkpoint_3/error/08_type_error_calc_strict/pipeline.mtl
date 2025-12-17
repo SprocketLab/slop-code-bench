@@ -1,0 +1,10 @@
+schema Data {
+  timestamp: timestamp
+  text: string
+  number: float
+}
+
+pipeline TypeError using Data {
+  calc bad = text + number : float @stage(pre)
+  aggregate count(*) as n
+}

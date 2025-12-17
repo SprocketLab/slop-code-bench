@@ -1,0 +1,8 @@
+schema Data {
+  timestamp: timestamp
+  required_field: float
+}
+
+pipeline MissingField using Data {
+  aggregate sum(required_field) as total
+}

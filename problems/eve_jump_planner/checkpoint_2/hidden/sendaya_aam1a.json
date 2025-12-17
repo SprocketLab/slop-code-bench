@@ -1,0 +1,10 @@
+{
+    "start": "Sendaya V - CONCORD Bureau",
+    "end": "AAM-1A II - Moon 11 - Archangels Testing Facilities",
+    "cases": [
+        {
+            "cloak": true,
+            "expected": "START: Sendaya V - CONCORD Bureau\nUNDOCK\nGO: Sendaya (0.3) -> Doril (-0.0)\nJUMP 3.31 LY: AAM-1A (34K isotopes)\nDOCK: AAM-1A II - Moon 11 - Archangels Testing Facilities\nSUMMARY:\n  End Cooldown: 00:01\n  End Fatigue: 00:14\n  Isotopes Used: 34K\n  Time Waiting: 00:00\n  Total LY: 3.31"
+        }
+    ]
+}

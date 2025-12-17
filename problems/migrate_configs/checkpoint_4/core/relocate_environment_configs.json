@@ -1,0 +1,18 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "{\"event\":\"file_relocated\",\"from\":\"environments/production/app.yaml\",\"to\":\"flattened_env/production/app.yaml\"}\\n{\"event\":\"file_relocated\",\"from\":\"environments/production/db.yaml\",\"to\":\"flattened_env/production/db.yaml\"}\\n{\"event\":\"file_relocated\",\"from\":\"environments/staging/app.yaml\",\"to\":\"flattened_env/staging/app.yaml\"}\\n{\"event\":\"file_relocated\",\"from\":\"environments/staging/db.yaml\",\"to\":\"flattened_env/staging/db.yaml\"}\\n",
+  "rules": {
+    "consolidate_envs": {
+      "type": "relocate_files",
+      "scope": "file",
+      "source_pattern": "environments/$env/*.yaml",
+      "destination": "flattened_env/${env}/"
+    }
+  },
+  "expected_files": {
+    "configs/flattened_env/production/app.yaml": "app: web\\nenvironment: production\\n",
+    "configs/flattened_env/production/db.yaml": "database: prod-db\\nengine: postgres\\n",
+    "configs/flattened_env/staging/app.yaml": "app: web\\nenvironment: staging\\n",
+    "configs/flattened_env/staging/db.yaml": "database: staging-db\\nengine: postgres\\n"
+  }
+}

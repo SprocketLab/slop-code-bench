@@ -1,0 +1,1114 @@
+37146:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 26
+  - 28
+  - 419
+  - 463
+  - 1201
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+37147:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 26
+  - 28
+  - 419
+  - 463
+  - 1201
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+37148:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+37149:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+37150:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+37151:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+37152:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 27
+  - 513
+  - 941
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+37153:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 26
+  - 28
+  - 419
+  - 463
+  - 1201
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+37154:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 25
+  - 31
+  - 420
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+37155:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 25
+  - 31
+  - 420
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+37156:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+37157:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+37158:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+37159:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+37160:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 12
+  - 340
+  - 448
+  - 649
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+37161:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 12
+  - 340
+  - 448
+  - 649
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+37162:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 25
+  - 31
+  - 420
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+37163:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 25
+  - 31
+  - 420
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+37164:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+37165:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+37166:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 27
+  - 513
+  - 941
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+37167:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 27
+  - 513
+  - 941
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+37168:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 898
+  - 900
+  - 902
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+37169:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 898
+  - 900
+  - 902
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+37170:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 12
+  - 340
+  - 448
+  - 649
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+37171:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 12
+  - 340
+  - 448
+  - 649
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+37172:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 485
+  - 547
+  - 883
+  - 1538
+  - 4594
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+37173:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 485
+  - 547
+  - 883
+  - 1538
+  - 4594
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+37174:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 716
+  - 913
+  - 964
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+37175:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 716
+  - 913
+  - 964
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+37178:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 12
+  - 340
+  - 448
+  - 649
+  material_bonus: 2
+  size: Xtra-Large
+  time_bonus: 20
+37179:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 12
+  - 340
+  - 448
+  - 649
+  material_bonus: 2.4
+  size: Xtra-Large
+  time_bonus: 24
+37180:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2
+  size: Xtra-Large
+  time_bonus: 20
+37181:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2.4
+  size: Xtra-Large
+  time_bonus: 24
+37182:
+  affected_activities:
+  - 3
+  - 4
+  - 8
+  - 5
+  affected_group_ids: []
+  material_bonus: 0
+  size: Xtra-Large
+  time_bonus: 24
+37183:
+  affected_activities:
+  - 3
+  - 4
+  - 8
+  - 5
+  affected_group_ids: []
+  material_bonus: 0
+  size: Xtra-Large
+  time_bonus: 20
+43704:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 536
+  - 716
+  - 873
+  - 913
+  - 964
+  - 1136
+  - 4736
+  material_bonus: 2
+  size: Xtra-Large
+  time_bonus: 20
+43705:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 536
+  - 716
+  - 873
+  - 913
+  - 964
+  - 1136
+  - 4736
+  material_bonus: 2.4
+  size: Xtra-Large
+  time_bonus: 24
+43707:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 324
+  - 541
+  - 830
+  - 831
+  - 834
+  - 893
+  - 1283
+  - 1305
+  - 1527
+  - 1534
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+43708:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 324
+  - 541
+  - 830
+  - 831
+  - 834
+  - 893
+  - 1283
+  - 1305
+  - 1527
+  - 1534
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+43709:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 358
+  - 380
+  - 540
+  - 543
+  - 832
+  - 833
+  - 894
+  - 906
+  - 963
+  - 1202
+  - 1972
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+43711:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 358
+  - 380
+  - 540
+  - 543
+  - 832
+  - 833
+  - 894
+  - 906
+  - 963
+  - 1202
+  - 1972
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+43712:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+43713:
+  affected_activities: []
+  affected_group_ids: []
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+43714:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 25
+  - 31
+  - 420
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+43715:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 25
+  - 31
+  - 420
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+43716:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 26
+  - 28
+  - 419
+  - 463
+  - 1201
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+43717:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 26
+  - 28
+  - 419
+  - 463
+  - 1201
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+43718:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 873
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+43719:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 873
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+43720:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 536
+  - 1136
+  - 4736
+  material_bonus: 2
+  size: Large
+  time_bonus: 20
+43721:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 536
+  - 1136
+  - 4736
+  material_bonus: 2.4
+  size: Large
+  time_bonus: 24
+43722:
+  affected_activities:
+  - 8
+  affected_group_ids: []
+  material_bonus: 0
+  size: Large
+  time_bonus: 20
+43723:
+  affected_activities:
+  - 8
+  affected_group_ids: []
+  material_bonus: 0
+  size: Large
+  time_bonus: 24
+43724:
+  affected_activities:
+  - 3
+  affected_group_ids: []
+  material_bonus: 0
+  size: Large
+  time_bonus: 20
+43725:
+  affected_activities:
+  - 3
+  affected_group_ids: []
+  material_bonus: 0
+  size: Large
+  time_bonus: 24
+43726:
+  affected_activities:
+  - 4
+  affected_group_ids: []
+  material_bonus: 0
+  size: Large
+  time_bonus: 20
+43727:
+  affected_activities:
+  - 4
+  affected_group_ids: []
+  material_bonus: 0
+  size: Large
+  time_bonus: 24
+43729:
+  affected_activities:
+  - 5
+  affected_group_ids: []
+  material_bonus: 0
+  size: Large
+  time_bonus: 20
+43730:
+  affected_activities:
+  - 5
+  affected_group_ids: []
+  material_bonus: 0
+  size: Large
+  time_bonus: 24
+43732:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 27
+  - 513
+  - 941
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+43733:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 27
+  - 513
+  - 941
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43734:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 27
+  - 513
+  - 941
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43854:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 324
+  - 541
+  - 830
+  - 831
+  - 834
+  - 893
+  - 1283
+  - 1305
+  - 1527
+  - 1534
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+43855:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 324
+  - 541
+  - 830
+  - 831
+  - 834
+  - 893
+  - 1283
+  - 1305
+  - 1527
+  - 1534
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+43856:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 324
+  - 541
+  - 830
+  - 831
+  - 834
+  - 893
+  - 1283
+  - 1305
+  - 1527
+  - 1534
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43857:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 324
+  - 541
+  - 830
+  - 831
+  - 834
+  - 893
+  - 1283
+  - 1305
+  - 1527
+  - 1534
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43858:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 358
+  - 380
+  - 540
+  - 543
+  - 832
+  - 833
+  - 894
+  - 906
+  - 963
+  - 1202
+  - 1972
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+43859:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 358
+  - 380
+  - 540
+  - 543
+  - 832
+  - 833
+  - 894
+  - 906
+  - 963
+  - 1202
+  - 1972
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+43860:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 358
+  - 380
+  - 540
+  - 543
+  - 832
+  - 833
+  - 894
+  - 906
+  - 963
+  - 1202
+  - 1972
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43861:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 358
+  - 380
+  - 540
+  - 543
+  - 832
+  - 833
+  - 894
+  - 906
+  - 963
+  - 1202
+  - 1972
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43862:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 898
+  - 900
+  - 902
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+43863:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 898
+  - 900
+  - 902
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+43864:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 898
+  - 900
+  - 902
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43865:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 898
+  - 900
+  - 902
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43866:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 716
+  - 913
+  - 964
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+43867:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 716
+  - 913
+  - 964
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+43868:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 716
+  - 913
+  - 964
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43869:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 716
+  - 913
+  - 964
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43870:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 873
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+43871:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 873
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+43872:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 873
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43873:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 873
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43874:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 536
+  - 1136
+  - 4736
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+43875:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 536
+  - 1136
+  - 4736
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+43876:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 536
+  - 1136
+  - 4736
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43877:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 536
+  - 1136
+  - 4736
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43878:
+  affected_activities:
+  - 8
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 0
+43879:
+  affected_activities:
+  - 8
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 0
+43880:
+  affected_activities:
+  - 8
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43881:
+  affected_activities:
+  - 8
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43882:
+  affected_activities:
+  - 3
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43883:
+  affected_activities:
+  - 3
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43884:
+  affected_activities:
+  - 3
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 0
+43885:
+  affected_activities:
+  - 3
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 0
+43886:
+  affected_activities:
+  - 4
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 0
+43887:
+  affected_activities:
+  - 4
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 0
+43888:
+  affected_activities:
+  - 4
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43889:
+  affected_activities:
+  - 4
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43890:
+  affected_activities:
+  - 5
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 0
+43891:
+  affected_activities:
+  - 5
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 0
+43892:
+  affected_activities:
+  - 5
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 24
+43893:
+  affected_activities:
+  - 5
+  affected_group_ids: []
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43919:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 26
+  - 28
+  - 419
+  - 463
+  - 1201
+  material_bonus: 0
+  size: Medium
+  time_bonus: 20
+43920:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 12
+  - 340
+  - 448
+  - 649
+  material_bonus: 2
+  size: Medium
+  time_bonus: 0
+43921:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 12
+  - 340
+  - 448
+  - 649
+  material_bonus: 2.4
+  size: Medium
+  time_bonus: 0
+45544:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 873
+  material_bonus: 3.7
+  size: Medium
+  time_bonus: 0
+45546:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 873
+  material_bonus: 3.7
+  size: Large
+  time_bonus: 20
+45548:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 536
+  - 716
+  - 873
+  - 913
+  - 964
+  - 1136
+  - 4736
+  material_bonus: 5.7
+  size: Xtra-Large
+  time_bonus: 20
+45640:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 716
+  - 913
+  - 964
+  material_bonus: 5.7
+  size: Medium
+  time_bonus: 0
+45641:
+  affected_activities:
+  - 1
+  affected_group_ids:
+  - 332
+  - 334
+  - 716
+  - 913
+  - 964
+  material_bonus: 5.7
+  size: Large
+  time_bonus: 20

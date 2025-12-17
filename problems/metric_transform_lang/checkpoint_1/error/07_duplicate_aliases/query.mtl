@@ -1,0 +1,2 @@
+aggregate sum(price) as total,
+          count(*) as total

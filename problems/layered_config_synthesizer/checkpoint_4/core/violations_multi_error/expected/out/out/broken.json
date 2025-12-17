@@ -1,0 +1,1 @@
+{"experiment_name":"broken","resources":{"accelerators":[{"count":4,"type":"l4"}],"profile":"train_l4","world_size":4},"training":{"batch_size":14,"launcher":"torchrun","optimizer":"adam"}}

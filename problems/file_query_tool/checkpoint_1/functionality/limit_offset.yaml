@@ -1,0 +1,15 @@
+id: limit_offset
+files:
+  query.sql: 'SELECT first_name, job, country FROM users ORDER BY id LIMIT 3 OFFSET
+    2
+
+    '
+expected: '| first_name   | job                  | country   |
+
+  |--------------|----------------------|-----------|
+
+  | Sheilah      | VP Accounting        | CH        |
+
+  | Teodor       | Compensation Analyst | NULL      |
+
+  | Mirelle      | Assistant Manager    | AR        |'

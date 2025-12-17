@@ -1,0 +1,189 @@
+{
+  "echo": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "Hello, world!\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "echo 'Hello, world!'",
+        "env": {},
+        "files": {},
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "final_stats": {
+    "expected": {
+      "output": {
+        "duration": {
+          "average": "{{ duration.average }}",
+          "max": "{{ duration.max }}",
+          "median": "{{ duration.median }}",
+          "min": "{{ duration.min }}",
+          "stddev": "{{ duration.stddev }}"
+        },
+        "ran": "{{ ran }}"
+      },
+      "status_code": 200
+    },
+    "input": {
+      "method": "GET",
+      "path": "/v1/stats/execution"
+    },
+    "order": 6
+  },
+  "initial_stats": {
+    "expected": {
+      "output": {
+        "duration": {
+          "average": null,
+          "max": null,
+          "median": null,
+          "min": null,
+          "stddev": null
+        },
+        "ran": 0
+      },
+      "status_code": 200
+    },
+    "input": {
+      "method": "GET",
+      "path": "/v1/stats/execution"
+    },
+    "order": 0
+  },
+  "time_out": {
+    "expected": {
+      "output": {
+        "duration": 1.500,
+        "exit_code": -1,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "",
+        "timed_out": true
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "sleep 2",
+        "env": {},
+        "files": {},
+        "stdin": [],
+        "timeout": 1
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 2
+  },
+  "with_env": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "test\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "echo $TEST",
+        "env": {
+          "TEST": "test"
+        },
+        "files": {},
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 5
+  },
+  "with_files": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "Hello, world\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "echo $(cat input.txt)",
+        "env": {},
+        "files": {
+          "input.txt": "Hello, world"
+        },
+        "stdin": [],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 3
+  },
+  "with_stdin": {
+    "expected": {
+      "output": {
+        "duration": 10,
+        "exit_code": 0,
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "Madison\nWisconsin\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "read city\necho $city\nread state\necho $state",
+        "env": {},
+        "files": {},
+        "stdin": [
+          "Madison",
+          "Wisconsin"
+        ],
+        "timeout": 10
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 4
+  }
+}

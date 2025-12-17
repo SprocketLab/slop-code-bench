@@ -1,0 +1,23 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"inheritance/json/order_app.json\",\"rules_applied\":[\"alpha_merge_env\",\"beta_template_description\"]}\\n",
+  "rules": {
+    "alpha_merge_env": {
+      "type": "merge_data",
+      "data": {
+        "environment": "qa"
+      }
+    },
+    "beta_template_description": {
+      "type": "template_string",
+      "key": "description",
+      "variables": {
+        "env": "environment"
+      },
+      "template": "${env}-service"
+    }
+  },
+  "expected_files": {
+    "configs/inheritance/json/order_app.json": "{\\n  \\\"name\\\": \\\"order-app\\\",\\n  \\\"description\\\": \\\"qa-service\\\",\\n  \\\"timeout\\\": 30,\\n  \\\"environment\\\": \\\"qa\\\"\\n}\\n"
+  }
+}

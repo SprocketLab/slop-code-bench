@@ -1,0 +1,6 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"daily-home","kind":"daily","now_local":"2025-09-10T03:30:00Z"}
+{"event":"JOB_STARTED","exclude_count":4,"job_id":"daily-home"}
+{"event":"FILE_SELECTED","job_id":"daily-home","path":"C/D.py"}
+{"event":"FILE_EXCLUDED","job_id":"daily-home","path":"E.bin","pattern":"**/*.bin"}
+{"event":"JOB_COMPLETED","job_id":"daily-home","selected":1,"excluded":1}

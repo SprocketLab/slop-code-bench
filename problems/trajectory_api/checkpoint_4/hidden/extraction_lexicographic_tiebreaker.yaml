@@ -1,0 +1,37 @@
+case:
+  body:
+    date: "2025-10-06T00:00:00Z"
+    task: lex_tiebreaker_task
+    environment: local-sim
+    model: model-lex
+    framework: framework-lex
+    metrics: {}
+    trajectory:
+      - role: user
+        content: Test lexicographic ordering
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: 'Here is <tool zebra args="x"/><tool alpha args="x"/> output'
+        input_tokens: 8
+        output_tokens: 16
+        cost: 0.001
+  headers:
+    content-type: application/json; charset=utf-8
+  id: extraction_lexicographic_tiebreaker
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      environment_version:
+        const: 1
+    required:
+      - id
+      - environment_version
+    type: object
+  status_code: 201

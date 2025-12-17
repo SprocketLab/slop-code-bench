@@ -1,0 +1,6 @@
+task main {
+    run {
+        bash run.sh
+        echo $(ls) >> test.txt
+    }
+}

@@ -1,0 +1,10 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Add foreign key with SET NULL on_delete\",\n  \"operations\": [\n    {\n      \"type\": \"add_foreign_key\",\n      \"table\": \"products\",\n      \"name\": \"fk_products_category\",\n      \"columns\": [\n        \"category_id\"\n      ],\n      \"references\": {\n        \"table\": \"categories\",\n        \"columns\": [\n          \"id\"\n        ]\n      },\n      \"on_delete\": \"SET NULL\"\n    }\n  ]\n}\n"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

@@ -1,0 +1,29 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 3,
+        "line": 1
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "\t",
+      "rule_id": "tab",
+      "start": {
+        "col": 2,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/f.py": "a\tb"
+  },
+  "rules.json": [
+    {
+      "id": "tab",
+      "kind": "exact",
+      "pattern": "\t"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+case:
+  body:
+    date: "2025-10-06T00:00:00Z"
+    task: non_assistant_task
+    environment: local-sim
+    model: model-non-asst
+    framework: framework-non-asst
+    metrics: {}
+    trajectory:
+      - role: system
+        content: '<tool system_tool args="sys"/> System instruction'
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: user
+        content: '<tool user_tool args="usr"/> User message'
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: environment
+        content: '<tool env_tool args="env"/> Environment output'
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: No tools in this response
+        input_tokens: 10
+        output_tokens: 5
+        cost: 0.0005
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_non_assistant_tools
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+    required:
+      - id
+    type: object
+  status_code: 201

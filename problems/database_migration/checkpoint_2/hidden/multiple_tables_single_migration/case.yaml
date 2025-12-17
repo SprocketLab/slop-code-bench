@@ -1,0 +1,19 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Add status to both users and\
+    \ orders\",\n  \"operations\": [\n    {\n      \"type\": \"add_column\",\n   \
+    \   \"table\": \"users\",\n      \"column\": {\n        \"name\": \"status\",\n\
+    \        \"type\": \"TEXT\"\n      }\n    },\n    {\n      \"type\": \"backfill_data\"\
+    ,\n      \"table\": \"users\",\n      \"column\": \"status\",\n      \"value\"\
+    : \"'active'\"\n    },\n    {\n      \"type\": \"add_column\",\n      \"table\"\
+    : \"orders\",\n      \"column\": {\n        \"name\": \"status\",\n        \"\
+    type\": \"TEXT\"\n      }\n    },\n    {\n      \"type\": \"backfill_data\",\n\
+    \      \"table\": \"orders\",\n      \"column\": \"status\",\n      \"value\"\
+    : \"'pending'\"\n    }\n  ]\n}"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

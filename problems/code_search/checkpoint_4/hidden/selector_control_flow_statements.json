@@ -1,0 +1,100 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "rule_id": "while_loops",
+      "file": "code.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 3,
+        "col": 2
+      },
+      "match": "while (x > 0) {\n  x--;\n}"
+    },
+    {
+      "rule_id": "for_loops",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 32
+      },
+      "match": "for (let i = 0; i < 10; i++) {}"
+    },
+    {
+      "rule_id": "while_loops",
+      "file": "code.js",
+      "language": "javascript",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 2
+      },
+      "match": "while (true) {\n  break;\n}"
+    },
+    {
+      "rule_id": "if_stmts",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 2,
+        "col": 13
+      },
+      "match": "if x:\n        pass"
+    },
+    {
+      "rule_id": "for_loops",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 3,
+        "col": 5
+      },
+      "end": {
+        "line": 4,
+        "col": 17
+      },
+      "match": "for i in range(5):\n        continue"
+    }
+  ],
+  "input_files": {
+    "proj/code.cpp": "while (x > 0) {\n  x--;\n}",
+    "proj/code.js": "for (let i = 0; i < 10; i++) {}\nwhile (true) {\n  break;\n}",
+    "proj/code.py": "    if x:\n        pass\n    for i in range(5):\n        continue"
+  },
+  "rules.json": [
+    {
+      "id": "while_loops",
+      "kind": "selector",
+      "selector": "while_statement"
+    },
+    {
+      "id": "for_loops",
+      "kind": "selector",
+      "selector": "for_statement"
+    },
+    {
+      "id": "if_stmts",
+      "kind": "selector",
+      "languages": [
+        "python"
+      ],
+      "selector": "if_statement"
+    }
+  ]
+}

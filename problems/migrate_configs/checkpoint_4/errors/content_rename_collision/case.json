@@ -1,0 +1,21 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "same_name_by_env": {
+      "type": "content_rename",
+      "scope": "file",
+      "file_pattern": "services/*/config.yaml",
+      "variables": {
+        "env": "environment"
+      },
+      "new_path": "../${env}.yaml"
+    }
+  },
+  "status_code": 1,
+  "expected_stderr": "^Error: destination already exists: services/development\\.yaml$",
+  "files": {
+    "configs/services/api/config.yaml": "service:\n  name: api-gateway\n  port: 8080\nenvironment: development\n",
+    "configs/services/worker/config.yaml": "service:\n  name: background-worker\n  port: 8081\nenvironment: development\n"
+  }
+}

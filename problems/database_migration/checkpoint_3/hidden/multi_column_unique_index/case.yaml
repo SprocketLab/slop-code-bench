@@ -1,0 +1,10 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Create composite unique index on student-course pair\",\n  \"operations\": [\n    {\n      \"type\": \"create_index\",\n      \"name\": \"idx_enrollments_student_course\",\n      \"table\": \"enrollments\",\n      \"columns\": [\n        \"student_id\",\n        \"course_id\"\n      ],\n      \"unique\": true\n    }\n  ]\n}\n"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

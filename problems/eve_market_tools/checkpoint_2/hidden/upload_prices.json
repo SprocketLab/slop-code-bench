@@ -1,0 +1,18 @@
+{
+  "expected": {
+    "output": {
+      "status": "PRICES_UPDATED",
+      "count": 895787
+    },
+    "status_code": 200
+  },
+  "input": {
+    "input_file": "orders.csv.gz",
+    "headers": {
+      "content-type": "application/octet-stream"
+    },
+    "method": "POST",
+    "path": "/v1/prices"
+  },
+  "order": 8
+}

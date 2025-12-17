@@ -1,0 +1,2 @@
+group_by(category)
+aggregate count(*) as n

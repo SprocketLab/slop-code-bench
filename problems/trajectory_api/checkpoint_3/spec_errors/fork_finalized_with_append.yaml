@@ -1,0 +1,37 @@
+case:
+  body:
+    up_to_step: 1
+    status: finalized
+    append:
+      - role: user
+        content: This should not be allowed
+        input_tokens: null
+        output_tokens: null
+        cost: null
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"3"
+  id: fork_finalized_with_append
+  method: POST
+  path: /trajectories/{{store.create_in_progress_trajectory}}/fork
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            type: string
+            const: VALIDATION_FAILED
+          message:
+            type: string
+          field_path:
+            type: string
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 422

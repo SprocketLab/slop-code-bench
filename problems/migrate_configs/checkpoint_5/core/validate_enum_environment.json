@@ -1,0 +1,26 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "expected_stdout": "{\"event\":\"validation_failed\",\"file\":\"app.yaml\",\"rule\":\"validate_environment\",\"error\":\"value 'testing' at key 'environment' not in allowed values: [development, staging, production]\"}\\n",
+  "rules": {
+    "validate_environment": {
+      "type": "validate_value",
+      "scope": "validation",
+      "key": "environment",
+      "constraint": {
+        "enum": [
+          "development",
+          "staging",
+          "production"
+        ]
+      }
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "yaml",
+      "content": "environment: testing\\n"
+    }
+  ]
+}

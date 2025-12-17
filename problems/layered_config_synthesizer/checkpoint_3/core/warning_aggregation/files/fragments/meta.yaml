@@ -1,0 +1,2 @@
+legacy_logger:
+  deprecated_reason: "Use structured_logger"

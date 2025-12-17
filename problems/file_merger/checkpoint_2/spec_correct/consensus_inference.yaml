@@ -1,0 +1,37 @@
+case:
+  arguments: --output output.csv --key id --infer strict --schema-strategy consensus
+    x.csv y.tsv z.jsonl
+  input_files:
+  - content:
+    - amount: '5'
+      id: '3'
+    - amount: '6'
+      id: '4'
+    file_type: tsv
+    path: y.tsv
+  - content:
+    - amount: 7
+      id: 5
+    file_type: jsonl
+    path: z.jsonl
+  - content:
+    - amount: '10'
+      id: '1'
+    - amount: '20'
+      id: '2'
+    file_type: csv
+    path: x.csv
+expected:
+  files:
+    output.csv:
+    - amount: 10
+      id: 1
+    - amount: 20
+      id: 2
+    - amount: 5
+      id: 3
+    - amount: 6
+      id: 4
+    - amount: 7
+      id: 5
+  status_code: 0

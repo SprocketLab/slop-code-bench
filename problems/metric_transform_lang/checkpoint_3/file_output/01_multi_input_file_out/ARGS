@@ -1,0 +1,1 @@
+--input a.csv --input b.csv --dsl pipeline.mtl --out out.json

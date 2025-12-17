@@ -1,0 +1,29 @@
+case:
+  arguments: --output output.csv --key id data.tsv.gz
+  input_files:
+  - content:
+    - id: '2'
+      name: Bob
+      score: '85'
+    - id: '1'
+      name: Alice
+      score: '90'
+    - id: '3'
+      name: Charlie
+      score: '75'
+    file_type: tsv
+    compression: gzip
+    path: data.tsv.gz
+expected:
+  files:
+    output.csv:
+    - id: 1
+      name: Alice
+      score: 90
+    - id: 2
+      name: Bob
+      score: 85
+    - id: 3
+      name: Charlie
+      score: 75
+  status_code: 0

@@ -1,0 +1,5 @@
+timestamp,promo_code,category,price
+2025-09-14T08:00:00Z,Q3-PROMO-X,electronics,100.0
+2025-09-14T08:05:00Z,Q3-SALE-Y,electronics,150.0
+2025-09-14T08:10:00Z,Q4-PROMO-X,books,200.0
+2025-09-14T08:15:00Z,Q3-DEAL-X,electronics,250.0

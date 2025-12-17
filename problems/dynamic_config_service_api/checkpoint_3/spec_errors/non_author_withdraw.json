@@ -1,0 +1,41 @@
+{
+  "case": {
+    "body": {
+      "actor": "carol",
+      "reason": "Want to withdraw someone else's proposal"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "non_author_withdraw",
+    "method": "POST",
+    "path": "/v1/proposals/5:withdraw"
+  },
+  "expected": {
+    "status_code": 422,
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "policy_violation"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+experiment_name: bad-template
+training:
+  optimizer: adam
+resources:
+  profile: invalid
+  world_size: 3
+  accelerators:
+    - type: h100
+      count: 8
+    - "{{static:array_frag}}"

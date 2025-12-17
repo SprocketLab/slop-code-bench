@@ -1,0 +1,30 @@
+case:
+  body:
+    metrics:
+      this_key_is_definitely_way_too_long_it_exceeds_sixty_four_characters_limit: "value"
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: finalize_metrics_key_too_long
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_metrics_errors}}/finalize
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: VALIDATION_FAILED
+          message:
+            type: string
+          field_path:
+            type: string
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 422

@@ -1,0 +1,21 @@
+case:
+  arguments: --output out.csv --key user --schema schema.json input.jsonl
+  input_files:
+  - content:
+    - user:
+        id: 1
+    file_type: jsonl
+    path: input.jsonl
+  - content:
+      columns:
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: id
+              type: int
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 3
+  stderr: ERR 3 key column "user" does not resolve to a primitive

@@ -1,0 +1,25 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_limit_invalid_zero
+  method: GET
+  path: /trajectories?limit=0
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: INVALID_QUERY
+          message:
+            type: string
+          field_path:
+            type: ["string", "null"]
+        required:
+        - code
+        - message
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 400

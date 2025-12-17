@@ -1,0 +1,10 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"empty-now","kind":"daily","now_local":"2025-01-15T02:00:00Z"}
+{"event":"JOB_STARTED","exclude_count":1,"job_id":"empty-now"}
+{"event":"STRATEGY_SELECTED","job_id":"empty-now","kind":"pack"}
+{"event":"FILE_EXCLUDED","job_id":"empty-now","path":"A","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"empty-now","path":"B","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"empty-now","path":"C","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"empty-now","path":"D","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"empty-now","path":"E","pattern":"**/*"}
+{"event":"JOB_COMPLETED","job_id":"empty-now","selected":0,"excluded":5,"files_skipped_unchanged":0,"dest_state_files":0,"packs":0,"total_size":0}

@@ -1,0 +1,42 @@
+case:
+  arguments: --output output.csv --key ts --schema schema.json data.csv
+  input_files:
+  - content:
+    - id: '1'
+      ts: '2024-07-01T12:00:00Z'
+    - id: '2'
+      ts: '2024-07-01T12:00:00+00:00'
+    - id: '3'
+      ts: '2024-07-01T07:00:00-05:00'
+    - id: '4'
+      ts: '2024-07-01T20:00:00+08:00'
+    - id: '5'
+      ts: '2024-07-01T13:30:00+01:30'
+    - id: '6'
+      ts: '2024-07-01T10:00:00'
+    file_type: csv
+    path: data.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: ts
+        type: timestamp
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - id: 6
+      ts: '2024-07-01T10:00:00Z'
+    - id: 1
+      ts: '2024-07-01T12:00:00Z'
+    - id: 2
+      ts: '2024-07-01T12:00:00Z'
+    - id: 3
+      ts: '2024-07-01T12:00:00Z'
+    - id: 4
+      ts: '2024-07-01T12:00:00Z'
+    - id: 5
+      ts: '2024-07-01T12:00:00Z'
+  status_code: 0

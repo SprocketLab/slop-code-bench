@@ -1,0 +1,4 @@
+START: Arant
+GO: Arant (0.6) -> Kemerk (0.8) -> Deninard (0.7) -> Onne (0.4) -> Vitrauze (0.3) -> Droselory (0.5)
+DOCK: Droselory IX - Moon 4 - Material Acquisition Mineral Reserve
+DONE: 00:13

@@ -1,0 +1,1 @@
+FRAGMENT_DEPRECATED legacy_logger Use structured_logger

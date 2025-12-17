@@ -1,0 +1,4 @@
+{"job_id": 2, "task": "A", "params": {}, "stdout": "A\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.016096523999294732}
+{"job_id": 3, "task": "A", "params": {}, "stdout": "A\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.016566131000217865}
+{"job_id": 4, "task": "PrintInt", "params": {"num": 2}, "stdout": "2\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.015216441999655217}
+{"job_id": 1, "task": "main", "params": {"num": 10}, "stdout": "Finished.\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": null, "duration": 0.06499276499926054}

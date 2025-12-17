@@ -1,0 +1,32 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json data.csv
+  input_files:
+  - content: 'id,payload
+
+      1,"{\"a\":[1,2],\"b\":{\"x\":true}}"
+
+      2,"[1,2,3]"
+
+      3,"42"
+
+      '
+    file_type: text
+    path: data.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: payload
+        type: json
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      payload: '{"a":[1,2],"b":{"x":true}}'
+    - id: 2
+      payload: '[1,2,3]'
+    - id: 3
+      payload: '42'
+  status_code: 0

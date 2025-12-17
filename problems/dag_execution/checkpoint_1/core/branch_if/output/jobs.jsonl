@@ -1,0 +1,3 @@
+{"job_id": 2, "task": "B", "params": {}, "stdout": "B\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.01610095999967598}
+{"job_id": 3, "task": "A", "params": {}, "stdout": "A\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.014925462000974221}
+{"job_id": 1, "task": "main", "params": {}, "stdout": "Finished.\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": null, "duration": 0.04601003599964315}

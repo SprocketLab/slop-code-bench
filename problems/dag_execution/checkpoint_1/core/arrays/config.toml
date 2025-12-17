@@ -1,0 +1,4 @@
+clean_cwd=true
+entry="main_but_not"
+[env]
+FILE_NAME="I_AM_AN_ENV_VAR"

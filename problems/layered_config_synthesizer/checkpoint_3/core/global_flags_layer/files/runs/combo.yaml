@@ -1,0 +1,3 @@
+experiment_name: combo
+training:
+  optimizer: adamw

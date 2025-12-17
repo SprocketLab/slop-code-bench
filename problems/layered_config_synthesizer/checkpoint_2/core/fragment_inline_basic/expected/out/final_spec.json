@@ -1,0 +1,1 @@
+{"experiment_name":"base-run","logging":{"format":"json","level":"INFO"},"resources":{"accelerators":[{"count":2,"type":"a10"}],"profile":"base","world_size":2},"training":{"batch_size":32,"optimizer":"adam"}}

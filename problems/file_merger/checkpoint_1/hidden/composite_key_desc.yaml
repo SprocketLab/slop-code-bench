@@ -1,0 +1,34 @@
+case:
+  arguments: --output output.csv --key category,priority --desc data.csv
+  input_files:
+  - content:
+    - category: A
+      id: '1'
+      priority: '1'
+    - category: B
+      id: '2'
+      priority: '2'
+    - category: A
+      id: '3'
+      priority: '2'
+    - category: B
+      id: '4'
+      priority: '1'
+    file_type: csv
+    path: data.csv
+expected:
+  files:
+    output.csv:
+    - category: B
+      id: 2
+      priority: 2
+    - category: B
+      id: 4
+      priority: 1
+    - category: A
+      id: 3
+      priority: 2
+    - category: A
+      id: 1
+      priority: 1
+  status_code: 0

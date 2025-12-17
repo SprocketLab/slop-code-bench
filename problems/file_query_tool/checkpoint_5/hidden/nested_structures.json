@@ -1,0 +1,11 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "query": "WITH high_salary_depts AS (\n    SELECT department\n    FROM (\n        SELECT department, AVG(salary) as avg_salary\n        FROM employees\n        GROUP BY department\n    ) dept_avgs\n    WHERE avg_salary > 90000\n)\nSELECT \n    name,\n    department,\n    salary,\n    (SELECT AVG(salary) FROM employees e2 WHERE e2.department = e1.department) as dept_avg,\n    RANK() OVER (PARTITION BY department ORDER BY salary DESC) as dept_rank\nFROM employees e1\nWHERE department IN (SELECT department FROM high_salary_depts)\nORDER BY department, dept_rank",
+    "expected": "| name    | department  | salary | dept_avg | dept_rank |\n| ------- | ----------- | ------ | -------- | --------- |\n| Alice   | Engineering | 120000 | 94000    | 1         |\n| Charlie | Engineering | 95000  | 94000    | 2         |\n| Bob     | Engineering | 90000  | 94000    | 3         |\n| Eve     | Engineering | 85000  | 94000    | 4         |\n| David   | Engineering | 80000  | 94000    | 5         |",
+    "input_data": "data.json"
+}

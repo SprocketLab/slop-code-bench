@@ -1,0 +1,2 @@
+{"event":"file_relocated","from":"services/api/config.yaml","to":"services/api/api-gateway.yaml"}
+{"event":"file_relocated","from":"services/worker/config.yaml","to":"services/worker/background-worker.yaml"}

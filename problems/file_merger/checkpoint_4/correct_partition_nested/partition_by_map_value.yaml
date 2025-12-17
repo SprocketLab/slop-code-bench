@@ -1,0 +1,56 @@
+case:
+  arguments: --output out --key id --partition-by attrs["region"] --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 3
+      name: Charlie
+      attrs:
+        region: west
+        tier: gold
+    - id: 1
+      name: Alice
+      attrs:
+        region: east
+        tier: silver
+    - id: 4
+      name: Dave
+      attrs:
+        region: west
+        tier: bronze
+    - id: 2
+      name: Bob
+      attrs:
+        region: east
+        tier: gold
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: name
+        type: string
+      - name: attrs
+        type:
+          map:
+            key: string
+            value: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out/attrs["region"]=east/part-00000.csv: 'attrs,id,name
+
+      "{\"region\":\"east\",\"tier\":\"silver\"}",1,Alice
+
+      "{\"region\":\"east\",\"tier\":\"gold\"}",2,Bob
+
+      '
+    out/attrs["region"]=west/part-00000.csv: 'attrs,id,name
+
+      "{\"region\":\"west\",\"tier\":\"gold\"}",3,Charlie
+
+      "{\"region\":\"west\",\"tier\":\"bronze\"}",4,Dave
+
+      '
+  status_code: 0

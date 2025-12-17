@@ -1,0 +1,4 @@
+{"job_id": 2, "task": "Calculate", "params": {"x": 12, "y": 8}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.01728178499979549}
+{"job_id": 3, "task": "Calculate", "params": {"x": 20, "y": 5}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.016037567000239505}
+{"job_id": 4, "task": "Calculate", "params": {"x": 0, "y": 2}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.01563090200033912}
+{"job_id": 1, "task": "main", "params": {}, "stdout": "x=0, y=2\nsum=2\ndiff=-2\nprod=0\ndiv=0\nmod=0\nx=12, y=8\nsum=20\ndiff=4\nprod=96\ndiv=1\nmod=4\nx=20, y=5\nsum=25\ndiff=15\nprod=100\ndiv=4\nmod=0\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": null, "duration": 0.06515672200112022}

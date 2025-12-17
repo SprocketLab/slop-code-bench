@@ -1,0 +1,21 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+  rules:
+    out.json:
+      dest: ["expected", "files", "out.json"]
+      loader: json
+
+verifiers:
+  success:
+    type: status_code
+    value: 0
+  report_ok:
+    type: exact_match
+    result_attr: ["files","out.json"]
+    expected_attr: ["files","out.json"]
+
+normalizers:
+  - "load_json(files.out.json)"
+

@@ -1,0 +1,260 @@
+{
+    "basic_library_params": {
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {
+                        "Normalize": {
+                            "steps": [
+                                {
+                                    "op": "map",
+                                    "as": "z",
+                                    "expr": "(x - params.mu) / params.s"
+                                }
+                            ]
+                        },
+                        "KeepZ": {
+                            "steps": [
+                                {
+                                    "op": "select",
+                                    "columns": [
+                                        "id",
+                                        "z"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "compose": [
+                {
+                    "ref": "stats:Normalize",
+                    "params": {
+                        "mu": 10,
+                        "s": 5
+                    }
+                },
+                {
+                    "ref": "stats:KeepZ"
+                }
+            ],
+            "dataset": [
+                {
+                    "id": 1,
+                    "x": 15
+                },
+                {
+                    "id": 2,
+                    "x": 5
+                }
+            ]
+        },
+        "expected": {
+            "status": "ok",
+            "data": [
+                {
+                    "id": 1,
+                    "z": 1
+                },
+                {
+                    "id": 2,
+                    "z": -1
+                }
+            ],
+            "metrics": {
+                "rows_in": 2,
+                "rows_out": 2
+            }
+        }
+    },
+    "mix_inline_and_namespace": {
+        "stdin": {
+            "library": {
+                "tags": {
+                    "defs": {
+                        "Label": {
+                            "steps": [
+                                {
+                                    "op": "map",
+                                    "as": "tag",
+                                    "expr": "params.label"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "compose": [
+                {
+                    "steps": [
+                        {
+                            "op": "map",
+                            "as": "y",
+                            "expr": "x * 2"
+                        }
+                    ]
+                },
+                {
+                    "ref": "tags:Label",
+                    "params": {
+                        "label": "A"
+                    }
+                }
+            ],
+            "dataset": [
+                {
+                    "id": 1,
+                    "x": 3
+                }
+            ]
+        },
+        "expected": {
+            "status": "ok",
+            "data": [
+                {
+                    "id": 1,
+                    "x": 3,
+                    "y": 6,
+                    "tag": "A"
+                }
+            ],
+            "metrics": {
+                "rows_in": 1,
+                "rows_out": 1
+            }
+        }
+    },
+    "expand_refs_params": {
+        "arguments": [],
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {
+                        "Normalize": {
+                            "steps": [
+                                {
+                                    "op": "map",
+                                    "as": "z",
+                                    "expr": "(x - params.mu) / params.s"
+                                }
+                            ]
+                        },
+                        "KeepZ": {
+                            "steps": [
+                                {
+                                    "op": "select",
+                                    "columns": [
+                                        "id",
+                                        "z"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "compose": [
+                {
+                    "ref": "stats:Normalize",
+                    "params": {
+                        "mu": 10,
+                        "s": 5
+                    }
+                },
+                {
+                    "ref": "stats:KeepZ"
+                }
+            ],
+            "dataset": [
+                {
+                    "id": 1,
+                    "x": 15
+                },
+                {
+                    "id": 2,
+                    "x": 5
+                }
+            ]
+        },
+        "expected": {
+            "status": "ok",
+            "normalized": {
+                "steps": [
+                    {
+                        "op": "map",
+                        "as": "z",
+                        "expr": "(x - params.mu) / params.s"
+                    },
+                    {
+                        "op": "select",
+                        "columns": [
+                            "id",
+                            "z"
+                        ]
+                    }
+                ]
+            }
+        }
+    },
+    "inline_and_ref": {
+        "arguments": [],
+        "stdin": {
+            "library": {
+                "tags": {
+                    "defs": {
+                        "Label": {
+                            "steps": [
+                                {
+                                    "op": "map",
+                                    "as": "tag",
+                                    "expr": "params.label"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "compose": [
+                {
+                    "steps": [
+                        {
+                            "op": "map",
+                            "as": "y",
+                            "expr": "x * 2"
+                        }
+                    ]
+                },
+                {
+                    "ref": "tags:Label",
+                    "params": {
+                        "label": "A"
+                    }
+                }
+            ],
+            "dataset": [
+                {
+                    "id": 1,
+                    "x": 3
+                }
+            ]
+        },
+        "expected": {
+            "status": "ok",
+            "normalized": {
+                "steps": [
+                    {
+                        "op": "map",
+                        "as": "y",
+                        "expr": "x * 2"
+                    },
+                    {
+                        "op": "map",
+                        "as": "tag",
+                        "expr": "params.label"
+                    }
+                ]
+            }
+        }
+    }
+}

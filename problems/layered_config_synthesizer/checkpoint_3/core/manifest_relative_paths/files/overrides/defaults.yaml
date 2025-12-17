@@ -1,0 +1,6 @@
+training:
+  batch_size: 30
+resources:
+  accelerators:
+    - type: v100
+      count: 2

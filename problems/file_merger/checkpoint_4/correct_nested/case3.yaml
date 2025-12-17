@@ -1,0 +1,46 @@
+case:
+  arguments: --output out.csv --key user.meta.last_login --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 2
+      user:
+        meta:
+          last_login: '2024-07-01T10:00:00+02:00'
+          signup_date: '2024-06-01'
+        name: B
+    - id: 1
+      user:
+        meta:
+          last_login: '2024-07-01T09:00:00Z'
+          signup_date: '2024-06-02'
+        name: A
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: meta
+              type:
+                struct:
+                  fields:
+                  - name: last_login
+                    type: timestamp
+                  - name: signup_date
+                    type: date
+            - name: name
+              type: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 2
+      user: '{"meta":{"last_login":"2024-07-01T08:00:00Z","signup_date":"2024-06-01"},"name":"B"}'
+    - id: 1
+      user: '{"meta":{"last_login":"2024-07-01T09:00:00Z","signup_date":"2024-06-02"},"name":"A"}'
+  status_code: 0

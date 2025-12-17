@@ -1,0 +1,5 @@
+experiment_name: delta
+resources:
+  world_size: 4
+training:
+  extra: "delta-${STAGE}"

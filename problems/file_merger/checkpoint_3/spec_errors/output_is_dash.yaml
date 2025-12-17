@@ -1,0 +1,13 @@
+case:
+  arguments: --output - --key id --partition-by country INPUT1.csv
+  input_files:
+  - content: 'id,country
+
+      1,US
+
+      '
+    file_type: text
+    path: INPUT1.csv
+expected:
+  status_code: 2
+  stderr: ERR 2 partitioned output requires --output to be a directory

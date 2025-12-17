@@ -1,0 +1,24 @@
+tables:
+  users:
+    columns:
+    - id
+    - temp_email
+    - name
+    - email
+    rows:
+    - id: 1
+      temp_email: alice@test.com
+      name: Alice
+      email: alice@test.com
+    - id: 2
+      temp_email: null
+      name: Bob
+      email: null
+    - id: 3
+      temp_email: charlie@test.com
+      name: Charlie
+      email: charlie@test.com
+    - id: 4
+      temp_email: null
+      name: Diana
+      email: null

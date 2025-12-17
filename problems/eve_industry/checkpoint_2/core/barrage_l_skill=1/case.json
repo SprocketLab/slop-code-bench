@@ -1,0 +1,15 @@
+{
+    "case": {
+        "arguments": [
+            "invention",
+            "'Barrage L Blueprint'",
+            "--sde",
+            "{{static:sde_dir}}",
+            "--skill",
+            "1"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

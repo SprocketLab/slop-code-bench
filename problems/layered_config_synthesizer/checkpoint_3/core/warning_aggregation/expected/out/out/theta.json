@@ -1,0 +1,1 @@
+{"experiment_name":"theta","logging":{"destination":"stdout","format":"text"},"metadata":"general","resources":{"accelerators":[{"count":2,"type":"a100"}],"profile":"shared","world_size":2},"training":{"batch_size":24,"learning_rate":0.05,"optimizer":"adam"}}

@@ -1,0 +1,13 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "bad_constraint": {
+      "type": "validate_value",
+      "scope": "validation",
+      "key": "environment"
+    }
+  },
+  "status_code": 1,
+  "expected_stderr": "^Error: invalid validate_value rule 'bad_constraint': constraint must be provided$"
+}

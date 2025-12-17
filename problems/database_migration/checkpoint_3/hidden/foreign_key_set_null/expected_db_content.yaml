@@ -1,0 +1,25 @@
+tables:
+  categories:
+    columns:
+    - id
+    - name
+    rows:
+    - id: 1
+      name: Electronics
+    - id: 2
+      name: Books
+  products:
+    columns:
+    - id
+    - name
+    - category_id
+    rows:
+    - id: 1
+      name: Laptop
+      category_id: 1
+    - id: 2
+      name: Novel
+      category_id: 2
+    - id: 3
+      name: Uncategorized
+      category_id: null

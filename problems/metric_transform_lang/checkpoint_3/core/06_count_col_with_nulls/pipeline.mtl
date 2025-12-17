@@ -1,0 +1,13 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  price: float
+  quantity: int
+}
+
+pipeline CountTest using Sale {
+  aggregate count(*) as total_rows,
+            count(price) as price_count,
+            count(quantity) as qty_count,
+            sum(price) as total_price
+}

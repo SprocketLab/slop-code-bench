@@ -1,0 +1,21 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "rules": {
+    "require_database": {
+      "type": "require_keys",
+      "scope": "validation",
+      "keys": [
+        "database.host",
+        "database.port"
+      ]
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "text",
+      "content": "environment: production\ntimeout: 60\ndatabase:\n  host: prod.db.internal\nservices:\n  - name: api\n    port: 8080\n"
+    }
+  ]
+}

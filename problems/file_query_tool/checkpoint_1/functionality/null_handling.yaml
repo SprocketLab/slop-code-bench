@@ -1,0 +1,11 @@
+id: null_handling
+files:
+  query.sql: 'SELECT first_name, phone, car FROM users WHERE phone = '''' OR car =
+    ''''
+
+    '
+expected: '| first_name   | phone   | car   |
+
+  |--------------|---------|-------|
+
+  | Irita        |         | Mazda |'

@@ -1,0 +1,20 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "b_update_host_value": {
+      "type": "replace_value",
+      "key": "metadata.host",
+      "value": "cache.prod.internal"
+    },
+    "a_rename_hostname": {
+      "type": "rename_key",
+      "old_key": "metadata.hostname",
+      "new_key": "metadata.host"
+    },
+    "c_update_metrics": {
+      "type": "replace_value",
+      "key": "urls.metrics",
+      "value": "https://cache.prod.internal/metrics"
+    }
+  }
+}

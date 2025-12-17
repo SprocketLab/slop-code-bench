@@ -1,0 +1,5 @@
+timestamp,value
+2025-09-14T08:00:00Z,10.0
+2025-09-14T08:05:00Z,abc
+invalid-timestamp,20.0
+2025-09-14T08:15:00Z,30.0

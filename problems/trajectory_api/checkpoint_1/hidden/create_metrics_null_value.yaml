@@ -1,0 +1,41 @@
+case:
+  body:
+    date: "2025-10-12T00:00:00Z"
+    task: metrics_null_test
+    environment: local-sim
+    model: gpt-x-pro
+    framework: my-agent-v2
+    metrics:
+      valid_key: "valid_value"
+      null_key: null
+    trajectory:
+      - role: user
+        content: Hello
+        input_tokens: null
+        output_tokens: null
+        cost: null
+  headers:
+    content-type: application/json; charset=utf-8
+  id: create_metrics_null_value
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: INVALID_INPUT
+          message:
+            type: string
+          field_path:
+            type: string
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 400

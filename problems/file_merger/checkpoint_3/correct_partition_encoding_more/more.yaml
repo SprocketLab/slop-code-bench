@@ -1,0 +1,15 @@
+case:
+  arguments: --output out --key id --partition-by city data.csv
+  input_files:
+  - content: "id,city\n1,M\xFCnchen\n2,a+b\n"
+    file_type: text
+    path: data.csv
+expected:
+  files:
+    out/city=M%C3%BCnchen/part-00000.csv:
+    - city: "M\xFCnchen"
+      id: 1
+    out/city=a%2Bb/part-00000.csv:
+    - city: a+b
+      id: 2
+  status_code: 0

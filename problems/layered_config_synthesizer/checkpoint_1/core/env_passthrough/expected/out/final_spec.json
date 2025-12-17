@@ -1,0 +1,1 @@
+{"experiment_name":"env-case","resources":{"accelerators":[{"count":2,"type":"l4"}],"profile":"env-profile","world_size":1},"training":{"batch_size":16,"optimizer":"adam"}}

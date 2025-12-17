@@ -1,0 +1,14 @@
+{
+    "case": {
+        "arguments": [
+            "contracts",
+            "\"Jita IV - Moon 4 - Caldari Navy Assembly Plant\"",
+            "contracts.jsonl",
+            "--config",
+            "config.yaml"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

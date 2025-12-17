@@ -1,0 +1,13 @@
+{
+  "arguments": "rules.json configs",
+  "files": {
+    "configs/arrays/servers.json": "{\n  \"primary_endpoint\": \"unused\",\n  \"servers\": [\n    {\"host\": \"api.example.com\", \"port\": 8080},\n    {\"host\": \"backup.example.com\", \"port\": 8081}\n  ]\n}\n"
+  },
+  "rules": {
+    "set_primary_host": {
+      "type": "pattern_replace",
+      "key_pattern": "servers[0].host",
+      "value": "primary.example.com"
+    }
+  }
+}

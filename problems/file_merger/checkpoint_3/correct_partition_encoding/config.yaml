@@ -1,0 +1,30 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+  rules:
+    expected_ny.csv:
+      dest: ["expected", "files", "out/city=New%20York/part-00000.csv"]
+      loader: text
+    expected_null.csv:
+      dest: ["expected", "files", "out/city=_null/part-00000.csv"]
+      loader: text
+    expected_slash.csv:
+      dest: ["expected", "files", "out/city=SF%2FMarket/part-00000.csv"]
+      loader: csv
+verifiers:
+  success:
+    type: status_code
+    value: 0
+  ny_match:
+    type: exact_match
+    result_attr: [files, "out/city=New%20York/part-00000.csv"]
+    expected_attr: [files, "out/city=New%20York/part-00000.csv"]
+  null_match:
+    type: exact_match
+    result_attr: [files, "out/city=_null/part-00000.csv"]
+    expected_attr: [files, "out/city=_null/part-00000.csv"]
+  slash_match:
+    type: exact_match
+    result_attr: [files, "out/city=SF%2FMarket/part-00000.csv"]
+    expected_attr: [files, "out/city=SF%2FMarket/part-00000.csv"]

@@ -1,0 +1,26 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "input_files": [
+    {
+      "path": "configs/inheritance/default.json",
+      "file_type": "text",
+      "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+    },
+    {
+      "path": "configs/inheritance/yaml/app_chain.yaml",
+      "file_type": "text",
+      "content": "extends: base_chain.yaml\napp: chain-app\ntimeout: 45\n"
+    },
+    {
+      "path": "configs/inheritance/yaml/base_chain.yaml",
+      "file_type": "text",
+      "content": "extends: root.yaml\nretry: 3\n"
+    },
+    {
+      "path": "configs/inheritance/yaml/root.yaml",
+      "file_type": "text",
+      "content": "timeout: 30\nregion: us-west-2\n"
+    }
+  ],
+  "rules": {}
+}

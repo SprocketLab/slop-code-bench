@@ -1,0 +1,16 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Add and backfill status column\"\
+    ,\n  \"operations\": [\n    {\n      \"type\": \"add_column\",\n      \"table\"\
+    : \"users\",\n      \"column\": {\n        \"name\": \"status\",\n        \"type\"\
+    : \"TEXT\",\n        \"not_null\": false\n      }\n    },\n    {\n      \"type\"\
+    : \"backfill_data\",\n      \"table\": \"users\",\n      \"column\": \"status\"\
+    ,\n      \"value\": \"'active'\",\n      \"where\": \"status IS NULL\"\n    }\n\
+    \  ]\n}\n"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

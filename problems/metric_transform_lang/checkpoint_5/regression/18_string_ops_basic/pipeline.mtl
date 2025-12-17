@@ -1,0 +1,11 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  promo_code: string
+  price: float
+}
+
+pipeline StringOps using Sale {
+  filter(starts_with(promo_code, 'Q3') & ends_with(promo_code, 'X') & contains(promo_code, 'PROMO'))
+  aggregate count(*) as n, sum(price) as total
+}

@@ -1,0 +1,46 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --schema-strategy authoritative file1.parquet file2.parquet
+  input_files:
+  - content:
+    - id: 1
+      value: 100
+    - id: 2
+      value: 200
+    file_type: parquet
+    path: file1.parquet
+  - content:
+    - id: 3
+      value: 300
+    - id: 4
+      value: 400
+    file_type: parquet
+    path: file2.parquet
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: value
+        type: int
+      - name: config
+        type:
+          map:
+            key: string
+            value: int
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      value: 100
+      config: null
+    - id: 2
+      value: 200
+      config: null
+    - id: 3
+      value: 300
+      config: null
+    - id: 4
+      value: 400
+      config: null
+  status_code: 0

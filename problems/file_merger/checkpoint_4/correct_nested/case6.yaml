@@ -1,0 +1,37 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 1
+      items:
+      - sku: x
+      - qty: 2
+        sku: y
+    - id: 2
+      items: []
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: items
+        type:
+          array:
+            element:
+              struct:
+                fields:
+                - name: sku
+                  type: string
+                - name: qty
+                  type: int
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      items: '[{"sku":"x","qty":null},{"sku":"y","qty":2}]'
+    - id: 2
+      items: '[]'
+  status_code: 0

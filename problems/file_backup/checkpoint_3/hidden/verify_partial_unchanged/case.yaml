@@ -1,0 +1,18 @@
+arguments: --now 2025-01-15T05:00:00Z --schedule schedule.yaml --duration 1 --mount {{static:files}} --backup backup
+input_files:
+- content:
+    jobs:
+    - destination: backup://verify-store
+      exclude:
+      - '**/*.bin'
+      id: verify-partial
+      source: mount://A
+      when:
+        at: '05:00'
+        kind: daily
+      strategy:
+        kind: verify
+    timezone: UTC
+    version: 1
+  file_type: yaml
+  path: schedule.yaml

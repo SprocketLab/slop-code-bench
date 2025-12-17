@@ -1,0 +1,20 @@
+case:
+  arguments: --output out.csv --key attrs[country] --schema schema.json input.jsonl
+  input_files:
+  - content:
+    - attrs:
+        country: US
+    file_type: jsonl
+    path: input.jsonl
+  - content:
+      columns:
+      - name: attrs
+        type:
+          map:
+            key: string
+            value: string
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 2
+  stderr: 'ERR 2 invalid key path syntax: attrs[country]'

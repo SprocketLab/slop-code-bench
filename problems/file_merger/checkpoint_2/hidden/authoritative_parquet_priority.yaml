@@ -1,0 +1,29 @@
+case:
+  arguments: --output output.csv --key id --schema-strategy authoritative a.parquet b.csv
+  input_files:
+  - content:
+    - id: 1
+      value: 100
+    - id: 3
+      value: 300
+    file_type: parquet
+    path: a.parquet
+  - content:
+    - id: '2'
+      value: '200'
+    - id: '4'
+      value: '400'
+    file_type: csv
+    path: b.csv
+expected:
+  files:
+    output.csv:
+    - id: 1
+      value: 100
+    - id: 2
+      value: 200
+    - id: 3
+      value: 300
+    - id: 4
+      value: 400
+  status_code: 0

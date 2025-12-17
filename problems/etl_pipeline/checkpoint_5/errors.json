@@ -1,0 +1,272 @@
+{
+    "unknown_namespace": {
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {}
+                }
+            },
+            "compose": [
+                {
+                    "ref": "metrics:Normalize"
+                }
+            ],
+            "dataset": [
+                {
+                    "id": 1,
+                    "x": 0
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "UNKNOWN_NAMESPACE",
+            "message": "ETL_ERROR: unknown namespace 'metrics'",
+            "path": "compose[0].ref"
+        }
+    },
+    "compose_params_not_object_error": {
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {
+                        "Center": {
+                            "steps": [
+                                {
+                                    "op": "map",
+                                    "as": "delta",
+                                    "expr": "value - params.mu"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "compose": [
+                {
+                    "ref": "stats:Center",
+                    "params": 5
+                }
+            ],
+            "dataset": [
+                {
+                    "value": 10
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "SCHEMA_VALIDATION_FAILED",
+            "message": "ETL_ERROR: params must be an object",
+            "path": "compose[0].params"
+        }
+    },
+    "compose_pipeline_conflict": {
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {
+                        "Keep": {
+                            "steps": [
+                                {
+                                    "op": "limit",
+                                    "n": 1
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "compose": [
+                {
+                    "ref": "stats:Keep"
+                }
+            ],
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "limit",
+                        "n": 2
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "SCHEMA_VALIDATION_FAILED",
+            "message": "ETL_ERROR: 'compose' and non-empty 'pipeline.steps' cannot both be set",
+            "path": "pipeline.steps"
+        }
+    },
+    "compose_unknown_namespace": {
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {}
+                }
+            },
+            "compose": [
+                {
+                    "ref": "metrics:Normalize"
+                }
+            ],
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "UNKNOWN_NAMESPACE",
+            "message": "ETL_ERROR: unknown namespace 'metrics'",
+            "path": "compose[0].ref"
+        }
+    },
+    "compose_ref_unknown_name_error": {
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {}
+                }
+            },
+            "compose": [
+                {
+                    "ref": "stats:Missing"
+                }
+            ],
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "UNKNOWN_LIB_REF",
+            "message": "ETL_ERROR: undefined 'stats:Missing'",
+            "path": "compose[0].ref"
+        }
+    },
+    "unknown_lib_name": {
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {}
+                }
+            },
+            "compose": [
+                {
+                    "ref": "stats:Missing"
+                }
+            ],
+            "dataset": [
+                {
+                    "id": 1
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "UNKNOWN_LIB_REF",
+            "message": "ETL_ERROR: undefined 'stats:Missing'",
+            "path": "compose[0].ref"
+        }
+    },
+    "compose_and_pipeline_present": {
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {
+                        "K": {
+                            "steps": [
+                                {
+                                    "op": "limit",
+                                    "n": 1
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "compose": [
+                {
+                    "ref": "stats:K"
+                }
+            ],
+            "pipeline": {
+                "steps": [
+                    {
+                        "op": "limit",
+                        "n": 2
+                    }
+                ]
+            },
+            "dataset": [
+                {
+                    "id": 1
+                },
+                {
+                    "id": 2
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "SCHEMA_VALIDATION_FAILED",
+            "message": "ETL_ERROR: 'compose' and non-empty 'pipeline.steps' cannot both be set",
+            "path": "pipeline.steps"
+        }
+    },
+    "invalid_params_type": {
+        "stdin": {
+            "library": {
+                "stats": {
+                    "defs": {
+                        "Center": {
+                            "steps": [
+                                {
+                                    "op": "map",
+                                    "as": "y",
+                                    "expr": "x - params.mu"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "compose": [
+                {
+                    "ref": "stats:Center",
+                    "params": 42
+                },
+                {
+                    "steps": [
+                        {
+                            "op": "select",
+                            "columns": [
+                                "y"
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "dataset": [
+                {
+                    "x": 10
+                }
+            ]
+        },
+        "expected": {
+            "status": "error",
+            "error_code": "SCHEMA_VALIDATION_FAILED",
+            "message": "ETL_ERROR: params must be an object",
+            "path": "compose[0].params"
+        }
+    }
+}

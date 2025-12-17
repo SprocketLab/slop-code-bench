@@ -1,0 +1,25 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "add_defaults": {
+      "type": "merge_data",
+      "data": {
+        "environment": "production",
+        "timeout": 30
+      }
+    },
+    "set_description": {
+      "type": "template_string",
+      "key": "description",
+      "variables": {
+        "env": "environment"
+      },
+      "template": "${env} service"
+    },
+    "update_ports": {
+      "type": "pattern_replace",
+      "key_pattern": "services.*.port",
+      "value": 9000
+    }
+  }
+}

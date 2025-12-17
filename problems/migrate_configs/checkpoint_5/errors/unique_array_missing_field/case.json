@@ -1,0 +1,13 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "unique_services": {
+      "type": "unique_array_values",
+      "scope": "validation",
+      "array_path": "services"
+    }
+  },
+  "status_code": 1,
+  "expected_stderr": "^Error: invalid unique_array_values rule 'unique_services': field must be provided$"
+}

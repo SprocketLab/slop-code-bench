@@ -1,0 +1,45 @@
+case:
+  arguments: --output output.csv --key id --infer strict A.csv B.csv
+  input_files:
+  - content:
+    - amount: '2'
+      dateish: '2024-01-01'
+      flag: '0'
+      id: '2'
+    - amount: '1.5'
+      dateish: '2024-01-02'
+      flag: '1'
+      id: '1'
+    file_type: csv
+    path: A.csv
+  - content:
+    - amount: '3.25'
+      dateish: '2024-01-01T00:00:00Z'
+      flag: '0'
+      id: '3'
+    - amount: ''
+      dateish: '2024-01-03'
+      flag: '1'
+      id: '4'
+    file_type: csv
+    path: B.csv
+expected:
+  files:
+    output.csv:
+    - amount: 1.5
+      dateish: null
+      flag: 1
+      id: 1
+    - amount: 2.0
+      dateish: null
+      flag: 0
+      id: 2
+    - amount: 3.25
+      dateish: '2024-01-01T00:00:00Z'
+      flag: 0
+      id: 3
+    - amount: null
+      dateish: null
+      flag: 1
+      id: 4
+  status_code: 0

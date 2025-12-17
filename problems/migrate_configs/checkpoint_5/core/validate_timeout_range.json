@@ -1,0 +1,23 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "expected_stdout": "{\"event\":\"validation_failed\",\"file\":\"app.yaml\",\"rule\":\"validate_timeout\",\"error\":\"value 500 at key 'timeout' exceeds max: 300\"}\\n",
+  "rules": {
+    "validate_timeout": {
+      "type": "validate_value",
+      "scope": "validation",
+      "key": "timeout",
+      "constraint": {
+        "min": 10,
+        "max": 300
+      }
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "yaml",
+      "content": "timeout: 500\\n"
+    }
+  ]
+}

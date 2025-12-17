@@ -1,0 +1,4 @@
+
+expected:
+  status_code: 3
+  stderr: ERROR:bad_io:.*

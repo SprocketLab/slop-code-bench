@@ -1,0 +1,15 @@
+profiles:
+  canary:
+    server:
+      host: canary.internal
+      mode: canary
+  dev:
+    server:
+      host: dev.internal
+      mode: development
+  prod:
+    server:
+      host: prod.internal
+      mode: production
+environment: production
+timeout: 30

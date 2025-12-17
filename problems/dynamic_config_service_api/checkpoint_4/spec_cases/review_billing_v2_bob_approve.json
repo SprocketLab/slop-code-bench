@@ -1,0 +1,77 @@
+{
+  "case": {
+    "body": {
+      "actor": "bob",
+      "decision": "approve",
+      "message": "TLS enabled, pool size adequate - LGTM"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "review_billing_v2_bob_approve",
+    "method": "POST",
+    "path": "/v1/proposals/1:review"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "proposal_id": {
+          "const": 1
+        },
+        "name": {
+          "const": "billing"
+        },
+        "draft_version": {
+          "const": 2
+        },
+        "author": {
+          "const": "alice"
+        },
+        "status": {
+          "const": "open"
+        },
+        "tally": {
+          "properties": {
+            "approvals": {
+              "const": 1
+            },
+            "rejections": {
+              "const": 0
+            },
+            "by_actor": {
+              "items": {
+                "properties": {
+                  "actor": {
+                    "const": "bob"
+                  },
+                  "decision": {
+                    "const": "approve"
+                  }
+                },
+                "type": "object"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "approvals",
+            "rejections",
+            "by_actor"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "proposal_id",
+        "name",
+        "draft_version",
+        "author",
+        "status",
+        "tally"
+      ],
+      "type": "object"
+    },
+    "status_code": 200
+  }
+}

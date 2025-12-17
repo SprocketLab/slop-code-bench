@@ -1,0 +1,20 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "add_app_tier": {
+      "type": "replace_value",
+      "key": "metadata.tier",
+      "value": "gold"
+    },
+    "increase_workers": {
+      "type": "replace_value",
+      "key": "server.workers",
+      "value": 8
+    },
+    "update_api_endpoint": {
+      "type": "replace_value",
+      "key": "metadata.endpoint",
+      "value": "https://api.prod.internal"
+    }
+  }
+}

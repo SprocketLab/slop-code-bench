@@ -1,0 +1,59 @@
+{
+  "case": {
+    "body": {},
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "get_bundle_version_security_v1",
+    "method": "POST",
+    "path": "/v1/policies/bundles/security-policies/versions/1:get"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "bundle_name": {
+          "const": "security-policies"
+        },
+        "rego_modules": {
+          "properties": {
+            "security.rego": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "security.rego"
+          ],
+          "type": "object"
+        },
+        "version": {
+          "const": 1
+        },
+        "data": {
+          "properties": {
+            "security_standards": {
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "metadata": {
+          "properties": {
+            "version_label": {
+              "const": "security-v1"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "bundle_name",
+        "version",
+        "rego_modules",
+        "data",
+        "metadata"
+      ],
+      "type": "object"
+    },
+    "status_code": 200
+  }
+}

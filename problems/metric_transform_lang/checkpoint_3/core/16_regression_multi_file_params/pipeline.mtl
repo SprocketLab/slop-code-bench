@@ -1,0 +1,15 @@
+schema Data {
+  timestamp: timestamp
+  category: string
+  value: float
+}
+
+pipeline ParamsMulti using Data {
+  params {
+    cat_filter: string
+    min_val: float = 0.0
+  }
+
+  filter(category == param("cat_filter") & value > param("min_val"))
+  aggregate sum(value) as total, count(*) as n
+}

@@ -1,0 +1,45 @@
+{
+  "rules": {
+    "convert_string_to_number": {
+      "type": "replace_value",
+      "key": "settings.max_retries",
+      "value": 5
+    },
+    "convert_number_to_boolean": {
+      "type": "replace_value",
+      "key": "features.enabled",
+      "value": true
+    },
+    "convert_string_to_array": {
+      "type": "replace_value",
+      "key": "allowed_origins",
+      "value": [
+        "http://localhost",
+        "https://example.com"
+      ]
+    },
+    "convert_to_object": {
+      "type": "replace_value",
+      "key": "database",
+      "value": {
+        "host": "db.example.com",
+        "port": 5432,
+        "ssl": true
+      }
+    },
+    "convert_to_null": {
+      "type": "replace_value",
+      "key": "deprecated_feature",
+      "value": null
+    },
+    "convert_boolean_to_string": {
+      "type": "replace_value",
+      "key": "log_level",
+      "value": "debug"
+    }
+  },
+  "files": {
+    "configs/app.json": "{\"settings\": {\"max_retries\": \"3\"}, \"features\": {\"enabled\": 1}, \"allowed_origins\": \"*\", \"database\": \"localhost\", \"deprecated_feature\": {\"old\": true}, \"log_level\": false}",
+    "configs/service.yaml": "settings:\n  max_retries: \"3\"\nfeatures:\n  enabled: 0\nallowed_origins: \"*\"\ndatabase: localhost:5432\ndeprecated_feature:\n  legacy: true\nlog_level: false"
+  }
+}

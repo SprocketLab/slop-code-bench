@@ -1,0 +1,22 @@
+logging:
+  format: json
+  handlers:
+  - console
+  - metrics
+  level: info
+metadata:
+  endpoint: https://api.dev.internal
+  hostname: api-dev.internal
+region: us-east-1
+service: api
+features:
+  flags:
+    rollout: 0.75
+    experimental: true
+    canary: true
+  beta:
+    enabled: true
+    percentage: 50
+cache:
+  enabled: true
+  ttl: 240

@@ -1,0 +1,33 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_with_status_filter
+  method: GET
+  path: /trajectories?status=finalized&task=cot_math_gsm8k
+expected:
+  output:
+    properties:
+      items:
+        type: array
+        items:
+          properties:
+            id:
+              const: "{{store.create_in_progress_trajectory}}"
+            status:
+              const: finalized
+            rev:
+              const: 4
+          required:
+          - id
+          - status
+          - rev
+          type: object
+      next_cursor:
+        oneOf:
+          - type: string
+          - type: "null"
+    required:
+    - items
+    - next_cursor
+    type: object
+  status_code: 200

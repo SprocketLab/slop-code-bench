@@ -1,0 +1,18 @@
+id: join_with_aggregate
+files:
+  query.sql: 'SELECT u.country, COUNT(*) as transaction_count, SUM(p.price) as total_spent
+    FROM users u  INNER JOIN payments.pampas p ON u.id = p.id GROUP BY u.country ORDER
+    BY total_spent DESC
+
+    '
+expected: '| country   |   transaction_count |   total_spent |
+
+  |-----------|---------------------|---------------|
+
+  | NULL      |                   8 |        335.93 |
+
+  | AR        |                  15 |        263.15 |
+
+  | CH        |                   4 |         74.46 |
+
+  | FR        |                   3 |         54.97 |'

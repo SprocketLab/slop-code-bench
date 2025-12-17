@@ -1,0 +1,9 @@
+training:
+  checkpoint:
+    mode: continuous
+  logging:
+    level: DEBUG
+    sinks:
+      - stderr
+resources:
+  world_size: 4

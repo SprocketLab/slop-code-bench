@@ -1,0 +1,16 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "{\"event\":\"file_relocated\",\"from\":\"services/api/config.yaml\",\"to\":\"flattened/api.yaml\"}\\n{\"event\":\"file_relocated\",\"from\":\"services/worker/config.yaml\",\"to\":\"flattened/worker.yaml\"}\\n",
+  "rules": {
+    "flatten_service_configs": {
+      "type": "path_rename",
+      "scope": "file",
+      "path_pattern": "services/$name/config.yaml",
+      "new_path": "flattened/${name}.yaml"
+    }
+  },
+  "expected_files": {
+    "configs/flattened/api.yaml": "service:\\n  name: api-gateway\\n  port: 8080\\nenvironment: development\\n",
+    "configs/flattened/worker.yaml": "service:\\n  name: background-worker\\n  port: 8081\\nenvironment: development\\n"
+  }
+}

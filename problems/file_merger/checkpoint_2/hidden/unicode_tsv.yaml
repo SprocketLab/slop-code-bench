@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id data.tsv
+  input_files:
+  - content:
+    - id: '1'
+      name: "\u7530\u4E2D\u592A\u90CE"
+      city: Tokyo
+    - id: '2'
+      name: "\u0418\u0432\u0430\u043D"
+      city: Moscow
+    - id: '3'
+      name: "M\xFCller"
+      city: Berlin
+    file_type: tsv
+    path: data.tsv
+expected:
+  files:
+    output.csv:
+    - city: Tokyo
+      id: 1
+      name: "\u7530\u4E2D\u592A\u90CE"
+    - city: Moscow
+      id: 2
+      name: "\u0418\u0432\u0430\u043D"
+    - city: Berlin
+      id: 3
+      name: "M\xFCller"
+  status_code: 0

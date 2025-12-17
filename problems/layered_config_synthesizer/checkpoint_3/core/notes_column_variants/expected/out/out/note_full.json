@@ -1,0 +1,1 @@
+{"experiment_name":"note_full","resources":{"accelerators":[{"count":2,"type":"l4"}],"profile":"shared","world_size":3},"training":{"batch_size":18,"optimizer":"adam"}}

@@ -1,0 +1,5 @@
+logging:
+  destination:
+    type: file
+    path: /tmp/debug.log
+  format: text

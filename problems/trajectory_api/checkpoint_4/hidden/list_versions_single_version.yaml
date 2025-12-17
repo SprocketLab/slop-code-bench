@@ -1,0 +1,39 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: list_versions_single_version
+  method: GET
+  path: /environments/different-env/versions
+expected:
+  output:
+    properties:
+      environment:
+        const: different-env
+      active_version:
+        const: 1
+      items:
+        type: array
+        items:
+          properties:
+            version:
+              const: 1
+            active:
+              const: true
+            created_at:
+              type: string
+            notes:
+              const: "Grammar for different-env"
+          required:
+            - version
+            - active
+            - created_at
+            - notes
+          type: object
+        minItems: 1
+        maxItems: 1
+    required:
+      - environment
+      - active_version
+      - items
+    type: object
+  status_code: 200

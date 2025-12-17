@@ -1,0 +1,29 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "frontend",
+        "env": "dev"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "get_policy_default",
+    "method": "POST",
+    "path": "/v1/configs/frontend:policy"
+  },
+  "expected": {
+    "output": {
+      "allow_author_approval": false,
+      "allowed_reviewers": null,
+      "name": "frontend",
+      "required_approvals": 2,
+      "scope": {
+        "app": "frontend",
+        "env": "dev"
+      }
+    },
+    "status_code": 200
+  }
+}

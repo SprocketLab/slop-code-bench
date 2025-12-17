@@ -1,0 +1,9 @@
+experiment_name: base
+training:
+  optimizer: adam
+  description: "Stage ${STAGE}"
+resources:
+  profile: shared
+  world_size: 2
+logging: "{{static:logger}}"
+metadata: "{{static:labels}}"

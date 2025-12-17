@@ -1,0 +1,91 @@
+{
+  "arguments": "--sql query.sql --sharded users=test_data/users_shard_*.csv --data test_data",
+  "input_files": [
+    {
+      "path": "test_data/users_shard_3.csv",
+      "content": [
+        {
+          "id": "7",
+          "first_name": "Edward",
+          "last_name": "Davis",
+          "age": "29",
+          "city": "San Antonio"
+        },
+        {
+          "id": "8",
+          "first_name": "Frank",
+          "last_name": "Garcia",
+          "age": "31",
+          "city": "San Diego"
+        },
+        {
+          "id": "9",
+          "first_name": "Grace",
+          "last_name": "Rodriguez",
+          "age": "26",
+          "city": "Dallas"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/users_shard_2.csv",
+      "content": [
+        {
+          "id": "4",
+          "first_name": "Alice",
+          "last_name": "Williams",
+          "age": "28",
+          "city": "Houston"
+        },
+        {
+          "id": "5",
+          "first_name": "Charlie",
+          "last_name": "Brown",
+          "age": "32",
+          "city": "Phoenix"
+        },
+        {
+          "id": "6",
+          "first_name": "Diana",
+          "last_name": "Miller",
+          "age": "27",
+          "city": "Philadelphia"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/users_shard_1.csv",
+      "content": [
+        {
+          "id": "1",
+          "first_name": "John",
+          "last_name": "Smith",
+          "age": "25",
+          "city": "New York"
+        },
+        {
+          "id": "2",
+          "first_name": "Jane",
+          "last_name": "Doe",
+          "age": "30",
+          "city": "Los Angeles"
+        },
+        {
+          "id": "3",
+          "first_name": "Bob",
+          "last_name": "Johnson",
+          "age": "35",
+          "city": "Chicago"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT first_name, last_name, age, city\nFROM users\nWHERE age >= 30\nORDER BY age DESC",
+  "expected": "| first_name   | last_name   |   age | city        |\n|--------------|-------------|-------|-------------|\n| Bob          | Johnson     |    35 | Chicago     |\n| Charlie      | Brown       |    32 | Phoenix     |\n| Frank        | Garcia      |    31 | San Diego   |\n| Jane         | Doe         |    30 | Los Angeles |"
+}

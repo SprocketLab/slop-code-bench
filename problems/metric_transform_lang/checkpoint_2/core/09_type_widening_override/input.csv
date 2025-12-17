@@ -1,0 +1,4 @@
+timestamp,item,quantity,price
+2025-09-14T08:00:00Z,apple,2,1.5
+2025-09-14T08:05:00Z,orange,3,2.0
+2025-09-14T08:10:00Z,banana,5,1.0

@@ -1,0 +1,4 @@
+{
+  "extends": "services_base.json",
+  "app": "services-app"
+}

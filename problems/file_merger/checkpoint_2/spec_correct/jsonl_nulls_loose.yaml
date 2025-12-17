@@ -1,0 +1,25 @@
+case:
+  arguments: --output output.csv --key id --infer loose a.jsonl b.csv
+  input_files:
+  - content:
+    - amount: '2.5'
+      id: '3'
+    file_type: csv
+    path: b.csv
+  - content:
+    - amount: null
+      id: 1
+    - amount: 1
+      id: 2
+    file_type: jsonl
+    path: a.jsonl
+expected:
+  files:
+    output.csv:
+    - amount: null
+      id: 1
+    - amount: 1.0
+      id: 2
+    - amount: 2.5
+      id: 3
+  status_code: 0

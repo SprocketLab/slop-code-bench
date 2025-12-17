@@ -1,0 +1,10 @@
+{
+    "start": "Orvolle I - Federation Navy Assembly Plant",
+    "end": "Hakonen IX - Moon 10 - Caldari Business Tribunal Information Center",
+    "cases": [
+        {
+            "cloak": true,
+            "expected": "START: Orvolle I - Federation Navy Assembly Plant\nUNDOCK\nGO: Orvolle (0.7) -> Mesybier (0.5)\nJUMP 5.61 LY: Tama (57K isotopes)\nDOCK: Tama VII - Moon 9 - Republic Security Services Testing Facilities\nUNDOCK\nGO: Tama (0.3) -> Nourvukaiken (0.8)\nJUMP 5.85 LY: Hakonen (59K isotopes)\nDOCK: Hakonen IX - Moon 10 - Caldari Business Tribunal Information Center\nSUMMARY:\n  End Cooldown: 00:02\n  End Fatigue: 00:23\n  Isotopes Used: 115K\n  Time Waiting: 00:02\n  Total LY: 11.46"
+        }
+    ]
+}

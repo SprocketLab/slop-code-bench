@@ -1,0 +1,16 @@
+tables:
+  users:
+    columns:
+    - id
+    - email
+    - age
+    rows:
+    - id: 1
+      email: alice@example.com
+      age: 25
+    - id: 2
+      email: bob@example.com
+      age: 30
+    - id: 3
+      email: charlie@example.com
+      age: 45

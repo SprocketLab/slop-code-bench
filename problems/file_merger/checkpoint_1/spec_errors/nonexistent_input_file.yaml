@@ -1,0 +1,6 @@
+case:
+  arguments: --output out.csv --key id nonexistent.csv
+  input_files: []
+expected:
+  status_code: 2
+  stderr: "^ERR 2"

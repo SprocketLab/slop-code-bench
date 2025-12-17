@@ -1,0 +1,4 @@
+owner: ${TEAM}
+tags:
+  - ${STAGE}
+  - shared

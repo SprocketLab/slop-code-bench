@@ -1,0 +1,1942 @@
+{
+  "all_required_commands": {
+    "order": 0,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo 'step1'",
+            "required": true
+          },
+          {
+            "cmd": "exit 1",
+            "required": true
+          },
+          {
+            "cmd": "echo 'step3'",
+            "required": true
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo 'step1'",
+            "stdout": "step1\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          },
+          {
+            "cmd": "exit 1",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 1,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          },
+          {
+            "cmd": "echo 'step3'",
+            "stdout": "step3\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          }
+        ],
+        "exit_code": 1,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "required_command_at_beginning": {
+    "order": 1,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo 'required'",
+            "required": true
+          },
+          {
+            "cmd": "exit 2"
+          },
+          {
+            "cmd": "echo 'never runs'"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo 'required'",
+            "stdout": "required\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          },
+          {
+            "cmd": "exit 2",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 2,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 2,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "required_command_in_middle": {
+    "order": 2,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "exit 1"
+          },
+          {
+            "cmd": "echo 'required middle'",
+            "required": true
+          },
+          {
+            "cmd": "echo 'last'",
+            "required": true
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "exit 1",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 1,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'required middle'",
+            "stdout": "required middle\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          },
+          {
+            "cmd": "echo 'last'",
+            "stdout": "last\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          }
+        ],
+        "exit_code": 1,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "required_command_itself_times_out": {
+    "order": 3,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo 'before'"
+          },
+          {
+            "cmd": "sleep 5",
+            "timeout": 1,
+            "required": true
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo 'before'",
+            "stdout": "before\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sleep 5",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration": 1.500,
+            "timed_out": true,
+            "required": true
+          }
+        ],
+        "exit_code": -1,
+        "duration": 10,
+        "timed_out": true,
+        "files": {}
+      }
+    }
+  },
+  "multiple_timeouts_in_chain": {
+    "order": 4,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sleep 5",
+            "timeout": 1
+          },
+          {
+            "cmd": "echo 'never runs'"
+          }
+        ],
+        "continue_on_error": false
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sleep 5",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration": 1.500,
+            "timed_out": true
+          }
+        ],
+        "exit_code": -1,
+        "duration": 10,
+        "timed_out": true,
+        "files": {}
+      }
+    }
+  },
+  "all_commands_timeout": {
+    "order": 5,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sleep 10",
+            "timeout": 1
+          },
+          {
+            "cmd": "sleep 10",
+            "timeout": 1,
+            "required": true
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sleep 10",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration": 1.500,
+            "timed_out": true
+          },
+          {
+            "cmd": "sleep 10",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration": 1.500,
+            "timed_out": true,
+            "required": true
+          }
+        ],
+        "exit_code": -1,
+        "duration": 10,
+        "timed_out": true,
+        "files": {}
+      }
+    }
+  },
+  "very_long_chain": {
+    "order": 6,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo '1'"
+          },
+          {
+            "cmd": "echo '2'"
+          },
+          {
+            "cmd": "echo '3'"
+          },
+          {
+            "cmd": "echo '4'"
+          },
+          {
+            "cmd": "echo '5'"
+          },
+          {
+            "cmd": "echo '6'"
+          },
+          {
+            "cmd": "echo '7'"
+          },
+          {
+            "cmd": "echo '8'"
+          },
+          {
+            "cmd": "echo '9'"
+          },
+          {
+            "cmd": "echo '10'"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo '1'",
+            "stdout": "1\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '2'",
+            "stdout": "2\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '3'",
+            "stdout": "3\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '4'",
+            "stdout": "4\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '5'",
+            "stdout": "5\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '6'",
+            "stdout": "6\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '7'",
+            "stdout": "7\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '8'",
+            "stdout": "8\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '9'",
+            "stdout": "9\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '10'",
+            "stdout": "10\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "chain_with_specific_exit_codes": {
+    "order": 7,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "exit 42"
+          },
+          {
+            "cmd": "echo 'never runs'"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "exit 42",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 42,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 42,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "chain_with_stdin": {
+    "order": 8,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "cat"
+          },
+          {
+            "cmd": "echo 'second command'"
+          }
+        ],
+        "stdin": "input data\n"
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "cat",
+            "stdout": "input data\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'second command'",
+            "stdout": "second command\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "chain_creates_and_modifies_files": {
+    "order": 9,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sh -c 'echo first > output.txt'"
+          },
+          {
+            "cmd": "sh -c 'echo second >> output.txt'"
+          },
+          {
+            "cmd": "sh -c 'echo third >> output.txt'"
+          }
+        ],
+        "track": [
+          "*.txt"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sh -c 'echo first > output.txt'",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sh -c 'echo second >> output.txt'",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sh -c 'echo third >> output.txt'",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {
+          "output.txt": "first\nsecond\nthird\n"
+        }
+      }
+    }
+  },
+  "chain_deletes_then_recreates_file": {
+    "order": 10,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sh -c 'echo original > file.txt'"
+          },
+          {
+            "cmd": "rm file.txt"
+          },
+          {
+            "cmd": "sh -c 'echo new > file.txt'"
+          }
+        ],
+        "track": [
+          "*.txt"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sh -c 'echo original > file.txt'",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "rm file.txt",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sh -c 'echo new > file.txt'",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {
+          "file.txt": "new\n"
+        }
+      }
+    }
+  },
+  "chain_with_large_output": {
+    "order": 11,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "seq 1 100"
+          },
+          {
+            "cmd": "wc -l"
+          }
+        ],
+        "stdin": ""
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "seq 1 100",
+            "stdout": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n70\n71\n72\n73\n74\n75\n76\n77\n78\n79\n80\n81\n82\n83\n84\n85\n86\n87\n88\n89\n90\n91\n92\n93\n94\n95\n96\n97\n98\n99\n100\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "wc -l",
+            "stdout": "0\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "continue_on_error_with_required": {
+    "order": 12,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "exit 1"
+          },
+          {
+            "cmd": "echo 'runs anyway'"
+          },
+          {
+            "cmd": "echo 'required'",
+            "required": true
+          }
+        ],
+        "continue_on_error": true
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "exit 1",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 1,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'runs anyway'",
+            "stdout": "runs anyway\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'required'",
+            "stdout": "required\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          }
+        ],
+        "exit_code": 1,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "per_command_timeout_overrides_global": {
+    "order": 13,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sleep 0.5"
+          },
+          {
+            "cmd": "sleep 2",
+            "timeout": 3
+          }
+        ],
+        "timeout": 1
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sleep 0.5",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sleep 2",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "global_timeout_applies_to_commands": {
+    "order": 14,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sleep 0.5"
+          },
+          {
+            "cmd": "sleep 2"
+          }
+        ],
+        "timeout": 1
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sleep 0.5",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sleep 2",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration": 1.500,
+            "timed_out": true
+          }
+        ],
+        "exit_code": -1,
+        "duration": 10,
+        "timed_out": true,
+        "files": {}
+      }
+    }
+  },
+  "chain_with_env_and_files": {
+    "order": 15,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sh -c 'cat config.txt'"
+          },
+          {
+            "cmd": "sh -c 'echo $VAR'"
+          }
+        ],
+        "env": {
+          "VAR": "value"
+        },
+        "files": {
+          "config.txt": "config data\n"
+        }
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sh -c 'cat config.txt'",
+            "stdout": "config data\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sh -c 'echo $VAR'",
+            "stdout": "value\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "chain_with_all_features": {
+    "order": 16,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "cat",
+            "timeout": 5
+          },
+          {
+            "cmd": "sh -c 'echo $MSG > output.txt'"
+          },
+          {
+            "cmd": "cat output.txt",
+            "required": true
+          }
+        ],
+        "env": {
+          "MSG": "hello"
+        },
+        "stdin": "stdin data\n",
+        "timeout": 10,
+        "track": [
+          "*.txt"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "cat",
+            "stdout": "stdin data\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sh -c 'echo $MSG > output.txt'",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "cat output.txt",
+            "stdout": "hello\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {
+          "output.txt": "hello\n"
+        }
+      }
+    }
+  },
+  "multiple_failures_with_continue": {
+    "order": 17,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "exit 1"
+          },
+          {
+            "cmd": "exit 2"
+          },
+          {
+            "cmd": "exit 3"
+          }
+        ],
+        "continue_on_error": true
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "exit 1",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 1,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "exit 2",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 2,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "exit 3",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 3,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 1,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "required_false_explicit": {
+    "order": 18,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "exit 1"
+          },
+          {
+            "cmd": "echo 'not required'",
+            "required": false
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "exit 1",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 1,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 1,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "continue_on_error_false_explicit": {
+    "order": 19,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "exit 1"
+          },
+          {
+            "cmd": "echo 'skipped'"
+          }
+        ],
+        "continue_on_error": false
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "exit 1",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 1,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 1,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "timeout_then_required_then_timeout": {
+    "order": 20,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sleep 5",
+            "timeout": 1
+          },
+          {
+            "cmd": "echo 'required after timeout'",
+            "required": true
+          },
+          {
+            "cmd": "sleep 5",
+            "timeout": 1,
+            "required": true
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sleep 5",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration": 1.500,
+            "timed_out": true
+          },
+          {
+            "cmd": "echo 'required after timeout'",
+            "stdout": "required after timeout\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          },
+          {
+            "cmd": "sleep 5",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration": 1.500,
+            "timed_out": true,
+            "required": true
+          }
+        ],
+        "exit_code": -1,
+        "duration": 10,
+        "timed_out": true,
+        "files": {}
+      }
+    }
+  },
+  "chain_with_stderr": {
+    "order": 22,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sh -c 'echo out && echo err >&2'"
+          },
+          {
+            "cmd": "echo 'second'"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sh -c 'echo out && echo err >&2'",
+            "stdout": "out\n",
+            "stderr": "err\n",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'second'",
+            "stdout": "second\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "chain_track_multiple_patterns": {
+    "order": 23,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "sh -c 'echo data > file.txt'"
+          },
+          {
+            "cmd": "sh -c 'echo log > file.log'"
+          },
+          {
+            "cmd": "sh -c 'echo json > file.json'"
+          }
+        ],
+        "track": [
+          "*.txt",
+          "*.log"
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "sh -c 'echo data > file.txt'",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sh -c 'echo log > file.log'",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sh -c 'echo json > file.json'",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {
+          "file.txt": "data\n",
+          "file.log": "log\n"
+        }
+      }
+    }
+  },
+  "zero_duration_commands": {
+    "order": 24,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "true"
+          },
+          {
+            "cmd": "true"
+          },
+          {
+            "cmd": "true"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "true",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "true",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "true",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "chain_success_then_failure_at_end": {
+    "order": 25,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo '1'"
+          },
+          {
+            "cmd": "echo '2'"
+          },
+          {
+            "cmd": "echo '3'"
+          },
+          {
+            "cmd": "exit 7"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo '1'",
+            "stdout": "1\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '2'",
+            "stdout": "2\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '3'",
+            "stdout": "3\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "exit 7",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 7,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 7,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "failure_at_start_required_at_end": {
+    "order": 26,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "exit 10"
+          },
+          {
+            "cmd": "echo 'skipped'"
+          },
+          {
+            "cmd": "echo 'required'",
+            "required": true
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "exit 10",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 10,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'required'",
+            "stdout": "required\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          }
+        ],
+        "exit_code": 10,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "chain_with_special_characters": {
+    "order": 28,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo 'hello world'"
+          },
+          {
+            "cmd": "echo 'with \"quotes\"'"
+          },
+          {
+            "cmd": "echo 'with $dollar'"
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo 'hello world'",
+            "stdout": "hello world\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'with \"quotes\"'",
+            "stdout": "with \"quotes\"\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'with $dollar'",
+            "stdout": "with $dollar\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "alternating_success_failure_continue": {
+    "order": 29,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo 'ok1'"
+          },
+          {
+            "cmd": "exit 1"
+          },
+          {
+            "cmd": "echo 'ok2'"
+          },
+          {
+            "cmd": "exit 2"
+          },
+          {
+            "cmd": "echo 'ok3'"
+          }
+        ],
+        "continue_on_error": true
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo 'ok1'",
+            "stdout": "ok1\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "exit 1",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 1,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'ok2'",
+            "stdout": "ok2\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "exit 2",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 2,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'ok3'",
+            "stdout": "ok3\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 1,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "single_required_only": {
+    "order": 30,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo 'only one'",
+            "required": true
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo 'only one'",
+            "stdout": "only one\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "timeout_on_last_command": {
+    "order": 31,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo 'first'"
+          },
+          {
+            "cmd": "echo 'second'"
+          },
+          {
+            "cmd": "sleep 5",
+            "timeout": 1
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo 'first'",
+            "stdout": "first\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'second'",
+            "stdout": "second\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "sleep 5",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration": 1.500,
+            "timed_out": true
+          }
+        ],
+        "exit_code": -1,
+        "duration": 10,
+        "timed_out": true,
+        "files": {}
+      }
+    }
+  },
+  "required_after_multiple_failures": {
+    "order": 32,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "exit 1"
+          },
+          {
+            "cmd": "exit 2"
+          },
+          {
+            "cmd": "exit 3"
+          },
+          {
+            "cmd": "echo 'cleanup'",
+            "required": true
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "exit 1",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 1,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo 'cleanup'",
+            "stdout": "cleanup\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          }
+        ],
+        "exit_code": 1,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  },
+  "mixed_timeouts_and_errors": {
+    "order": 33,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo 'ok'"
+          },
+          {
+            "cmd": "exit 1",
+            "required": true
+          },
+          {
+            "cmd": "sleep 5",
+            "timeout": 1,
+            "required": true
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo 'ok'",
+            "stdout": "ok\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "exit 1",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": 1,
+            "duration": 10,
+            "timed_out": false,
+            "required": true
+          },
+          {
+            "cmd": "sleep 5",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration": 1.500,
+            "timed_out": true,
+            "required": true
+          }
+        ],
+        "exit_code": 1,
+        "duration": 10,
+        "timed_out": true,
+        "files": {}
+      }
+    }
+  },
+  "all_success_with_false_required": {
+    "order": 34,
+    "input": {
+      "method": "POST",
+      "path": "/v1/execute",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "command": [
+          {
+            "cmd": "echo '1'",
+            "required": false
+          },
+          {
+            "cmd": "echo '2'",
+            "required": false
+          },
+          {
+            "cmd": "echo '3'",
+            "required": false
+          }
+        ]
+      }
+    },
+    "expected": {
+      "status_code": 201,
+      "output": {
+        "id": "UUID",
+        "commands": [
+          {
+            "cmd": "echo '1'",
+            "stdout": "1\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '2'",
+            "stdout": "2\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          },
+          {
+            "cmd": "echo '3'",
+            "stdout": "3\n",
+            "stderr": "",
+            "exit_code": 0,
+            "duration": 10,
+            "timed_out": false
+          }
+        ],
+        "exit_code": 0,
+        "duration": 10,
+        "timed_out": false,
+        "files": {}
+      }
+    }
+  }
+}

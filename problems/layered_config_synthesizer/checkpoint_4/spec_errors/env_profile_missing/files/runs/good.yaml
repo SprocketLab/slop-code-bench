@@ -1,0 +1,6 @@
+experiment_name: env_good
+resources:
+  profile: train_l4
+  world_size: 4
+training:
+  optimizer: adamw

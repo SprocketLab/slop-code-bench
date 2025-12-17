@@ -1,0 +1,35 @@
+ITEM: Azariel (78576)
+Group: Ship > Titan
+Market Group: Ships > Capital Ships > Titans > Faction Titans
+Tech Level: Tech I
+Volume: 10000000.00
+
+Recipe:
+Activity: Manufacturing
+Output Quantity: 1
+Run Time: 150000
+| Item | Quantity | Buildable |
+|:-:|:-:|---:|
+| Auto-Integrity Preservation Seal | 3200 | Yes |
+| Capital Armor Plates | 300 | Yes |
+| Capital Capacitor Battery | 300 | Yes |
+| Capital Clone Vat Bay | 500 | Yes |
+| Capital Computer System | 200 | Yes |
+| Capital Construction Parts | 200 | Yes |
+| Capital Core Temperature Regulator | 25 | Yes |
+| Capital Corporate Hangar Bay | 500 | Yes |
+| Capital Doomsday Weapon Mount | 500 | Yes |
+| Capital Jump Bridge Array | 500 | Yes |
+| Capital Jump Drive | 300 | Yes |
+| Capital Power Generator | 400 | Yes |
+| Capital Propulsion Engine | 80 | Yes |
+| Capital Sensor Cluster | 100 | Yes |
+| Capital Shield Emitter | 150 | Yes |
+| Capital Ship Maintenance Bay | 500 | Yes |
+| Capital Turret Hardpoint | 400 | Yes |
+| Enhanced Neurolink Protection Cell | 1 | Yes |
+| G-O Trigger Neurolink Conduit | 96 | Yes |
+| Ladar-FTL Interlink Communicator | 125 | Yes |
+| Life Support Backup Unit | 1600 | Yes |
+| Magnetometric-FTL Interlink Communicator | 125 | Yes |
+| S-R Trigger Neurolink Conduit | 96 | Yes |

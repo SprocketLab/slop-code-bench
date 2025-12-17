@@ -1,0 +1,1 @@
+--input input.csv --dsl pipeline.mtl --nulls "NULL,NaN"

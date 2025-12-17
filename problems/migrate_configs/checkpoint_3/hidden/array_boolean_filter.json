@@ -1,0 +1,14 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"arrays/features.json\",\"rules_applied\":[\"promote_enabled_features\"]}\\n",
+  "rules": {
+    "promote_enabled_features": {
+      "type": "pattern_replace",
+      "key_pattern": "features[?enabled=true].host",
+      "value": "beta.prod"
+    }
+  },
+  "expected_files": {
+    "configs/arrays/features.json": "{\\n  \\\"features\\\": [\\n    {\\n      \\\"name\\\": \\\"beta\\\",\\n      \\\"enabled\\\": true,\\n      \\\"host\\\": \\\"beta.prod\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"legacy\\\",\\n      \\\"enabled\\\": false,\\n      \\\"host\\\": \\\"legacy.local\\\"\\n    }\\n  ]\\n}\\n"
+  }
+}

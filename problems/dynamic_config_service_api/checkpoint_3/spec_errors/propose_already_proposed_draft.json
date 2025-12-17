@@ -1,0 +1,48 @@
+{
+  "case": {
+    "body": {
+      "author": "carol",
+      "base_version": 1,
+      "description": "Trying to propose v4 again",
+      "labels": [],
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "title": "Duplicate proposal"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "propose_already_proposed_draft",
+    "method": "POST",
+    "path": "/v1/configs/billing/4:propose"
+  },
+  "expected": {
+    "status_code": 409,
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "conflict"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+    "start": "3-CE1R VIII - Moon 5 - Prosper Vault",
+    "end": "B-G1LG VI - Moon 3 - True Power Mining Outpost",
+    "cases": [
+        {
+            "expected": "START: 3-CE1R VIII - Moon 5 - Prosper Vault\nUNDOCK\nJUMP 8.11 LY: 2RV-06 (82K isotopes)\nDOCK: 2RV-06 VIII - Moon 11 - Jovian Directorate Treasury\nUNDOCK\nJUMP 9.46 LY: X7-8IG (95K isotopes)\nDOCK: X7-8IG VIII - Moon 9 - Jovian Directorate Treasury\nUNDOCK\nJUMP 7.67 LY: FDZ4-A (77K isotopes)\nDOCK: FDZ4-A IX - Moon 6 - Society of Conscious Thought School\nUNDOCK\nJUMP 6.39 LY: Maila (64K isotopes)\nDOCK: Maila III - Moon 1 - Caldari Funds Unlimited Depository\nUNDOCK\nJUMP 9.41 LY: Turnur (95K isotopes)\nDOCK: Turnur I - Republic Parliament Bureau (Damaged)\nUNDOCK\nJUMP 7.71 LY: Arayar (78K isotopes)\nDOCK: Arayar VII - Moon 16 - Emperor Family Bureau\nUNDOCK\nJUMP 9.70 LY: Teshkat (98K isotopes)\nDOCK: Teshkat V - Chemal Tech Factory\nUNDOCK\nJUMP 5.92 LY: Saminer (60K isotopes)\nDOCK: Saminer IX - TransStellar Shipping Storage\nUNDOCK\nJUMP 9.95 LY: T-NNJZ (100K isotopes)\nDOCK: T-NNJZ V - Moon 2 - True Creations Storage Bay\nUNDOCK\nJUMP 9.54 LY: Y-4U62 (96K isotopes)\nDOCK: Y-4U62 V - Moon 1 - True Creations Shipyard\nUNDOCK\nJUMP 3.81 LY: B-G1LG (39K isotopes)\nDOCK: B-G1LG VI - Moon 3 - True Power Mining Outpost\nSUMMARY:\n  End Cooldown: 00:30\n  End Fatigue: 05:00\n  Isotopes Used: 877K\n  Time Waiting: 02:30\n  Total LY: 87.67"
+        }
+    ]
+}

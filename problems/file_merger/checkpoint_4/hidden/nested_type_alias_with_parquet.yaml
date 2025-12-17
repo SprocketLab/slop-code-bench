@@ -1,0 +1,54 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --type-alias-file aliases.json data.parquet
+  input_files:
+  - content:
+    - id: 1
+      name: Alice
+      value: 100
+    - id: 2
+      name: Bob
+      value: 200
+    file_type: parquet
+    path: data.parquet
+  - content:
+      columns:
+      - name: id
+        type: integer
+      - name: name
+        type: text
+      - name: value
+        type: long
+      - name: settings
+        type:
+          struct:
+            fields:
+            - name: enabled
+              type: boolean
+            - name: options
+              type:
+                list:
+                  element: varchar
+    file_type: json
+    path: schema.json
+  - content:
+      aliases:
+        integer: int
+        text: string
+        long: int
+        boolean: bool
+        varchar: string
+        list: array
+    file_type: json
+    path: aliases.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      name: Alice
+      value: 100
+      settings: null
+    - id: 2
+      name: Bob
+      value: 200
+      settings: null
+  status_code: 0

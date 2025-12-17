@@ -1,0 +1,65 @@
+{
+    "data/employees.csv": {
+        "path": "test_data/employees.csv",
+        "content": [
+            {
+                "id": "1",
+                "name": "Alice",
+                "manager_id": "NULL",
+                "department": "Engineering",
+                "salary": "120000"
+            },
+            {
+                "id": "2",
+                "name": "Bob",
+                "manager_id": "1",
+                "department": "Engineering",
+                "salary": "90000"
+            },
+            {
+                "id": "3",
+                "name": "Charlie",
+                "manager_id": "1",
+                "department": "Engineering",
+                "salary": "95000"
+            },
+            {
+                "id": "4",
+                "name": "David",
+                "manager_id": "2",
+                "department": "Engineering",
+                "salary": "80000"
+            },
+            {
+                "id": "5",
+                "name": "Eve",
+                "manager_id": "4",
+                "department": "Engineering",
+                "salary": "85000"
+            },
+            {
+                "id": "6",
+                "name": "Frank",
+                "manager_id": "NULL",
+                "department": "Sales",
+                "salary": "110000"
+            },
+            {
+                "id": "7",
+                "name": "Grace",
+                "manager_id": "6",
+                "department": "Sales",
+                "salary": "75000"
+            },
+            {
+                "id": "8",
+                "name": "Henry",
+                "manager_id": "6",
+                "department": "Sales",
+                "salary": "70000"
+            }
+        ],
+        "file_type": "csv",
+        "compression": "none"
+    }
+}

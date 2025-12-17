@@ -1,0 +1,8 @@
+start_cargo: null
+waypoints:
+  - name: Jita IV - Moon 6 - Ytiri Storage
+    cargo: 20000
+  - name: Ikuchi VI - Moon 6 - Ytiri Storage
+    cargo: 20000
+  - name: Ikuchi VI - Moon 15 - Ytiri Storage
+    cargo: 20000

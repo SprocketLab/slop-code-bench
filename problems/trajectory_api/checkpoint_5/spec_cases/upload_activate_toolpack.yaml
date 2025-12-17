@@ -1,0 +1,33 @@
+case:
+  body: "UEsDBBQAAAAIAOCufVtRmXG0WAAAAHQAAAANAAAAbWFuaWZlc3QuanNvblWNQQrAIAwEv1JyLq3Qm5/xFKigicRIEfHvVXvqbVlmdhsoc8hgtwaPeEUnmEvQVUgh9RFHhlT1ZoJ9AySVmtjTZD77XOaRqrW/jUFPn4u6OC8uY0zv/QVQSwMEFAAAAAgA4K59W5+qcsEvAQAASQIAAA4AAAB0b29scy93cml0ZS5weWVRX2uDMBB/76c4socoONlAymjxO+y9FEn17EKtkeScG+J33yW21rI8BO53vz93SYU1DFYTFhZd31Ck7NkVVg07cGTj3Qb46GtnLMFJOdxmAXmBT2UdgmdDoy8IotYN5qp1A9qUfmj/rZoe80wEfnCtdEmQwzgFqDYWOqUt6BbuoanrGk2R3MtbckivQebS0zz9gftzwd8EOIltffOuz2UC7/ETc5ngwJoj81kVCPMwPHzRKfrixsJMz8hevsV2Us5+Ya3/rACvaOEqTUvYUnHaZqyYny/lAtvSVBgFTXorZE/164eM47TCGVCu1HptZ5F628K47CVqV5jOiR0cnnYdhekYFOFjRQLCb8bAsiVDq9m4s6q4d+V8r3/bZpmYFutj8khuzNkzzGX+32nzB1BLAQIUAxQAAAAIAOCufVtRmXG0WAAAAHQAAAANAAAAAAAAAAAAAACAAQAAAABtYW5pZmVzdC5qc29uUEsBAhQDFAAAAAgA4K59W5+qcsEvAQAASQIAAA4AAAAAAAAAAAAAAIABgwAAAHRvb2xzL3dyaXRlLnB5UEsFBgAAAAACAAIAdwAAAN4BAAAAAA=="
+  headers:
+    content-type: application/zip
+  id: upload_activate_toolpack
+  method: POST
+  path: /environments/local-sim/toolpacks
+expected:
+  output:
+    properties:
+      environment:
+        const: local-sim
+      version:
+        const: 1
+      active:
+        const: false
+      created_at:
+        type: string
+        pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+      manifest_sha256:
+        type: string
+        pattern: '^[0-9a-f]{64}$'
+      archive_len:
+        type: integer
+    required:
+    - environment
+    - version
+    - active
+    - created_at
+    - manifest_sha256
+    - archive_len
+    type: object
+  status_code: 201

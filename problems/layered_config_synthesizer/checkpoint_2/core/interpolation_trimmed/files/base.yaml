@@ -1,0 +1,8 @@
+experiment_name: proj-${REGION}-${STAGE}
+training:
+  optimizer: adam
+  description: "${MESSAGE} for ${REGION}"
+resources:
+  profile: ${STAGE}
+  world_size: 5
+banner: "{{static:announce}}"

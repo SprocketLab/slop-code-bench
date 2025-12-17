@@ -1,0 +1,19 @@
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+schema WebSale extends BaseSale {
+  revenue: float = price * quantity
+}
+
+pipeline Hourly using WebSale {
+  window(1h)
+  aggregate sum(revenue) as total_rev
+  calc prev_rev = lag(total_rev, 1) : float @stage(post_agg)
+}

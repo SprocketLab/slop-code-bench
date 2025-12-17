@@ -1,0 +1,17 @@
+schema Sale {
+  timestamp: timestamp
+  promo_code: string
+  category: string
+  price: float
+}
+
+pipeline FilterByParams using Sale {
+  params {
+    prefix: string = 'Q3'
+    suffix: string = 'X'
+    infix: string
+  }
+
+  filter(starts_with(promo_code, param("prefix")) & ends_with(promo_code, param("suffix")) & contains(category, param("infix")))
+  aggregate sum(price) as total, count(*) as n
+}

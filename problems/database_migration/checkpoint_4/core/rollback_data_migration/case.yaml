@@ -1,0 +1,7 @@
+arguments: rollback app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+tracked_files:
+- app.db
+expected_status: 0

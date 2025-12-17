@@ -1,0 +1,1 @@
+{"experiment_name":"flagged","resources":{"accelerators":[{"count":2,"type":"a10"}],"profile":"shared","world_size":5},"training":{"batch_size":16,"optimizer":{"beta2":0.95,"name":"lion"}}}

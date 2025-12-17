@@ -1,0 +1,8 @@
+schema Base {
+  timestamp: timestamp
+}
+
+pipeline P using Base {
+  calc x = 1 : int @stage(middle)
+  aggregate count(*) as n
+}

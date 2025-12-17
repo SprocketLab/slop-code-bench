@@ -1,0 +1,71 @@
+{
+  "order": 15,
+  "input": {
+    "body": {
+      "materials": {
+        "Tritanium": 100000
+      },
+      "hubs": [
+        "JiTa",
+        "AMARR"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Batch Compressed Condensed Scordite": {
+          "quantity": 699,
+          "cost": 1404.99,
+          "volume": 132.81,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 699,
+              "total": 1404.99,
+              "avg_price": 2.01
+            }
+          }
+        }
+      },
+      "total": 47888.49,
+      "shipping": 46483.5,
+      "collateral_tax": 0.0,
+      "items": 1404.99,
+      "raw_ship": 350000.0,
+      "material_value": 329876.2,
+      "excess_value": 1517402.73,
+      "yields": {
+        "Tritanium": {
+          "target": 100000,
+          "actual": 100093,
+          "buy": 390146.05,
+          "sell": 330182.99
+        },
+        "Pyerite": {
+          "target": null,
+          "actual": 65250,
+          "buy": 1742760.76,
+          "sell": 1517095.95
+        }
+      }
+    }
+  }
+}

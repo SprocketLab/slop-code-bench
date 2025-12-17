@@ -1,0 +1,6 @@
+x=20, y=5
+sum=25
+diff=15
+prod=100
+div=4
+mod=0

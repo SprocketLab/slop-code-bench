@@ -1,0 +1,43 @@
+case:
+  body:
+    date: "2025-10-03T00:00:00Z"
+    task: hidden_reparse_task
+    environment: reparse-env
+    model: hidden-model-6
+    framework: hidden-framework-6
+    metrics: {}
+    trajectory:
+      - role: user
+        content: Run a tool
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: '<tool reparse_tool args="test"/> Done with reparse test.'
+        input_tokens: 8
+        output_tokens: 12
+        cost: 0.001
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_for_reparse
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      environment:
+        const: reparse-env
+      environment_version:
+        type: "null"
+      steps:
+        const: 2
+    required:
+      - id
+      - environment
+      - environment_version
+      - steps
+    type: object
+  status_code: 201

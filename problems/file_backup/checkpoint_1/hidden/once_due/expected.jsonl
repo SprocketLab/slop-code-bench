@@ -1,0 +1,15 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"one-time-backup","kind":"once","now_local":"2025-09-10T04:00:00Z"}
+{"event":"JOB_STARTED","exclude_count":1,"job_id":"one-time-backup"}
+{"event":"FILE_EXCLUDED","job_id":"one-time-backup","path":"A/B/C/D.py","pattern":"A/**"}
+{"event":"FILE_EXCLUDED","job_id":"one-time-backup","path":"A/B/E.bin","pattern":"A/**"}
+{"event":"FILE_EXCLUDED","job_id":"one-time-backup","path":"A/F/G.bin","pattern":"A/**"}
+{"event":"FILE_EXCLUDED","job_id":"one-time-backup","path":"A/F/H.py","pattern":"A/**"}
+{"event":"FILE_EXCLUDED","job_id":"one-time-backup","path":"A/I.py","pattern":"A/**"}
+{"event":"FILE_EXCLUDED","job_id":"one-time-backup","path":"A/J.bin","pattern":"A/**"}
+{"event":"FILE_EXCLUDED","job_id":"one-time-backup","path":"A/K.html","pattern":"A/**"}
+{"event":"FILE_EXCLUDED","job_id":"one-time-backup","path":"A/L.md","pattern":"A/**"}
+{"event":"FILE_SELECTED","job_id":"one-time-backup","path":"M.py"}
+{"event":"FILE_SELECTED","job_id":"one-time-backup","path":"N.py"}
+{"event":"FILE_SELECTED","job_id":"one-time-backup","path":"O.md"}
+{"event":"JOB_COMPLETED","job_id":"one-time-backup","selected":3,"excluded":8}

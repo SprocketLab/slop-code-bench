@@ -1,0 +1,18 @@
+clusters:
+  blue:
+    services:
+      api:
+        host: old-api.blue.dev
+        port: 8443
+      worker:
+        host: old-worker.blue.dev
+        port: 8444
+  green:
+    services:
+      api:
+        host: old-api.green.dev
+        port: 9443
+      cache:
+        host: old-cache.green.dev
+        metadata:
+          endpoint: https://cache.green.dev

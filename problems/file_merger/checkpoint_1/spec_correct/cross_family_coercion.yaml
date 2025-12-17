@@ -1,0 +1,25 @@
+case:
+  arguments: --output output.csv --key id --infer strict A.csv B.csv
+  input_files:
+  - content:
+    - id: '1'
+      mixed_bool_int: '1'
+      mixed_date_float: '2024-01-01'
+    file_type: csv
+    path: A.csv
+  - content:
+    - id: '2'
+      mixed_bool_int: 'true'
+      mixed_date_float: '3.14'
+    file_type: csv
+    path: B.csv
+expected:
+  files:
+    output.csv:
+    - id: 1
+      mixed_bool_int: true
+      mixed_date_float: '2024-01-01'
+    - id: 2
+      mixed_bool_int: true
+      mixed_date_float: '3.14'
+  status_code: 0

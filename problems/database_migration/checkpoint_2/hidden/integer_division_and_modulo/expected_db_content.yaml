@@ -1,0 +1,24 @@
+tables:
+  transactions:
+    columns:
+    - id
+    - amount_cents
+    - dollars
+    - cents
+    rows:
+    - id: 1
+      amount_cents: 12345
+      dollars: 123
+      cents: 45
+    - id: 2
+      amount_cents: 50000
+      dollars: 500
+      cents: 0
+    - id: 3
+      amount_cents: 9999
+      dollars: 99
+      cents: 99
+    - id: 4
+      amount_cents: 100
+      dollars: 1
+      cents: 0

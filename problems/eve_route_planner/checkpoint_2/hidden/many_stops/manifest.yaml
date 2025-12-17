@@ -1,0 +1,6 @@
+start_cargo: null
+waypoints:
+  - name: Niyabainen IV - Moon 1 - Caldari Navy Assembly Plant
+    cargo: 1000
+  - name: Fora V - Moon 3 - Imperial Academy
+    cargo: 3000000

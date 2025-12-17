@@ -1,0 +1,10 @@
+schema Data {
+  timestamp: timestamp
+  numerator: float
+  denominator: float
+}
+
+pipeline DivZero using Data {
+  calc ratio = numerator / denominator : float @stage(pre)
+  aggregate sum(ratio) as total
+}

@@ -1,0 +1,7 @@
+experiment_name: gamma
+metadata:
+  owner: core
+training:
+  optimizer:
+    name: adamw
+    beta1: 0.9

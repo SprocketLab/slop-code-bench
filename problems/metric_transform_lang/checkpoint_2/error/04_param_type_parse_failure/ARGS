@@ -1,0 +1,1 @@
+--csv input.csv --dsl bad.mtl --param k=oopsy

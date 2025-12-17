@@ -1,0 +1,3 @@
+group_by(category)
+aggregate sum(price) as total_revenue,
+          count(*) as n

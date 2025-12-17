@@ -1,0 +1,56 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "rule_id": "first_import",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "match": "import os"
+    },
+    {
+      "event": "fix",
+      "rule_id": "first_import",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "replacement": "import sys",
+      "applied": true,
+      "skipped_reason": null
+    }
+  ],
+  "expected_files": {
+    "proj/code.py": "import sys\n\ndef main():\n    pass"
+  },
+  "input_files": {
+    "proj/code.py": "import os\n\ndef main():\n    pass"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "import sys"
+      },
+      "id": "first_import",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "import os"
+    }
+  ]
+}

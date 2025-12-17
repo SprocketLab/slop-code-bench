@@ -1,0 +1,27 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+  "input_files": [
+    {
+      "path": "configs/inheritance/default.json",
+      "file_type": "text",
+      "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+    },
+    {
+      "path": "configs/inheritance/json/app.json",
+      "file_type": "text",
+      "content": "{\n  \"extends\": \"base.json\",\n  \"name\": \"json-app\"\n}\n"
+    },
+    {
+      "path": "configs/inheritance/json/base.json",
+      "file_type": "text",
+      "content": "{\n  \"timeout\": 30,\n  \"environment\": \"development\"\n}\n"
+    }
+  ],
+  "rules": {
+    "set_env": {
+      "type": "replace_value",
+      "key": "environment",
+      "value": "production"
+    }
+  }
+}

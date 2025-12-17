@@ -1,0 +1,6 @@
+timestamp,location,price,quantity,active
+2025-09-14T08:00:00Z,NYC,15.0,2,true
+2025-09-14T08:05:00Z,NYC,5.0,3,true
+2025-09-14T08:10:00Z,NYC,20.0,1,false
+2025-09-14T08:15:00Z,SF,25.0,2,true
+2025-09-14T08:20:00Z,NYC,30.0,2,true

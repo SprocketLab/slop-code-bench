@@ -1,0 +1,49 @@
+{
+  "case": {
+    "body": {
+      "allow_author_approval": false,
+      "allowed_reviewers": [
+        "alice",
+        "bob"
+      ],
+      "required_approvals": 100,
+      "scope": {
+        "app": "test",
+        "env": "dev"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "invalid_policy_required_approvals_excessive",
+    "method": "POST",
+    "path": "/v1/configs/test:policy"
+  },
+  "expected": {
+    "status_code": 422,
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "policy_violation"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    }
+  }
+}

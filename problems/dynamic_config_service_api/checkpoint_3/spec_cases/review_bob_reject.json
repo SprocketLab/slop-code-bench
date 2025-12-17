@@ -1,0 +1,76 @@
+{
+  "case": {
+    "body": {
+      "actor": "bob",
+      "decision": "reject",
+      "message": "Pool size too large for current infrastructure"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "review_bob_reject",
+    "method": "POST",
+    "path": "/v1/proposals/3:review"
+  },
+  "expected": {
+    "output": {
+      "author": "alice",
+      "base_version": 2,
+      "description": "Increase pool to 12 for peak load",
+      "diffs": {
+        "human": [
+          "REPLACE /db/pool: 8 -> 12"
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ]
+      },
+      "draft_version": 3,
+      "labels": [
+        "capacity",
+        "db"
+      ],
+      "name": "billing",
+      "proposal_id": 3,
+      "quorum": {
+        "allow_author_approval": false,
+        "allowed_reviewers": [
+          "alice",
+          "bob",
+          "carol"
+        ],
+        "required_approvals": 2
+      },
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "status": "rejected",
+      "tally": {
+        "approvals": 0,
+        "by_actor": [
+          {
+            "actor": "bob",
+            "decision": "reject",
+            "message": "Pool size too large for current infrastructure"
+          }
+        ],
+        "rejections": 1
+      },
+      "title": "Increase pool to 12"
+    },
+    "status_code": 200
+  }
+}

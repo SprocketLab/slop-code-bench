@@ -1,0 +1,6 @@
+{
+  "features": [
+    {"name": "beta", "enabled": true, "host": "beta.local"},
+    {"name": "legacy", "enabled": false, "host": "legacy.local"}
+  ]
+}

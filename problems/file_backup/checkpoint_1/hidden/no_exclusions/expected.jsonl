@@ -1,0 +1,15 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"no-exclude-job","kind":"daily","now_local":"2025-09-10T03:30:00Z"}
+{"event":"JOB_STARTED","exclude_count":0,"job_id":"no-exclude-job"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"A/B/C/D.py"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"A/B/E.bin"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"A/F/G.bin"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"A/F/H.py"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"A/I.py"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"A/J.bin"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"A/K.html"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"A/L.md"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"M.py"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"N.py"}
+{"event":"FILE_SELECTED","job_id":"no-exclude-job","path":"O.md"}
+{"event":"JOB_COMPLETED","job_id":"no-exclude-job","selected":11,"excluded":0}

@@ -1,0 +1,1 @@
+[{"avg": 15.0, "group": "A", "maximum": 20.0, "minimum": 10.0, "n": 2, "total": 30.0, "value_count": 2}, {"avg": null, "group": "B", "maximum": null, "minimum": null, "n": 2, "total": null, "value_count": 0}, {"avg": 30.0, "group": "C", "maximum": 30.0, "minimum": 30.0, "n": 2, "total": 30.0, "value_count": 1}]

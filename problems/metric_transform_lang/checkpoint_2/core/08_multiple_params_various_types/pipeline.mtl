@@ -1,0 +1,20 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  price: float
+  quantity: float
+  active: bool
+}
+
+pipeline MultiParam using Sale {
+  params {
+    loc_filter: string = 'NYC'
+    min_price: float = 10.0
+    min_qty: int = 1
+    active_only: bool = true
+  }
+
+  calc row_revenue = price * quantity : float @stage(pre)
+  filter(location == param("loc_filter") & price >= param("min_price") & quantity >= param("min_qty") & active == param("active_only"))
+  aggregate sum(row_revenue) as revenue, count(*) as n
+}

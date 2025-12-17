@@ -1,0 +1,53 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "env": "test",
+        "app": "pattern_test"
+      },
+      "schema_ref": {
+        "name": "pattern_schema",
+        "version": 1
+      },
+      "config": {
+        "email": "invalid-email"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "validation_failed_pattern",
+    "method": "POST",
+    "path": "/v1/configs/pattern_test"
+  },
+  "expected": {
+    "status_code": 404,
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "not_found"
+            },
+            "details": {
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+training:
+  batch_size: 32
+resources:
+  profile: compute_a
+  world_size: 2

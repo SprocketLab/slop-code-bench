@@ -1,0 +1,28 @@
+[
+  {"id": "todo", "kind": "exact", "pattern": "TODO"},
+  {
+    "id": "urls",
+    "kind": "regex",
+    "pattern": "https?://[\\w./-]+",
+    "regex_flags": ["i"],
+    "languages": ["python"]
+  },
+  {
+    "id": "py-print",
+    "kind": "pattern",
+    "pattern": "print($VALUE)",
+    "languages": ["python"]
+  },
+  {
+    "id": "console-log",
+    "kind": "pattern",
+    "pattern": "console.log($TAG, $TAG)",
+    "languages": ["javascript"]
+  },
+  {
+    "id": "printf",
+    "kind": "regex",
+    "pattern": "\\bprintf\\s*\\(",
+    "languages": ["cpp"]
+  }
+]

@@ -1,0 +1,9 @@
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+}
+
+pipeline P using BaseSale {
+  calc d = day(location) : int @stage(pre)
+  aggregate count(*) as n
+}

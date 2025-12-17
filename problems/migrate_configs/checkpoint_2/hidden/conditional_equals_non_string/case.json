@@ -1,0 +1,13 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "bump_retry_limit": {
+      "type": "conditional_replace",
+      "key": "limits.retries",
+      "value": 5,
+      "condition": {
+        "current_value_equals": 3
+      }
+    }
+  }
+}

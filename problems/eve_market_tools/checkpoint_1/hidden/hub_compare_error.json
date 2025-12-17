@@ -1,0 +1,14 @@
+{
+  "expected": {
+    "output": {
+      "error": "NO_PRICE_DATA",
+      "details": "28665"
+    },
+    "status_code": 404
+  },
+  "input": {
+    "method": "GET",
+    "path": "/v1/hub-compare/28665"
+  },
+  "order": 0
+}

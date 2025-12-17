@@ -1,0 +1,2 @@
+{"event": "operation_applied", "type": "create_index", "name": "idx_users_email_lower", "table": "users", "version": 2}
+{"event": "migration_complete", "version": 2, "operations_count": 1}

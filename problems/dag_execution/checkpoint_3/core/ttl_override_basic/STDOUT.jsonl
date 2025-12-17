@@ -1,0 +1,23 @@
+{"event": "TASK_STARTED", "job_id": 1, "task": "main", "parent": null}
+{"event": "TASK_STARTED", "job_id": 2, "task": "compute", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 2, "task": "compute", "parent": 1, "cache_key": "343b95791edceddd1298e4a064d69b765a43f664c413b9040705cd63ee739a44"}
+{"event": "CACHE_MISS", "job_id": 2, "task": "compute", "parent": 1, "cache_key": "343b95791edceddd1298e4a064d69b765a43f664c413b9040705cd63ee739a44", "reason": "first_execution"}
+{"event": "TASK_RUNNING", "job_id": 2, "task": "compute", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 2, "task": "compute", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 3, "task": "sleep", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 3, "task": "sleep", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 3, "task": "sleep", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 4, "task": "compute", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 4, "task": "compute", "parent": 1, "cache_key": "343b95791edceddd1298e4a064d69b765a43f664c413b9040705cd63ee739a44"}
+{"event": "CACHE_MISS", "job_id": 4, "task": "compute", "parent": 1, "cache_key": "343b95791edceddd1298e4a064d69b765a43f664c413b9040705cd63ee739a44", "reason": "ttl_expired"}
+{"event": "TASK_RUNNING", "job_id": 4, "task": "compute", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 4, "task": "compute", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 5, "task": "sleep", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 5, "task": "sleep", "parent": 1}
+{"event": "TASK_COMPLETED", "job_id": 5, "task": "sleep", "parent": 1}
+{"event": "TASK_STARTED", "job_id": 6, "task": "compute", "parent": 1}
+{"event": "CACHE_CHECK", "job_id": 6, "task": "compute", "parent": 1, "cache_key": "343b95791edceddd1298e4a064d69b765a43f664c413b9040705cd63ee739a44"}
+{"event": "CACHE_HIT", "job_id": 6, "task": "compute", "parent": 1, "cache_key": "343b95791edceddd1298e4a064d69b765a43f664c413b9040705cd63ee739a44"}
+{"event": "TASK_COMPLETED", "job_id": 6, "task": "compute", "parent": 1}
+{"event": "TASK_RUNNING", "job_id": 1, "task": "main", "parent": null}
+{"event": "TASK_COMPLETED", "job_id": 1, "task": "main", "parent": null}

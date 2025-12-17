@@ -1,0 +1,1 @@
+[{"window_start": "2025-09-14T08:00:00Z", "window_end": "2025-09-14T08:10:00Z", "n": 2, "total_price": 3.0}, {"window_start": "2025-09-14T08:10:00Z", "window_end": "2025-09-14T08:20:00Z", "n": 1, "total_price": 3.0}, {"window_start": "2025-09-14T08:20:00Z", "window_end": "2025-09-14T08:30:00Z", "n": 1, "total_price": 4.0}]

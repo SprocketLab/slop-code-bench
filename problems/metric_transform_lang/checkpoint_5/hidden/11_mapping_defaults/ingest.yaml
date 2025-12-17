@@ -1,0 +1,28 @@
+sources:
+  - name: web
+    inputs: ["web.csv"]
+    format: csv
+    schema: WebSale
+    precedence: 10
+    mapping:
+      rename:
+        event_time: timestamp
+        store: location
+        sku: item
+        web_price: price
+        web_qty: quantity
+  - name: pos
+    inputs: ["pos.csv"]
+    format: csv
+    schema: BaseSale
+    precedence: 20
+    mapping:
+      rename:
+        event_time: timestamp
+        store: location
+        sku: item
+        pos_price: price
+        pos_qty: quantity
+      defaults:
+        unit: ea
+        category: store

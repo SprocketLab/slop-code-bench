@@ -1,0 +1,5 @@
+[
+  {"category": "bakery", "n": 1, "total_revenue": 2.5},
+  {"category": "dairy",  "n": 1, "total_revenue": 3.2},
+  {"category": "fruit",  "n": 4, "total_revenue": 4.8}
+]

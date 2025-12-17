@@ -1,0 +1,15 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline GroupByMulti using Sale {
+  group_by([location, item])
+  aggregate sum(price) as total_price,
+            count(*) as n
+}

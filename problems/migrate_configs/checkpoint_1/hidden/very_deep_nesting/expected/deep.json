@@ -1,0 +1,49 @@
+{
+  "level1": {
+    "level2": {
+      "level3": {
+        "level4": {
+          "level5": {
+            "level6": {
+              "value": "updated_deep_value",
+              "other": "data"
+            }
+          }
+        }
+      }
+    },
+    "system": {
+      "services": {
+        "api": {
+          "handlers": {
+            "auth": {
+              "middleware": {
+                "logging": {
+                  "enabled": true,
+                  "level": "debug"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "app": {
+    "modules": {
+      "core": {
+        "components": {
+          "database": {
+            "connections": {
+              "primary": {
+                "pool": {
+                  "size": 50
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

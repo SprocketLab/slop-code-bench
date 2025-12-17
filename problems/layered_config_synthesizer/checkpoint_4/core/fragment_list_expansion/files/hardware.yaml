@@ -1,0 +1,16 @@
+default_profile: train_l4
+train_l4:
+  accelerators:
+    - type: l4
+      count: 4
+  max_world_size: 8
+  defaults:
+    resources:
+      world_size: 4
+      accelerators:
+        - type: l4
+          count: 4
+    training:
+      launcher: torchrun
+  constraints:
+    world_size_multiple_of: 4

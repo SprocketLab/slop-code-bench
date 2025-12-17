@@ -1,0 +1,156 @@
+{
+  "01_canon_select_fallback": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query \"SELECT CANON.ip, CANON.route FROM a GLOSS { ip := a.client.ip | a.http.client_ip | a.ip, route := a.route | a.path }\"",
+      "input_files": [
+        {
+          "path": "b.ndjson",
+          "content": [
+            {
+              "rid": "x1",
+              "edge_client_ip": "1.1.1.1",
+              "http": {
+                "path": "/a"
+              }
+            },
+            {
+              "rid": "x2",
+              "edge_client_ip": "2.2.2.2",
+              "client": {
+                "ip_address": "2.2.2.2"
+              }
+            },
+            {
+              "rid": "x3",
+              "edge_client_ip": "9.9.9.9",
+              "http": {
+                "path": "/z"
+              }
+            }
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "a.ndjson",
+          "content": [
+            {
+              "id": 1,
+              "client": {
+                "ip": "1.1.1.1"
+              },
+              "path": "/a",
+              "bytes": 100
+            },
+            {
+              "id": 2,
+              "client": {
+                "ip": null
+              },
+              "http": {
+                "client_ip": "2.2.2.2"
+              },
+              "path": "/b",
+              "bytes": null
+            },
+            {
+              "id": 3,
+              "ip": "3.3.3.3",
+              "route": "/c",
+              "bytes": 50
+            },
+            {
+              "id": 4,
+              "path": "/a",
+              "bytes": 0
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "CANON.ip": "1.1.1.1",
+          "CANON.route": "/a"
+        },
+        {
+          "CANON.ip": "2.2.2.2",
+          "CANON.route": "/b"
+        },
+        {
+          "CANON.ip": "3.3.3.3",
+          "CANON.route": "/c"
+        },
+        {
+          "CANON.ip": null,
+          "CANON.route": "/a"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "02_canon_group_by_aggregates": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query \"SELECT CANON.route AS r, COUNT(*) AS n, SUM(a.bytes) AS total FROM a GLOSS { route := a.route | a.path } GROUP BY CANON.route\"",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {
+              "id": 1,
+              "client": {
+                "ip": "1.1.1.1"
+              },
+              "path": "/a",
+              "bytes": 100
+            },
+            {
+              "id": 2,
+              "client": {
+                "ip": null
+              },
+              "http": {
+                "client_ip": "2.2.2.2"
+              },
+              "path": "/b",
+              "bytes": null
+            },
+            {
+              "id": 3,
+              "ip": "3.3.3.3",
+              "route": "/c",
+              "bytes": 50
+            },
+            {
+              "id": 4,
+              "path": "/a",
+              "bytes": 0
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "r": "/a",
+          "n": 2,
+          "total": 100
+        },
+        {
+          "r": "/b",
+          "n": 1,
+          "total": null
+        },
+        {
+          "r": "/c",
+          "n": 1,
+          "total": 50
+        }
+      ],
+      "status_code": 0
+    }
+  }
+}

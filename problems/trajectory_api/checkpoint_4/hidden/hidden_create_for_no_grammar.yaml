@@ -1,0 +1,43 @@
+case:
+  body:
+    date: "2025-10-01T00:00:00Z"
+    task: hidden_no_grammar_task
+    environment: no-grammar-env
+    model: hidden-model-2
+    framework: hidden-framework-2
+    metrics: {}
+    trajectory:
+      - role: user
+        content: Hello
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: Hi there!
+        input_tokens: 5
+        output_tokens: 10
+        cost: 0.0005
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_for_no_grammar
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      environment:
+        const: no-grammar-env
+      environment_version:
+        type: "null"
+      steps:
+        const: 2
+    required:
+      - id
+      - environment
+      - environment_version
+      - steps
+    type: object
+  status_code: 201

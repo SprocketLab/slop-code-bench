@@ -1,0 +1,10 @@
+schema Data {
+  timestamp: timestamp
+  file_marker: string
+  value: float
+}
+
+pipeline LexOrder using Data {
+  group_by(['file_marker'])
+  aggregate sum(value) as total
+}

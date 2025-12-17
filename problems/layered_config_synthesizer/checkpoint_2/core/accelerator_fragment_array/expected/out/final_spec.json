@@ -1,0 +1,1 @@
+{"experiment_name":"gpu-frag","resources":{"accelerators":[{"count":8,"type":"h100"},{"count":4,"type":"l4"}],"profile":"array","world_size":8},"training":{"batch_size":40,"optimizer":"adam"}}

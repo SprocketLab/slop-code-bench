@@ -1,0 +1,2406 @@
+{
+  "11_not_equal_numbers": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT level, status FROM logs WHERE status != 200'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO",
+              "status": 200
+            },
+            {
+              "level": "ERROR",
+              "status": 500
+            },
+            {
+              "level": "WARN",
+              "status": 503
+            },
+            {
+              "level": "DEBUG",
+              "status": 200
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "ERROR",
+          "status": 500
+        },
+        {
+          "level": "WARN",
+          "status": 503
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "12_not_equal_strings": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT level FROM logs WHERE level != \"INFO\"'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO"
+            },
+            {
+              "level": "ERROR"
+            },
+            {
+              "level": "WARN"
+            },
+            {
+              "level": "INFO"
+            },
+            {
+              "level": "DEBUG"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "ERROR"
+        },
+        {
+          "level": "WARN"
+        },
+        {
+          "level": "DEBUG"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "13_not_equal_null": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT level, message FROM logs WHERE message != null'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO",
+              "message": "zoom"
+            },
+            {
+              "level": "WARN",
+              "message": null
+            },
+            {
+              "level": "DEBUG",
+              "message": "BIG JUSTICE"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "INFO",
+          "message": "zoom"
+        },
+        {
+          "level": "DEBUG",
+          "message": "BIG JUSTICE"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "15_less_than_numbers": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT status FROM logs WHERE status < 400'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "status": 200
+            },
+            {
+              "status": 404
+            },
+            {
+              "status": 500
+            },
+            {
+              "status": 100
+            },
+            {
+              "status": 399
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "status": 200
+        },
+        {
+          "status": 100
+        },
+        {
+          "status": 399
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "16_less_than_strings_lexicographic": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT level FROM logs WHERE level < \"INFO\"'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "ERROR"
+            },
+            {
+              "level": "INFO"
+            },
+            {
+              "level": "WARN"
+            },
+            {
+              "level": "DEBUG"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "ERROR"
+        },
+        {
+          "level": "DEBUG"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "17_greater_than_numbers": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT status FROM logs WHERE status > 400'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "status": 200
+            },
+            {
+              "status": 404
+            },
+            {
+              "status": 500
+            },
+            {
+              "status": 503
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "status": 404
+        },
+        {
+          "status": 500
+        },
+        {
+          "status": 503
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "18_greater_than_strings": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT level FROM logs WHERE level > \"INFO\"'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "ERROR"
+            },
+            {
+              "level": "INFO"
+            },
+            {
+              "level": "WARN"
+            },
+            {
+              "level": "DEBUG"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "WARN"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "19_less_equal_boundary": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT n FROM logs WHERE n <= 5'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": 4
+            },
+            {
+              "n": 5
+            },
+            {
+              "n": 6
+            },
+            {
+              "n": 5
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "n": 4
+        },
+        {
+          "n": 5
+        },
+        {
+          "n": 5
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "20_greater_equal_boundary": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT n FROM logs WHERE n >= 5'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": 4
+            },
+            {
+              "n": 5
+            },
+            {
+              "n": 6
+            },
+            {
+              "n": 5
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "n": 5
+        },
+        {
+          "n": 6
+        },
+        {
+          "n": 5
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "21_less_equal_strings": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT s FROM logs WHERE s <= \\\"b\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "s": "a"
+            },
+            {
+              "s": "b"
+            },
+            {
+              "s": "c"
+            },
+            {
+              "s": "b"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "s": "a"
+        },
+        {
+          "s": "b"
+        },
+        {
+          "s": "b"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "22_greater_equal_strings": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT s FROM logs WHERE s >= \\\"b\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "s": "a"
+            },
+            {
+              "s": "b"
+            },
+            {
+              "s": "c"
+            },
+            {
+              "s": "b"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "s": "b"
+        },
+        {
+          "s": "c"
+        },
+        {
+          "s": "b"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "23_negative_numbers": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT n FROM logs WHERE n > -5'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": -10
+            },
+            {
+              "n": -5
+            },
+            {
+              "n": 0
+            },
+            {
+              "n": 5
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "n": 0
+        },
+        {
+          "n": 5
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "24_decimal_comparisons": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT n FROM logs WHERE n >= 1.5 AND n < 3.0'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": 1.0
+            },
+            {
+              "n": 1.5
+            },
+            {
+              "n": 2.5
+            },
+            {
+              "n": 3.0
+            },
+            {
+              "n": 3.5
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "n": 1.5
+        },
+        {
+          "n": 2.5
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "25_boolean_true_equality": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT enabled FROM logs WHERE enabled = true'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "enabled": true
+            },
+            {
+              "enabled": false
+            },
+            {
+              "enabled": true
+            },
+            {
+              "enabled": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "enabled": true
+        },
+        {
+          "enabled": true
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "26_boolean_false_equality": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT disabled FROM logs WHERE disabled = false'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "disabled": true
+            },
+            {
+              "disabled": false
+            },
+            {
+              "disabled": false
+            },
+            {
+              "disabled": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "disabled": false
+        },
+        {
+          "disabled": false
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "28_boolean_vs_number_mismatch": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT enabled FROM logs WHERE enabled = 1'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "enabled": true
+            },
+            {
+              "enabled": 1
+            },
+            {
+              "enabled": false
+            },
+            {
+              "enabled": 0
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "enabled": 1
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "29_boolean_vs_string_mismatch": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT enabled FROM logs WHERE enabled = \\\"true\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "enabled": true
+            },
+            {
+              "enabled": "true"
+            },
+            {
+              "enabled": false
+            },
+            {
+              "enabled": "false"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "enabled": "true"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "30_boolean_ordering_always_false": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT flag FROM logs WHERE flag > false'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "flag": true
+            },
+            {
+              "flag": false
+            },
+            {
+              "flag": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "31_boolean_in_complex_expr": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT status, enabled FROM logs WHERE enabled = true AND status = 200'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "status": 200,
+              "enabled": true
+            },
+            {
+              "status": 500,
+              "enabled": true
+            },
+            {
+              "status": 200,
+              "enabled": false
+            },
+            {
+              "status": 200,
+              "enabled": true
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "status": 200,
+          "enabled": true
+        },
+        {
+          "status": 200,
+          "enabled": true
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "32_null_with_ordering_always_false": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT name FROM logs WHERE name > null'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "name": "alice"
+            },
+            {
+              "name": null
+            },
+            {
+              "name": "bob"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "33_null_less_than_always_false": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT n FROM logs WHERE n < null'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": 100
+            },
+            {
+              "n": null
+            },
+            {
+              "n": -100
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "34_array_equality_always_false": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT tags FROM logs WHERE tags = null'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "tags": [
+                "a",
+                "b"
+              ]
+            },
+            {
+              "tags": null
+            },
+            {
+              "tags": [
+                "c"
+              ]
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "tags": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "35_array_comparison_always_false": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT tags FROM logs WHERE tags != null'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "tags": [
+                "a",
+                "b"
+              ]
+            },
+            {
+              "tags": null
+            },
+            {
+              "tags": []
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "36_array_ordering_always_false": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT tags FROM logs WHERE tags < 10'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "tags": [
+                "a"
+              ]
+            },
+            {
+              "tags": []
+            },
+            {
+              "tags": [
+                "b",
+                "c"
+              ]
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "37_object_equality_null_only": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT http FROM logs WHERE http = null'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "http": {
+                "status": 200
+              }
+            },
+            {
+              "http": null
+            },
+            {
+              "http": {}
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "http": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "38_object_not_equal_always_false": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT meta FROM logs WHERE meta != null'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "meta": {
+                "key": "value"
+              }
+            },
+            {
+              "meta": null
+            },
+            {
+              "meta": {}
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "39_object_ordering_always_false": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT data FROM logs WHERE data > 0'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "data": {
+                "x": 1
+              }
+            },
+            {
+              "data": {}
+            },
+            {
+              "data": {
+                "y": 2
+              }
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "40_string_lexicographic_numbers": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT s FROM logs WHERE s < \\\"20\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "s": "10"
+            },
+            {
+              "s": "2"
+            },
+            {
+              "s": "20"
+            },
+            {
+              "s": "100"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "s": "10"
+        },
+        {
+          "s": "2"
+        },
+        {
+          "s": "100"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "41_empty_string_comparison": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT msg FROM logs WHERE msg = \\\"\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "msg": ""
+            },
+            {
+              "msg": "hello"
+            },
+            {
+              "msg": ""
+            },
+            {
+              "msg": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "msg": ""
+        },
+        {
+          "msg": ""
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "42_empty_string_ordering": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT s FROM logs WHERE s > \\\"\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "s": ""
+            },
+            {
+              "s": "a"
+            },
+            {
+              "s": ""
+            },
+            {
+              "s": "z"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "s": "a"
+        },
+        {
+          "s": "z"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "43_keywords_lowercase": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"select level from logs where level = \\\"INFO\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO"
+            },
+            {
+              "level": "ERROR"
+            },
+            {
+              "level": "INFO"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "INFO"
+        },
+        {
+          "level": "INFO"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "44_keywords_mixed_case": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SeLeCt level FrOm logs WhErE level = \\\"INFO\\\" AnD status = 200\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO",
+              "status": 200
+            },
+            {
+              "level": "ERROR",
+              "status": 500
+            },
+            {
+              "level": "INFO",
+              "status": 200
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "INFO"
+        },
+        {
+          "level": "INFO"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "45_boolean_literals_case_insensitive": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT flag FROM logs WHERE flag = TRUE OR flag = FALSE'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "flag": true
+            },
+            {
+              "flag": false
+            },
+            {
+              "flag": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "flag": true
+        },
+        {
+          "flag": false
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "46_null_literal_case_insensitive": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT msg FROM logs WHERE msg = NULL\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "msg": null
+            },
+            {
+              "msg": "test"
+            },
+            {
+              "msg": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "msg": null
+        },
+        {
+          "msg": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "47_field_names_case_sensitive": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT Level, level FROM logs\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "Level": "HIGH",
+              "level": "info"
+            },
+            {
+              "Level": "LOW",
+              "level": "debug"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "Level": "HIGH",
+          "level": "info"
+        },
+        {
+          "Level": "LOW",
+          "level": "debug"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "48_multiple_ors_left_to_right": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT x FROM logs WHERE x = 1 OR x = 2 OR x = 3\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "x": 1
+            },
+            {
+              "x": 2
+            },
+            {
+              "x": 3
+            },
+            {
+              "x": 4
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "x": 1
+        },
+        {
+          "x": 2
+        },
+        {
+          "x": 3
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "49_multiple_ands_left_to_right": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT x,y,z FROM logs WHERE x = 1 AND y = 2 AND z = 3'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "x": 1,
+              "y": 2,
+              "z": 3
+            },
+            {
+              "x": 1,
+              "y": 2,
+              "z": 4
+            },
+            {
+              "x": 1,
+              "y": 3,
+              "z": 3
+            },
+            {
+              "x": 1,
+              "y": 2,
+              "z": 3
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "x": 1,
+          "y": 2,
+          "z": 3
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "z": 3
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "50_mixed_chain_precedence": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT x FROM logs WHERE x = 1 OR x = 2 AND x = 3 OR x = 4\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "x": 1
+            },
+            {
+              "x": 2
+            },
+            {
+              "x": 3
+            },
+            {
+              "x": 4
+            },
+            {
+              "x": 5
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "x": 1
+        },
+        {
+          "x": 4
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "51_deep_nested_path": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT a.b.c.d.e FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "a": {
+                "b": {
+                  "c": {
+                    "d": {
+                      "e": 42
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "a": {
+                "b": {
+                  "c": {
+                    "d": {}
+                  }
+                }
+              }
+            },
+            {
+              "a": {
+                "b": {}
+              }
+            },
+            {}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "a.b.c.d.e": 42
+        },
+        {
+          "a.b.c.d.e": null
+        },
+        {
+          "a.b.c.d.e": null
+        },
+        {
+          "a.b.c.d.e": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "52_field_name_with_underscore": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT user_id, _internal FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "user_id": 123,
+              "_internal": "data"
+            },
+            {
+              "user_id": 456,
+              "_internal": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "user_id": 123,
+          "_internal": "data"
+        },
+        {
+          "user_id": 456,
+          "_internal": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "53_field_name_with_numbers": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT field123, field_2 FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "field123": "a",
+              "field_2": "b"
+            },
+            {
+              "field123": "c",
+              "field_2": "d"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "field123": "a",
+          "field_2": "b"
+        },
+        {
+          "field123": "c",
+          "field_2": "d"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "54_path_through_null": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT http.status FROM logs WHERE http.status = null'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "http": null
+            },
+            {
+              "http": {
+                "status": 200
+              }
+            },
+            {}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "http.status": null
+        },
+        {
+          "http.status": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "55_path_through_non_object": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT status.code FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "status": 200
+            },
+            {
+              "status": {
+                "code": 500
+              }
+            },
+            {
+              "status": "error"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "status.code": null
+        },
+        {
+          "status.code": 500
+        },
+        {
+          "status.code": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "56_select_star_no_where": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT * FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO",
+              "status": 200
+            },
+            {
+              "level": "ERROR",
+              "message": "fail"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "INFO",
+          "status": 200
+        },
+        {
+          "level": "ERROR",
+          "message": "fail"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "57_empty_result_set": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT level FROM logs WHERE level = \"FATAL\"'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO"
+            },
+            {
+              "level": "ERROR"
+            },
+            {
+              "level": "WARN"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "58_all_records_match": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT level FROM logs WHERE level != \\\"NEVER\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO"
+            },
+            {
+              "level": "ERROR"
+            },
+            {
+              "level": "WARN"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "INFO"
+        },
+        {
+          "level": "ERROR"
+        },
+        {
+          "level": "WARN"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "59_select_nonexistent_field": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT missing FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO"
+            },
+            {
+              "status": 200
+            },
+            {
+              "message": "ok"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "missing": null
+        },
+        {
+          "missing": null
+        },
+        {
+          "missing": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "60_empty_file": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT * FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "61_zero_value": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT n FROM logs WHERE n = 0'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": 0
+            },
+            {
+              "n": 1
+            },
+            {
+              "n": 0
+            },
+            {
+              "n": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "n": 0
+        },
+        {
+          "n": 0
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "62_empty_object": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT * FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {},
+            {
+              "level": "INFO"
+            },
+            {}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {},
+        {
+          "level": "INFO"
+        },
+        {}
+      ],
+      "status_code": 0
+    }
+  },
+  "63_unicode_in_strings": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT msg FROM logs WHERE msg = \\\"hello 世界\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "msg": "hello 世界"
+            },
+            {
+              "msg": "hello world"
+            },
+            {
+              "msg": "hello 世界"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "msg": "hello 世界"
+        },
+        {
+          "msg": "hello 世界"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "64_multiple_dotted_fields_select": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT http.status, meta.user.id FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "http": {
+                "status": 200
+              },
+              "meta": {
+                "user": {
+                  "id": 123
+                }
+              }
+            },
+            {
+              "http": {
+                "status": 404
+              },
+              "meta": {}
+            },
+            {
+              "http": null,
+              "meta": {
+                "user": {
+                  "id": 456
+                }
+              }
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "http.status": 200,
+          "meta.user.id": 123
+        },
+        {
+          "http.status": 404,
+          "meta.user.id": null
+        },
+        {
+          "http.status": null,
+          "meta.user.id": 456
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "65_special_chars_in_string": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT msg FROM logs WHERE msg = \"tab\there\"'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "msg": "tab\there"
+            },
+            {
+              "msg": "notab"
+            },
+            {
+              "msg": "tab\there"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "msg": "tab\there"
+        },
+        {
+          "msg": "tab\there"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "66_single_field_selection": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT level FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO",
+              "status": 200
+            },
+            {
+              "level": "ERROR",
+              "message": "fail"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "INFO"
+        },
+        {
+          "level": "ERROR"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "67_complex_nested_parens": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT x FROM logs WHERE ((x = 1 OR x = 2) AND (x = 1 OR x = 3)) OR x = 4\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "x": 1
+            },
+            {
+              "x": 2
+            },
+            {
+              "x": 3
+            },
+            {
+              "x": 4
+            },
+            {
+              "x": 5
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "x": 1
+        },
+        {
+          "x": 4
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "68_string_with_backslash": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT path FROM logs WHERE path = \\\"C:\\\\\\\\Users\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "path": "C:\\Users"
+            },
+            {
+              "path": "D:\\Data"
+            },
+            {
+              "path": "C:\\Users"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "path": "C:\\Users"
+        },
+        {
+          "path": "C:\\Users"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "70_type_mismatch_all_comparisons": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT n FROM logs WHERE n > \\\"100\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": 200
+            },
+            {
+              "n": "200"
+            },
+            {
+              "n": 50
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "n": "200"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "71_where_with_missing_field": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT level FROM logs WHERE missing = 100'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO"
+            },
+            {
+              "level": "ERROR",
+              "missing": 100
+            },
+            {
+              "level": "WARN"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "ERROR"
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "72_multiple_same_value_comparisons": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT n FROM logs WHERE n >= 5 AND n <= 5'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": 4
+            },
+            {
+              "n": 5
+            },
+            {
+              "n": 6
+            },
+            {
+              "n": 5
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "n": 5
+        },
+        {
+          "n": 5
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "73_long_or_chain": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT x FROM logs WHERE x = 1 OR x = 2 OR x = 3 OR x = 4 OR x = 5'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "x": 1
+            },
+            {
+              "x": 6
+            },
+            {
+              "x": 3
+            },
+            {
+              "x": 7
+            },
+            {
+              "x": 5
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "x": 1
+        },
+        {
+          "x": 3
+        },
+        {
+          "x": 5
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "74_long_and_chain": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT a,b,c,d FROM logs WHERE a = 1 AND b = 2 AND c = 3 AND d = 4'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "a": 1,
+              "b": 2,
+              "c": 3,
+              "d": 4
+            },
+            {
+              "a": 1,
+              "b": 2,
+              "c": 3,
+              "d": 5
+            },
+            {
+              "a": 1,
+              "b": 2,
+              "c": 3,
+              "d": 4
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "a": 1,
+          "b": 2,
+          "c": 3,
+          "d": 4
+        },
+        {
+          "a": 1,
+          "b": 2,
+          "c": 3,
+          "d": 4
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "75_explicit_null_vs_missing": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT id, value FROM logs WHERE value = null'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "id": 1,
+              "value": null
+            },
+            {
+              "id": 2
+            },
+            {
+              "id": 3,
+              "value": "something"
+            },
+            {
+              "id": 4,
+              "value": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "id": 1,
+          "value": null
+        },
+        {
+          "id": 2,
+          "value": null
+        },
+        {
+          "id": 4,
+          "value": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "76_select_preserves_types": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT n, s, b, arr, obj FROM logs'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": 42,
+              "s": "text",
+              "b": true,
+              "arr": [
+                1,
+                2
+              ],
+              "obj": {
+                "k": "v"
+              }
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "n": 42,
+          "s": "text",
+          "b": true,
+          "arr": [
+            1,
+            2
+          ],
+          "obj": {
+            "k": "v"
+          }
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "77_very_deeply_nested_boolean": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT x FROM logs WHERE (((x = 1 OR x = 2) AND x = 1) OR (x = 3 AND (x = 3 OR x = 4)))\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "x": 1
+            },
+            {
+              "x": 2
+            },
+            {
+              "x": 3
+            },
+            {
+              "x": 4
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "x": 1
+        },
+        {
+          "x": 3
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "78_string_with_only_spaces": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT msg FROM logs WHERE msg = \\\"   \\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "msg": "   "
+            },
+            {
+              "msg": ""
+            },
+            {
+              "msg": " "
+            },
+            {
+              "msg": "   "
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "msg": "   "
+        },
+        {
+          "msg": "   "
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "79_negative_decimal": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query 'SELECT n FROM logs WHERE n < -1.5'",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "n": -2.0
+            },
+            {
+              "n": -1.5
+            },
+            {
+              "n": -1.0
+            },
+            {
+              "n": -2.5
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "n": -2.0
+        },
+        {
+          "n": -2.5
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "80_or_short_circuit_behavior": {
+    "case": {
+      "arguments": "--log-file logs.ndjson --query \"SELECT level FROM logs WHERE level = \\\"INFO\\\" OR level = \\\"ERROR\\\"\"",
+      "input_files": [
+        {
+          "path": "logs.ndjson",
+          "content": [
+            {
+              "level": "INFO"
+            },
+            {
+              "level": "ERROR"
+            },
+            {
+              "level": "WARN"
+            },
+            {
+              "level": "INFO"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "level": "INFO"
+        },
+        {
+          "level": "ERROR"
+        },
+        {
+          "level": "INFO"
+        }
+      ],
+      "status_code": 0
+    }
+  }
+}

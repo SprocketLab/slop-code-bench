@@ -1,0 +1,35 @@
+id: order_by_multiple
+files:
+  query.sql: 'SELECT country, first_name, id FROM users WHERE country IN (''AR'',
+    ''CH'') ORDER BY country DESC, first_name ASC
+
+    '
+expected: '| country   | first_name   |   id |
+
+  |-----------|--------------|------|
+
+  | CH        | Cristabel    |   45 |
+
+  | CH        | Sheilah      |    3 |
+
+  | AR        | Brady        |   44 |
+
+  | AR        | Darin        |    2 |
+
+  | AR        | Gaylene      |   32 |
+
+  | AR        | Irita        |   48 |
+
+  | AR        | Juanita      |   49 |
+
+  | AR        | Mirelle      |    5 |
+
+  | AR        | Olivia       |   50 |
+
+  | AR        | Osmond       |   33 |
+
+  | AR        | Othilia      |   31 |
+
+  | AR        | Rori         |    1 |
+
+  | AR        | Wilden       |   47 |'

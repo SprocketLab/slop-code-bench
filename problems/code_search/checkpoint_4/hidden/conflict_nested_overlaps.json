@@ -1,0 +1,142 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "rule_id": "outer",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 16
+      },
+      "match": "foo(bar(baz()))"
+    },
+    {
+      "event": "fix",
+      "rule_id": "outer",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 16
+      },
+      "replacement": "OUTER",
+      "applied": true,
+      "skipped_reason": null
+    },
+    {
+      "rule_id": "middle",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 15
+      },
+      "match": "bar(baz())"
+    },
+    {
+      "event": "fix",
+      "rule_id": "middle",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 15
+      },
+      "replacement": "MIDDLE",
+      "applied": false,
+      "skipped_reason": "overlap"
+    },
+    {
+      "rule_id": "inner",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 9
+      },
+      "end": {
+        "line": 1,
+        "col": 14
+      },
+      "match": "baz()"
+    },
+    {
+      "event": "fix",
+      "rule_id": "inner",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 9
+      },
+      "end": {
+        "line": 1,
+        "col": 14
+      },
+      "replacement": "INNER",
+      "applied": false,
+      "skipped_reason": "overlap"
+    }
+  ],
+  "expected_files": {
+    "proj/code.py": "OUTER"
+  },
+  "input_files": {
+    "proj/code.py": "foo(bar(baz()))"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "OUTER"
+      },
+      "id": "outer",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "foo(bar(baz()))"
+    },
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "MIDDLE"
+      },
+      "id": "middle",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "bar(baz())"
+    },
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "INNER"
+      },
+      "id": "inner",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "baz()"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline InOperator using Sale {
+  filter('apple' in item)
+  aggregate count(*) as n,
+            sum(price) as total
+}

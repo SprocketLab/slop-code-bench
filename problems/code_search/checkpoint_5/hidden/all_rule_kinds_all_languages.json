@@ -1,0 +1,943 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "rule_id": "exact_return",
+      "file": "a.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "a.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "regex_return_num",
+      "file": "a.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "return 1"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "a.cpp",
+      "language": "cpp",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "b.go",
+      "language": "go",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "b.go",
+      "language": "go",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "regex_return_num",
+      "file": "b.go",
+      "language": "go",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "return 2"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "b.go",
+      "language": "go",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "c.hs",
+      "language": "haskell",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "c.hs",
+      "language": "haskell",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "regex_return_num",
+      "file": "c.hs",
+      "language": "haskell",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "return 3"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "c.hs",
+      "language": "haskell",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "d.java",
+      "language": "java",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "d.java",
+      "language": "java",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "regex_return_num",
+      "file": "d.java",
+      "language": "java",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "return 4"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "d.java",
+      "language": "java",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "e.js",
+      "language": "javascript",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "e.js",
+      "language": "javascript",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "regex_return_num",
+      "file": "e.js",
+      "language": "javascript",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "return 5"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "e.js",
+      "language": "javascript",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return",
+      "captures": {
+        "$X": {
+          "text": "return",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 1
+              },
+              "end": {
+                "line": 1,
+                "col": 7
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "selector_return",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "return",
+      "captures": {
+        "$X": {
+          "text": "return",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 1
+              },
+              "end": {
+                "line": 2,
+                "col": 7
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "regex_return_num",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "return 6"
+    },
+    {
+      "rule_id": "selector_return",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "return 6"
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 8
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "6",
+      "captures": {
+        "$X": {
+          "text": "6",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 8
+              },
+              "end": {
+                "line": 2,
+                "col": 9
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 3,
+        "col": 1
+      },
+      "end": {
+        "line": 3,
+        "col": 2
+      },
+      "match": "x",
+      "captures": {
+        "$X": {
+          "text": "x",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 1
+              },
+              "end": {
+                "line": 3,
+                "col": 2
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 3,
+        "col": 3
+      },
+      "end": {
+        "line": 3,
+        "col": 4
+      },
+      "match": "=",
+      "captures": {
+        "$X": {
+          "text": "=",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 3
+              },
+              "end": {
+                "line": 3,
+                "col": 4
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 3,
+        "col": 5
+      },
+      "end": {
+        "line": 3,
+        "col": 6
+      },
+      "match": "1",
+      "captures": {
+        "$X": {
+          "text": "1",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 5
+              },
+              "end": {
+                "line": 3,
+                "col": 6
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 7
+      },
+      "match": "return",
+      "captures": {
+        "$X": {
+          "text": "return",
+          "ranges": [
+            {
+              "start": {
+                "line": 4,
+                "col": 1
+              },
+              "end": {
+                "line": 4,
+                "col": 7
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "selector_return",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 9
+      },
+      "match": "return x"
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "f.py",
+      "language": "python",
+      "start": {
+        "line": 4,
+        "col": 8
+      },
+      "end": {
+        "line": 4,
+        "col": 9
+      },
+      "match": "x",
+      "captures": {
+        "$X": {
+          "text": "x",
+          "ranges": [
+            {
+              "start": {
+                "line": 4,
+                "col": 8
+              },
+              "end": {
+                "line": 4,
+                "col": 9
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "return",
+      "captures": {
+        "$X": {
+          "text": "return",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 1
+              },
+              "end": {
+                "line": 1,
+                "col": 7
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "return",
+      "captures": {
+        "$X": {
+          "text": "return",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 1
+              },
+              "end": {
+                "line": 2,
+                "col": 7
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "regex_return_num",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "return 7"
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 2,
+        "col": 8
+      },
+      "end": {
+        "line": 2,
+        "col": 9
+      },
+      "match": "7",
+      "captures": {
+        "$X": {
+          "text": "7",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 8
+              },
+              "end": {
+                "line": 2,
+                "col": 9
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 3,
+        "col": 1
+      },
+      "end": {
+        "line": 3,
+        "col": 4
+      },
+      "match": "let",
+      "captures": {
+        "$X": {
+          "text": "let",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 1
+              },
+              "end": {
+                "line": 3,
+                "col": 4
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 3,
+        "col": 5
+      },
+      "end": {
+        "line": 3,
+        "col": 6
+      },
+      "match": "y",
+      "captures": {
+        "$X": {
+          "text": "y",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 5
+              },
+              "end": {
+                "line": 3,
+                "col": 6
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "exact_return",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 7
+      },
+      "match": "return"
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 7
+      },
+      "match": "return",
+      "captures": {
+        "$X": {
+          "text": "return",
+          "ranges": [
+            {
+              "start": {
+                "line": 4,
+                "col": 1
+              },
+              "end": {
+                "line": 4,
+                "col": 7
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "pattern_var",
+      "file": "g.rs",
+      "language": "rust",
+      "start": {
+        "line": 4,
+        "col": 8
+      },
+      "end": {
+        "line": 4,
+        "col": 9
+      },
+      "match": "y",
+      "captures": {
+        "$X": {
+          "text": "y",
+          "ranges": [
+            {
+              "start": {
+                "line": 4,
+                "col": 8
+              },
+              "end": {
+                "line": 4,
+                "col": 9
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "input_files": {
+    "proj/a.cpp": "return\nreturn 1\nint x;\nreturn x;",
+    "proj/b.go": "return\nreturn 2\nvar x int\nreturn x",
+    "proj/c.hs": "return\nreturn 3\nx = 5\nreturn x",
+    "proj/d.java": "return\nreturn 4\nint x;\nreturn x;",
+    "proj/e.js": "return\nreturn 5\nlet x;\nreturn x;",
+    "proj/f.py": "return\nreturn 6\nx = 1\nreturn x",
+    "proj/g.rs": "return\nreturn 7\nlet y;\nreturn y"
+  },
+  "rules.json": [
+    {
+      "id": "exact_return",
+      "kind": "exact",
+      "pattern": "return"
+    },
+    {
+      "id": "regex_return_num",
+      "kind": "regex",
+      "pattern": "return \\d"
+    },
+    {
+      "id": "pattern_var",
+      "kind": "pattern",
+      "languages": [
+        "python",
+        "rust"
+      ],
+      "pattern": "$X"
+    },
+    {
+      "id": "selector_return",
+      "kind": "selector",
+      "languages": [
+        "python",
+        "rust"
+      ],
+      "selector": "return_statement"
+    }
+  ]
+}

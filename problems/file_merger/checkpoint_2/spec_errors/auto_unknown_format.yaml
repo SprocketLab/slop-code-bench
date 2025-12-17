@@ -1,0 +1,9 @@
+case:
+  arguments: --output out.csv --key id mystery.data
+  input_files:
+  - content: YW1vdW50LGlkCjEwLDEKMjAsMgo1LDMKNiw0CjcsNQo=
+    file_type: binary
+    path: mystery.data
+expected:
+  status_code: 2
+  stderr: ^ERR 2.*

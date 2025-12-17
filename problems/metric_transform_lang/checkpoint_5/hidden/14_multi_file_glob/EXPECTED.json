@@ -1,0 +1,16 @@
+[
+  {
+    "window_start": "2024-08-12T09:00:00Z",
+    "window_end": "2024-08-12T10:00:00Z",
+    "item": "marker",
+    "web_units": 10.0,
+    "store_units": 6.0
+  },
+  {
+    "window_start": "2024-08-12T09:00:00Z",
+    "window_end": "2024-08-12T10:00:00Z",
+    "item": "notebook",
+    "web_units": 5.0,
+    "store_units": 7.0
+  }
+]

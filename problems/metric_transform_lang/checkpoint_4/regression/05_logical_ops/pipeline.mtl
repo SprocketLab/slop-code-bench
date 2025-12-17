@@ -1,0 +1,17 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline LogicalOps using Sale {
+  # Test &, |, ! operators with precedence
+  filter((price > 1.0 & quantity > 2) | location == 'NYC')
+  filter(!(category == 'dairy'))
+  aggregate count(*) as n,
+            sum(price) as total
+}

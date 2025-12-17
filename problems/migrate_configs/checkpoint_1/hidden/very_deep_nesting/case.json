@@ -1,0 +1,41 @@
+{
+  "rules": {
+    "replace_deep_value": {
+      "type": "replace_value",
+      "key": "level1.level2.level3.level4.level5.level6.value",
+      "value": "updated_deep_value"
+    },
+    "rename_deep_key": {
+      "type": "rename_key",
+      "old_key": "system.services.api.handlers.auth.middleware.logging.enabled",
+      "new_key": "system.services.api.handlers.auth.middleware.logging.active"
+    },
+    "merge_deep_structure": {
+      "type": "merge_data",
+      "glob": "**/*",
+      "data": {
+        "app": {
+          "modules": {
+            "core": {
+              "components": {
+                "database": {
+                  "connections": {
+                    "primary": {
+                      "pool": {
+                        "size": 50
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "files": {
+    "configs/deep.json": "{\"level1\": {\"level2\": {\"level3\": {\"level4\": {\"level5\": {\"level6\": {\"value\": \"original\", \"other\": \"data\"}}}}}, \"system\": {\"services\": {\"api\": {\"handlers\": {\"auth\": {\"middleware\": {\"logging\": {\"enabled\": true, \"level\": \"debug\"}}}}}}}}}",
+    "configs/nested.yaml": "level1:\n  level2:\n    level3:\n      level4:\n        level5:\n          level6:\n            value: original\n            other: data\nsystem:\n  services:\n    api:\n      handlers:\n        auth:\n          middleware:\n            logging:\n              enabled: true\n              level: debug\napp:\n  modules:\n    core:\n      components:\n        database:\n          connections:\n            primary:\n              host: localhost"
+  }
+}

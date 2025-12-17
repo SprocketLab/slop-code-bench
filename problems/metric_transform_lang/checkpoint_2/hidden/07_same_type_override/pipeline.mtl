@@ -1,0 +1,15 @@
+schema Base {
+  timestamp: timestamp
+  price: float
+  category: string
+}
+
+schema Same extends Base {
+  # Same type override (redundant but legal)
+  price: float
+  category: string
+}
+
+pipeline SameType using Same {
+  aggregate sum(price) as total, count(*) as n
+}

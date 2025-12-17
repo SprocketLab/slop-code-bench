@@ -1,0 +1,18 @@
+app: migrate-configs
+cache:
+  ttl: 240
+  enabled: true
+logging:
+  format: json
+  level: info
+  handlers:
+  - console
+  - metrics
+features:
+  flags:
+    rollout: 0.75
+    experimental: true
+    canary: true
+  beta:
+    enabled: true
+    percentage: 50

@@ -1,0 +1,60 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 7,
+        "line": 1
+      },
+      "file": "file.py",
+      "language": "python",
+      "match": "TODO",
+      "rule_id": "todo",
+      "start": {
+        "col": 3,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 7,
+        "line": 2
+      },
+      "file": "file.py",
+      "language": "python",
+      "match": "todo",
+      "rule_id": "todo",
+      "start": {
+        "col": 3,
+        "line": 2
+      }
+    },
+    {
+      "end": {
+        "col": 7,
+        "line": 3
+      },
+      "file": "file.py",
+      "language": "python",
+      "match": "Todo",
+      "rule_id": "todo",
+      "start": {
+        "col": 3,
+        "line": 3
+      }
+    }
+  ],
+  "input_files": {
+    "proj/file.py": "# TODO: fix this\n# todo: also this\n# Todo: and this"
+  },
+  "rules.json": [
+    {
+      "id": "todo",
+      "kind": "regex",
+      "pattern": "TODO",
+      "regex_flags": [
+        "i"
+      ]
+    }
+  ]
+}

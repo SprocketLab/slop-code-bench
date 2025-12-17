@@ -1,0 +1,23 @@
+mtl_version 1.5
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+schema WebSale extends BaseSale {
+  revenue: float = price * quantity
+}
+
+pipeline WithLead using WebSale {
+  params {
+    k: int = 1
+  }
+  window(1h)
+  aggregate sum(revenue) as total_rev
+  calc next_rev = coalesce(lead(total_rev, param("k")), 0.0) : float @stage(post_agg)
+}

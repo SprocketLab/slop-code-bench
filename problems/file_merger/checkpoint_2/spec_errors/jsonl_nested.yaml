@@ -1,0 +1,14 @@
+case:
+  arguments: --output out.csv --key id events.jsonl
+  input_files:
+  - content:
+    - address:
+        city: X
+      id: 1
+    - amount: 5
+      id: 2
+    file_type: jsonl
+    path: events.jsonl
+expected:
+  status_code: 6
+  stderr: ^ERR 6.*

@@ -1,0 +1,3 @@
+filter(price >= quantity)
+aggregate count(*) as n,
+          sum(price) as total_price

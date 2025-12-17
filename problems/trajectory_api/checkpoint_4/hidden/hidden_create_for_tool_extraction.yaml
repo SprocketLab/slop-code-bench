@@ -1,0 +1,49 @@
+case:
+  body:
+    date: "2025-10-01T00:00:00Z"
+    task: hidden_tool_extraction_task
+    environment: local-sim
+    model: hidden-model-1
+    framework: hidden-framework-1
+    metrics:
+      pass: true
+    trajectory:
+      - role: system
+        content: You are a helpful assistant.
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: user
+        content: Please search for information.
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: '<tool search_wiki args="q=test query"/> I found the information.'
+        input_tokens: 10
+        output_tokens: 20
+        cost: 0.001
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_for_tool_extraction
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      environment:
+        const: local-sim
+      environment_version:
+        const: 1
+      steps:
+        const: 3
+    required:
+      - id
+      - environment
+      - environment_version
+      - steps
+    type: object
+  status_code: 201

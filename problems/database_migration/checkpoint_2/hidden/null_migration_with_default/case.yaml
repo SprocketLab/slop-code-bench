@@ -1,0 +1,16 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Migrate email with default\
+    \ for NULLs\",\n  \"operations\": [\n    {\n      \"type\": \"add_column\",\n\
+    \      \"table\": \"users\",\n      \"column\": {\n        \"name\": \"email\"\
+    ,\n        \"type\": \"TEXT\"\n      }\n    },\n    {\n      \"type\": \"migrate_column_data\"\
+    ,\n      \"table\": \"users\",\n      \"from_column\": \"old_email\",\n      \"\
+    to_column\": \"email\",\n      \"default_value\": \"'unknown@example.com'\"\n\
+    \    }\n  ]\n}"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

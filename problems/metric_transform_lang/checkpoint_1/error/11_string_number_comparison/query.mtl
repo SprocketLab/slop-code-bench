@@ -1,0 +1,2 @@
+filter(category < 5)
+aggregate count(*) as n

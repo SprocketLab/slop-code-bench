@@ -1,0 +1,32 @@
+case:
+  body:
+    steps:
+      - role: assistant
+        content: "First append"
+        input_tokens: 5
+        output_tokens: 20
+        cost: 0.002
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: rev_tracking_first_append
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_rev_sequence}}/steps
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.hidden_create_for_rev_sequence}}"
+      status:
+        const: in_progress
+      rev:
+        const: 2
+      appended:
+        const: 1
+    required:
+      - id
+      - status
+      - rev
+      - appended
+    type: object
+  status_code: 200

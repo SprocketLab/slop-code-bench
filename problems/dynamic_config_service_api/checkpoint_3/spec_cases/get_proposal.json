@@ -1,0 +1,80 @@
+{
+  "case": {
+    "body": {},
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "get_proposal",
+    "method": "POST",
+    "path": "/v1/proposals/1:get"
+  },
+  "expected": {
+    "output": {
+      "proposal_id": 1,
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "author": "alice",
+      "draft_version": 1,
+      "base_version": 0,
+      "title": "Seed billing v1",
+      "description": "Initial activation of billing@prod",
+      "labels": [
+        "init"
+      ],
+      "status": "merged",
+      "quorum": {
+        "allow_author_approval": false,
+        "allowed_reviewers": [
+          "alice",
+          "bob",
+          "carol"
+        ],
+        "required_approvals": 2
+      },
+      "tally": {
+        "approvals": 2,
+        "rejections": 0,
+        "by_actor": [
+          {
+            "actor": "bob",
+            "decision": "approve",
+            "message": "Looks good"
+          },
+          {
+            "actor": "carol",
+            "decision": "approve",
+            "message": null
+          }
+        ]
+      },
+      "diffs": {
+        "human": [
+          "SET /db: {\"pool\":4}"
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "add",
+            "path": "/db",
+            "value": {
+              "pool": 4
+            }
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "add",
+            "path": "/db",
+            "value": {
+              "pool": 4
+            }
+          }
+        ]
+      }
+    },
+    "status_code": 200
+  }
+}

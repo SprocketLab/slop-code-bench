@@ -1,0 +1,57 @@
+{
+  "case": {
+    "body": {
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "config": {
+            "$ref": "https://example.com/external-schema.json"
+          }
+        }
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "schema_external_ref_not_allowed",
+    "method": "POST",
+    "path": "/v1/schemas/external_ref_schema"
+  },
+  "expected": {
+    "status_code": 422,
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "schema_invalid"
+            },
+            "details": {
+              "properties": {
+                "reason": {
+                  "const": "external_ref_not_allowed"
+                }
+              },
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    }
+  }
+}

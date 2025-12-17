@@ -1,0 +1,15 @@
+{
+    "case": {
+        "arguments": [
+            "invention",
+            "'Proteus'",
+            "--sde",
+            "{{static:sde_dir}}",
+            "--skill",
+            "1"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

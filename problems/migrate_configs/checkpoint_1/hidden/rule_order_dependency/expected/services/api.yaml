@@ -1,0 +1,11 @@
+logging:
+  format: json
+  handlers:
+  - console
+  - file
+  level: debug
+metadata:
+  endpoint: https://api.dev.internal
+  host: cache.prod.internal
+region: us-east-1
+service: api

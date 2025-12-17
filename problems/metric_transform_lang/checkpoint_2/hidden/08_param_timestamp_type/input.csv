@@ -1,0 +1,5 @@
+timestamp,event_type
+2025-09-14T08:00:00Z,login
+2025-09-14T08:30:00Z,purchase
+2025-09-14T09:00:00Z,logout
+2025-09-14T09:30:00Z,login

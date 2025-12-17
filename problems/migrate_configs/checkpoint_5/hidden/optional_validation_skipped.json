@@ -1,0 +1,32 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"app.yaml\",\"rules_applied\":[\"add_description\"]}\\n",
+  "rules": {
+    "check_description_pattern": {
+      "type": "validate_value",
+      "scope": "validation",
+      "key": "metadata.description",
+      "constraint": {
+        "pattern": "^[a-z\\-]+$"
+      }
+    },
+    "add_description": {
+      "type": "merge_data",
+      "data": {
+        "metadata": {
+          "description": "stable-service"
+        }
+      }
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "yaml",
+      "content": "environment: production\\nmetadata: {}\\n"
+    }
+  ],
+  "expected_files": {
+    "configs/app.yaml": "environment: production\\nmetadata:\\n  description: stable-service\\n"
+  }
+}

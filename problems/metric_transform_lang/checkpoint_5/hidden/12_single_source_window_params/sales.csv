@@ -1,0 +1,5 @@
+timestamp,location,item,price,quantity,unit,category
+2024-06-01T10:00:00Z,SF,tablet,6.0,2,ea,electronics
+2024-06-01T10:15:00Z,SF,tablet,4.5,1,ea,electronics
+2024-06-01T10:30:00Z,SF,phone,5.5,3,ea,electronics
+2024-06-01T10:45:00Z,LA,headphones,7.0,1,ea,electronics

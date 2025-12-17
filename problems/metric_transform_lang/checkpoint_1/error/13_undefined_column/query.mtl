@@ -1,0 +1,2 @@
+filter(nonexistent_col > 5)
+aggregate count(*) as n

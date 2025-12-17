@@ -1,0 +1,51 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "list_proposals_all_billing",
+    "method": "POST",
+    "path": "/v1/configs/billing/proposals:list"
+  },
+  "expected": {
+    "output": {
+      "proposals": [
+        {
+          "proposal_id": 1,
+          "status": "merged",
+          "author": "alice",
+          "draft_version": 1,
+          "base_version": 0
+        },
+        {
+          "proposal_id": 2,
+          "status": "merged",
+          "author": "alice",
+          "draft_version": 2,
+          "base_version": 1
+        },
+        {
+          "proposal_id": 3,
+          "status": "superseded",
+          "author": "alice",
+          "draft_version": 3,
+          "base_version": 2
+        },
+        {
+          "proposal_id": 4,
+          "status": "approved",
+          "author": "carol",
+          "draft_version": 3,
+          "base_version": 2
+        }
+      ]
+    },
+    "status_code": 200
+  }
+}

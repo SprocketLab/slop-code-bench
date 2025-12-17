@@ -1,0 +1,19 @@
+id: like_patterns
+files:
+  query.sql: 'SELECT first_name, job FROM users WHERE job LIKE ''%Engineer%'' OR job
+    LIKE ''VP %'' ORDER BY first_name
+
+    '
+expected: '| first_name   | job                         |
+
+  |--------------|-----------------------------|
+
+  | Joice        | Senior Quality Engineer     |
+
+  | Osmond       | Nuclear Power Engineer      |
+
+  | Othilia      | Chemical Engineer           |
+
+  | Rori         | Mechanical Systems Engineer |
+
+  | Sheilah      | VP Accounting               |'

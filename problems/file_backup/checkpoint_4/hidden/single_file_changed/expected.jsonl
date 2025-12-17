@@ -1,0 +1,16 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"single-change","kind":"daily","now_local":"2025-01-15T02:00:00Z"}
+{"event":"JOB_STARTED","exclude_count":0,"job_id":"single-change"}
+{"event":"STRATEGY_SELECTED","job_id":"single-change","kind":"pack"}
+{"event":"FILE_SELECTED","job_id":"single-change","path":"A"}
+{"event":"FILE_PACKED","job_id":"single-change","pack_id":1,"path":"A","size":1}
+{"event":"FILE_SELECTED","job_id":"single-change","path":"B"}
+{"event":"FILE_PACKED","job_id":"single-change","pack_id":1,"path":"B","size":2}
+{"event":"FILE_SELECTED","job_id":"single-change","path":"C"}
+{"event":"FILE_PACKED","job_id":"single-change","pack_id":1,"path":"C","size":2}
+{"event":"FILE_SELECTED","job_id":"single-change","path":"D"}
+{"event":"FILE_PACKED","job_id":"single-change","pack_id":1,"path":"D","size":3}
+{"event":"FILE_SELECTED","job_id":"single-change","path":"E"}
+{"event":"FILE_PACKED","job_id":"single-change","pack_id":1,"path":"E","size":1}
+{"event":"PACK_CREATED","job_id":"single-change","name":"pack-1.tar","size":9,"tar_size":10240,"checksum":"sha256:feeb4b2c22f1af78c989b60c55c825acff21881054cf4f3f1d92aa5c86c55bab","timestamp":"2025-01-15T02:00:00Z"}
+{"event":"JOB_COMPLETED","job_id":"single-change","selected":5,"excluded":0,"files_skipped_unchanged":0,"dest_state_files":0,"packs":1,"total_size":9}

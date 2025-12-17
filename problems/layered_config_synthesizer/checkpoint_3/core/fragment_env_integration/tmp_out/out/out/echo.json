@@ -1,0 +1,1 @@
+{"experiment_name":"echo","logging":{"destination":"syslog","format":"json"},"metadata":{"owner":"infra","tags":["prod","shared"]},"resources":{"accelerators":[{"count":2,"type":"h100"}],"profile":"custom","world_size":2},"training":{"batch_size":20,"description":"manual prod","optimizer":"adam"}}

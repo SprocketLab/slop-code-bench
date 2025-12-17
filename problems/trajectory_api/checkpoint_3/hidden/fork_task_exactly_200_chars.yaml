@@ -1,0 +1,26 @@
+case:
+  body:
+    up_to_step: 1
+    status: in_progress
+    task: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: fork_task_exactly_200_chars
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_fork_basic}}/fork
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$
+      task:
+        type: string
+        minLength: 200
+        maxLength: 200
+    required:
+    - id
+    - task
+    type: object
+  status_code: 201

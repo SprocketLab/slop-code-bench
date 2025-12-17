@@ -1,0 +1,1 @@
+{"event":"validation_failed","file":"app.yaml","rule":"validate_service_name","error":"value 'MyService123' at key 'service.name' does not match pattern: ^[a-z][a-z0-9-]*$"}

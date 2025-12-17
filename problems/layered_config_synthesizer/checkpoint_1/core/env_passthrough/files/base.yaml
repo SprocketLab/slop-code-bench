@@ -1,0 +1,5 @@
+experiment_name: env-case
+training:
+  optimizer: adam
+resources:
+  profile: env-profile

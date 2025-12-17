@@ -1,0 +1,239 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.cc",
+      "language": "cpp",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.cjs",
+      "language": "javascript",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.cpp",
+      "language": "cpp",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.cxx",
+      "language": "cpp",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.go",
+      "language": "go",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.hh",
+      "language": "cpp",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.hpp",
+      "language": "cpp",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.hs",
+      "language": "haskell",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.hxx",
+      "language": "cpp",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.java",
+      "language": "java",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.js",
+      "language": "javascript",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.lhs",
+      "language": "haskell",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.mjs",
+      "language": "javascript",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.py",
+      "language": "python",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "file.rs",
+      "language": "rust",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/file.cc": "x",
+    "proj/file.cjs": "x",
+    "proj/file.cpp": "x",
+    "proj/file.cxx": "x",
+    "proj/file.go": "x",
+    "proj/file.hh": "x",
+    "proj/file.hpp": "x",
+    "proj/file.hs": "x",
+    "proj/file.hxx": "x",
+    "proj/file.java": "x",
+    "proj/file.js": "x",
+    "proj/file.lhs": "x",
+    "proj/file.mjs": "x",
+    "proj/file.py": "x",
+    "proj/file.rs": "x"
+  },
+  "rules.json": [
+    {
+      "id": "find_x",
+      "kind": "exact",
+      "pattern": "x"
+    }
+  ]
+}

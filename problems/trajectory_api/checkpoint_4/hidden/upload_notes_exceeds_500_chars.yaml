@@ -1,0 +1,30 @@
+case:
+  body:
+    grammar: "TOOL_CALL = '<tool ', TOOL_NAME, ' args=\"', TOOL_ARGS, '\"/>'; TOOL_NAME = letter , { letter | digit | '_' }; TOOL_ARGS = { ? any char except '\"' ? };"
+    activate: false
+    notes: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  headers:
+    content-type: application/json; charset=utf-8
+  id: upload_notes_exceeds_500_chars
+  method: POST
+  path: /environments/notes-test-env/versions
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: INVALID_INPUT
+          message:
+            type: string
+          field_path:
+            type: [string, "null"]
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 400

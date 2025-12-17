@@ -1,0 +1,28 @@
+case:
+  body: "UEsDBBQAAAAIAAqrfVtmy4zGCgAAAAgAAAANAAAAbWFuaWZlc3QuanNvbsvLL1HIKs7PAwBQSwMEFAAAAAgACqt9Wwx+f9gGAAAABAAAAA8AAABmaWxlcy9kdW1teS50eHQrSS0uAQBQSwECFAMUAAAACAAKq31bZsuMxgoAAAAIAAAADQAAAAAAAAAAAAAAgAEAAAAAbWFuaWZlc3QuanNvblBLAQIUAxQAAAAIAAqrfVsMfn/YBgAAAAQAAAAPAAAAAAAAAAAAAACAATUAAABmaWxlcy9kdW1teS50eHRQSwUGAAAAAAIAAgB4AAAAaAAAAAAA"
+  headers:
+    content-type: application/zip
+  id: invalid_manifest_json
+  method: POST
+  path: /environments/local-sim/toolpacks
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            type: string
+            const: INVALID_MANIFEST
+          message:
+            type: string
+          field_path:
+            const: null
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 422

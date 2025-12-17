@@ -1,0 +1,526 @@
+{
+  "order": 4,
+  "input": {
+    "method": "GET",
+    "path": "/v1/profit/haul",
+    "query": {
+      "optimize": "m3",
+      "hub": "jita",
+      "capacity": 60000,
+      "shipping": 0,
+      "margin": 50,
+      "include_hubs": true,
+      "daily_value": 1000000000,
+      "sales_tax": 0.04,
+      "max_jumps": 5
+    }
+  },
+  "expected": {
+    "output": {
+      "cost": 487685328.44,
+      "revenue": 899435608.32,
+      "profit": 392242866.74,
+      "purchases": {
+        "Tsuguwa III - Moon 10 - Caldari Steel Factory": [
+          {
+            "item": "Intact Shield Emitter",
+            "quantity": 3,
+            "total": 2172000.0
+          }
+        ],
+        "New Caldari Prime - Moon 1 - Chief Executive Panel Bureau": [
+          {
+            "item": "Intact Shield Emitter",
+            "quantity": 8,
+            "total": 6232000.0
+          }
+        ],
+        "Funtanainen VIII - Caldari Navy Assembly Plant": [
+          {
+            "item": "Fierce Electrical Filament",
+            "quantity": 1,
+            "total": 1000000.0
+          }
+        ],
+        "Nourvukaiken II - Moon 1 - Modern Finances Depository": [
+          {
+            "item": "Large Transverse Bulkhead II",
+            "quantity": 2,
+            "total": 79880000.0
+          },
+          {
+            "item": "Medium Hydraulic Bay Thrusters II",
+            "quantity": 9,
+            "total": 104310000.0
+          }
+        ],
+        "Sankkasen II - Spacelane Patrol Assembly Plant": [
+          {
+            "item": "Conductive Polymer",
+            "quantity": 1,
+            "total": 19320.0
+          }
+        ],
+        "Korama III - Moon 10 - Ishukone Corporation Factory": [
+          {
+            "item": "Conductive Polymer",
+            "quantity": 7,
+            "total": 145670.0
+          }
+        ],
+        "Kusomonmon VI - Moon 6 - Caldari Provisions Plantation": [
+          {
+            "item": "Conductive Polymer",
+            "quantity": 6,
+            "total": 136800.0
+          }
+        ],
+        "Tsuguwa VI - Caldari Navy Assembly Plant": [
+          {
+            "item": "Conductive Polymer",
+            "quantity": 9,
+            "total": 205200.0
+          },
+          {
+            "item": "Smashed Trigger Unit",
+            "quantity": 6,
+            "total": 69600.0
+          },
+          {
+            "item": "Long-limb Roes",
+            "quantity": 75,
+            "total": 204225.0
+          },
+          {
+            "item": "Long-limb Roes",
+            "quantity": 125,
+            "total": 340625.0
+          }
+        ],
+        "Akiainavas III - School of Applied Knowledge": [
+          {
+            "item": "Conductive Polymer",
+            "quantity": 1,
+            "total": 24000.0
+          },
+          {
+            "item": "SKINR Studio Supplies",
+            "quantity": 3,
+            "total": 4680000.0
+          },
+          {
+            "item": "Conductive Polymer",
+            "quantity": 23,
+            "total": 575000.0
+          }
+        ],
+        "Airkio II - Sukuuvestaa Corporation Factory": [
+          {
+            "item": "Smashed Trigger Unit",
+            "quantity": 26,
+            "total": 260000.0
+          }
+        ],
+        "Halaima VIII - Moon 17 - Mercantile Club Bureau": [
+          {
+            "item": "'Dunk' Salvage Drone",
+            "quantity": 15,
+            "total": 105660000.0
+          },
+          {
+            "item": "Medium Hydraulic Bay Thrusters II",
+            "quantity": 8,
+            "total": 92720000.0
+          }
+        ],
+        "Veisto V - Moon 15 - Sukuuvestaa Corporation Factory": [
+          {
+            "item": "Conductive Polymer",
+            "quantity": 24,
+            "total": 624000.0
+          }
+        ],
+        "Korama V - Moon 13 - House of Records Information Center": [
+          {
+            "item": "Smashed Trigger Unit",
+            "quantity": 20,
+            "total": 230000.0
+          }
+        ],
+        "Autama IX - Moon 12 - Aliastra Warehouse": [
+          {
+            "item": "Armor Plates",
+            "quantity": 2,
+            "total": 24020.0
+          }
+        ],
+        "Uemisaisen VII - Moon 16 - Home Guard Assembly Plant": [
+          {
+            "item": "Medium Hydraulic Bay Thrusters II",
+            "quantity": 2,
+            "total": 22000000.0
+          },
+          {
+            "item": "Medium Hydraulic Bay Thrusters II",
+            "quantity": 1,
+            "total": 11000000.0
+          }
+        ],
+        "Kakakela VI - Moon 15 - Caldari Navy Assembly Plant": [
+          {
+            "item": "Medium Hydraulic Bay Thrusters II",
+            "quantity": 2,
+            "total": 22000000.0
+          }
+        ],
+        "Passari V - Moon 9 - Ducia Foundry Refinery": [
+          {
+            "item": "Datacore - Hydromagnetic Physics",
+            "quantity": 7,
+            "total": 127120.0
+          },
+          {
+            "item": "Datacore - Hydromagnetic Physics",
+            "quantity": 7,
+            "total": 127120.0
+          }
+        ],
+        "Alikara VI - Moon 14 - Echelon Entertainment Development Studio": [
+          {
+            "item": "Fried Interface Circuit",
+            "quantity": 1,
+            "total": 1004.0
+          },
+          {
+            "item": "Tripped Power Circuit",
+            "quantity": 13,
+            "total": 10112.7
+          }
+        ],
+        "Jouvulen III - Science and Trade Institute School": [
+          {
+            "item": "Tripped Power Circuit",
+            "quantity": 4,
+            "total": 6272.0
+          },
+          {
+            "item": "Long-limb Roes",
+            "quantity": 15,
+            "total": 40875.0
+          }
+        ],
+        "Piekura VIII - Moon 15 - Rapid Assembly Factory": [
+          {
+            "item": "Mining Drone II",
+            "quantity": 2,
+            "total": 1800000.0
+          }
+        ],
+        "Dantumi III - Hyasyoda Corporation Refinery": [
+          {
+            "item": "Republic Fleet EMP M",
+            "quantity": 2,
+            "total": 1200.0
+          }
+        ],
+        "Ekura VII - Moon 14 - Caldari Constructions Warehouse": [
+          {
+            "item": "Compressed Scordite",
+            "quantity": 96573,
+            "total": 1485292.74
+          },
+          {
+            "item": "Compressed Massive Scordite",
+            "quantity": 132156,
+            "total": 2510964.0
+          }
+        ],
+        "Ruvas II - Sukuuvestaa Corporation Production Plant": [
+          {
+            "item": "Compressed Pyroxeres",
+            "quantity": 71016,
+            "total": 1988448.0
+          }
+        ],
+        "Kusomonmon VI - Moon 23 - Corporate Police Force Testing Facilities": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 20,
+            "total": 52400.0
+          }
+        ],
+        "Isaziwa X - Moon 3 - Lai Dai Corporation Factory": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 90,
+            "total": 239760.0
+          }
+        ],
+        "Perimeter II - Moon 1 - Caldari Navy Assembly Plant": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 20,
+            "total": 54000.0
+          }
+        ],
+        "Sobaseki XI - Moon 1 - Home Guard Assembly Plant": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 15,
+            "total": 40950.0
+          }
+        ],
+        "Airkio VII - Moon 3 - Top Down Factory": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 10,
+            "total": 27340.0
+          }
+        ],
+        "Isikemi VI - Moon 5 - Caldari Navy Logistic Support": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 15,
+            "total": 41010.0
+          }
+        ],
+        "Funtanainen IV - Moon 1 - Caldari Navy Logistic Support": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 10,
+            "total": 27350.0
+          }
+        ],
+        "Saatuban IX - Moon 2 - Wiyrkomi Peace Corps Assembly Plant": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 10,
+            "total": 27420.0
+          }
+        ],
+        "Sobaseki X - Moon 12 - Propel Dynamics Factory": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 10,
+            "total": 27500.0
+          }
+        ],
+        "Waskisen I - Moon 2 - Kaalakiota Corporation Factory": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 15,
+            "total": 41730.0
+          }
+        ],
+        "Urlen VI - Chief Executive Panel Bureau": [
+          {
+            "item": "Long-limb Roes",
+            "quantity": 8625,
+            "total": 24495000.0
+          }
+        ]
+      },
+      "sales": {
+        "Intact Shield Emitter": {
+          "sell_price": 1199000,
+          "total": 11,
+          "volume": 0.11,
+          "revenue": 12661440.0,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 4,
+            "1_day": 4
+          }
+        },
+        "Fierce Electrical Filament": {
+          "sell_price": 1800000,
+          "total": 1,
+          "volume": 0.1,
+          "revenue": 1728000.0,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 1,
+            "1_day": 2
+          }
+        },
+        "Large Transverse Bulkhead II": {
+          "sell_price": 86020000,
+          "total": 2,
+          "volume": 40.0,
+          "revenue": 165158400.0,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 2,
+            "1_day": 15
+          }
+        },
+        "Conductive Polymer": {
+          "sell_price": 39980,
+          "total": 71,
+          "volume": 0.71,
+          "revenue": 2725036.8,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 0,
+            "1_day": 0
+          }
+        },
+        "SKINR Studio Supplies": {
+          "sell_price": 3079000,
+          "total": 3,
+          "volume": 3.0,
+          "revenue": 8867520.0,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 2,
+            "1_day": 4
+          }
+        },
+        "Smashed Trigger Unit": {
+          "sell_price": 23650,
+          "total": 52,
+          "volume": 0.52,
+          "revenue": 1180608.0,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 1,
+            "1_day": 22
+          }
+        },
+        "'Dunk' Salvage Drone": {
+          "sell_price": 14020000,
+          "total": 15,
+          "volume": 75.0,
+          "revenue": 201888000.0,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 5,
+            "1_day": 14
+          }
+        },
+        "Armor Plates": {
+          "sell_price": 22640,
+          "total": 2,
+          "volume": 0.02,
+          "revenue": 43468.8,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 0,
+            "1_day": 0
+          }
+        },
+        "Medium Hydraulic Bay Thrusters II": {
+          "sell_price": 19940000,
+          "total": 22,
+          "volume": 220.0,
+          "revenue": 421132800.0,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 1,
+            "1_day": 4
+          }
+        },
+        "Datacore - Hydromagnetic Physics": {
+          "sell_price": 98920,
+          "total": 14,
+          "volume": 1.4,
+          "revenue": 1329484.8,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 0,
+            "1_day": 0
+          }
+        },
+        "Fried Interface Circuit": {
+          "sell_price": 2994,
+          "total": 1,
+          "volume": 0.01,
+          "revenue": 2874.24,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 0,
+            "1_day": 5
+          }
+        },
+        "Tripped Power Circuit": {
+          "sell_price": 2632,
+          "total": 17,
+          "volume": 0.17,
+          "revenue": 42954.24,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 1,
+            "1_day": 14
+          }
+        },
+        "Mining Drone II": {
+          "sell_price": 1389000,
+          "total": 2,
+          "volume": 10.0,
+          "revenue": 2666880.0,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 3,
+            "1_day": 32
+          }
+        },
+        "Republic Fleet EMP M": {
+          "sell_price": 949,
+          "total": 2,
+          "volume": 0.03,
+          "revenue": 1822.08,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 0,
+            "1_day": 0
+          }
+        },
+        "Compressed Scordite": {
+          "sell_price": 36,
+          "total": 96573,
+          "volume": 144.86,
+          "revenue": 3337562.88,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 3,
+            "1_day": 4
+          }
+        },
+        "Compressed Massive Scordite": {
+          "sell_price": 32,
+          "total": 132156,
+          "volume": 198.23,
+          "revenue": 4059832.32,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 4,
+            "1_day": 6
+          }
+        },
+        "Compressed Pyroxeres": {
+          "sell_price": 46,
+          "total": 71016,
+          "volume": 213.05,
+          "revenue": 3136066.56,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 1,
+            "1_day": 3
+          }
+        },
+        "Long-limb Roes": {
+          "sell_price": 7992,
+          "total": 9055,
+          "volume": 9055.0,
+          "revenue": 69472857.6,
+          "competition": {
+            "5_minutes": 0,
+            "1_hour": 0,
+            "1_day": 6
+          }
+        }
+      }
+    },
+    "status_code": 200
+  }
+}

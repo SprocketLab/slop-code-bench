@@ -1,0 +1,1 @@
+{"banner":{"audience":["sre","ml"],"text":"Running canary in us-west"},"experiment_name":"proj-us-west-canary","resources":{"accelerators":[{"count":2,"type":"l4"}],"profile":"canary","world_size":5},"training":{"batch_size":28,"description":"deploy canary for us-west","optimizer":"adam"}}

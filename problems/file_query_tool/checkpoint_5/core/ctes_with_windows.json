@@ -1,0 +1,11 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "query": "WITH dept_rankings AS (\n    SELECT \n        name,\n        department,\n        salary,\n        RANK() OVER (PARTITION BY department ORDER BY salary DESC) as dept_rank\n    FROM employees\n)\nSELECT \n    department,\n    name,\n    salary,\n    dept_rank,\n    COUNT(*) OVER (PARTITION BY department) as dept_size\nFROM dept_rankings\nWHERE dept_rank <= 2\nORDER BY department, dept_rank",
+    "expected": "| department  | name    | salary | dept_rank | dept_size |\n| ----------- | ------- | ------ | --------- | --------- |\n| Engineering | Alice   | 120000 | 1         | 2         |\n| Engineering | Charlie | 95000  | 2         | 2         |\n| Sales       | Frank   | 110000 | 1         | 2         |\n| Sales       | Grace   | 75000  | 2         | 2         |",
+    "input_data": "data.json"
+}

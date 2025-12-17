@@ -1,0 +1,56 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "end": {
+        "col": 14,
+        "line": 1
+      },
+      "file": "code.py",
+      "language": "python",
+      "match": "return 42",
+      "rule_id": "whitespace_fix",
+      "start": {
+        "col": 5,
+        "line": 1
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 14,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "code.py",
+      "language": "python",
+      "replacement": "   ",
+      "rule_id": "whitespace_fix",
+      "skipped_reason": null,
+      "start": {
+        "col": 5,
+        "line": 1
+      }
+    }
+  ],
+  "expected_files": {
+    "proj/code.py": "       "
+  },
+  "input_files": {
+    "proj/code.py": "    return 42"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "   "
+      },
+      "id": "whitespace_fix",
+      "kind": "selector",
+      "languages": [
+        "python"
+      ],
+      "selector": "return_statement"
+    }
+  ]
+}

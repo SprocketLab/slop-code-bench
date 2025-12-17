@@ -1,0 +1,16 @@
+tables:
+  users:
+    columns:
+    - id
+    - age
+    - name
+    - age_group
+    rows:
+    - id: 1
+      age: 30
+      name: Alice
+      age_group: adult
+    - id: 2
+      age: 25
+      name: Bob
+      age_group: young

@@ -1,0 +1,9 @@
+{
+    "start": "Turnur III - Moon 18 - Freedom Extension Storage",
+    "end": "Ahbazon VI - Imperial Shipment Storage",
+    "cases": [
+        {
+            "expected": "START: Turnur III - Moon 18 - Freedom Extension Storage\nUNDOCK\nJUMP 3.07 LY: Egghelende (31K isotopes)\nDOCK: Egghelende IV - Moon 1 - FedMart Warehouse\nUNDOCK\nJUMP 7.16 LY: Ahbazon (72K isotopes)\nDOCK: Ahbazon VI - Imperial Shipment Storage\nSUMMARY:\n  End Cooldown: 00:02\n  End Fatigue: 00:20\n  Isotopes Used: 103K\n  Time Waiting: 00:02\n  Total LY: 10.22"
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+id: right_join
+files:
+  query.sql: 'SELECT u.id, u.first_name, p.product, p.price FROM users u RIGHT JOIN
+    payments.pampas p ON u.id = p.id WHERE p.department = ''Garden'' ORDER BY p.price
+
+    '
+expected: '|   id | first_name   | product   |   price |
+
+  |------|--------------|-----------|---------|
+
+  |   33 | Osmond       | GPU       |   69.99 |'

@@ -1,0 +1,7 @@
+metadata:
+  port: 6379
+  host: cache.prod.internal
+service: cache
+urls:
+  default: https://cache.dev.internal
+  metrics: https://cache.prod.internal/metrics

@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id data.parquet
+  input_files:
+  - content:
+    - id: 1
+      name: "\uC774\uC601\uD76C"
+      city: Seoul
+    - id: 2
+      name: "\u0634\u064A\u0631\u064A\u0646"
+      city: Cairo
+    - id: 3
+      name: "\u05D3\u05E0\u05D9\u05D0\u05DC"
+      city: "Tel Aviv"
+    file_type: parquet
+    path: data.parquet
+expected:
+  files:
+    output.csv:
+    - city: Seoul
+      id: 1
+      name: "\uC774\uC601\uD76C"
+    - city: Cairo
+      id: 2
+      name: "\u0634\u064A\u0631\u064A\u0646"
+    - city: "Tel Aviv"
+      id: 3
+      name: "\u05D3\u05E0\u05D9\u05D0\u05DC"
+  status_code: 0

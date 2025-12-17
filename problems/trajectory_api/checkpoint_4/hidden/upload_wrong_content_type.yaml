@@ -1,0 +1,29 @@
+case:
+  body:
+    grammar: "TOOL_CALL = '<tool ', TOOL_NAME, ' args=\"', TOOL_ARGS, '\"/>'; TOOL_NAME = letter; TOOL_ARGS = letter;"
+    activate: false
+  headers:
+    content-type: text/plain
+  id: upload_wrong_content_type
+  method: POST
+  path: /environments/wrong-ct-env/versions
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: UNSUPPORTED_MEDIA_TYPE
+          message:
+            type: string
+          field_path:
+            type: [string, "null"]
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 415

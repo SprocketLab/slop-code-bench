@@ -1,0 +1,55 @@
+{
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/sales.csv",
+      "content": [
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "800",
+          "date": "2023-01-01"
+        },
+        {
+          "region": "EU",
+          "product": "Widget B",
+          "sales": "1200",
+          "date": "2023-01-02"
+        },
+        {
+          "region": "NA",
+          "product": "Widget A",
+          "sales": "1000",
+          "date": "2023-01-01"
+        },
+        {
+          "region": "NA",
+          "product": "Widget B",
+          "sales": "1500",
+          "date": "2023-01-02"
+        },
+        {
+          "region": "NA",
+          "product": "Widget A",
+          "sales": "1200",
+          "date": "2023-01-03"
+        },
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "900",
+          "date": "2023-01-03"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT \n    region,\n    product,\n    sales,\n    SUM(sales) OVER (PARTITION BY region ORDER BY date) as running_total\nFROM sales\nORDER BY region, date",
+  "expected": "| region   | product   |   sales |   running_total |\n|----------|-----------|---------|-----------------|\n| EU       | Widget A  |     800 |             800 |\n| EU       | Widget B  |    1200 |            2000 |\n| EU       | Widget A  |     900 |            2900 |\n| NA       | Widget A  |    1000 |            1000 |\n| NA       | Widget B  |    1500 |            2500 |\n| NA       | Widget A  |    1200 |            3700 |"
+}

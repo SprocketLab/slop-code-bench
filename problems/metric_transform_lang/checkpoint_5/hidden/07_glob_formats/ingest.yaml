@@ -1,0 +1,13 @@
+sources:
+  - name: web
+    inputs: ["data/web/**/*.csv"]
+    recursive: true
+    format: auto
+    schema: WebSale
+    precedence: 10
+  - name: pos
+    inputs: ["data/pos/**/*.tsv"]
+    recursive: true
+    format: auto
+    schema: BaseSale
+    precedence: 20

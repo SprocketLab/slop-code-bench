@@ -1,0 +1,11 @@
+{
+  "description": "My service",
+  "services": {
+    "api": {
+      "port": 8500
+    },
+    "worker": {
+      "port": 8500
+    }
+  }
+}

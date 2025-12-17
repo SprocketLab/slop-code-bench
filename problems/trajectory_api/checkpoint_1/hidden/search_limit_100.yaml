@@ -1,0 +1,27 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_limit_100
+  method: GET
+  path: /trajectories?limit=100
+expected:
+  output:
+    properties:
+      items:
+        type: array
+        maxItems: 100
+        items:
+          properties:
+            id:
+              type: string
+              pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+          required:
+          - id
+          type: object
+      next_cursor:
+        type: ["string", "null"]
+    required:
+    - items
+    - next_cursor
+    type: object
+  status_code: 200

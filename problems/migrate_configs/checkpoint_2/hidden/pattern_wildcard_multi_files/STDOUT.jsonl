@@ -1,0 +1,3 @@
+{"event": "file_updated", "file": "runtime/app.json", "rules_applied": ["set_all_ports"]}
+{"event": "file_updated", "file": "services/hosts.json", "rules_applied": ["set_all_ports"]}
+{"event": "file_updated", "file": "services/ports.yaml", "rules_applied": ["set_all_ports"]}

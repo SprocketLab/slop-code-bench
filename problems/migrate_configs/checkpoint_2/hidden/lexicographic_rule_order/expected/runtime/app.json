@@ -1,0 +1,12 @@
+{
+  "description": "qa service",
+  "services": {
+    "api": {
+      "port": 8080
+    },
+    "worker": {
+      "port": 8081
+    }
+  },
+  "environment": "qa"
+}

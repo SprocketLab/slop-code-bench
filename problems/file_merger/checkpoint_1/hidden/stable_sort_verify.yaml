@@ -1,0 +1,40 @@
+case:
+  arguments: --output output.csv --key category data.csv
+  input_files:
+  - content:
+    - category: B
+      id: '1'
+      order: first
+    - category: A
+      id: '2'
+      order: second
+    - category: B
+      id: '3'
+      order: third
+    - category: A
+      id: '4'
+      order: fourth
+    - category: B
+      id: '5'
+      order: fifth
+    file_type: csv
+    path: data.csv
+expected:
+  files:
+    output.csv:
+    - category: A
+      id: 2
+      order: second
+    - category: A
+      id: 4
+      order: fourth
+    - category: B
+      id: 1
+      order: first
+    - category: B
+      id: 3
+      order: third
+    - category: B
+      id: 5
+      order: fifth
+  status_code: 0

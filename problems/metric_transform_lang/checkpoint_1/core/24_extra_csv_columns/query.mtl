@@ -1,0 +1,2 @@
+aggregate count(*) as n,
+          sum(price) as total

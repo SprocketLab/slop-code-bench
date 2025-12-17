@@ -1,0 +1,36 @@
+case:
+  body:
+    grammar: "TOOL_CALL = '<tool ', TOOL_NAME, ' args=\"', TOOL_ARGS, '\"/>'; TOOL_NAME = letter , { letter | digit | '_' }; TOOL_ARGS = { ? any char except '\"' ? };"
+    activate: true
+    notes: "XML-like inline tags"
+  headers:
+    content-type: application/json; charset=utf-8
+  id: upload_activate_grammar
+  method: POST
+  path: /environments/local-sim/versions
+expected:
+  output:
+    properties:
+      environment:
+        const: local-sim
+      version:
+        const: 1
+      active:
+        const: true
+      created_at:
+        type: string
+        pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+      grammar_sha256:
+        type: string
+        pattern: '^[0-9a-f]{64}$'
+      grammar_len:
+        type: integer
+    required:
+    - environment
+    - version
+    - active
+    - created_at
+    - grammar_sha256
+    - grammar_len
+    type: object
+  status_code: 201

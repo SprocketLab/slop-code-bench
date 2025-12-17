@@ -1,0 +1,15 @@
+{
+    "case": {
+        "arguments": [
+            "invention",
+            "'Valravn'",
+            "--sde",
+            "{{static:sde_dir}}",
+            "--skill",
+            "5"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

@@ -1,0 +1,13 @@
+{
+  "arguments": "rules.json configs",
+  "files": {
+    "configs/arrays/users.yaml": "users:\n  - name: alice\n    status: active\n    role: basic\n  - name: bob\n    status: inactive\n    role: basic\n  - name: charlie\n    status: active\n    role: basic\n"
+  },
+  "rules": {
+    "promote_active_users": {
+      "type": "pattern_replace",
+      "key_pattern": "users[?status=active].role",
+      "value": "premium"
+    }
+  }
+}

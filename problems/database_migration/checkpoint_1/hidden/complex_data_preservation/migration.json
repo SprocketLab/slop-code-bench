@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "operations": [
+    {
+      "type": "add_column",
+      "table": "customers",
+      "column": {
+        "name": "address",
+        "type": "TEXT"
+      }
+    },
+    {
+      "type": "drop_column",
+      "table": "customers",
+      "column": "phone"
+    },
+    {
+      "type": "add_column",
+      "table": "customers",
+      "column": {
+        "name": "loyalty_points",
+        "type": "INTEGER",
+        "default": "0"
+      }
+    }
+  ],
+  "description": "Modify customers table with multiple operations"
+}

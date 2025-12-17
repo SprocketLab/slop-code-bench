@@ -1,0 +1,20 @@
+mtl_version 1.5
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+schema PromoSale extends BaseSale {
+  promo_code: string
+  revenue: float = price * quantity
+}
+
+pipeline Totals using PromoSale {
+  aggregate sum(revenue) as total_rev,
+            count(*) as n
+}

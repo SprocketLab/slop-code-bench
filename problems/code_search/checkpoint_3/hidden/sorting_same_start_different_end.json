@@ -1,0 +1,64 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "captures": {
+        "$X": {
+          "ranges": [
+            {
+              "end": {
+                "col": 4,
+                "line": 1
+              },
+              "start": {
+                "col": 1,
+                "line": 1
+              }
+            }
+          ],
+          "text": "foo"
+        },
+        "$Y": {
+          "ranges": [
+            {
+              "end": {
+                "col": 16,
+                "line": 1
+              },
+              "start": {
+                "col": 5,
+                "line": 1
+              }
+            }
+          ],
+          "text": "bar(baz(1))"
+        }
+      },
+      "end": {
+        "col": 17,
+        "line": 1
+      },
+      "file": "nest.py",
+      "language": "python",
+      "match": "foo(bar(baz(1)))",
+      "rule_id": "nested",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/nest.py": "foo(bar(baz(1)))"
+  },
+  "rules.json": [
+    {
+      "id": "nested",
+      "kind": "pattern",
+      "languages": [
+        "python"
+      ],
+      "pattern": "$X($Y)"
+    }
+  ]
+}

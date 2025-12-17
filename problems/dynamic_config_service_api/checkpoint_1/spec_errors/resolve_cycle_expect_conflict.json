@@ -1,0 +1,45 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "resolve_cycle_expect_conflict",
+    "method": "POST",
+    "path": "/v1/configs/A:resolve"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "cycle_detected"
+            },
+            "details": {
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "status_code": 409
+  }
+}

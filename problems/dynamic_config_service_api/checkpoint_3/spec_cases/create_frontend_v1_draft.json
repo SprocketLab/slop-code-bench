@@ -1,0 +1,34 @@
+{
+  "case": {
+    "body": {
+      "config": {
+        "api_url": "https://api.example.com",
+        "theme": "light"
+      },
+      "includes": [],
+      "scope": {
+        "app": "frontend",
+        "env": "dev"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_frontend_v1_draft",
+    "method": "POST",
+    "path": "/v1/configs/frontend"
+  },
+  "expected": {
+    "output": {
+      "active": false,
+      "name": "frontend",
+      "scope": {
+        "app": "frontend",
+        "env": "dev"
+      },
+      "status": "draft",
+      "version": 1
+    },
+    "status_code": 201
+  }
+}

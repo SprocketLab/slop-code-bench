@@ -1,0 +1,15 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+  quantity: int
+}
+
+pipeline ApplyWithParam using Sale {
+  params {
+    multiplier: float = 1.5
+  }
+
+  apply(price * param("multiplier"), price)
+  apply(price * quantity, line_revenue)
+  aggregate sum(line_revenue) as revenue, count(*) as n
+}

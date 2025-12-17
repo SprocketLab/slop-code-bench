@@ -1,0 +1,47 @@
+case:
+  body:
+    date: "2025-10-06T00:00:00Z"
+    task: hidden_running_totals_task
+    environment: hidden_running_totals_env
+    model: hidden_running_totals_model
+    framework: hidden_running_totals_framework
+    status: in_progress
+    metrics: {}
+    trajectory:
+      - role: user
+        content: "Initial question for running totals tests"
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: "Initial response with baseline totals"
+        input_tokens: 10
+        output_tokens: 100
+        cost: 0.01
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_for_running_totals
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      rev:
+        const: 1
+      final_output_tokens:
+        const: 100
+      final_cost:
+        const: 0.01
+    required:
+      - id
+      - status
+      - rev
+      - final_output_tokens
+      - final_cost
+    type: object
+  status_code: 201

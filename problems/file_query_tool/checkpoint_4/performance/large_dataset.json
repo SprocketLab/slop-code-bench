@@ -1,0 +1,91 @@
+{
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/sales.csv",
+      "content": [
+        {
+          "region": "NA",
+          "product": "Widget A",
+          "sales": "1000",
+          "date": "2023-01-01"
+        },
+        {
+          "region": "NA",
+          "product": "Widget B",
+          "sales": "1500",
+          "date": "2023-01-02"
+        },
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "800",
+          "date": "2023-01-01"
+        },
+        {
+          "region": "EU",
+          "product": "Widget B",
+          "sales": "1200",
+          "date": "2023-01-02"
+        },
+        {
+          "region": "AS",
+          "product": "Widget A",
+          "sales": "2000",
+          "date": "2023-01-01"
+        },
+        {
+          "region": "AS",
+          "product": "Widget B",
+          "sales": "1800",
+          "date": "2023-01-02"
+        },
+        {
+          "region": "NA",
+          "product": "Widget A",
+          "sales": "1200",
+          "date": "2023-01-03"
+        },
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "900",
+          "date": "2023-01-03"
+        },
+        {
+          "region": "AS",
+          "product": "Widget A",
+          "sales": "2200",
+          "date": "2023-01-03"
+        },
+        {
+          "region": "NA",
+          "product": "Widget B",
+          "sales": "1100",
+          "date": "2023-01-04"
+        },
+        {
+          "region": "EU",
+          "product": "Widget B",
+          "sales": "1300",
+          "date": "2023-01-04"
+        },
+        {
+          "region": "AS",
+          "product": "Widget B",
+          "sales": "1900",
+          "date": "2023-01-04"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT \n    region,\n    SUM(sales) as total_sales,\n    ROW_NUMBER() OVER (PARTITION BY region ORDER BY SUM(sales) DESC) as rank_by_region,\n    SUM(sales) OVER () as grand_total,\n    ROUND(100.0 * SUM(sales) / SUM(sales) OVER (), 2) as percent_of_total\nFROM sales\nGROUP BY region\nORDER BY total_sales DESC",
+  "expected": "| region   |   total_sales |   rank_by_region |   grand_total |   percent_of_total |\n|----------|---------------|------------------|---------------|--------------------|\n| AS       |          7900 |                1 |         16900 |              46.75 |\n| NA       |          4800 |                1 |         16900 |              28.4  |\n| EU       |          4200 |                1 |         16900 |              24.85 |"
+}

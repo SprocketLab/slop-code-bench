@@ -1,0 +1,4 @@
+timestamp,location,item,price,quantity,unit,category
+2024-04-10T12:00:00Z,SEA,pear,2.0,1,ea,fruit
+2024-04-10T12:00:00Z,SEA,pear,2.2,1,ea,fruit
+2024-04-10T12:30:00Z,SEA,kiwi,1.2,1,ea,fruit

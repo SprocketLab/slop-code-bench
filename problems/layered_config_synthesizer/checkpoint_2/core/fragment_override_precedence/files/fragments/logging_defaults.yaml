@@ -1,0 +1,4 @@
+format: json
+destination:
+  type: file
+  path: /var/log/run.log

@@ -1,0 +1,370 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "input_files": [
+        {
+            "path": "test_data/users.json.bz2",
+            "content": [
+                {
+                    "id": 1,
+                    "first_name": "Rori",
+                    "job": "Mechanical Systems Engineer",
+                    "country": "AR",
+                    "car": "Chevy",
+                    "phone": "Cat"
+                },
+                {
+                    "id": 2,
+                    "first_name": "Darin",
+                    "job": "Marketing Assistant",
+                    "country": "AR",
+                    "car": "Ferarri",
+                    "phone": "BlackBerry"
+                },
+                {
+                    "id": 3,
+                    "first_name": "Sheilah",
+                    "job": "VP Accounting",
+                    "country": "CH",
+                    "car": "Ford",
+                    "phone": "Samsung"
+                },
+                {
+                    "id": 4,
+                    "first_name": "Teodor",
+                    "job": "Compensation Analyst",
+                    "country": null,
+                    "car": "Ferarri",
+                    "phone": "TCL"
+                },
+                {
+                    "id": 5,
+                    "first_name": "Mirelle",
+                    "job": "Assistant Manager",
+                    "country": "AR",
+                    "car": "Toyota",
+                    "phone": "Acer"
+                },
+                {
+                    "id": 19,
+                    "first_name": "Darryl",
+                    "job": "Physical Therapy Assistant",
+                    "country": "FR",
+                    "car": "Dodge",
+                    "phone": "ZTE"
+                },
+                {
+                    "id": 31,
+                    "first_name": "Othilia",
+                    "job": "Chemical Engineer",
+                    "country": "AR",
+                    "car": "Ferarri",
+                    "phone": "Sewon"
+                },
+                {
+                    "id": 32,
+                    "first_name": "Gaylene",
+                    "job": "Accounting Assistant I",
+                    "country": "AR",
+                    "car": "Toyota",
+                    "phone": "Microsoft"
+                },
+                {
+                    "id": 33,
+                    "first_name": "Osmond",
+                    "job": "Nuclear Power Engineer",
+                    "country": "AR",
+                    "car": "Ford",
+                    "phone": "verykool"
+                },
+                {
+                    "id": 43,
+                    "first_name": "Willard",
+                    "job": "Speech Pathologist",
+                    "country": "DE",
+                    "car": "Honda",
+                    "phone": "Motorola"
+                },
+                {
+                    "id": 44,
+                    "first_name": "Brady",
+                    "job": "Editor",
+                    "country": "AR",
+                    "car": "Mazda",
+                    "phone": "Sony"
+                },
+                {
+                    "id": 45,
+                    "first_name": "Cristabel",
+                    "job": "Web Designer II",
+                    "country": "CH",
+                    "car": "Ferarri",
+                    "phone": "Samsung"
+                },
+                {
+                    "id": 46,
+                    "first_name": "Joice",
+                    "job": "Senior Quality Engineer",
+                    "country": "DE",
+                    "car": "Ford",
+                    "phone": "LG"
+                },
+                {
+                    "id": 47,
+                    "first_name": "Wilden",
+                    "job": "Financial Advisor",
+                    "country": "AR",
+                    "car": "Ford",
+                    "phone": "Motorola"
+                },
+                {
+                    "id": 48,
+                    "first_name": "Irita",
+                    "job": "Senior Developer",
+                    "country": "AR",
+                    "car": "Mazda",
+                    "phone": null
+                },
+                {
+                    "id": 49,
+                    "first_name": "Juanita",
+                    "job": "Account Coordinator",
+                    "country": "AR",
+                    "car": "Chevy",
+                    "phone": "Maxon"
+                },
+                {
+                    "id": 50,
+                    "first_name": "Olivia",
+                    "job": "Cost Accountant",
+                    "country": "AR",
+                    "car": "Ferarri",
+                    "phone": "Samsung"
+                }
+            ],
+            "file_type": "json",
+            "compression": "bzip2"
+        },
+        {
+            "path": "test_data/payments/pampas.json.bz2",
+            "content": [
+                {
+                    "id": 2,
+                    "department": "Home",
+                    "product": "HDMI",
+                    "price": 8.99,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 4,
+                    "department": "Health",
+                    "product": "HDMI",
+                    "price": 49.99,
+                    "equipment_used": "Crane"
+                },
+                {
+                    "id": 33,
+                    "department": "Garden",
+                    "product": "GPU",
+                    "price": 69.99,
+                    "equipment_used": "Crane"
+                },
+                {
+                    "id": 33,
+                    "department": null,
+                    "product": "CPU",
+                    "price": 8.99,
+                    "equipment_used": "Drill"
+                },
+                {
+                    "id": 1,
+                    "department": "Electronics",
+                    "product": "TPU",
+                    "price": 5.49,
+                    "equipment_used": "Drill"
+                },
+                {
+                    "id": 4,
+                    "department": null,
+                    "product": "CPU",
+                    "price": 29.99,
+                    "equipment_used": "Crane"
+                },
+                {
+                    "id": 4,
+                    "department": "Home",
+                    "product": "HDU",
+                    "price": 30.0,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 3,
+                    "department": null,
+                    "product": "HDMI",
+                    "price": 34.99,
+                    "equipment_used": "Drill"
+                },
+                {
+                    "id": 31,
+                    "department": null,
+                    "product": "CPU",
+                    "price": 3.49,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 31,
+                    "department": null,
+                    "product": "HDMI",
+                    "price": 19.99,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 4,
+                    "department": null,
+                    "product": "GPU",
+                    "price": 19.99,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 19,
+                    "department": null,
+                    "product": "GPU",
+                    "price": 39.99,
+                    "equipment_used": "Crane"
+                },
+                {
+                    "id": 32,
+                    "department": null,
+                    "product": "CPU",
+                    "price": 4.29,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 2,
+                    "department": "Tools",
+                    "product": "GPU",
+                    "price": 29.99,
+                    "equipment_used": "Crane"
+                },
+                {
+                    "id": 4,
+                    "department": null,
+                    "product": "HDU",
+                    "price": 5.99,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 2,
+                    "department": null,
+                    "product": "HDMI",
+                    "price": 9.99,
+                    "equipment_used": "Crane"
+                },
+                {
+                    "id": 5,
+                    "department": null,
+                    "product": "TPU",
+                    "price": 29.99,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 4,
+                    "department": null,
+                    "product": "TPU",
+                    "price": 59.99,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 5,
+                    "department": "Automotive",
+                    "product": "GPU",
+                    "price": 9.49,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 3,
+                    "department": null,
+                    "product": "GPU",
+                    "price": 3.99,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 33,
+                    "department": "Shoes",
+                    "product": "TPU",
+                    "price": 9.99,
+                    "equipment_used": "Crane"
+                },
+                {
+                    "id": 4,
+                    "department": "Kids",
+                    "product": "HDMI",
+                    "price": 39.99,
+                    "equipment_used": "Drill"
+                },
+                {
+                    "id": 19,
+                    "department": null,
+                    "product": "HDU",
+                    "price": 4.99,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 3,
+                    "department": null,
+                    "product": "HDU",
+                    "price": 29.99,
+                    "equipment_used": "Drill"
+                },
+                {
+                    "id": 4,
+                    "department": "Automotive",
+                    "product": "CPU",
+                    "price": 99.99,
+                    "equipment_used": "Forklift"
+                },
+                {
+                    "id": 19,
+                    "department": null,
+                    "product": "CPU",
+                    "price": 9.99,
+                    "equipment_used": "Drill"
+                },
+                {
+                    "id": 31,
+                    "department": "Games",
+                    "product": "CPU",
+                    "price": 29.99,
+                    "equipment_used": "Drill"
+                },
+                {
+                    "id": 32,
+                    "department": "Tools",
+                    "product": "HDMI",
+                    "price": 2.49,
+                    "equipment_used": "Drill"
+                },
+                {
+                    "id": 33,
+                    "department": "Toys",
+                    "product": "HDU",
+                    "price": 19.99,
+                    "equipment_used": "Drill"
+                },
+                {
+                    "id": 3,
+                    "department": "Shoes",
+                    "product": "TPU",
+                    "price": 5.49,
+                    "equipment_used": "Crane"
+                }
+            ],
+            "file_type": "json",
+            "compression": "bzip2"
+        }
+    ]
+}

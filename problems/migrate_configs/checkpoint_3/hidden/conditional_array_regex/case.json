@@ -1,0 +1,13 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "promote_admins": {
+      "type": "conditional_replace",
+      "key": "users[?role=admin].permissions",
+      "value": "all",
+      "condition": {
+        "current_value_matches": "^limited$"
+      }
+    }
+  }
+}

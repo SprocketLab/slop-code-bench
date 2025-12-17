@@ -1,0 +1,2 @@
+{"event":"file_updated","file":"temp/app.yaml","rules_applied":["set_production"]}
+{"event":"file_relocated","from":"temp/app.yaml","to":"deploy/app.yaml"}

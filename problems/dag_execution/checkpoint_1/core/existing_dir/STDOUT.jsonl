@@ -1,0 +1,3 @@
+{"event": "TASK_STARTED", "job_id": 1, "task": "main", "parent": null}
+{"event": "TASK_RUNNING", "job_id": 1, "task": "main", "parent": null}
+{"event": "TASK_COMPLETED", "job_id": 1, "task": "main", "parent": null}

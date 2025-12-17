@@ -1,0 +1,30 @@
+case:
+  body:
+    up_to_step: 1
+    status: in_progress
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: fork_nonexistent_uuid
+  method: POST
+  path: /trajectories/00000000-0000-4000-a000-000000000000/fork
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: NOT_FOUND
+          message:
+            type: string
+          field_path:
+            const: null
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 404

@@ -1,0 +1,39 @@
+{
+  "case": {
+    "body": {
+      "name": "billing",
+      "scope": {
+        "env": "prod",
+        "tenant": "acme"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "get_policy_stack",
+    "method": "POST",
+    "path": "/v1/policies/stack"
+  },
+  "expected": {
+    "output": {
+      "policy_stack": [
+        {
+          "bundle": {
+            "name": "org-defaults",
+            "version": 1
+          },
+          "selector": {
+            "env": "prod",
+            "tenant": "acme"
+          },
+          "graph_keys": [
+            "env",
+            "tenant"
+          ],
+          "priority": 100
+        }
+      ]
+    },
+    "status_code": 200
+  }
+}

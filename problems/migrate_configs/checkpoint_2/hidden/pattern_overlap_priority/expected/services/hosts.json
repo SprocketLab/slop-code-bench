@@ -1,0 +1,16 @@
+{
+  "services": {
+    "api": {
+      "host": "localhost",
+      "port": 8500
+    },
+    "database": {
+      "host": "localhost",
+      "port": 8500
+    },
+    "worker": {
+      "host": "localhost",
+      "port": 8500
+    }
+  }
+}

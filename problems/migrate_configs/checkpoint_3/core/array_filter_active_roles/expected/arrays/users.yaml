@@ -1,0 +1,10 @@
+users:
+  - name: alice
+    status: active
+    role: premium
+  - name: bob
+    status: inactive
+    role: basic
+  - name: charlie
+    status: active
+    role: premium

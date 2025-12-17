@@ -1,0 +1,23 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+  rules:
+    expected_munich.csv:
+      dest: ["expected", "files", "out/city=M%C3%BCnchen/part-00000.csv"]
+      loader: text
+    expected_plus.csv:
+      dest: ["expected", "files", "out/city=a%2Bb/part-00000.csv"]
+      loader: text
+verifiers:
+  success:
+    type: status_code
+    value: 0
+  munich:
+    type: exact_match
+    result_attr: [files, "out/city=M%C3%BCnchen/part-00000.csv"]
+    expected_attr: [files, "out/city=M%C3%BCnchen/part-00000.csv"]
+  plus:
+    type: exact_match
+    result_attr: [files, "out/city=a%2Bb/part-00000.csv"]
+    expected_attr: [files, "out/city=a%2Bb/part-00000.csv"]

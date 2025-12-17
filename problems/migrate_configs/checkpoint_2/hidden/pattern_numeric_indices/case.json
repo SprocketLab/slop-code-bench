@@ -1,0 +1,10 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "normalize_listener_ports": {
+      "type": "pattern_replace",
+      "key_pattern": "listeners.$slot.port",
+      "value": 7000
+    }
+  }
+}

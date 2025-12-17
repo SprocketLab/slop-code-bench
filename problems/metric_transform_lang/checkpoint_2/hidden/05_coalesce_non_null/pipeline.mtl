@@ -1,0 +1,15 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  price: float
+}
+
+pipeline CoalesceTest using Sale {
+  window(1h)
+  group_by(['location'])
+  aggregate sum(price) as total
+
+  calc prev = lag(total, 1) : float @stage(post_agg)
+  calc safe_prev = coalesce(prev, 100.0) : float @stage(post_agg)
+  calc diff = total - safe_prev : float @stage(post_agg)
+}

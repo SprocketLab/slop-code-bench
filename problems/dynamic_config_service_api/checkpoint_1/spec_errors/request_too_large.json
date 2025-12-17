@@ -1,0 +1,49 @@
+{
+  "case": {
+    "body": {
+      "config": {
+        "data": "{{ 'x' * 1100000 }}"
+      },
+      "scope": {
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "request_too_large",
+    "method": "POST",
+    "path": "/v1/configs/large"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "too_large"
+            },
+            "details": {
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "status_code": 413
+  }
+}

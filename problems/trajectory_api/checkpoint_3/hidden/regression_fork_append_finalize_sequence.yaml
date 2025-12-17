@@ -1,0 +1,33 @@
+case:
+  body:
+    metrics:
+      workflow_complete: true
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: regression_fork_append_finalize_sequence
+  method: POST
+  path: /trajectories/{{store.regression_double_fork_same_parent}}/finalize
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.regression_double_fork_same_parent}}"
+      status:
+        const: finalized
+      rev:
+        const: 2
+      metrics:
+        properties:
+          workflow_complete:
+            const: true
+        required:
+          - workflow_complete
+        type: object
+    required:
+      - id
+      - status
+      - rev
+      - metrics
+    type: object
+  status_code: 200

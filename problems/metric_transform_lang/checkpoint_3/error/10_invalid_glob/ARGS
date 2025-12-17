@@ -1,0 +1,1 @@
+--input "[[[invalid" --dsl pipeline.mtl

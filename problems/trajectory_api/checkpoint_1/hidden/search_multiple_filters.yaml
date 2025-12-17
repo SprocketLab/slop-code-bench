@@ -1,0 +1,35 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_multiple_filters
+  method: GET
+  path: /trajectories?task=equal_totals_test&environment=local-sim&model=gpt-x-pro
+expected:
+  output:
+    properties:
+      items:
+        type: array
+        items:
+          properties:
+            id:
+              type: string
+            task:
+              const: equal_totals_test
+            environment:
+              const: local-sim
+            model:
+              const: gpt-x-pro
+          required:
+          - id
+          - task
+          - environment
+          - model
+          type: object
+        minItems: 1
+      next_cursor:
+        type: ["string", "null"]
+    required:
+    - items
+    - next_cursor
+    type: object
+  status_code: 200

@@ -1,0 +1,33 @@
+case:
+  body:
+    up_to_step: 1
+    status: in_progress
+    model: overridden_model
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: fork_override_model
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_fork_basic}}/fork
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      task:
+        const: hidden_fork_basic_task
+      environment:
+        const: hidden_fork_env
+      model:
+        const: overridden_model
+      framework:
+        const: hidden_fork_framework
+    required:
+      - id
+      - task
+      - environment
+      - model
+      - framework
+    type: object
+  status_code: 201

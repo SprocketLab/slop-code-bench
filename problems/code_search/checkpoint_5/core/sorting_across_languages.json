@@ -1,0 +1,119 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "a.cpp",
+      "language": "cpp",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "a.go",
+      "language": "go",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "a.hs",
+      "language": "haskell",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "a.java",
+      "language": "java",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "a.js",
+      "language": "javascript",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "a.py",
+      "language": "python",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "a.rs",
+      "language": "rust",
+      "match": "x",
+      "rule_id": "find_x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/a.cpp": "x",
+    "proj/a.go": "x",
+    "proj/a.hs": "x",
+    "proj/a.java": "x",
+    "proj/a.js": "x",
+    "proj/a.py": "x",
+    "proj/a.rs": "x"
+  },
+  "rules.json": [
+    {
+      "id": "find_x",
+      "kind": "exact",
+      "pattern": "x"
+    }
+  ]
+}

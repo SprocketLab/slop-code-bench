@@ -1,0 +1,11 @@
+case:
+  arguments: --now 2025-09-10T03:30:00Z --schedule schedule.yaml --duration 1 --mount
+    {{static:files}} --mount {{static:files}}
+  input_files:
+  - content: "jobs:\n  - id: test\n    when:\n      at: 03:30\n      kind: daily\n\
+      invalid_yaml: [unclosed\n"
+    file_type: yaml
+    path: schedule.yaml
+expected:
+  status_code: 4
+  stderr: ERROR:E_SCHEMA:.*

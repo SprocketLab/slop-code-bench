@@ -1,0 +1,59 @@
+case:
+  body:
+    date: "2025-10-10T00:00:00Z"
+    task: regression_create_task
+    environment: regression-env
+    model: regression-model
+    framework: regression-framework
+    metrics:
+      score: 0.95
+    trajectory:
+      - role: user
+        content: Test regression
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: Regression test response
+        input_tokens: 10
+        output_tokens: 15
+        cost: 0.001
+  headers:
+    content-type: application/json; charset=utf-8
+  id: regression_create_trajectory_works
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      task:
+        const: regression_create_task
+      environment:
+        const: regression-env
+      model:
+        const: regression-model
+      framework:
+        const: regression-framework
+      steps:
+        const: 2
+      final_output_tokens:
+        const: 15
+      final_cost:
+        const: 0.001
+      environment_version:
+        type: "null"
+    required:
+      - id
+      - task
+      - environment
+      - model
+      - framework
+      - steps
+      - final_output_tokens
+      - final_cost
+      - environment_version
+    type: object
+  status_code: 201

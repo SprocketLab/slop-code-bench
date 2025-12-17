@@ -1,0 +1,3 @@
+expected:
+  status_code: 6
+  stderr: ERROR:artifact_error:.*

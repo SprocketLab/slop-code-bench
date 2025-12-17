@@ -1,0 +1,1 @@
+{"event":"validation_failed","file":"app.yaml","rule":"validate_port","error":"expected type number at key 'port', got string"}

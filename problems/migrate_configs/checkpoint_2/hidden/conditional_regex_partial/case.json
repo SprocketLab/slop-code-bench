@@ -1,0 +1,13 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "normalize_note": {
+      "type": "conditional_replace",
+      "key": "details.note",
+      "value": "core workloads",
+      "condition": {
+        "current_value_matches": "^runs.*"
+      }
+    }
+  }
+}

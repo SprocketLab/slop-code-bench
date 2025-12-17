@@ -1,0 +1,50 @@
+{
+  "case": {
+    "body": {
+      "schema_ref": {
+        "name": "cfg",
+        "version": 99
+      },
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "bind_missing_version_conflict",
+    "method": "POST",
+    "path": "/v1/configs/billing:bind"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "conflict"
+            },
+            "details": {
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "status_code": 409
+  }
+}

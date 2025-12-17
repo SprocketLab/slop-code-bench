@@ -1,0 +1,5 @@
+experiment_name: shared-base
+training:
+  optimizer: adam
+resources:
+  profile: train_l4

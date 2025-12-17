@@ -1,0 +1,6 @@
+case:
+  arguments: build --base base.yaml --overrides overrides --fragments fragments --manifest runs_manifest.csv --flags flags.json --schema schema.json --hardware hardware.yaml --env env.list --out out
+  input_roots:
+  - files
+expected:
+  status_code: 0

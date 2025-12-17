@@ -1,0 +1,5 @@
+[
+  {"window_start": "2025-09-14T08:00:00Z", "window_end": "2025-09-14T09:00:00Z", "total_rev": 2.0, "next_rev": 3.0},
+  {"window_start": "2025-09-14T09:00:00Z", "window_end": "2025-09-14T10:00:00Z", "total_rev": 3.0, "next_rev": 1.0},
+  {"window_start": "2025-09-14T10:00:00Z", "window_end": "2025-09-14T11:00:00Z", "total_rev": 1.0, "next_rev": 0.0}
+]

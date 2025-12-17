@@ -1,0 +1,29 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 2,
+        "line": 2
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "a\nb",
+      "rule_id": "newline",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/f.py": "a\nb"
+  },
+  "rules.json": [
+    {
+      "id": "newline",
+      "kind": "exact",
+      "pattern": "a\nb"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+arguments: validate migration_v2.json --migrations-dir migrations/
+input_files:
+- content: |
+    {
+      "version": 1,
+      "description": "Create users table",
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "users",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true}
+          ]
+        }
+      ]
+    }
+  file_type: json
+  path: migrations/migration_v1.json
+- content: |
+    {
+      "version": 2,
+      "description": "Add foreign key",
+      "depends_on": [5],
+      "operations": [
+        {
+          "type": "add_foreign_key",
+          "table": "posts",
+          "name": "fk_posts_user_id",
+          "columns": ["user_id"],
+          "references": {
+            "table": "users",
+            "columns": ["id"]
+          }
+        }
+      ]
+    }
+  file_type: json
+  path: migrations/migration_v2.json
+- content: |
+    {
+      "version": 2,
+      "description": "Add foreign key",
+      "depends_on": [5],
+      "operations": [
+        {
+          "type": "add_foreign_key",
+          "table": "posts",
+          "name": "fk_posts_user_id",
+          "columns": ["user_id"],
+          "references": {
+            "table": "users",
+            "columns": ["id"]
+          }
+        }
+      ]
+    }
+  file_type: json
+  path: migration_v2.json
+tracked_files:
+- app.db
+expected_status: 1
+

@@ -1,0 +1,34 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 7,
+        "line": 1
+      },
+      "file": "a.py",
+      "language": "python",
+      "match": "SHARED",
+      "rule_id": "py-only",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/a.py": "SHARED",
+    "proj/b.js": "SHARED",
+    "proj/c.cpp": "SHARED"
+  },
+  "rules.json": [
+    {
+      "id": "py-only",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "SHARED"
+    }
+  ]
+}

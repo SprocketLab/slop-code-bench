@@ -1,0 +1,81 @@
+{
+  "case": {
+    "body": {
+      "actor": "bob",
+      "decision": "approve",
+      "message": "After discussion, infrastructure can handle it"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "review_bob_change_to_approve",
+    "method": "POST",
+    "path": "/v1/proposals/3:review"
+  },
+  "expected": {
+    "output": {
+      "author": "alice",
+      "base_version": 2,
+      "description": "Increase pool to 12 for peak load",
+      "diffs": {
+        "human": [
+          "REPLACE /db/pool: 8 -> 12"
+        ],
+        "includes_changes": [],
+        "raw_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ],
+        "resolved_json_patch": [
+          {
+            "op": "replace",
+            "path": "/db/pool",
+            "value": 12
+          }
+        ]
+      },
+      "draft_version": 3,
+      "labels": [
+        "capacity",
+        "db"
+      ],
+      "name": "billing",
+      "proposal_id": 3,
+      "quorum": {
+        "allow_author_approval": false,
+        "allowed_reviewers": [
+          "alice",
+          "bob",
+          "carol"
+        ],
+        "required_approvals": 2
+      },
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "status": "approved",
+      "tally": {
+        "approvals": 2,
+        "by_actor": [
+          {
+            "actor": "bob",
+            "decision": "approve",
+            "message": "After discussion, infrastructure can handle it"
+          },
+          {
+            "actor": "carol",
+            "decision": "approve",
+            "message": "Looks good to me"
+          }
+        ],
+        "rejections": 0
+      },
+      "title": "Increase pool to 12"
+    },
+    "status_code": 200
+  }
+}

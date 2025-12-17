@@ -1,0 +1,19 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "rules": {
+    "check_timeout_type": {
+      "type": "validate_type",
+      "scope": "validation",
+      "key": "timeout",
+      "expected_type": "number"
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "text",
+      "content": "timeout: \\\"60\\\"\nregion: us-west-2\n"
+    }
+  ]
+}

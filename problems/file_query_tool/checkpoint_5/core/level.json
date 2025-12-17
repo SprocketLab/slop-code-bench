@@ -1,0 +1,11 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "query": "WITH RECURSIVE employee_hierarchy AS (\n    SELECT\n        id,\n        name,\n        manager_id,\n        department,\n        salary,\n        0 as level\n    FROM employees\n    WHERE manager_id IS NULL\n    UNION ALL\n    SELECT\n        e.id,\n        e.name,\n        e.manager_id,\n        e.department,\n        e.salary,\n        eh.level + 1\n    FROM employees e\n    JOIN employee_hierarchy eh ON e.manager_id = eh.id\n)\nSELECT\n    name,\n    level,\n    department,\n    salary\nFROM employee_hierarchy\nORDER BY department, level, name",
+    "expected": "|name|level|department|salary|\n|----|-----|----------|------|\n|Alice|0|Engineering|120000|\n|Bob|1|Engineering|90000|\n|Charlie|1|Engineering|95000|\n|David|2|Engineering|80000|\n|Eve|3|Engineering|85000|\n|Frank|0|Sales|110000|\n|Grace|1|Sales|75000|\n|Henry|1|Sales|70000|",
+    "input_data": "data.json"
+}

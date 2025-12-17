@@ -1,0 +1,4 @@
+[
+  {"tax_rate": 0.1, "grand_total": 110.0, "n": 1},
+  {"tax_rate": 0.2, "grand_total": 264.0, "n": 2}
+]

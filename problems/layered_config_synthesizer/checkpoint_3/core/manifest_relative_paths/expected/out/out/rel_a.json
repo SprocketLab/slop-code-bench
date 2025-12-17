@@ -1,0 +1,1 @@
+{"experiment_name":"rel_a","resources":{"accelerators":[{"count":2,"type":"v100"}],"profile":"shared","world_size":5},"training":{"batch_size":30,"optimizer":"adam"}}

@@ -1,0 +1,39 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --type-alias-file aliases.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 2
+      count: 5
+      name: Bob
+    - id: 1
+      count: 10
+      name: Alice
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: myint
+      - name: name
+        type: mytext
+      - name: count
+        type: mycounter
+    file_type: json
+    path: schema.json
+  - content:
+      aliases:
+        myint: integer
+        mytext: varchar
+        mycounter: myint
+    file_type: json
+    path: aliases.json
+expected:
+  files:
+    out.csv: 'count,id,name
+
+      10,1,Alice
+
+      5,2,Bob
+
+      '
+  status_code: 0

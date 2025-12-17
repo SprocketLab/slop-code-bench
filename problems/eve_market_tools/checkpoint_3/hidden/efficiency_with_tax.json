@@ -1,0 +1,77 @@
+{
+  "order": 28,
+  "input": {
+    "body": {
+      "materials": {
+        "Tritanium": 250000
+      },
+      "hubs": [
+        "dodixie"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.02,
+      "efficiencies": {
+        "ore": 0.85,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Compressed Veldspar": {
+          "quantity": 73200,
+          "cost": 822036.0,
+          "volume": 73.2,
+          "category": "ore",
+          "purchases": {
+            "Dodixie IX - Moon 20 - Federation Navy Assembly Plant": {
+              "quantity": 73200,
+              "total": 822036.0,
+              "avg_price": 11.23
+            }
+          }
+        },
+        "Batch Compressed Dense Veldspar": {
+          "quantity": 3,
+          "cost": 3900.0,
+          "volume": 0.45,
+          "category": "ore",
+          "purchases": {
+            "Dodixie IX - Moon 20 - Federation Navy Assembly Plant": {
+              "quantity": 3,
+              "total": 3900.0,
+              "avg_price": 1300.0
+            }
+          }
+        }
+      },
+      "total": 868232.22,
+      "shipping": 25777.5,
+      "collateral_tax": 16518.72,
+      "items": 825936.0,
+      "raw_ship": 875000.0,
+      "material_value": 875000.0,
+      "excess_value": 7.0,
+      "yields": {
+        "Tritanium": {
+          "target": 250000,
+          "actual": 250002,
+          "buy": 847506.78,
+          "sell": 875007.0
+        }
+      }
+    }
+  }
+}

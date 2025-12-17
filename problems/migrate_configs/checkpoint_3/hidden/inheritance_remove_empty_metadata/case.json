@@ -1,0 +1,4 @@
+{
+  "arguments": "rules.json configs --inheritance configs/inheritance/metadata.json",
+  "rules": {}
+}

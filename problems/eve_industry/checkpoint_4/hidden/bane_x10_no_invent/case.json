@@ -1,0 +1,17 @@
+{
+    "case": {
+        "arguments": [
+            "plan",
+            "'Bane x10'",
+            "--sde",
+            "{{static:sde_dir}}",
+            "--config",
+            "build_config.yaml",
+            "--output",
+            "outputs"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

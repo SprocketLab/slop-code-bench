@@ -1,0 +1,18 @@
+arguments: --now 2025-01-15T08:00:00Z --schedule schedule.yaml --duration 1 --mount {{static:files}}
+input_files:
+- content:
+    jobs:
+    - destination: backup://nobak
+      exclude:
+      - '**/*.bin'
+      id: no-backup-dir
+      source: mount://
+      when:
+        at: '08:00'
+        kind: daily
+      strategy:
+        kind: full
+    timezone: UTC
+    version: 1
+  file_type: yaml
+  path: schedule.yaml

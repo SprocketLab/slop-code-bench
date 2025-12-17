@@ -1,0 +1,1016 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "rule_id": "func_pattern",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 8
+      },
+      "match": "package",
+      "captures": {
+        "$NAME": {
+          "text": "package",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 1
+              },
+              "end": {
+                "line": 1,
+                "col": 8
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 1,
+        "col": 9
+      },
+      "end": {
+        "line": 1,
+        "col": 13
+      },
+      "match": "main",
+      "captures": {
+        "$NAME": {
+          "text": "main",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 9
+              },
+              "end": {
+                "line": 1,
+                "col": 13
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 2,
+        "col": 1
+      },
+      "end": {
+        "line": 2,
+        "col": 7
+      },
+      "match": "import",
+      "captures": {
+        "$NAME": {
+          "text": "import",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 1
+              },
+              "end": {
+                "line": 2,
+                "col": 7
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 2,
+        "col": 8
+      },
+      "end": {
+        "line": 2,
+        "col": 13
+      },
+      "match": "\"fmt\"",
+      "captures": {
+        "$NAME": {
+          "text": "\"fmt\"",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 8
+              },
+              "end": {
+                "line": 2,
+                "col": 13
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 4,
+        "col": 1
+      },
+      "end": {
+        "line": 4,
+        "col": 5
+      },
+      "match": "func",
+      "captures": {
+        "$NAME": {
+          "text": "func",
+          "ranges": [
+            {
+              "start": {
+                "line": 4,
+                "col": 1
+              },
+              "end": {
+                "line": 4,
+                "col": 5
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 4,
+        "col": 6
+      },
+      "end": {
+        "line": 4,
+        "col": 10
+      },
+      "match": "main",
+      "captures": {
+        "$NAME": {
+          "text": "main",
+          "ranges": [
+            {
+              "start": {
+                "line": 4,
+                "col": 6
+              },
+              "end": {
+                "line": 4,
+                "col": 10
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 4,
+        "col": 10
+      },
+      "end": {
+        "line": 4,
+        "col": 12
+      },
+      "match": "()",
+      "captures": {
+        "$NAME": {
+          "text": "()",
+          "ranges": [
+            {
+              "start": {
+                "line": 4,
+                "col": 10
+              },
+              "end": {
+                "line": 4,
+                "col": 12
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.go",
+      "language": "go",
+      "start": {
+        "line": 4,
+        "col": 13
+      },
+      "end": {
+        "line": 6,
+        "col": 2
+      },
+      "match": "{\n\tfmt.Println(\"Go\")\n}",
+      "captures": {
+        "$NAME": {
+          "text": "{\n\tfmt.Println(\"Go\")\n}",
+          "ranges": [
+            {
+              "start": {
+                "line": 4,
+                "col": 13
+              },
+              "end": {
+                "line": 6,
+                "col": 2
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.hs",
+      "language": "haskell",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 5
+      },
+      "match": "main",
+      "captures": {
+        "$NAME": {
+          "text": "main",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 1
+              },
+              "end": {
+                "line": 1,
+                "col": 5
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.hs",
+      "language": "haskell",
+      "start": {
+        "line": 1,
+        "col": 6
+      },
+      "end": {
+        "line": 1,
+        "col": 7
+      },
+      "match": "=",
+      "captures": {
+        "$NAME": {
+          "text": "=",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 6
+              },
+              "end": {
+                "line": 1,
+                "col": 7
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.hs",
+      "language": "haskell",
+      "start": {
+        "line": 1,
+        "col": 8
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "match": "do",
+      "captures": {
+        "$NAME": {
+          "text": "do",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 8
+              },
+              "end": {
+                "line": 1,
+                "col": 10
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.hs",
+      "language": "haskell",
+      "start": {
+        "line": 2,
+        "col": 3
+      },
+      "end": {
+        "line": 2,
+        "col": 11
+      },
+      "match": "putStrLn",
+      "captures": {
+        "$NAME": {
+          "text": "putStrLn",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 3
+              },
+              "end": {
+                "line": 2,
+                "col": 11
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.hs",
+      "language": "haskell",
+      "start": {
+        "line": 2,
+        "col": 12
+      },
+      "end": {
+        "line": 2,
+        "col": 21
+      },
+      "match": "\"Haskell\"",
+      "captures": {
+        "$NAME": {
+          "text": "\"Haskell\"",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 12
+              },
+              "end": {
+                "line": 2,
+                "col": 21
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 6
+      },
+      "match": "class",
+      "captures": {
+        "$NAME": {
+          "text": "class",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 1
+              },
+              "end": {
+                "line": 1,
+                "col": 6
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 1,
+        "col": 7
+      },
+      "end": {
+        "line": 1,
+        "col": 11
+      },
+      "match": "Test",
+      "captures": {
+        "$NAME": {
+          "text": "Test",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 7
+              },
+              "end": {
+                "line": 1,
+                "col": 11
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 2,
+        "col": 5
+      },
+      "end": {
+        "line": 2,
+        "col": 11
+      },
+      "match": "public",
+      "captures": {
+        "$NAME": {
+          "text": "public",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 5
+              },
+              "end": {
+                "line": 2,
+                "col": 11
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 2,
+        "col": 12
+      },
+      "end": {
+        "line": 2,
+        "col": 18
+      },
+      "match": "static",
+      "captures": {
+        "$NAME": {
+          "text": "static",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 12
+              },
+              "end": {
+                "line": 2,
+                "col": 18
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 2,
+        "col": 19
+      },
+      "end": {
+        "line": 2,
+        "col": 23
+      },
+      "match": "void",
+      "captures": {
+        "$NAME": {
+          "text": "void",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 19
+              },
+              "end": {
+                "line": 2,
+                "col": 23
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 2,
+        "col": 24
+      },
+      "end": {
+        "line": 2,
+        "col": 28
+      },
+      "match": "main",
+      "captures": {
+        "$NAME": {
+          "text": "main",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 24
+              },
+              "end": {
+                "line": 2,
+                "col": 28
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 2,
+        "col": 28
+      },
+      "end": {
+        "line": 2,
+        "col": 43
+      },
+      "match": "(String[] args)",
+      "captures": {
+        "$NAME": {
+          "text": "(String[] args)",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 28
+              },
+              "end": {
+                "line": 2,
+                "col": 43
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 3,
+        "col": 9
+      },
+      "end": {
+        "line": 3,
+        "col": 15
+      },
+      "match": "System",
+      "captures": {
+        "$NAME": {
+          "text": "System",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 9
+              },
+              "end": {
+                "line": 3,
+                "col": 15
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 3,
+        "col": 15
+      },
+      "end": {
+        "line": 3,
+        "col": 16
+      },
+      "match": ".",
+      "captures": {
+        "$NAME": {
+          "text": ".",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 15
+              },
+              "end": {
+                "line": 3,
+                "col": 16
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 3,
+        "col": 16
+      },
+      "end": {
+        "line": 3,
+        "col": 19
+      },
+      "match": "out",
+      "captures": {
+        "$NAME": {
+          "text": "out",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 16
+              },
+              "end": {
+                "line": 3,
+                "col": 19
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 3,
+        "col": 19
+      },
+      "end": {
+        "line": 3,
+        "col": 20
+      },
+      "match": ".",
+      "captures": {
+        "$NAME": {
+          "text": ".",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 19
+              },
+              "end": {
+                "line": 3,
+                "col": 20
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 3,
+        "col": 20
+      },
+      "end": {
+        "line": 3,
+        "col": 27
+      },
+      "match": "println",
+      "captures": {
+        "$NAME": {
+          "text": "println",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 20
+              },
+              "end": {
+                "line": 3,
+                "col": 27
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.java",
+      "language": "java",
+      "start": {
+        "line": 3,
+        "col": 27
+      },
+      "end": {
+        "line": 3,
+        "col": 35
+      },
+      "match": "(\"Java\")",
+      "captures": {
+        "$NAME": {
+          "text": "(\"Java\")",
+          "ranges": [
+            {
+              "start": {
+                "line": 3,
+                "col": 27
+              },
+              "end": {
+                "line": 3,
+                "col": 35
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 3
+      },
+      "match": "fn",
+      "captures": {
+        "$NAME": {
+          "text": "fn",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 1
+              },
+              "end": {
+                "line": 1,
+                "col": 3
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 4
+      },
+      "end": {
+        "line": 1,
+        "col": 8
+      },
+      "match": "main",
+      "captures": {
+        "$NAME": {
+          "text": "main",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 4
+              },
+              "end": {
+                "line": 1,
+                "col": 8
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 8
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "match": "()",
+      "captures": {
+        "$NAME": {
+          "text": "()",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 8
+              },
+              "end": {
+                "line": 1,
+                "col": 10
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.rs",
+      "language": "rust",
+      "start": {
+        "line": 2,
+        "col": 5
+      },
+      "end": {
+        "line": 2,
+        "col": 12
+      },
+      "match": "println",
+      "captures": {
+        "$NAME": {
+          "text": "println",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 5
+              },
+              "end": {
+                "line": 2,
+                "col": 12
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.rs",
+      "language": "rust",
+      "start": {
+        "line": 2,
+        "col": 12
+      },
+      "end": {
+        "line": 2,
+        "col": 13
+      },
+      "match": "!",
+      "captures": {
+        "$NAME": {
+          "text": "!",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 12
+              },
+              "end": {
+                "line": 2,
+                "col": 13
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "rule_id": "func_pattern",
+      "file": "test.rs",
+      "language": "rust",
+      "start": {
+        "line": 2,
+        "col": 13
+      },
+      "end": {
+        "line": 2,
+        "col": 21
+      },
+      "match": "(\"Rust\")",
+      "captures": {
+        "$NAME": {
+          "text": "(\"Rust\")",
+          "ranges": [
+            {
+              "start": {
+                "line": 2,
+                "col": 13
+              },
+              "end": {
+                "line": 2,
+                "col": 21
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "input_files": {
+    "proj/test.go": "package main\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Go\")\n}",
+    "proj/test.hs": "main = do\n  putStrLn \"Haskell\"",
+    "proj/test.java": "class Test {\n    public static void main(String[] args) {\n        System.out.println(\"Java\");\n    }\n}",
+    "proj/test.rs": "fn main() {\n    println!(\"Rust\");\n}"
+  },
+  "rules.json": [
+    {
+      "id": "func_pattern",
+      "kind": "pattern",
+      "languages": [
+        "rust",
+        "java",
+        "go",
+        "haskell"
+      ],
+      "pattern": "$NAME"
+    }
+  ]
+}

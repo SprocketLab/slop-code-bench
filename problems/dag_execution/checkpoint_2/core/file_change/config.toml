@@ -1,0 +1,5 @@
+# Test cache with different input files
+# file1.txt processed once, cached twice
+# file2.txt processed once
+
+entry = "compare_results"

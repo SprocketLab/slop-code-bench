@@ -1,0 +1,2 @@
+format: ${LOG_FORMAT}
+destination: ${LOG_DEST}

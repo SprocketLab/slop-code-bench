@@ -1,0 +1,47 @@
+{
+  "case": {
+    "body": {
+      "scope": {
+        "env": "prod"
+      },
+      "to_version": 999
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "rollback_to_future_version",
+    "method": "POST",
+    "path": "/v1/configs/array_base:rollback"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "error": {
+          "properties": {
+            "code": {
+              "type": "string",
+              "const": "conflict"
+            },
+            "details": {
+              "type": "object"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "type": "object"
+    },
+    "status_code": 409
+  }
+}

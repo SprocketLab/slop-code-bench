@@ -1,0 +1,8 @@
+misc:
+  extra: true
+training:
+  optimizer:
+    beta1: 0.92
+    epsilon: 0.00000002
+resources:
+  profile: hi-perf

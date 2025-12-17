@@ -1,0 +1,33 @@
+id: table_alias
+files:
+  query.sql: 'SELECT u.first_name, u.car, p.product FROM users u LEFT JOIN payments.pampas
+    p ON u.id = p.id WHERE u.country = ''AR'' AND u.car LIKE ''F%'' ORDER BY u.first_name
+
+    '
+expected: '| first_name   | car     | product   |
+
+  |--------------|---------|-----------|
+
+  | Darin        | Ferarri | HDMI      |
+
+  | Darin        | Ferarri | GPU       |
+
+  | Darin        | Ferarri | HDMI      |
+
+  | Olivia       | Ferarri | NULL      |
+
+  | Osmond       | Ford    | GPU       |
+
+  | Osmond       | Ford    | CPU       |
+
+  | Osmond       | Ford    | TPU       |
+
+  | Osmond       | Ford    | HDU       |
+
+  | Othilia      | Ferarri | CPU       |
+
+  | Othilia      | Ferarri | HDMI      |
+
+  | Othilia      | Ferarri | CPU       |
+
+  | Wilden       | Ford    | NULL      |'

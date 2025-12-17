@@ -1,0 +1,16 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Calculate final price with\
+    \ tax\",\n  \"operations\": [\n    {\n      \"type\": \"add_column\",\n      \"\
+    table\": \"products\",\n      \"column\": {\n        \"name\": \"final_price\"\
+    ,\n        \"type\": \"REAL\"\n      }\n    },\n    {\n      \"type\": \"transform_data\"\
+    ,\n      \"table\": \"products\",\n      \"transformations\": [\n        {\n \
+    \         \"column\": \"final_price\",\n          \"expression\": \"price * (1\
+    \ + tax_rate)\"\n        }\n      ]\n    }\n  ]\n}"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

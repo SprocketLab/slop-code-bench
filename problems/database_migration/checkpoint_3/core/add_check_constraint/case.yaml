@@ -1,0 +1,13 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Add age validation constraint\"\
+    ,\n  \"operations\": [\n    {\n      \"type\": \"add_check_constraint\",\n   \
+    \   \"table\": \"users\",\n      \"name\": \"chk_users_age\",\n      \"expression\"\
+    : \"age >= 0 AND age <= 150\"\n    }\n  ]\n}\n"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

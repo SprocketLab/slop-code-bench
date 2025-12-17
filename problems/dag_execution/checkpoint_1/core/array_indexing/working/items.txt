@@ -1,0 +1,4 @@
+Item 0: apple
+Item 1: banana
+Item 2: cherry
+Item 3: date

@@ -1,0 +1,23 @@
+ITEM: Redeemer (22428)
+Group: Ship > Black Ops
+Market Group: Ships > Battleships > Advanced Battleships > Black Ops > Amarr
+Tech Level: Tech II
+
+Invention:
+Base: Armageddon Blueprint (997)
+Datacores: Datacore - Amarrian Starship Engineering, Datacore - Mechanical Engineering
+Required Per Run: 32
+Skills: Amarr Encryption Methods, Amarr Starship Engineering, Mechanical Engineering
+Time: 3200
+Probabilities:
+| Decryptor                       | Probability | Runs | ME | TE |
+|---------------------------------|-------------|------|----|----|
+| None                            | 24.02       | 1    | 2  | 4  |
+| Accelerant Decryptor            | 28.82       | 2    | 4  | 14 |
+| Attainment Decryptor            | 43.23       | 5    | 1  | 8  |
+| Augmentation Decryptor          | 14.41       | 10   | 0  | 6  |
+| Optimized Attainment Decryptor  | 45.63       | 3    | 3  | 2  |
+| Optimized Augmentation Decryptor | 21.62       | 8    | 4  | 4  |
+| Parity Decryptor                | 36.03       | 4    | 3  | 2  |
+| Process Decryptor               | 26.42       | 1    | 5  | 10 |
+| Symmetry Decryptor              | 24.02       | 3    | 3  | 12 |

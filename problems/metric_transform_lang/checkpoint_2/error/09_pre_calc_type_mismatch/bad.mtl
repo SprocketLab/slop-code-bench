@@ -1,0 +1,11 @@
+schema Sale {
+  timestamp: timestamp
+  price: float
+  quantity: int
+}
+
+pipeline BadPreCalc using Sale {
+  # price * quantity is float, but declared as int
+  calc revenue = price * quantity : int @stage(pre)
+  aggregate sum(revenue) as total
+}

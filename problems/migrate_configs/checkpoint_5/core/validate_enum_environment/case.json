@@ -1,0 +1,25 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "rules": {
+    "validate_environment": {
+      "type": "validate_value",
+      "scope": "validation",
+      "key": "environment",
+      "constraint": {
+        "enum": [
+          "development",
+          "staging",
+          "production"
+        ]
+      }
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "text",
+      "content": "environment: testing\n"
+    }
+  ]
+}

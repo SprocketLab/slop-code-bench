@@ -1,0 +1,8 @@
+summary: "dana-emma"
+users:
+  - name: dana
+    status: active
+    role: premium
+  - name: emma
+    status: inactive
+    role: basic

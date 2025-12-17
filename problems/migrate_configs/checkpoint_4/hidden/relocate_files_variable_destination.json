@@ -1,0 +1,16 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "{\"event\":\"file_relocated\",\"from\":\"relocate_src/nyc/app.yaml\",\"to\":\"archives/nyc/app.yaml\"}\\n{\"event\":\"file_relocated\",\"from\":\"relocate_src/sfo/api.yaml\",\"to\":\"archives/sfo/api.yaml\"}\\n",
+  "rules": {
+    "bucketize_regions": {
+      "type": "relocate_files",
+      "scope": "file",
+      "source_pattern": "relocate_src/$city/*.yaml",
+      "destination": "archives/${city}/"
+    }
+  },
+  "expected_files": {
+    "configs/archives/nyc/app.yaml": "name: nyc\\ntype: web\\n",
+    "configs/archives/sfo/api.yaml": "name: sfo\\ntype: api\\n"
+  }
+}

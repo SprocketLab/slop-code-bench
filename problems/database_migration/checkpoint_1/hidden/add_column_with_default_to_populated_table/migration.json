@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "operations": [
+    {
+      "type": "add_column",
+      "table": "items",
+      "column": {
+        "name": "status",
+        "type": "TEXT",
+        "default": "active"
+      }
+    },
+    {
+      "type": "add_column",
+      "table": "items",
+      "column": {
+        "name": "quantity",
+        "type": "INTEGER",
+        "default": "100"
+      }
+    }
+  ],
+  "description": "Add status and quantity columns to items table"
+}

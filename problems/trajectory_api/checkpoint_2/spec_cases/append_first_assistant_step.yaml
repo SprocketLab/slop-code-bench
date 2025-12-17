@@ -1,0 +1,45 @@
+case:
+  body:
+    steps:
+      - role: assistant
+        content: First assistant response
+        input_tokens: 8
+        output_tokens: 15
+        cost: 0.002
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: append_first_assistant_step
+  method: POST
+  path: /trajectories/{{store.create_in_progress_no_assistant}}/steps
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.create_in_progress_no_assistant}}"
+      status:
+        const: in_progress
+      rev:
+        const: 2
+      appended:
+        const: 1
+      steps:
+        const: 2
+      final_output_tokens:
+        const: 15
+      final_cost:
+        const: 0.002
+      updated_at:
+        type: string
+        pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+    required:
+    - id
+    - status
+    - rev
+    - appended
+    - steps
+    - final_output_tokens
+    - final_cost
+    - updated_at
+    type: object
+  status_code: 200

@@ -1,0 +1,23 @@
+case:
+  arguments: --output out --key id --partition-by state,city data.csv
+  input_files:
+  - content: 'state,city,id
+
+      CA,San Jose,1
+
+      NY,,2
+
+      '
+    file_type: text
+    path: data.csv
+expected:
+  files:
+    out/state=CA/city=San%20Jose/part-00000.csv:
+    - city: San Jose
+      id: 1
+      state: CA
+    out/state=NY/city=_null/part-00000.csv:
+    - city: null
+      id: 2
+      state: NY
+  status_code: 0

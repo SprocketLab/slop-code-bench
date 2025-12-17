@@ -1,0 +1,124 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "input_files": [
+        {
+            "path": "test_data/employees.csv",
+            "content": [
+                {
+                    "id": "1",
+                    "name": "Alice",
+                    "manager_id": "NULL",
+                    "department": "Engineering",
+                    "salary": "120000"
+                },
+                {
+                    "id": "2",
+                    "name": "Bob",
+                    "manager_id": "1",
+                    "department": "Engineering",
+                    "salary": "90000"
+                },
+                {
+                    "id": "3",
+                    "name": "Charlie",
+                    "manager_id": "1",
+                    "department": "Engineering",
+                    "salary": "95000"
+                },
+                {
+                    "id": "4",
+                    "name": "David",
+                    "manager_id": "2",
+                    "department": "Engineering",
+                    "salary": "80000"
+                },
+                {
+                    "id": "5",
+                    "name": "Eve",
+                    "manager_id": "4",
+                    "department": "Engineering",
+                    "salary": "85000"
+                },
+                {
+                    "id": "6",
+                    "name": "Frank",
+                    "manager_id": "NULL",
+                    "department": "Sales",
+                    "salary": "110000"
+                },
+                {
+                    "id": "7",
+                    "name": "Grace",
+                    "manager_id": "6",
+                    "department": "Sales",
+                    "salary": "75000"
+                },
+                {
+                    "id": "8",
+                    "name": "Henry",
+                    "manager_id": "6",
+                    "department": "Sales",
+                    "salary": "70000"
+                },
+                {
+                    "id": "9",
+                    "name": "Ivan",
+                    "manager_id": "1",
+                    "department": "Engineering",
+                    "salary": "88000"
+                },
+                {
+                    "id": "10",
+                    "name": "Julia",
+                    "manager_id": "2",
+                    "department": "Engineering",
+                    "salary": "82000"
+                },
+                {
+                    "id": "11",
+                    "name": "Karl",
+                    "manager_id": "3",
+                    "department": "Engineering",
+                    "salary": "87000"
+                },
+                {
+                    "id": "12",
+                    "name": "Lisa",
+                    "manager_id": "6",
+                    "department": "Sales",
+                    "salary": "78000"
+                },
+                {
+                    "id": "13",
+                    "name": "Mike",
+                    "manager_id": "7",
+                    "department": "Sales",
+                    "salary": "72000"
+                },
+                {
+                    "id": "14",
+                    "name": "Nancy",
+                    "manager_id": "8",
+                    "department": "Sales",
+                    "salary": "71000"
+                },
+                {
+                    "id": "15",
+                    "name": "Oscar",
+                    "manager_id": "9",
+                    "department": "Engineering",
+                    "salary": "83000"
+                }
+            ],
+            "file_type": "csv",
+            "compression": "none"
+        }
+    ],
+    "query": "WITH dept_stats AS (\n    SELECT \n        department,\n        COUNT(*) as emp_count,\n        AVG(salary) as avg_salary,\n        MAX(salary) as max_salary,\n        MIN(salary) as min_salary\n    FROM employees\n    GROUP BY department\n),\nemp_ranks AS (\n    SELECT \n        e.name,\n        e.department,\n        e.salary,\n        RANK() OVER (PARTITION BY e.department ORDER BY e.salary DESC) as dept_rank,\n        ROW_NUMBER() OVER (ORDER BY e.salary DESC) as company_rank\n    FROM employees e\n)\nSELECT \n    er.name,\n    er.department,\n    er.salary,\n    er.dept_rank,\n    er.company_rank,\n    ds.emp_count,\n    ds.avg_salary,\n    ROUND(100.0 * er.salary / ds.avg_salary, 2) as salary_vs_avg_pct\nFROM emp_ranks er\nJOIN dept_stats ds ON er.department = ds.department\nWHERE er.dept_rank <= 3\nORDER BY er.department, er.dept_rank",
+    "expected": "| name    | department  | salary | dept_rank | company_rank | emp_count | avg_salary | salary_vs_avg_pct |\n| ------- | ----------- | ------ | --------- | ------------ | --------- | ---------- | ----------------- |\n| Alice   | Engineering | 120000 | 1         | 1            | 5         | 94000      | 127.66            |\n| Charlie | Engineering | 95000  | 2         | 3            | 5         | 94000      | 101.06            |\n| Bob     | Engineering | 90000  | 3         | 4            | 5         | 94000      | 95.74             |\n| Frank   | Sales       | 110000 | 1         | 2            | 3         | 85000      | 129.41            |\n| Grace   | Sales       | 75000  | 2         | 7            | 3         | 85000      | 88.24             |\n| Henry   | Sales       | 70000  | 3         | 8            | 3         | 85000      | 82.35             |"
+}

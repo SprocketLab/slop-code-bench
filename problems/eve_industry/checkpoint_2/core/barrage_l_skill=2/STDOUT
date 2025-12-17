@@ -1,0 +1,23 @@
+ITEM: Barrage L (12775)
+Group: Charge > Advanced Autocannon Ammo
+Market Group: Ammunition & Charges > Projectile Ammo > Advanced Autocannon Ammo > Large
+Tech Level: Tech II
+
+Invention:
+Base: Nuclear L Blueprint (896)
+Datacores: Datacore - Mechanical Engineering, Datacore - Nuclear Physics
+Required Per Run: 1
+Skills: Mechanical Engineering, Minmatar Encryption Methods, Nuclear Physics
+Time: 1135
+Probabilities:
+| Decryptor                       | Probability | Runs | ME | TE |
+|---------------------------------|-------------|------|----|----|
+| None                            | 40.23       | 10   | 2  | 4  |
+| Accelerant Decryptor            | 48.28       | 11   | 4  | 14 |
+| Attainment Decryptor            | 72.42       | 14   | 1  | 8  |
+| Augmentation Decryptor          | 24.14       | 19   | 0  | 6  |
+| Optimized Attainment Decryptor  | 76.44       | 12   | 3  | 2  |
+| Optimized Augmentation Decryptor | 36.21       | 17   | 4  | 4  |
+| Parity Decryptor                | 60.35       | 13   | 3  | 2  |
+| Process Decryptor               | 44.26       | 10   | 5  | 10 |
+| Symmetry Decryptor              | 40.23       | 12   | 3  | 12 |

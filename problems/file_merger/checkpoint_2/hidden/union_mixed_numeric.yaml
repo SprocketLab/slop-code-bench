@@ -1,0 +1,40 @@
+case:
+  arguments: --output output.csv --key id --schema-strategy union a.csv b.jsonl c.parquet
+  input_files:
+  - content:
+    - id: '1'
+      amount: '100'
+    - id: '2'
+      amount: '200'
+    file_type: csv
+    path: a.csv
+  - content:
+    - id: 3
+      amount: 300.5
+    - id: 4
+      amount: 400
+    file_type: jsonl
+    path: b.jsonl
+  - content:
+    - id: 5
+      amount: 500.25
+    - id: 6
+      amount: 600.75
+    file_type: parquet
+    path: c.parquet
+expected:
+  files:
+    output.csv:
+    - amount: 100.0
+      id: 1
+    - amount: 200.0
+      id: 2
+    - amount: 300.5
+      id: 3
+    - amount: 400.0
+      id: 4
+    - amount: 500.25
+      id: 5
+    - amount: 600.75
+      id: 6
+  status_code: 0

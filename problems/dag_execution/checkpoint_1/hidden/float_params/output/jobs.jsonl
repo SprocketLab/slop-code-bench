@@ -1,0 +1,3 @@
+{"job_id": 2, "task": "Calculate", "params": {"x": 1.5, "y": 2.0, "precision": 3}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": "calculations", "exit_code": 0, "parent": 1, "duration": 0.03801951499917777}
+{"job_id": 3, "task": "Calculate", "params": {"x": 10.5, "y": 0.5, "precision": 2}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": "calculations", "exit_code": 0, "parent": 1, "duration": 0.03634164399954898}
+{"job_id": 1, "task": "main", "params": {}, "stdout": "x=10.5, y=0.5\n11.0\n5.25\n", "stderr": "", "timed_out": false, "success": {"file_created": true}, "output": null, "exit_code": 0, "parent": null, "duration": 0.09173665100024664}

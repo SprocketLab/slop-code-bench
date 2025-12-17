@@ -1,0 +1,3 @@
+window(10m)
+aggregate count(*) as n,
+          sum(price) as total_price

@@ -1,0 +1,4 @@
+# Test modified strategy - cache based on file modification time
+# 3 modules built, 3 cache hits
+
+entry = "create_app"

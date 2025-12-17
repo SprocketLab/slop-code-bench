@@ -1,0 +1,6 @@
+experiment_name: frag-base
+training:
+  optimizer: adam
+resources:
+  profile: train_l4
+logging: "{{static:legacy_logger}}"

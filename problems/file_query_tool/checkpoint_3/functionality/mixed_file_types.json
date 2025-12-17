@@ -1,0 +1,64 @@
+{
+  "arguments": "--sql query.sql --sharded employees=test_data/employees_* --data test_data",
+  "input_files": [
+    {
+      "path": "test_data/employees_2.csv",
+      "content": [
+        {
+          "id": "3",
+          "name": "Bob",
+          "department": "Engineering",
+          "salary": "80000"
+        },
+        {
+          "id": "4",
+          "name": "Alice",
+          "department": "Sales",
+          "salary": "70000"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/employees_1.csv",
+      "content": [
+        {
+          "id": "1",
+          "name": "John",
+          "department": "Engineering",
+          "salary": "75000"
+        },
+        {
+          "id": "2",
+          "name": "Jane",
+          "department": "Marketing",
+          "salary": "65000"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    },
+    {
+      "path": "test_data/employees_3.jsonl",
+      "content": [
+        {
+          "id": 5,
+          "name": "Charlie",
+          "department": "HR",
+          "salary": 60000
+        },
+        {
+          "id": 6,
+          "name": "Diana",
+          "department": "Engineering",
+          "salary": 85000
+        }
+      ],
+      "file_type": "jsonl",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT department, AVG(salary) as avg_salary, COUNT(*) as employee_count\nFROM employees\nGROUP BY department\nORDER BY avg_salary DESC",
+  "expected": "| department   |   avg_salary |   employee_count |\n|--------------|--------------|------------------|\n| Engineering  |        80000 |                3 |\n| Sales        |        70000 |                1 |\n| Marketing    |        65000 |                1 |\n| HR           |        60000 |                1 |"
+}

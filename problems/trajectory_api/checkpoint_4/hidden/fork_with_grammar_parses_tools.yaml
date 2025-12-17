@@ -1,0 +1,32 @@
+case:
+  body:
+    up_to_step: 2
+    status: in_progress
+    append:
+      - role: assistant
+        content: '<tool forked_tool args="fork_arg"/> Forked step'
+        input_tokens: 10
+        output_tokens: 15
+        cost: 0.001
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: fork_with_grammar_parses_tools
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_search_tests}}/fork
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      environment_version:
+        type: integer
+    required:
+      - id
+      - status
+      - environment_version
+    type: object
+  status_code: 201

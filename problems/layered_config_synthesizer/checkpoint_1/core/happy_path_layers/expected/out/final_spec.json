@@ -1,0 +1,1 @@
+{"experiment_name":"hydra-base","resources":{"accelerators":[{"count":2,"type":"a100"}],"profile":"standard","world_size":16},"training":{"batch_size":64,"optimizer":{"name":"adamw","weight_decay":0.01},"scheduler":"cosine"}}

@@ -1,0 +1,15 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  location: string
+  price: float
+}
+
+pipeline WinGroupLag using Sale {
+  window(1h)
+  group_by(['location'])
+  aggregate sum(price) as total
+
+  calc prev = lag(total, 1) : float @stage(post_agg)
+  calc change = total - coalesce(prev, 0.0) : float @stage(post_agg)
+}

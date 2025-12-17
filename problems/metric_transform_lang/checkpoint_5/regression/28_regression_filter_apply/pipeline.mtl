@@ -1,0 +1,13 @@
+mtl_version 1.5
+schema Event {
+  timestamp: timestamp
+  category: string
+  value: float
+  status: string
+}
+
+pipeline FilterApply using Event {
+  filter(status == 'active' & value > 10.0)
+  apply(value * 2.0, value)
+  aggregate sum(value) as total, count(*) as n
+}

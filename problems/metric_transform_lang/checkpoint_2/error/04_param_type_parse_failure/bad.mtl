@@ -1,0 +1,12 @@
+schema BaseSale {
+  timestamp: timestamp
+}
+
+pipeline P using BaseSale {
+  params {
+    k: int = 1
+  }
+  window(1h)
+  aggregate count(*) as n
+  calc prev_n = lag(n, param("k")) : float @stage(post_agg)
+}

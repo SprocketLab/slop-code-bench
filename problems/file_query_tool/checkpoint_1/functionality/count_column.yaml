@@ -1,0 +1,19 @@
+id: count_column
+files:
+  query.sql: 'SELECT country, COUNT(first_name) as name_count FROM users GROUP BY
+    country ORDER BY name_count DESC
+
+    '
+expected: '| country   |   name_count |
+
+  |-----------|--------------|
+
+  | AR        |           11 |
+
+  | DE        |            2 |
+
+  | CH        |            2 |
+
+  | NULL      |            1 |
+
+  | FR        |            1 |'

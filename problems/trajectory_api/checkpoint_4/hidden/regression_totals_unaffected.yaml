@@ -1,0 +1,21 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: regression_totals_unaffected
+  method: GET
+  path: /trajectories/{{store.hidden_create_for_tool_extraction}}/totals
+expected:
+  output:
+    properties:
+      total_input_tokens:
+        type: integer
+      total_output_tokens:
+        type: integer
+      total_cost:
+        type: number
+    required:
+      - total_input_tokens
+      - total_output_tokens
+      - total_cost
+    type: object
+  status_code: 200

@@ -1,0 +1,121 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: get_trajectory_with_execution_data
+  method: GET
+  path: /trajectories/{{store.create_trajectory_with_tool_execution}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.create_trajectory_with_tool_execution}}"
+      record:
+        type: object
+      derived:
+        properties:
+          steps:
+            const: 3
+          final_output_tokens:
+            const: 25
+          final_cost:
+            const: 0.0030
+          tool_calls:
+            type: array
+            items:
+              properties:
+                step_index:
+                  const: 2
+                name:
+                  const: write_result
+                args_raw:
+                  const: file=answer.txt;value=4
+                span:
+                  properties:
+                    start:
+                      const: 0
+                    end:
+                      const: 51
+                  required:
+                  - start
+                  - end
+                  type: object
+              required:
+              - step_index
+              - name
+              - args_raw
+              - span
+              type: object
+          tool_call_count:
+            const: 1
+          wd:
+            properties:
+              step_states:
+                type: array
+                items:
+                  properties:
+                    step_index:
+                      const: 2
+                    after_hash:
+                      type: string
+                      pattern: '^[0-9a-f]{64}$'
+                    files:
+                      type: array
+                      items:
+                        properties:
+                          path:
+                            const: answer.txt
+                          bytes:
+                            const: 2
+                        required:
+                        - path
+                        - bytes
+                        type: object
+                  required:
+                  - step_index
+                  - after_hash
+                  - files
+                  type: object
+              active_toolpack_version:
+                const: 1
+            type: object
+          exec_log:
+            type: array
+            items:
+              properties:
+                step_index:
+                  const: 2
+                call_index:
+                  const: 0
+                tool:
+                  const: write_result
+                status:
+                  const: ok
+                exit_code:
+                  type: string
+                  const: "0"
+                runtime_ms:
+                  type: integer
+                stderr:
+                  const: ""
+                log:
+                  const: ok
+              required:
+              - step_index
+              - call_index
+              - tool
+              - status
+              - exit_code
+              - runtime_ms
+              - stderr
+              - log
+              type: object
+        type: object
+      environment_version:
+        const: 1
+    required:
+    - id
+    - record
+    - derived
+    - environment_version
+    type: object
+  status_code: 200

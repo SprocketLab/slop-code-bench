@@ -1,0 +1,3 @@
+event_time,store,sku,pos_price,pos_qty
+2024-05-01T09:05:00Z,LA,grapes,2.8,5
+2024-05-01T09:20:00Z,LA,grapes,2.7,3

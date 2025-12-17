@@ -1,0 +1,2 @@
+FRAGMENT_DEPRECATED frag_a legacy_logger Use structured_logger
+FRAGMENT_DEPRECATED frag_b legacy_logger Use structured_logger

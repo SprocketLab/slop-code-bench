@@ -1,0 +1,14 @@
+{
+  "features": [
+    {
+      "name": "beta",
+      "enabled": true,
+      "host": "beta.prod"
+    },
+    {
+      "name": "legacy",
+      "enabled": false,
+      "host": "legacy.local"
+    }
+  ]
+}

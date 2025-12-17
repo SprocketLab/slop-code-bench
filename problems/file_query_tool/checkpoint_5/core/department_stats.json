@@ -1,0 +1,11 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "query": "WITH dept_totals AS (\n    SELECT \n        department,\n        SUM(salary) as total_salary,\n        COUNT(*) as employee_count\n    FROM employees\n    GROUP BY department\n)\nSELECT \n    department,\n    total_salary,\n    employee_count,\n    ROUND(total_salary / employee_count, 2) as avg_salary\nFROM dept_totals\nORDER BY total_salary DESC",
+    "expected": "\n| department  | total_salary | employee_count | avg_salary |\n| ----------- | ------------ | -------------- | ---------- |\n| Engineering | 470000       | 5              | 94000      |\n| Sales       | 255000       | 3              | 85000      |",
+    "input_data": "data.json"
+}

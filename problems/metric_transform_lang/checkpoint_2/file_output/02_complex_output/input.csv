@@ -1,0 +1,6 @@
+timestamp,location,category,price,quantity
+2025-09-14T08:10:00Z,NYC,books,10.0,2
+2025-09-14T08:20:00Z,NYC,books,15.0,3
+2025-09-14T08:30:00Z,SF,electronics,100.0,1
+2025-09-14T09:10:00Z,NYC,books,20.0,2
+2025-09-14T09:20:00Z,SF,electronics,120.0,2

@@ -1,0 +1,24 @@
+{
+  "arguments": "--sql query.sql --data test_data --sharded empty_table=test_data/nonexistent_*.csv",
+  "input_files": [
+    {
+      "path": "test_data/users.csv",
+      "content": [
+        {
+          "id": "1",
+          "name": "John Doe",
+          "email": "john@example.com"
+        },
+        {
+          "id": "2",
+          "name": "Jane Smith",
+          "email": "jane@example.com"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT COUNT(*) as user_count\nFROM users",
+  "expected": "|   user_count |\n|--------------|\n|            2 |"
+}

@@ -1,0 +1,21 @@
+mtl_version 1.5
+
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline Stats using Sale {
+  aggregate sum(price) as total_price,
+            average(price) as avg_price,
+            median(quantity) as median_qty,
+            std(price) as price_std,
+            var(price) as price_var,
+            min(price) as min_price,
+            max(price) as max_price
+}

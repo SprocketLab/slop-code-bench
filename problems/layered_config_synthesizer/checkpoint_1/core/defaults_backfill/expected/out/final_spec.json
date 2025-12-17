@@ -1,0 +1,1 @@
+{"experiment_name":"fallback-case","resources":{"accelerators":[{"count":1,"type":"t4"}],"profile":"standard","world_size":1},"training":{"batch_size":32,"optimizer":"adam"}}

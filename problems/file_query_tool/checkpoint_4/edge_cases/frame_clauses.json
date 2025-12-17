@@ -1,0 +1,34 @@
+{
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/sales.csv",
+      "content": [
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "800"
+        },
+        {
+          "region": "EU",
+          "product": "Widget B",
+          "sales": "1200"
+        },
+        {
+          "region": "EU",
+          "product": "Widget A",
+          "sales": "900"
+        }
+      ],
+      "file_type": "csv",
+      "compression": "none"
+    }
+  ],
+  "query": "SELECT \n    region,\n    product,\n    sales,\n    SUM(sales) OVER (PARTITION BY region ORDER BY sales ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as rows_running_total,\n    SUM(sales) OVER (PARTITION BY region ORDER BY sales RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as range_running_total\nFROM sales\nORDER BY region, sales",
+  "expected": "| region   | product   |   sales |   rows_running_total |   range_running_total |\n|----------|-----------|---------|----------------------|-----------------------|\n| EU       | Widget A  |     800 |                  800 |                   800 |\n| EU       | Widget A  |     900 |                 1700 |                  1700 |\n| EU       | Widget B  |    1200 |                 2900 |                  2900 |"
+}

@@ -1,0 +1,2 @@
+apply(len(price), price_len)
+aggregate count(*) as n

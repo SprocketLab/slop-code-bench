@@ -1,0 +1,156 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "captures": {
+        "$PTR": {
+          "ranges": [
+            {
+              "end": {
+                "col": 7,
+                "line": 1
+              },
+              "start": {
+                "col": 6,
+                "line": 1
+              }
+            }
+          ],
+          "text": "p"
+        },
+        "$VAL": {
+          "ranges": [
+            {
+              "end": {
+                "col": 17,
+                "line": 1
+              },
+              "start": {
+                "col": 10,
+                "line": 1
+              }
+            }
+          ],
+          "text": "nullptr"
+        }
+      },
+      "end": {
+        "col": 18,
+        "line": 1
+      },
+      "file": "ptrs.cpp",
+      "language": "cpp",
+      "match": "* p = nullptr;",
+      "rule_id": "ptr_deref",
+      "start": {
+        "col": 4,
+        "line": 1
+      }
+    },
+    {
+      "captures": {
+        "$PTR": {
+          "ranges": [
+            {
+              "end": {
+                "col": 3,
+                "line": 2
+              },
+              "start": {
+                "col": 2,
+                "line": 2
+              }
+            }
+          ],
+          "text": "p"
+        },
+        "$VAL": {
+          "ranges": [
+            {
+              "end": {
+                "col": 8,
+                "line": 2
+              },
+              "start": {
+                "col": 6,
+                "line": 2
+              }
+            }
+          ],
+          "text": "42"
+        }
+      },
+      "end": {
+        "col": 9,
+        "line": 2
+      },
+      "file": "ptrs.cpp",
+      "language": "cpp",
+      "match": "*p = 42;",
+      "rule_id": "ptr_deref",
+      "start": {
+        "col": 1,
+        "line": 2
+      }
+    },
+    {
+      "captures": {
+        "$PTR": {
+          "ranges": [
+            {
+              "end": {
+                "col": 5,
+                "line": 4
+              },
+              "start": {
+                "col": 2,
+                "line": 4
+              }
+            }
+          ],
+          "text": "ptr"
+        },
+        "$VAL": {
+          "ranges": [
+            {
+              "end": {
+                "col": 13,
+                "line": 4
+              },
+              "start": {
+                "col": 8,
+                "line": 4
+              }
+            }
+          ],
+          "text": "x + 5"
+        }
+      },
+      "end": {
+        "col": 14,
+        "line": 4
+      },
+      "file": "ptrs.cpp",
+      "language": "cpp",
+      "match": "*ptr = x + 5;",
+      "rule_id": "ptr_deref",
+      "start": {
+        "col": 1,
+        "line": 4
+      }
+    }
+  ],
+  "input_files": {
+    "proj/ptrs.cpp": "int* p = nullptr;\n*p = 42;\nint x = 10;\n*ptr = x + 5;"
+  },
+  "rules.json": [
+    {
+      "id": "ptr_deref",
+      "kind": "pattern",
+      "languages": [
+        "cpp"
+      ],
+      "pattern": "*$PTR = $VAL;"
+    }
+  ]
+}

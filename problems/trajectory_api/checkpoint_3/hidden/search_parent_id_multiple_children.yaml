@@ -1,0 +1,28 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_parent_id_multiple_children
+  method: GET
+  path: /trajectories?parent_id={{store.hidden_create_for_search_tests}}
+expected:
+  output:
+    properties:
+      items:
+        type: array
+        minItems: 2
+        items:
+          properties:
+            lineage:
+              properties:
+                parent_id:
+                  const: "{{store.hidden_create_for_search_tests}}"
+              required:
+                - parent_id
+              type: object
+          required:
+            - lineage
+          type: object
+    required:
+      - items
+    type: object
+  status_code: 200

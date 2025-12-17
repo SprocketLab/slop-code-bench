@@ -1,0 +1,87 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "rule_id": "regex_with_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 21
+      },
+      "match": "print(\"message\")"
+    },
+    {
+      "event": "fix",
+      "rule_id": "regex_with_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 21
+      },
+      "replacement": "# OLD: print(\"message\")",
+      "applied": true,
+      "skipped_reason": null
+    },
+    {
+      "rule_id": "regex_with_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 5
+      },
+      "end": {
+        "line": 2,
+        "col": 19
+      },
+      "match": "print(\"hello\")"
+    },
+    {
+      "event": "fix",
+      "rule_id": "regex_with_fix",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 2,
+        "col": 5
+      },
+      "end": {
+        "line": 2,
+        "col": 19
+      },
+      "replacement": "# OLD: print(\"hello\")",
+      "applied": true,
+      "skipped_reason": null
+    }
+  ],
+  "expected_files": {
+    "proj/code.py": "    # OLD: print(\"message\")\n    # OLD: print(\"hello\")"
+  },
+  "input_files": {
+    "proj/code.py": "    print(\"message\")\n    print(\"hello\")"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "# OLD: $MATCH"
+      },
+      "id": "regex_with_fix",
+      "kind": "regex",
+      "languages": [
+        "python"
+      ],
+      "pattern": "print\\(\".*\"\\)"
+    }
+  ]
+}

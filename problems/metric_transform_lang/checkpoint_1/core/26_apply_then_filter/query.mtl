@@ -1,0 +1,4 @@
+apply(len(item), item_len)
+filter(item_len > 4)
+aggregate count(*) as n,
+          sum(price) as total

@@ -1,0 +1,138 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "captures": {
+        "$X": {
+          "ranges": [
+            {
+              "end": {
+                "col": 8,
+                "line": 1
+              },
+              "start": {
+                "col": 6,
+                "line": 1
+              }
+            },
+            {
+              "end": {
+                "col": 12,
+                "line": 1
+              },
+              "start": {
+                "col": 10,
+                "line": 1
+              }
+            }
+          ],
+          "text": "42"
+        }
+      },
+      "end": {
+        "col": 13,
+        "line": 1
+      },
+      "file": "dup.js",
+      "language": "javascript",
+      "match": "func(42, 42)",
+      "rule_id": "same_args",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 13,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "dup.js",
+      "language": "javascript",
+      "replacement": "func_once(42)",
+      "rule_id": "same_args",
+      "skipped_reason": null,
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "captures": {
+        "$X": {
+          "ranges": [
+            {
+              "end": {
+                "col": 9,
+                "line": 2
+              },
+              "start": {
+                "col": 6,
+                "line": 2
+              }
+            },
+            {
+              "end": {
+                "col": 14,
+                "line": 2
+              },
+              "start": {
+                "col": 11,
+                "line": 2
+              }
+            }
+          ],
+          "text": "\"a\""
+        }
+      },
+      "end": {
+        "col": 15,
+        "line": 2
+      },
+      "file": "dup.js",
+      "language": "javascript",
+      "match": "func(\"a\", \"a\")",
+      "rule_id": "same_args",
+      "start": {
+        "col": 1,
+        "line": 2
+      }
+    },
+    {
+      "applied": true,
+      "end": {
+        "col": 15,
+        "line": 2
+      },
+      "event": "fix",
+      "file": "dup.js",
+      "language": "javascript",
+      "replacement": "func_once(\"a\")",
+      "rule_id": "same_args",
+      "skipped_reason": null,
+      "start": {
+        "col": 1,
+        "line": 2
+      }
+    }
+  ],
+  "input_files": {
+    "proj/dup.js": "func(42, 42);\nfunc(\"a\", \"a\");\nfunc(x, y);"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "func_once($X)"
+      },
+      "id": "same_args",
+      "kind": "pattern",
+      "languages": [
+        "javascript"
+      ],
+      "pattern": "func($X, $X)"
+    }
+  ]
+}

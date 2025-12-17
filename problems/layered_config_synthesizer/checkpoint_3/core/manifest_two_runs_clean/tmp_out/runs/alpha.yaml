@@ -1,0 +1,5 @@
+experiment_name: alpha
+resources:
+  world_size: 4
+training:
+  learning_rate: 0.01

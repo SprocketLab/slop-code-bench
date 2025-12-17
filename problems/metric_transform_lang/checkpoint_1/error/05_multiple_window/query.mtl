@@ -1,0 +1,3 @@
+window(1h)
+window(10m)
+aggregate count(*) as n

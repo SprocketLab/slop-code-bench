@@ -1,0 +1,39 @@
+{
+  "order": 20,
+  "input": {
+    "body": {
+      "materials": {
+        "NotARealMaterial": 1000,
+        "AlsoFakeItem": 500
+      },
+      "hubs": ["jita"],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 404,
+    "output": {
+      "type": "object",
+      "properties": {
+        "error": {"const": "UNKNOWN_ITEMS"},
+        "details": {"type": "array"}
+      },
+      "required": ["error", "details"]
+    }
+  }
+}

@@ -1,0 +1,2 @@
+{"event":"file_relocated","from":"logs/archive/2024-01-01/app.log","to":"logs_flat/2024-01-01/app.log"}
+{"event":"file_relocated","from":"logs/archive/2024-01-02/app.log","to":"logs_flat/2024-01-02/app.log"}

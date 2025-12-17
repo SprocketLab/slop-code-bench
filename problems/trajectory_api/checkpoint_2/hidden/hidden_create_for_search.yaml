@@ -1,0 +1,43 @@
+case:
+  body:
+    date: "2025-10-04T00:00:00Z"
+    task: hidden_search_task
+    environment: hidden_search_env
+    model: hidden_search_model
+    framework: hidden_search_framework
+    status: in_progress
+    metrics: {}
+    trajectory:
+      - role: user
+        content: "Question for search filter tests"
+        input_tokens: null
+        output_tokens: null
+        cost: null
+  headers:
+    content-type: application/json; charset=utf-8
+  id: hidden_create_for_search
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      status:
+        const: in_progress
+      rev:
+        const: 1
+      steps:
+        const: 1
+      final_output_tokens:
+        const: 0
+      final_cost:
+        const: 0
+    required:
+      - id
+      - status
+      - rev
+      - steps
+    type: object
+  status_code: 201

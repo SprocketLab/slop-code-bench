@@ -1,0 +1,15 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"boundary-job","kind":"daily","now_local":"2025-09-10T03:30:00Z"}
+{"event":"JOB_STARTED","exclude_count":1,"job_id":"boundary-job"}
+{"event":"FILE_SELECTED","job_id":"boundary-job","path":"A/B/C/D.py"}
+{"event":"FILE_EXCLUDED","job_id":"boundary-job","path":"A/B/E.bin","pattern":"**/*.bin"}
+{"event":"FILE_EXCLUDED","job_id":"boundary-job","path":"A/F/G.bin","pattern":"**/*.bin"}
+{"event":"FILE_SELECTED","job_id":"boundary-job","path":"A/F/H.py"}
+{"event":"FILE_SELECTED","job_id":"boundary-job","path":"A/I.py"}
+{"event":"FILE_EXCLUDED","job_id":"boundary-job","path":"A/J.bin","pattern":"**/*.bin"}
+{"event":"FILE_SELECTED","job_id":"boundary-job","path":"A/K.html"}
+{"event":"FILE_SELECTED","job_id":"boundary-job","path":"A/L.md"}
+{"event":"FILE_SELECTED","job_id":"boundary-job","path":"M.py"}
+{"event":"FILE_SELECTED","job_id":"boundary-job","path":"N.py"}
+{"event":"FILE_SELECTED","job_id":"boundary-job","path":"O.md"}
+{"event":"JOB_COMPLETED","job_id":"boundary-job","selected":8,"excluded":3}

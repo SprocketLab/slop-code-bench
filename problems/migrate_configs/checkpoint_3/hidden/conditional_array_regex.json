@@ -1,0 +1,17 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"arrays/accounts.json\",\"rules_applied\":[\"promote_admins\"]}\\n",
+  "rules": {
+    "promote_admins": {
+      "type": "conditional_replace",
+      "key": "users[?role=admin].permissions",
+      "value": "all",
+      "condition": {
+        "current_value_matches": "^limited$"
+      }
+    }
+  },
+  "expected_files": {
+    "configs/arrays/accounts.json": "{\\n  \\\"users\\\": [\\n    {\\n      \\\"name\\\": \\\"alice\\\",\\n      \\\"role\\\": \\\"admin\\\",\\n      \\\"email\\\": \\\"alice@example.com\\\",\\n      \\\"permissions\\\": \\\"all\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"bob\\\",\\n      \\\"role\\\": \\\"user\\\",\\n      \\\"email\\\": \\\"bob@example.com\\\",\\n      \\\"permissions\\\": \\\"limited\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"carol\\\",\\n      \\\"role\\\": \\\"admin\\\",\\n      \\\"email\\\": \\\"carol@example.com\\\",\\n      \\\"permissions\\\": \\\"all\\\"\\n    }\\n  ]\\n}\\n"
+  }
+}

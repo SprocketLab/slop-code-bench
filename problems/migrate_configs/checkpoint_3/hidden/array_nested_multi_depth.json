@@ -1,0 +1,14 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"arrays/clusters.json\",\"rules_applied\":[\"normalize_primary_nodes\"]}\\n",
+  "rules": {
+    "normalize_primary_nodes": {
+      "type": "pattern_replace",
+      "key_pattern": "clusters[*].nodes[0].ip",
+      "value": "10.9.9.1"
+    }
+  },
+  "expected_files": {
+    "configs/arrays/clusters.json": "{\\n  \\\"clusters\\\": [\\n    {\\n      \\\"name\\\": \\\"blue\\\",\\n      \\\"nodes\\\": [\\n        {\\n          \\\"ip\\\": \\\"10.9.9.1\\\"\\n        },\\n        {\\n          \\\"ip\\\": \\\"10.0.0.2\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"name\\\": \\\"green\\\",\\n      \\\"nodes\\\": [\\n        {\\n          \\\"ip\\\": \\\"10.9.9.1\\\"\\n        },\\n        {\\n          \\\"ip\\\": \\\"10.0.1.2\\\"\\n        }\\n      ]\\n    }\\n  ]\\n}\\n"
+  }
+}

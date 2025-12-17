@@ -1,0 +1,4 @@
+timestamp,location,item,price,quantity,unit,category
+2024-07-02T14:00:00Z,Austin,laptop,900,1,ea,electronics
+2024-07-02T14:10:00Z,Austin,laptop,920,1,ea,electronics
+2024-07-02T14:20:00Z,Austin,mouse,25,2,ea,electronics

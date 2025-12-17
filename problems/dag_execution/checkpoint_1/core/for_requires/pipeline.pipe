@@ -1,0 +1,20 @@
+task A {
+    run: {
+        echo "A"
+    }
+}
+
+
+task main {
+    params: {
+        num: int = 2;
+    }
+    run {
+        echo "Finished."
+    }
+    requires {
+        for (int i=0; i<${params.num}; i++) {
+            A()
+        }
+    }
+}

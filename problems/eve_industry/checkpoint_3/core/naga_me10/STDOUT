@@ -1,0 +1,19 @@
+ITEM: Naga (4306)
+Group: Ship > Attack Battlecruiser
+Market Group: Ships > Battlecruisers > Standard Battlecruisers > Caldari
+Tech Level: Tech I
+Volume: 15000.00
+
+Recipe:
+Activity: Manufacturing
+Output Quantity: 1
+Run Time: 250
+| Item      | Quantity  | Buildable |
+|:---------:|:---------:|----------:|
+| Isogen    | 23400     | No        |
+| Megacyte  | 468       | No        |
+| Mexallon  | 210600    | No        |
+| Nocxium   | 9360      | No        |
+| Pyerite   | 1170000   | No        |
+| Tritanium | 3276000   | No        |
+| Zydrine   | 2340      | No        |

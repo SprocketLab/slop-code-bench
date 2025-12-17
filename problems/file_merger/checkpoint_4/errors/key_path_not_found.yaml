@@ -1,0 +1,21 @@
+case:
+  arguments: --output out.csv --key user.age --schema schema.json input.jsonl
+  input_files:
+  - content:
+    - user:
+        name: x
+    file_type: jsonl
+    path: input.jsonl
+  - content:
+      columns:
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: name
+              type: string
+    file_type: json
+    path: schema.json
+expected:
+  status_code: 3
+  stderr: ERR 3 key column "user.age" not present in resolved schema

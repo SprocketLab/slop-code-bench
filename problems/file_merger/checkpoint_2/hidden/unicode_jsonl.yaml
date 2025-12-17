@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id data.jsonl
+  input_files:
+  - content:
+    - id: 1
+      name: "\u674E\u660E"
+      city: Beijing
+    - id: 2
+      name: "Jos\xE9 Silva"
+      city: "S\xE3o Paulo"
+    - id: 3
+      name: "\u03A3\u03C9\u03BA\u03C1\u03AC\u03C4\u03B7\u03C2"
+      city: Athens
+    file_type: jsonl
+    path: data.jsonl
+expected:
+  files:
+    output.csv:
+    - city: Beijing
+      id: 1
+      name: "\u674E\u660E"
+    - city: "S\xE3o Paulo"
+      id: 2
+      name: "Jos\xE9 Silva"
+    - city: Athens
+      id: 3
+      name: "\u03A3\u03C9\u03BA\u03C1\u03AC\u03C4\u03B7\u03C2"
+  status_code: 0

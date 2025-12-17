@@ -1,0 +1,54 @@
+{
+  "case": {
+    "body": {
+      "config": {
+        "nested": {
+          "value": "string_value"
+        }
+      },
+      "scope": {
+        "env": "prod"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "type_conflict_base",
+    "method": "POST",
+    "path": "/v1/configs/type_conflict_base"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "active": {
+          "const": true
+        },
+        "name": {
+          "const": "type_conflict_base"
+        },
+        "scope": {
+          "properties": {
+            "env": {
+              "const": "prod"
+            }
+          },
+          "required": [
+            "env"
+          ],
+          "type": "object"
+        },
+        "version": {
+          "const": 1
+        }
+      },
+      "required": [
+        "active",
+        "name",
+        "scope",
+        "version"
+      ],
+      "type": "object"
+    },
+    "status_code": 201
+  }
+}

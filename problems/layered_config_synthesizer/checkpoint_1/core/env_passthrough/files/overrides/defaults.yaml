@@ -1,0 +1,7 @@
+training:
+  batch_size: 16
+resources:
+  accelerators:
+    - type: l4
+      count: 2
+  world_size: 1

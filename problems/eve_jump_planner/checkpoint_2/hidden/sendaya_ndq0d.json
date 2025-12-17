@@ -1,0 +1,10 @@
+{
+    "start": "Sendaya V - CONCORD Bureau",
+    "end": "N-DQ0D IV - Trust Partners Trading Post",
+    "cases": [
+        {
+            "cloak": true,
+            "expected": "START: Sendaya V - CONCORD Bureau\nUNDOCK\nGO: Sendaya (0.3) -> Doril (-0.0)\nJUMP 9.49 LY: N-DQ0D (95K isotopes)\nDOCK: N-DQ0D IV - Trust Partners Trading Post\nSUMMARY:\n  End Cooldown: 00:02\n  End Fatigue: 00:20\n  Isotopes Used: 95K\n  Time Waiting: 00:00\n  Total LY: 9.49"
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id data.jsonl
+  input_files:
+  - content:
+    - id: 1
+      value: 5.0
+      count: 10
+    - id: 2
+      value: 3.5
+      count: 20.0
+    - id: 3
+      value: 7
+      count: 15
+    file_type: jsonl
+    path: data.jsonl
+expected:
+  files:
+    output.csv:
+    - count: 10
+      id: 1
+      value: 5.0
+    - count: 20
+      id: 2
+      value: 3.5
+    - count: 15
+      id: 3
+      value: 7.0
+  status_code: 0

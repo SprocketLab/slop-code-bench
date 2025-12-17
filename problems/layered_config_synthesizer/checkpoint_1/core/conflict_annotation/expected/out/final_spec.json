@@ -1,0 +1,1 @@
+{"experiment_name":"conflict-stack","resources":{"accelerators":[{"count":1,"type":"a10"}],"profile":"conflict","world_size":4},"training":{"checkpoint":{"mode":"continuous"},"logging":{"level":"DEBUG","sinks":["stderr"]}}}

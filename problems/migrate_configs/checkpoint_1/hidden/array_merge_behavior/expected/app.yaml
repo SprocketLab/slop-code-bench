@@ -1,0 +1,21 @@
+services:
+- api
+- worker
+- scheduler
+features:
+  flags:
+  - new_ui
+  - analytics
+  experimental: true
+  enabled: true
+ports:
+- 8080
+- 9090
+metadata:
+  tags:
+  - production
+  - critical
+  version: 1.0.0
+  owners:
+  - team-a
+  - team-b

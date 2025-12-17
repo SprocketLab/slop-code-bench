@@ -1,0 +1,59 @@
+case:
+  arguments: --output out.csv --key user.age --schema schema.json --on-type-error
+    keep-string inputs.jsonl
+  input_files:
+  - content:
+    - id: 2
+      items:
+      - qty: bad
+        sku: x
+      user:
+        age: 40
+        prefs:
+          a: '1'
+          b: x
+    - id: 1
+      items:
+      - qty: 2
+        sku: y
+      user:
+        age: 20
+        prefs:
+          b: '2'
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: age
+              type: int
+            - name: prefs
+              type:
+                map:
+                  key: string
+                  value: int
+      - name: items
+        type:
+          array:
+            element:
+              struct:
+                fields:
+                - name: sku
+                  type: string
+                - name: qty
+                  type: int
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv: 'id,user,items
+
+      1,"{\"age\":20,\"prefs\":{\"b\":2}}","[{\"sku\":\"y\",\"qty\":2}]"
+
+      2,"{\"age\":40,\"prefs\":{\"a\":1,\"b\":\"x\"}}","[{\"sku\":\"x\",\"qty\":\"bad\"}]"'
+  status_code: 0

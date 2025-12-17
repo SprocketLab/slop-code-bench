@@ -1,0 +1,2 @@
+{"event":"file_updated","file":"deep.json","rules_applied":["merge_deep_structure","replace_deep_value"]}
+{"event":"file_updated","file":"nested.yaml","rules_applied":["merge_deep_structure","rename_deep_key","replace_deep_value"]}

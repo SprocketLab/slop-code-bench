@@ -1,0 +1,50 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json data.csv
+  input_files:
+  - content:
+    - flag: 'true'
+      id: '1'
+    - flag: 'false'
+      id: '2'
+    - flag: 'True'
+      id: '3'
+    - flag: 'False'
+      id: '4'
+    - flag: 'TRUE'
+      id: '5'
+    - flag: 'FALSE'
+      id: '6'
+    - flag: '1'
+      id: '7'
+    - flag: '0'
+      id: '8'
+    file_type: csv
+    path: data.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: flag
+        type: bool
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - flag: true
+      id: 1
+    - flag: false
+      id: 2
+    - flag: true
+      id: 3
+    - flag: false
+      id: 4
+    - flag: true
+      id: 5
+    - flag: false
+      id: 6
+    - flag: true
+      id: 7
+    - flag: false
+      id: 8
+  status_code: 0

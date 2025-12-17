@@ -1,0 +1,3 @@
+clean_cwd=false
+[env]
+FILE_NAME="env_file_name"

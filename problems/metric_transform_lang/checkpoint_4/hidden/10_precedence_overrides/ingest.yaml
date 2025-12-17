@@ -1,0 +1,14 @@
+sources:
+  - name: web
+    inputs: ["data/*.csv"]
+    format: auto
+    schema: WebSale
+    precedence: 10
+    tz: "America/New_York"
+    nulls: ["", "NULL", "N/A"]
+  - name: pos
+    inputs: ["pos.csv"]
+    format: auto
+    schema: BaseSale
+    precedence: 20
+    tz: "America/Los_Angeles"

@@ -1,0 +1,57 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --type-alias-file aliases.json
+    a.csv b.jsonl
+  input_files:
+  - content: 'id,items,event_time,payload
+
+      2,"[{\"sku\":\"x\",\"qty\":1}]",2024-07-01T10:00:00Z,"{\"a\":[1,2],\"b\":\"x\"}"
+
+      '
+    file_type: text
+    path: a.csv
+  - content:
+      aliases:
+        decimal: float
+        myts: timestamp
+        smallint: int
+        uuid: string
+    file_type: json
+    path: aliases.json
+  - content:
+    - event_time: '2024-07-01T09:00:00+01:00'
+      id: 1
+      items:
+      - qty: 2
+        sku: y
+      payload:
+        c: true
+    file_type: jsonl
+    path: b.jsonl
+  - content:
+      columns:
+      - name: id
+        type: INTEGER
+      - name: items
+        type:
+          list:
+            element:
+              struct:
+                fields:
+                - name: sku
+                  type: text
+                - name: qty
+                  type: smallint
+      - name: event_time
+        type: myts
+      - name: payload
+        type: json
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv: 'id,items,event_time,payload
+
+      1,"[{\"sku\":\"y\",\"qty\":2}]",2024-07-01T08:00:00Z,"{\"c\":true}"
+
+      2,"[{\"sku\":\"x\",\"qty\":1}]",2024-07-01T10:00:00Z,"{\"a\":[1,2],\"b\":\"x\"}"'
+  status_code: 0

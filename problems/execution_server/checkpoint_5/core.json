@@ -1,0 +1,249 @@
+{
+  "cache_hit": {
+    "expected": {
+      "output": {
+        "cached": true,
+        "duration": 0.100,
+        "exit_code": 0,
+        "files": {},
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "hello from cache\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "echo 'hello from cache'",
+        "env": {},
+        "files": {},
+        "stdin": "",
+        "timeout": 5
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 2
+  },
+  "cache_miss": {
+    "expected": {
+      "output": {
+        "cached": false,
+        "duration": 10,
+        "exit_code": 0,
+        "files": {},
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "hello from cache\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "echo 'hello from cache'",
+        "env": {},
+        "files": {},
+        "stdin": "",
+        "timeout": 5
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 1
+  },
+  "different_files_cache_miss": {
+    "expected": {
+      "output": {
+        "cached": false,
+        "duration": 10,
+        "exit_code": 0,
+        "files": {},
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "version 2",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat input.txt",
+        "files": {
+          "input.txt": "version 2"
+        }
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 4
+  },
+  "files_cache_miss": {
+    "expected": {
+      "output": {
+        "cached": false,
+        "duration": 10,
+        "exit_code": 0,
+        "files": {},
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "version 1",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "cat input.txt",
+        "files": {
+          "input.txt": "version 1"
+        }
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 3
+  },
+  "final_stats": {
+    "expected": {
+      "output": {
+        "cache": {
+          "hit_rate": "{{ cache.hit_rate }}",
+          "hits": "{{ cache.hits }}",
+          "misses": "{{ cache.misses }}"
+        },
+        "duration": {
+          "average": "{{ duration.average }}",
+          "max": "{{ duration.max }}",
+          "median": "{{ duration.median }}",
+          "min": "{{ duration.min }}",
+          "stddev": "{{ duration.stddev }}"
+        },
+        "ran": "{{ ran }}"
+      },
+      "status_code": 200
+    },
+    "input": {
+      "method": "GET",
+      "path": "/v1/stats/execution"
+    },
+    "order": 8
+  },
+  "force_bypass": {
+    "expected": {
+      "output": {
+        "cached": false,
+        "duration": 10,
+        "exit_code": 0,
+        "files": {},
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "forced\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "echo 'forced'",
+        "force": true
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 6
+  },
+  "force_bypass_updates_cache": {
+    "expected": {
+      "output": {
+        "cached": true,
+        "duration": 10,
+        "exit_code": 0,
+        "files": {},
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "forced\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "echo 'forced'"
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 7
+  },
+  "initial_stats": {
+    "expected": {
+      "output": {
+        "cache": {
+          "hit_rate": null,
+          "hits": 0,
+          "misses": 0
+        },
+        "duration": {
+          "average": null,
+          "max": null,
+          "median": null,
+          "min": null,
+          "stddev": null
+        },
+        "ran": 0
+      },
+      "status_code": 200
+    },
+    "input": {
+      "method": "GET",
+      "path": "/v1/stats/execution"
+    },
+    "order": 0
+  },
+  "force_test_setup": {
+    "expected": {
+      "output": {
+        "cached": false,
+        "duration": 10,
+        "exit_code": 0,
+        "files": {},
+        "id": "UUID",
+        "stderr": "",
+        "stdout": "forced\n",
+        "timed_out": false
+      },
+      "status_code": 201
+    },
+    "input": {
+      "body": {
+        "command": "echo 'forced'"
+      },
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "method": "POST",
+      "path": "/v1/execute"
+    },
+    "order": 5
+  }
+}

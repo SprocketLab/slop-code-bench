@@ -1,0 +1,3 @@
+experiment_name: alpha
+resources:
+  world_size: 4

@@ -1,0 +1,20 @@
+{
+  "arguments": "rules.json configs",
+  "expected_stdout": "",
+  "rules": {
+    "noop": {
+      "type": "replace_value",
+      "key": "services.api.port",
+      "value": 80
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/services/hosts.json",
+      "file_type": "json",
+      "content": "{\n  \"services\": [\n"
+    }
+  ],
+  "status_code": 1,
+  "expected_stderr": "^Error: failed to parse services/hosts\\.json"
+}

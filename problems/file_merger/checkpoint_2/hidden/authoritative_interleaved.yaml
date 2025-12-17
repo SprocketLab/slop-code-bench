@@ -1,0 +1,29 @@
+case:
+  arguments: --output output.csv --key id --schema-strategy authoritative a.csv b.jsonl
+  input_files:
+  - content:
+    - id: '1'
+      value: '100'
+    - id: '3'
+      value: '200'
+    file_type: csv
+    path: a.csv
+  - content:
+    - id: 2
+      value: 150.5
+    - id: 4
+      value: 250.5
+    file_type: jsonl
+    path: b.jsonl
+expected:
+  files:
+    output.csv:
+    - id: 1
+      value: 100.0
+    - id: 2
+      value: 150.5
+    - id: 3
+      value: 200.0
+    - id: 4
+      value: 250.5
+  status_code: 0

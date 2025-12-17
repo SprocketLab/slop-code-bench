@@ -1,0 +1,37 @@
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+}
+
+schema WebSale extends BaseSale {
+  unit: string
+  category: string
+}
+
+pipeline CrossStream using WebSale {
+  sources {
+    web as W,
+    pos as P
+  }
+
+  join W with P
+    on ((W.item == P.item & W.location == P.location) | (W.item == P.item & W.price == P.price))
+    type inner
+    project {
+      W.timestamp as timestamp,
+      W.location  as location,
+      W.item      as item,
+      P.quantity  as pos_qty,
+      W.price * 1.1 as adjusted_price,
+      P.price     as pos_price
+    }
+
+  window(1h)
+  group_by(['location','item'])
+  aggregate sum(adjusted_price) as total_adjusted,
+            sum(pos_qty)        as pos_total,
+            average(pos_price)      as avg_pos_price
+}

@@ -1,0 +1,29 @@
+[
+  {
+    "window_start": "2025-09-14T08:00:00Z",
+    "window_end": "2025-09-14T09:00:00Z",
+    "location": "NYC",
+    "category": "books",
+    "avg": 15.0,
+    "n": 2,
+    "total": 30.0
+  },
+  {
+    "window_start": "2025-09-14T08:00:00Z",
+    "window_end": "2025-09-14T09:00:00Z",
+    "location": "SF",
+    "category": "electronics",
+    "avg": 30.0,
+    "n": 1,
+    "total": 30.0
+  },
+  {
+    "window_start": "2025-09-14T09:00:00Z",
+    "window_end": "2025-09-14T10:00:00Z",
+    "location": "NYC",
+    "category": "books",
+    "avg": 40.0,
+    "n": 1,
+    "total": 40.0
+  }
+]

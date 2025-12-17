@@ -1,0 +1,53 @@
+case:
+  arguments: --output out --key id --partition-by user.country --schema schema.json inputs.jsonl
+  input_files:
+  - content:
+    - id: 3
+      user:
+        name: Charlie
+        country: CA
+    - id: 1
+      user:
+        name: Alice
+        country: US
+    - id: 4
+      user:
+        name: Dave
+        country: CA
+    - id: 2
+      user:
+        name: Bob
+        country: US
+    file_type: jsonl
+    path: inputs.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: name
+              type: string
+            - name: country
+              type: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out/user.country=CA/part-00000.csv: 'id,user
+
+      3,"{\"name\":\"Charlie\",\"country\":\"CA\"}"
+
+      4,"{\"name\":\"Dave\",\"country\":\"CA\"}"
+
+      '
+    out/user.country=US/part-00000.csv: 'id,user
+
+      1,"{\"name\":\"Alice\",\"country\":\"US\"}"
+
+      2,"{\"name\":\"Bob\",\"country\":\"US\"}"
+
+      '
+  status_code: 0

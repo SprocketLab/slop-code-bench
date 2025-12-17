@@ -1,0 +1,58 @@
+mtl_version 1.5
+
+schema BaseSale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+}
+
+schema WebSale extends BaseSale {
+  unit: string
+  category: string
+}
+
+schema Inventory {
+  location: string
+  item: string
+  on_hand: float
+}
+
+pipeline JoinChain using WebSale {
+  sources {
+    web as W,
+    pos as P,
+    inv as I
+  }
+
+  join W with P
+    on (W.item == P.item & W.location == P.location)
+    type inner
+    project {
+      W.timestamp as timestamp,
+      W.location  as location,
+      W.item      as item,
+      W.quantity  as web_qty,
+      P.quantity  as pos_qty
+    }
+    as WP
+
+  join WP with I
+    on (WP.item == I.item & WP.location == I.location)
+    type left
+    project {
+      WP.timestamp as timestamp,
+      WP.location as location,
+      WP.item as item,
+      WP.web_qty as web_qty,
+      WP.pos_qty as pos_qty,
+      I.on_hand as on_hand
+    }
+
+  window(1h)
+  group_by(['location','item'])
+  aggregate sum(web_qty) as web_units,
+            sum(pos_qty) as pos_units,
+            max(on_hand) as max_on_hand
+}

@@ -1,0 +1,77 @@
+{
+  "case": {
+    "body": {
+      "actor": "alice",
+      "decision": "approve",
+      "message": "Accepting with pool size warning - will address later"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "review_billing_v3_alice_approve",
+    "method": "POST",
+    "path": "/v1/proposals/2:review"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "proposal_id": {
+          "const": 2
+        },
+        "name": {
+          "const": "billing"
+        },
+        "draft_version": {
+          "const": 3
+        },
+        "author": {
+          "const": "bob"
+        },
+        "status": {
+          "const": "open"
+        },
+        "tally": {
+          "properties": {
+            "approvals": {
+              "const": 1
+            },
+            "rejections": {
+              "const": 0
+            },
+            "by_actor": {
+              "items": {
+                "properties": {
+                  "actor": {
+                    "const": "alice"
+                  },
+                  "decision": {
+                    "const": "approve"
+                  }
+                },
+                "type": "object"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "approvals",
+            "rejections",
+            "by_actor"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "proposal_id",
+        "name",
+        "draft_version",
+        "author",
+        "status",
+        "tally"
+      ],
+      "type": "object"
+    },
+    "status_code": 200
+  }
+}

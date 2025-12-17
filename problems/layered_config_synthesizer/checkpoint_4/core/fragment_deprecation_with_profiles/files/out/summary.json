@@ -1,0 +1,1 @@
+{"failed":0,"runs":[{"conflicts":0,"notes":"deprecated frag","run_id":"frag_a","status":"ok","warnings":1},{"conflicts":0,"notes":"deprecated frag","run_id":"frag_b","status":"ok","warnings":1}],"succeeded":2,"total_runs":2}

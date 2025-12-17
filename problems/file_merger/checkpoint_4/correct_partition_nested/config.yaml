@@ -1,0 +1,8 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+verifiers:
+  success:
+    type: status_code
+    value: 0

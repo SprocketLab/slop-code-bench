@@ -1,0 +1,6 @@
+{
+  "services": [
+    {"name": "api", "port": 3000},
+    {"name": "worker", "port": 3001}
+  ]
+}

@@ -1,0 +1,4 @@
+START: Jita IV - Moon 4 - Caldari Navy Assembly Plant
+UNDOCK
+GO: Jita (0.9) -> Ikuchi (1.0) -> Ansila (0.9) -> Hykkota (0.8) -> Ahbazon (0.4) -> Shera (0.6) -> Gensela (0.7) -> Dresi (0.6) -> Aphend (0.6) -> Romi (0.7) -> Bhizheba (1.0) -> Amarr (1.0)
+DONE: 00:04

@@ -1,0 +1,11 @@
+{
+    "arguments": [
+        "--sql",
+        "query.sql",
+        "--data",
+        "test_data"
+    ],
+    "query": "WITH high_earners AS (\n    SELECT * FROM employees WHERE salary > 85000\n),\nmanagers AS (\n    SELECT DISTINCT manager_id FROM employees WHERE manager_id IS NOT NULL\n)\nSELECT\n    e.name,\n    e.department,\n    e.salary\nFROM high_earners e\nWHERE e.id IN (SELECT manager_id FROM managers)\nORDER BY e.salary DESC",
+    "expected": "| name  | department  | salary |\n| ----- | ----------- | ------ |\n| Alice | Engineering | 120000 |\n| Frank | Sales       | 110000 |\n| Bob   | Engineering | 90000  |",
+    "input_data": "data.json"
+}

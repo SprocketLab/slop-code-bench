@@ -1,0 +1,30 @@
+case:
+  body:
+    activate: true
+    notes: missing grammar
+  headers:
+    content-type: application/json; charset=utf-8
+  id: missing_grammar_field
+  method: POST
+  path: /environments/local-sim/versions
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            type: string
+            const: INVALID_INPUT
+          message:
+            type: string
+          field_path:
+            type: string
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 400

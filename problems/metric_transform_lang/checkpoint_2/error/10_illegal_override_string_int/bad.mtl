@@ -1,0 +1,14 @@
+schema Base {
+  timestamp: timestamp
+  item_code: string
+  price: float
+}
+
+schema Bad extends Base {
+  # Illegal override: string -> int
+  item_code: int
+}
+
+pipeline P using Bad {
+  aggregate count(*) as n
+}

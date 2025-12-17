@@ -1,0 +1,18 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline RoundFunction using Sale {
+  apply(round(price), price_round0)
+  apply(round(price, 1), price_round1)
+  apply(round(quantity, 2), qty_round2)
+  aggregate sum(price_round0) as total_price_round0,
+            sum(price_round1) as total_price_round1,
+            sum(qty_round2) as total_qty_round2
+}

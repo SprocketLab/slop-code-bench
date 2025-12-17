@@ -1,0 +1,9 @@
+id: aggregates
+files:
+  query.sql: "SELECT \n  COUNT(*) as total_users,\n  COUNT(car) as users_with_cars,\n\
+    \  MIN(id) as min_id,\n  MAX(id) as max_id\nFROM users WHERE country = 'AR'\n"
+expected: '|   total_users |   users_with_cars |   min_id |   max_id |
+
+  |---------------|-------------------|----------|----------|
+
+  |            11 |                11 |        1 |       50 |'

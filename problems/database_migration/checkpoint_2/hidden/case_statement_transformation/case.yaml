@@ -1,0 +1,17 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Add order size category\",\n\
+    \  \"operations\": [\n    {\n      \"type\": \"add_column\",\n      \"table\"\
+    : \"orders\",\n      \"column\": {\n        \"name\": \"size_category\",\n   \
+    \     \"type\": \"TEXT\"\n      }\n    },\n    {\n      \"type\": \"transform_data\"\
+    ,\n      \"table\": \"orders\",\n      \"transformations\": [\n        {\n   \
+    \       \"column\": \"size_category\",\n          \"expression\": \"CASE WHEN\
+    \ total < 50 THEN 'small' WHEN total < 200 THEN 'medium' ELSE 'large' END\"\n\
+    \        }\n      ]\n    }\n  ]\n}"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

@@ -1,0 +1,16 @@
+{
+    "case": {
+        "arguments": [
+            "recipe",
+            "'Naga'",
+            "-me",
+            "5",
+            "--sde",
+            "{{static:sde_dir}}",
+            "--display-waste"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

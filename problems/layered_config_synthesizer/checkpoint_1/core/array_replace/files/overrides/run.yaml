@@ -1,0 +1,7 @@
+training:
+  callbacks:
+    - tensorboard
+resources:
+  accelerators:
+    - type: l4
+      count: 8

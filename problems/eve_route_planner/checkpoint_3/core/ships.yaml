@@ -1,0 +1,38 @@
+max_isk_per_ehp: 1000
+ships:
+  Occator:
+    type: Deep Space Transport
+    align: 10
+    top_speed: 300
+    warp_speed: 5.0
+    cargo_size: 60000
+    ehp: 60000
+  Charon:
+    type: Freighter
+    align: 60
+    top_speed: 100
+    warp_speed: 1.5
+    cargo_size: 1000000
+    ehp: 200000
+  Rhea:
+    type: Freighter
+    align: 60
+    top_speed: 100
+    warp_speed: 1.5
+    cargo_size: 300000
+    ehp: 600000
+  Prowler:
+    type: Blockade Runner
+    align: 2.1
+    top_speed: 250
+    warp_speed: 10.0
+    cargo_size: 5000
+    ehp: 10000
+times:
+  dock: 5
+  gate: 1
+  move_cargo: 10
+
+
+max_isk_per_ehp: 350
+min_isk_per_jump: 1000000

@@ -1,0 +1,21 @@
+{
+    "case": {
+        "arguments": [
+            "Turnur",
+            "Alsavoinon",
+            "--align",
+            "60",
+            "--top-speed",
+            "100",
+            "--warp-speed",
+            "1.5",
+            "--dock-time",
+            "5",
+            "--gate-time",
+            "3600"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

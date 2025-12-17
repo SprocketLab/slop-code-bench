@@ -1,0 +1,17 @@
+loader:
+  type: nested
+  include: "*"
+  patterns: ["**/*"]
+
+verifiers:
+  exit_code:
+    type: status_code
+    value: null
+  stderr_line:
+    type: regex_match
+    result_attr: stderr
+    pattern: ".+"
+
+normalizers: []
+expected_normalizers: []
+

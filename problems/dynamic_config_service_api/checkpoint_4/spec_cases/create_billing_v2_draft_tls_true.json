@@ -1,0 +1,71 @@
+{
+  "case": {
+    "body": {
+      "activate": false,
+      "config": {
+        "db": {
+          "pool": 6,
+          "tls": true
+        }
+      },
+      "scope": {
+        "app": "billing",
+        "env": "prod",
+        "tenant": "acme"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_billing_v2_draft_tls_true",
+    "method": "POST",
+    "path": "/v1/configs/billing"
+  },
+  "expected": {
+    "output": {
+      "properties": {
+        "active": {
+          "const": false
+        },
+        "name": {
+          "const": "billing"
+        },
+        "scope": {
+          "properties": {
+            "app": {
+              "const": "billing"
+            },
+            "env": {
+              "const": "prod"
+            },
+            "tenant": {
+              "const": "acme"
+            }
+          },
+          "required": [
+            "env",
+            "tenant",
+            "app"
+          ],
+          "type": "object"
+        },
+        "status": {
+          "const": "draft"
+        },
+        "version": {
+          "minimum": 2,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "scope",
+        "version",
+        "status",
+        "active"
+      ],
+      "type": "object"
+    },
+    "status_code": 201
+  }
+}

@@ -1,0 +1,3 @@
+expected:
+  status_code: 5
+  stderr: ERROR:config_error:.*precedence.*

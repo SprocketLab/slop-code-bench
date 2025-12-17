@@ -1,0 +1,42 @@
+case:
+  arguments: --output output.csv --key name a.csv b.csv c.csv d.csv e.csv
+  input_files:
+  - content:
+    - name: Eve
+      score: '50'
+    file_type: csv
+    path: a.csv
+  - content:
+    - name: Bob
+      score: '80'
+    file_type: csv
+    path: b.csv
+  - content:
+    - name: Alice
+      score: '90'
+    file_type: csv
+    path: c.csv
+  - content:
+    - name: David
+      score: '70'
+    file_type: csv
+    path: d.csv
+  - content:
+    - name: Charlie
+      score: '85'
+    file_type: csv
+    path: e.csv
+expected:
+  files:
+    output.csv:
+    - name: Alice
+      score: 90
+    - name: Bob
+      score: 80
+    - name: Charlie
+      score: 85
+    - name: David
+      score: 70
+    - name: Eve
+      score: 50
+  status_code: 0

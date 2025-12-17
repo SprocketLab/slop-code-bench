@@ -1,0 +1,10 @@
+[
+  {
+    "window_start": "2024-01-01T15:00:00Z",
+    "window_end": "2024-01-01T16:00:00Z",
+    "location": "NYC",
+    "item": "apple",
+    "web_rev": 1.5,
+    "pos_total": 12.0
+  }
+]

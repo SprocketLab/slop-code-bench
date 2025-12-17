@@ -1,0 +1,11 @@
+{
+  "yaml": {
+    "pattern": "extends"
+  },
+  "json": {
+    "pattern": "extends"
+  },
+  "toml": {
+    "pattern": "import.base"
+  }
+}

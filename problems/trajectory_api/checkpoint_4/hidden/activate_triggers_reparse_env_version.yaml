@@ -1,0 +1,21 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: activate_triggers_reparse_env_version
+  method: GET
+  path: /trajectories/{{store.hidden_create_for_reparse}}
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.hidden_create_for_reparse}}"
+      environment:
+        const: reparse-env
+      environment_version:
+        const: 1
+    required:
+      - id
+      - environment
+      - environment_version
+    type: object
+  status_code: 200

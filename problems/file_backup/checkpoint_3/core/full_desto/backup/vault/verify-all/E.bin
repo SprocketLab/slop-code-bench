@@ -1,0 +1,74 @@
+Binary file content simulation - this would normally contain actual binary data.
+The following represents a serialized data structure with metadata headers.
+
+MAGIC_HEADER: 0x42494E46415259
+VERSION: 1.0
+CREATED: 2024-01-15T10:30:45Z
+AUTHOR: DataGenerator v2.1.0
+
+[DATA_BLOCK_START]
+Block 1: Configuration data
+{
+  "database_config": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "production_db",
+    "username": "admin_user",
+    "password_encrypted": "aes256:encrypted_password_hash_here",
+    "ssl_mode": "require",
+    "connection_timeout": 30,
+    "max_connections": 100,
+    "pool_size": 20
+  },
+  "api_settings": {
+    "rate_limit": 1000,
+    "timeout": 30,
+    "retry_attempts": 3,
+    "backoff_factor": 2.0,
+    "auth_method": "bearer_token",
+    "endpoints": {
+      "users": "/api/v1/users",
+      "products": "/api/v1/products",
+      "orders": "/api/v1/orders",
+      "analytics": "/api/v1/analytics"
+    }
+  },
+  "logging": {
+    
+    "format": "json",
+    "outputs": ["file", "console"],
+    "file_path": "/var/log/application.log",
+    "max_file_size": "100MB",
+    "backup_count": 5,
+    "compression": "gzip"
+  }
+}
+
+Block 2: User session data
+SessionID: sess_abc123def456ghi789
+UserID: user_12345
+StartTime: 2024-01-15T09:15:30Z
+LastActivity: 2024-01-15T10:28:45Z
+IPAddress: 192.168.1.100
+UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+Actions: [
+  {"timestamp": "2024-01-15T09:15:30Z", "action": "login", "resource": "/auth/login"},
+  {"timestamp": "2024-01-15T09:16:12Z", "action": "view", "resource": "/dashboard"},
+  {"timestamp": "2024-01-15T09:18:45Z", "action": "search", "resource": "/products/search?q=laptop"},
+  {"timestamp": "2024-01-15T09:22:30Z", "action": "view", "resource": "/products/12345"},
+  {"timestamp": "2024-01-15T09:25:15Z", "action": "add_to_cart", "resource": "/cart/add"},
+  {"timestamp": "2024-01-15T09:28:30Z", "action": "checkout", "resource": "/checkout"},
+  {"timestamp": "2024-01-15T10:15:20Z", "action": "view", "resource": "/orders/67890"},
+  {"timestamp": "2024-01-15T10:28:45Z", "action": "logout", "resource": "/auth/logout"}
+]
+
+Block 3: Performance metrics
+CPU_Usage: [45.2, 52.1, 48.7, 61.3, 55.8, 49.2, 53.6, 47.9, 51.4, 58.2]
+Memory_Usage: [2.1, 2.3, 2.2, 2.5, 2.4, 2.2, 2.3, 2.1, 2.2, 2.4]
+Disk_IO: [150, 180, 165, 210, 195, 175, 185, 160, 170, 190]
+Network_IO: [1024, 1536, 1280, 2048, 1792, 1408, 1664, 1152, 1472, 1920]
+Response_Times: [120, 95, 110, 85, 105, 98, 112, 88, 102, 92]
+
+[DATA_BLOCK_END]
+CHECKSUM: 0x7f8a9b2c3d4e5f6a1b2c3d4e5f6a7b8c
+EOF_MARKER: 0xFFFFFFFF

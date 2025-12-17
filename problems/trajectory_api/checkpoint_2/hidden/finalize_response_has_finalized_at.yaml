@@ -1,0 +1,50 @@
+case:
+  body:
+    metrics:
+      completed: true
+      score: 0.95
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"2"
+  id: finalize_response_has_finalized_at
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_response_validation}}/finalize
+expected:
+  output:
+    properties:
+      id:
+        const: "{{store.hidden_create_for_response_validation}}"
+      status:
+        const: finalized
+      rev:
+        const: 3
+      steps:
+        const: 4
+      final_output_tokens:
+        const: 50
+      final_cost:
+        const: 0.005
+      metrics:
+        properties:
+          completed:
+            const: true
+          score:
+            const: 0.95
+        required:
+          - completed
+          - score
+        type: object
+      finalized_at:
+        type: string
+        pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+    required:
+      - id
+      - status
+      - rev
+      - steps
+      - final_output_tokens
+      - final_cost
+      - metrics
+      - finalized_at
+    type: object
+  status_code: 200

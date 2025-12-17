@@ -1,0 +1,135 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "rule_id": "go_fix",
+      "file": "app.go",
+      "language": "go",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 21
+      },
+      "match": "fmt.Println(\"hello\")",
+      "captures": {
+        "$MSG": {
+          "text": "\"hello\"",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 13
+              },
+              "end": {
+                "line": 1,
+                "col": 20
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "event": "fix",
+      "rule_id": "go_fix",
+      "file": "app.go",
+      "language": "go",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 21
+      },
+      "replacement": "log.Println(\"hello\")",
+      "applied": true,
+      "skipped_reason": null
+    },
+    {
+      "rule_id": "rust_fix",
+      "file": "main.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 17
+      },
+      "match": "println!(\"test\")",
+      "captures": {
+        "$ARG": {
+          "text": "\"test\"",
+          "ranges": [
+            {
+              "start": {
+                "line": 1,
+                "col": 10
+              },
+              "end": {
+                "line": 1,
+                "col": 16
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "event": "fix",
+      "rule_id": "rust_fix",
+      "file": "main.rs",
+      "language": "rust",
+      "start": {
+        "line": 1,
+        "col": 1
+      },
+      "end": {
+        "line": 1,
+        "col": 17
+      },
+      "replacement": "eprintln!(\"test\")",
+      "applied": true,
+      "skipped_reason": null
+    }
+  ],
+  "expected_files": {
+    "proj/app.go": "log.Println(\"hello\")",
+    "proj/main.rs": "eprintln!(\"test\")"
+  },
+  "input_files": {
+    "proj/app.go": "fmt.Println(\"hello\")",
+    "proj/main.rs": "println!(\"test\")"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "eprintln!($ARG)"
+      },
+      "id": "rust_fix",
+      "kind": "pattern",
+      "languages": [
+        "rust"
+      ],
+      "pattern": "println!($ARG)"
+    },
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "log.Println($MSG)"
+      },
+      "id": "go_fix",
+      "kind": "pattern",
+      "languages": [
+        "go"
+      ],
+      "pattern": "fmt.Println($MSG)"
+    }
+  ]
+}

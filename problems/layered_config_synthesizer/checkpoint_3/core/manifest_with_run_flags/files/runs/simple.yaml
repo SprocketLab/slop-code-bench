@@ -1,0 +1,5 @@
+experiment_name: simple
+resources:
+  world_size: 3
+training:
+  learning_rate: 0.01

@@ -1,0 +1,7 @@
+experiment_name: override-run
+training:
+  optimizer: adam
+resources:
+  profile: override
+  world_size: 1
+logging: "{{static:logging_defaults}}"

@@ -1,0 +1,76 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json input1.csv input2.csv
+  input_files:
+  - content:
+    - amount: '7.25'
+      id: '2'
+      ts: '2024-07-01T12:30:00Z'
+    - amount: '1'
+      id: '4'
+      ts: '2024-07-02T00:00:00Z'
+    file_type: csv
+    path: input2.csv
+  - content:
+    - amount: '10.5'
+      extra: foo
+      id: '1'
+      is_active: true
+      note: hi
+      ts: '2024-07-01T12:00:00Z'
+    - amount: '3'
+      extra: bar
+      id: '2'
+      is_active: false
+      note: He said "ok"
+      ts: '2024-07-01T13:00:00+02:00'
+    - amount: '8'
+      extra: baz
+      id: '3'
+      is_active: false
+      note: note with comma, inside
+      ts: '2024-07-01T13:00:00'
+    file_type: csv
+    path: input1.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: ts
+        type: timestamp
+      - name: amount
+        type: float
+      - name: note
+        type: string
+      - name: is_active
+        type: bool
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    output.csv:
+    - amount: 10.5
+      id: 1
+      is_active: true
+      note: hi
+      ts: '2024-07-01T12:00:00Z'
+    - amount: 3.0
+      id: 2
+      is_active: false
+      note: He said "ok"
+      ts: '2024-07-01T11:00:00Z'
+    - amount: 7.25
+      id: 2
+      is_active: null
+      note: null
+      ts: '2024-07-01T12:30:00Z'
+    - amount: 8.0
+      id: 3
+      is_active: false
+      note: note with comma, inside
+      ts: '2024-07-01T13:00:00Z'
+    - amount: 1.0
+      id: 4
+      is_active: null
+      note: null
+      ts: '2024-07-02T00:00:00Z'
+  status_code: 0

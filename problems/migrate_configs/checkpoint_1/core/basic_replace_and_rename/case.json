@@ -1,0 +1,15 @@
+{
+  "arguments": "rules.json configs",
+  "rules": {
+    "prod_env": {
+      "type": "replace_value",
+      "key": "environment",
+      "value": "production"
+    },
+    "rename_db_key": {
+      "type": "rename_key",
+      "old_key": "db.hostname",
+      "new_key": "db.host"
+    }
+  }
+}

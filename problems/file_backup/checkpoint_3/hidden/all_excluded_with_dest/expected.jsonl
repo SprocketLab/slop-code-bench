@@ -1,0 +1,16 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"all-excluded","kind":"daily","now_local":"2025-01-15T09:00:00Z"}
+{"event":"JOB_STARTED","exclude_count":1,"job_id":"all-excluded"}
+{"event":"STRATEGY_SELECTED","job_id":"all-excluded","kind":"verify"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"A/B/C/D.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"A/B/E.bin","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"A/F/G.bin","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"A/F/H.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"A/I.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"A/J.bin","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"A/K.html","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"A/L.md","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"M.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"N.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"all-excluded","path":"O.md","pattern":"**/*"}
+{"event":"JOB_COMPLETED","job_id":"all-excluded","selected":0,"excluded":11,"files_skipped_unchanged":0,"dest_state_files":0}

@@ -1,0 +1,11 @@
+service: api
+region: us-east-1
+metadata:
+  endpoint: https://api.prod.internal
+  hostname: api-dev.internal
+logging:
+  level: debug
+  format: json
+  handlers:
+  - console
+  - file

@@ -1,0 +1,22 @@
+{
+  "arguments": "rules.json configs",
+  "status_code": 1,
+  "expected_stdout": "{\"event\":\"validation_failed\",\"file\":\"app.yaml\",\"rule\":\"validate_service_name\",\"error\":\"value 'MyService123' at key 'service.name' does not match pattern: ^[a-z][a-z0-9-]*$\"}\\n",
+  "rules": {
+    "validate_service_name": {
+      "type": "validate_value",
+      "scope": "validation",
+      "key": "service.name",
+      "constraint": {
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    }
+  },
+  "input_files": [
+    {
+      "path": "configs/app.yaml",
+      "file_type": "yaml",
+      "content": "service:\\n  name: MyService123\\n"
+    }
+  ]
+}

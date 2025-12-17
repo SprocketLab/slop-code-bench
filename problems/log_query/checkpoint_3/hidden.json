@@ -1,0 +1,799 @@
+{
+  "05_intersecting_with_null_join_key": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.req = b.req'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "req": "r1"},
+            {"id": 2, "req": null},
+            {"id": 3, "req": "r2"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "x1", "req": "r1"},
+            {"rid": "x2", "req": null},
+            {"rid": "x3", "req": "r2"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "x1"},
+        {"a.id": 2, "b.rid": "x2"},
+        {"a.id": 3, "b.rid": "x3"}
+      ],
+      "status_code": 0
+    }
+  },
+  "06_preserving_left_no_match": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.status FROM a CONFLATE PRESERVING LEFT b UPON a.req = b.req'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "req": "r1"},
+            {"id": 2, "req": "r2"},
+            {"id": 3, "req": "r3"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"status": 200, "req": "r1"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.status": 200},
+        {"a.id": 2, "b.status": null},
+        {"a.id": 3, "b.status": null}
+      ],
+      "status_code": 0
+    }
+  },
+  "07_preserving_right_unmatched_right": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.status FROM a CONFLATE PRESERVING RIGHT b UPON a.req = b.req'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "req": "r1"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"status": 200, "req": "r1"},
+            {"status": 404, "req": "r2"},
+            {"status": 500, "req": "r3"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.status": 200},
+        {"a.id": null, "b.status": 404},
+        {"a.id": null, "b.status": 500}
+      ],
+      "status_code": 0
+    }
+  },
+  "08_preserving_both_full_outer": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.status FROM a CONFLATE PRESERVING BOTH b UPON a.req = b.req'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "req": "r1"},
+            {"id": 2, "req": "r2"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"status": 200, "req": "r1"},
+            {"status": 404, "req": "r3"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.status": 200},
+        {"a.id": 2, "b.status": null},
+        {"a.id": null, "b.status": 404}
+      ],
+      "status_code": 0
+    }
+  },
+  "09_multi_predicate_join": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.x = b.x AND a.y = b.y'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "x": 1, "y": 2},
+            {"id": 2, "x": 1, "y": 3},
+            {"id": 3, "x": 2, "y": 2}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "x": 1, "y": 2},
+            {"rid": "r2", "x": 1, "y": 4},
+            {"rid": "r3", "x": 2, "y": 2}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "r1"},
+        {"a.id": 3, "b.rid": "r3"}
+      ],
+      "status_code": 0
+    }
+  },
+  "10_join_on_boolean_values": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.status FROM a CONFLATE INTERSECTING b UPON a.active = b.enabled'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "active": true},
+            {"id": 2, "active": false},
+            {"id": 3, "active": true}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"status": 200, "enabled": true},
+            {"status": 503, "enabled": false}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.status": 200},
+        {"a.id": 2, "b.status": 503},
+        {"a.id": 3, "b.status": 200}
+      ],
+      "status_code": 0
+    }
+  },
+  "11_join_with_array_equality": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.tags = b.tags'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "tags": ["x", "y"]},
+            {"id": 2, "tags": ["x"]},
+            {"id": 3, "tags": ["y", "x"]}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "tags": ["x", "y"]},
+            {"rid": "r2", "tags": ["x"]},
+            {"rid": "r3", "tags": ["z"]}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "r1"},
+        {"a.id": 2, "b.rid": "r2"}
+      ],
+      "status_code": 0
+    }
+  },
+  "12_join_with_object_equality": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.meta = b.meta'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "meta": {"k": 1, "v": 2}},
+            {"id": 2, "meta": {"k": 1}}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "meta": {"v": 2, "k": 1}},
+            {"rid": "r2", "meta": {"k": 2}}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "r1"}
+      ],
+      "status_code": 0
+    }
+  },
+  "13_join_on_dotted_paths": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.http.status = b.status'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "http": {"status": 200}},
+            {"id": 2, "http": {"status": 500}},
+            {"id": 3, "http": null}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "status": 200},
+            {"rid": "r2", "status": 404}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "r1"}
+      ],
+      "status_code": 0
+    }
+  },
+  "14_alias_star_expansion": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.*, b.status FROM a CONFLATE INTERSECTING b UPON a.req = b.req'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "req": "r1", "bytes": 100}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"status": 200, "req": "r1"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "a.req": "r1", "a.bytes": 100, "b.status": 200}
+      ],
+      "status_code": 0
+    }
+  },
+  "15_both_alias_star_expansion": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.*, b.* FROM a CONFLATE INTERSECTING b UPON a.key = b.key'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "key": "k1"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "key": "k1"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "a.key": "k1", "b.rid": "r1", "b.key": "k1"}
+      ],
+      "status_code": 0
+    }
+  },
+  "16_multiple_matches_anchor_first_order": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.req = b.req'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "req": "r1"},
+            {"id": 2, "req": "r2"},
+            {"id": 3, "req": "r1"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "x1", "req": "r1"},
+            {"rid": "x2", "req": "r1"},
+            {"rid": "x3", "req": "r2"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "x1"},
+        {"a.id": 1, "b.rid": "x2"},
+        {"a.id": 2, "b.rid": "x3"},
+        {"a.id": 3, "b.rid": "x1"},
+        {"a.id": 3, "b.rid": "x2"}
+      ],
+      "status_code": 0
+    }
+  },
+  "17_two_conflates_chain": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --source c=c.ndjson --query 'SELECT a.id, b.bid, c.cid FROM a CONFLATE INTERSECTING b UPON a.key = b.key CONFLATE INTERSECTING c UPON b.key2 = c.key2'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "key": "k1"},
+            {"id": 2, "key": "k2"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"bid": 10, "key": "k1", "key2": "k2a"},
+            {"bid": 20, "key": "k2", "key2": "k2b"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "c.ndjson",
+          "content": [
+            {"cid": 100, "key2": "k2a"},
+            {"cid": 200, "key2": "k2c"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.bid": 10, "c.cid": 100}
+      ],
+      "status_code": 0
+    }
+  },
+  "18_conflate_with_group_by": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.service, COUNT(*) AS n FROM a CONFLATE INTERSECTING b UPON a.req = b.req GROUP BY a.service'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"service": "api", "req": "r1"},
+            {"service": "api", "req": "r2"},
+            {"service": "web", "req": "r3"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"req": "r1"},
+            {"req": "r2"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.service": "api", "n": 2}
+      ],
+      "status_code": 0
+    }
+  },
+  "19_conflate_with_aggregates": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.service, SUM(b.bytes) AS total FROM a CONFLATE INTERSECTING b UPON a.req = b.req GROUP BY a.service'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"service": "api", "req": "r1"},
+            {"service": "api", "req": "r2"},
+            {"service": "web", "req": "r3"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"req": "r1", "bytes": 100},
+            {"req": "r2", "bytes": 200},
+            {"req": "r3", "bytes": 50}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.service": "api", "total": 300},
+        {"a.service": "web", "total": 50}
+      ],
+      "status_code": 0
+    }
+  },
+  "20_join_type_mismatch_no_match": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.key = b.key'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "key": 100},
+            {"id": 2, "key": "200"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "key": "100"},
+            {"rid": "r2", "key": 200}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "21_preserving_left_with_where": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.status FROM a WHERE a.active = true CONFLATE PRESERVING LEFT b UPON a.req = b.req'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "req": "r1", "active": true},
+            {"id": 2, "req": "r2", "active": false},
+            {"id": 3, "req": "r3", "active": true}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"req": "r1", "status": 200}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.status": 200},
+        {"a.id": 3, "b.status": null}
+      ],
+      "status_code": 0
+    }
+  },
+  "22_preserving_both_no_matches": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE PRESERVING BOTH b UPON a.key = b.key'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "key": "k1"},
+            {"id": 2, "key": "k2"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "key": "k3"},
+            {"rid": "r2", "key": "k4"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": null},
+        {"a.id": 2, "b.rid": null},
+        {"a.id": null, "b.rid": "r1"},
+        {"a.id": null, "b.rid": "r2"}
+      ],
+      "status_code": 0
+    }
+  },
+  "23_empty_left_preserving_right": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a WHERE a.id > 100 CONFLATE PRESERVING RIGHT b UPON a.key = b.key'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "key": "k1"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "key": "k1"},
+            {"rid": "r2", "key": "k2"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": null, "b.rid": "r1"},
+        {"a.id": null, "b.rid": "r2"}
+      ],
+      "status_code": 0
+    }
+  },
+  "24_conflate_with_as_alias": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id AS aid, b.rid AS bid FROM a CONFLATE INTERSECTING b UPON a.key = b.key'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "key": "k1"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "key": "k1"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"aid": 1, "bid": "r1"}
+      ],
+      "status_code": 0
+    }
+  },
+  "25_join_on_number_zero": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.val = b.val'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "val": 0},
+            {"id": 2, "val": 1}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "val": 0},
+            {"rid": "r2", "val": 2}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "r1"}
+      ],
+      "status_code": 0
+    }
+  },
+  "26_join_on_negative_numbers": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.val = b.val'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "val": -10},
+            {"id": 2, "val": 5}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "val": -10},
+            {"rid": "r2", "val": -5}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "r1"}
+      ],
+      "status_code": 0
+    }
+  },
+  "27_join_empty_strings": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE INTERSECTING b UPON a.str = b.str'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "str": ""},
+            {"id": 2, "str": "nonempty"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "str": ""},
+            {"rid": "r2", "str": "other"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "r1"}
+      ],
+      "status_code": 0
+    }
+  },
+  "28_three_way_conflate": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --source c=c.ndjson --query 'SELECT a.id, b.bid, c.cid FROM a CONFLATE INTERSECTING b UPON a.k1 = b.k1 CONFLATE INTERSECTING c UPON a.k2 = c.k2'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "k1": "x", "k2": "y"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"bid": 10, "k1": "x"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "c.ndjson",
+          "content": [
+            {"cid": 100, "k2": "y"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.bid": 10, "c.cid": 100}
+      ],
+      "status_code": 0
+    }
+  },
+  "29_conflate_preserving_left_multiple_matches": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.rid FROM a CONFLATE PRESERVING LEFT b UPON a.key = b.key'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "key": "k1"},
+            {"id": 2, "key": "k2"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "key": "k1"},
+            {"rid": "r2", "key": "k1"},
+            {"rid": "r3", "key": "k3"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.rid": "r1"},
+        {"a.id": 1, "b.rid": "r2"},
+        {"a.id": 2, "b.rid": null}
+      ],
+      "status_code": 0
+    }
+  },
+  "30_unique_after_conflate": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.service, UNIQUE(b.host) AS hosts FROM a CONFLATE INTERSECTING b UPON a.req = b.req GROUP BY a.service'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"service": "api", "req": "r1"},
+            {"service": "api", "req": "r2"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"req": "r1", "host": "h1"},
+            {"req": "r1", "host": "h2"},
+            {"req": "r2", "host": "h1"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.service": "api", "hosts": ["h1", "h2"]}
+      ],
+      "status_code": 0
+    }
+  }
+}

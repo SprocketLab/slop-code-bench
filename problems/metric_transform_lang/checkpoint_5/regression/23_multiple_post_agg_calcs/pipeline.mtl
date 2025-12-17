@@ -1,0 +1,15 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  price: float
+}
+
+pipeline MultiPost using Sale {
+  window(1h)
+  aggregate sum(price) as total, count(*) as n
+
+  # Test lexicographic ordering: output must be a_metric, m_metric, z_metric
+  calc z_metric = total * 2.0 : float @stage(post_agg)
+  calc a_metric = total + 10.0 : float @stage(post_agg)
+  calc m_metric = total - 5.0 : float @stage(post_agg)
+}

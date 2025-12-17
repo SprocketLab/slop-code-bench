@@ -1,0 +1,17 @@
+{
+  "name": "migrate-demo",
+  "environment": "development",
+  "region": "us-west-2",
+  "db": {
+    "hostname": "localhost",
+    "port": 5432
+  },
+  "metadata": {
+    "owner": "core-team",
+    "region": "us-east-1",
+    "tier": "beta"
+  },
+  "features": {
+    "beta": false
+  }
+}

@@ -1,0 +1,11 @@
+mtl_version 1.5
+schema Event {
+  timestamp: timestamp
+  type: string
+  value: float
+}
+
+pipeline MixedFormats using Event {
+  group_by(['type'])
+  aggregate sum(value) as total, count(*) as n
+}

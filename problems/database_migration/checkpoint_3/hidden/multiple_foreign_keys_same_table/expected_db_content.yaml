@@ -1,0 +1,37 @@
+tables:
+  departments:
+    columns:
+    - id
+    - name
+    rows:
+    - id: 1
+      name: Engineering
+    - id: 2
+      name: Sales
+  locations:
+    columns:
+    - id
+    - city
+    - country
+    rows:
+    - id: 1
+      city: Boston
+      country: USA
+    - id: 2
+      city: London
+      country: UK
+  employees:
+    columns:
+    - id
+    - name
+    - department_id
+    - location_id
+    rows:
+    - id: 1
+      name: Alice
+      department_id: 1
+      location_id: 1
+    - id: 2
+      name: Bob
+      department_id: 2
+      location_id: 2

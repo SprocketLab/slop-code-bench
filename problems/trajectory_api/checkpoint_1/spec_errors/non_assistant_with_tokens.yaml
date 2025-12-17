@@ -1,0 +1,40 @@
+case:
+  body:
+    date: "2025-10-12T00:00:00Z"
+    task: cot_math_gsm8k
+    environment: local-sim
+    model: gpt-x-pro
+    framework: my-agent-v2
+    metrics: {}
+    trajectory:
+      - role: user
+        content: Hello
+        input_tokens: 5
+        output_tokens: 10
+        cost: 0.001
+  headers:
+    content-type: application/json; charset=utf-8
+  id: non_assistant_with_tokens
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            type: string
+            const: INVALID_INPUT
+          message:
+            type: string
+          field_path:
+            const: trajectory[0].input_tokens
+        required:
+        - code
+        - message
+        - field_path
+        type: object
+    required:
+    - error
+    type: object
+  status_code: 400

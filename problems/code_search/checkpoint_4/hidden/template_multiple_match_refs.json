@@ -1,0 +1,53 @@
+{
+  "arguments": "proj --rules rules.json --dry-run",
+  "expected": [
+    {
+      "end": {
+        "col": 14,
+        "line": 1
+      },
+      "file": "code.py",
+      "language": "python",
+      "match": "return 42",
+      "rule_id": "duplicate_match",
+      "start": {
+        "col": 5,
+        "line": 1
+      }
+    },
+    {
+      "applied": false,
+      "end": {
+        "col": 14,
+        "line": 1
+      },
+      "event": "fix",
+      "file": "code.py",
+      "language": "python",
+      "replacement": "# OLD: return 42\n    # NEW: return 42",
+      "rule_id": "duplicate_match",
+      "skipped_reason": null,
+      "start": {
+        "col": 5,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/code.py": "    return 42"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "# OLD: $MATCH\n    # NEW: $MATCH"
+      },
+      "id": "duplicate_match",
+      "kind": "selector",
+      "languages": [
+        "python"
+      ],
+      "selector": "return_statement"
+    }
+  ]
+}

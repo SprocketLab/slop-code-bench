@@ -1,0 +1,2 @@
+{"file": "input.csv", "line": 3, "reason_code": "PARSE_TYPE_MISMATCH", "reason": "Failed to parse 'abc' as float", "raw": "2025-09-14T08:05:00Z,abc", "ts_iso": "2025-09-14T08:05:00Z", "row_hash": "PLACEHOLDER"}
+{"file": "input.csv", "line": 4, "reason_code": "TIMESTAMP_PARSE_ERROR", "reason": "Invalid timestamp format", "raw": "invalid-timestamp,20.0", "ts_iso": null, "row_hash": "PLACEHOLDER"}

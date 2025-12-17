@@ -1,0 +1,9 @@
+{
+    "end": "Audaerne VI - Moon 5 - Modern Finances Depository",
+    "start": "Ethernity V - Moon 1 - Astral Mining Inc. Mineral Reserve",
+    "cases": [
+        {
+            "expected": "START: Ethernity V - Moon 1 - Astral Mining Inc. Mineral Reserve\nUNDOCK\nJUMP 3.95 LY: Avenod (40K isotopes)\nDOCK: Avenod VIII - Moon 17 - TransStellar Shipping Storage\nUNDOCK\nGO: Avenod (0.4) -> Audaerne (0.5)\nDOCK: Audaerne VI - Moon 5 - Modern Finances Depository\nSUMMARY:\n  End Cooldown: 00:02\n  End Fatigue: 00:14\n  Isotopes Used: 40K\n  Time Waiting: 00:00\n  Total LY: 3.95"
+        }
+    ]
+}

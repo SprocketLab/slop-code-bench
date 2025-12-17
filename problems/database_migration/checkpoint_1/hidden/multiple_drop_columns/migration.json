@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "operations": [
+    {
+      "type": "drop_column",
+      "table": "employees",
+      "column": "phone"
+    },
+    {
+      "type": "drop_column",
+      "table": "employees",
+      "column": "department"
+    }
+  ],
+  "description": "Drop phone and department columns from employees table"
+}

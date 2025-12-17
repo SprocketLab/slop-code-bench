@@ -1,0 +1,18 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Migrate to new price with 10%\
+    \ increase\",\n  \"operations\": [\n    {\n      \"type\": \"add_column\",\n \
+    \     \"table\": \"products\",\n      \"column\": {\n        \"name\": \"price\"\
+    ,\n        \"type\": \"REAL\"\n      }\n    },\n    {\n      \"type\": \"migrate_column_data\"\
+    ,\n      \"table\": \"products\",\n      \"from_column\": \"old_price\",\n   \
+    \   \"to_column\": \"price\"\n    },\n    {\n      \"type\": \"transform_data\"\
+    ,\n      \"table\": \"products\",\n      \"transformations\": [\n        {\n \
+    \         \"column\": \"price\",\n          \"expression\": \"price * 1.10\"\n\
+    \        }\n      ]\n    }\n  ]\n}"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

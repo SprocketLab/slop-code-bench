@@ -1,0 +1,6 @@
+x=0, y=2
+sum=2
+diff=-2
+prod=0
+div=0
+mod=0

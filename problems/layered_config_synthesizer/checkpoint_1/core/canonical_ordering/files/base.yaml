@@ -1,0 +1,13 @@
+training:
+  optimizer:
+    epsilon: 0.00000001
+    beta2: 0.999
+    beta1: 0.9
+resources:
+  accelerators:
+    - type: v100
+      count: 2
+experiment_name: order-check
+misc:
+  zeta: 1
+  alpha: 2

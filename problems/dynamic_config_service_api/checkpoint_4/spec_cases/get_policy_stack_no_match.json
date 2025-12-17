@@ -1,0 +1,23 @@
+{
+  "case": {
+    "body": {
+      "name": "frontend",
+      "scope": {
+        "env": "dev",
+        "tenant": "test-corp"
+      }
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "get_policy_stack_no_match",
+    "method": "POST",
+    "path": "/v1/policies/stack"
+  },
+  "expected": {
+    "output": {
+      "policy_stack": []
+    },
+    "status_code": 200
+  }
+}

@@ -1,0 +1,7 @@
+{"event":"file_updated","file":"app.json","rules_applied":["expand_features"]}
+{"event":"file_updated","file":"features/rollout.yaml","rules_applied":["expand_features"]}
+{"event":"file_updated","file":"infra/config.toml","rules_applied":["expand_features"]}
+{"event":"file_updated","file":"infra/settings.ini","rules_applied":["expand_features"]}
+{"event":"file_updated","file":"logging/config.yaml","rules_applied":["expand_features"]}
+{"event":"file_updated","file":"services/api.yaml","rules_applied":["expand_features"]}
+{"event":"file_updated","file":"services/cache.yaml","rules_applied":["expand_features"]}

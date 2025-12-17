@@ -1,0 +1,14 @@
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline CliTimezone using Sale {
+  window(1h)
+  aggregate count(*) as n
+}

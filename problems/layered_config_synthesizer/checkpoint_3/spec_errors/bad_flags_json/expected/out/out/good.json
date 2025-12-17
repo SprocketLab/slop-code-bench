@@ -1,0 +1,1 @@
+{"experiment_name":"good","resources":{"accelerators":[{"count":2,"type":"t4"}],"profile":"shared","world_size":4},"training":{"batch_size":28,"optimizer":"adamw"}}

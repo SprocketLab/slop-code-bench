@@ -1,0 +1,5 @@
+task Task {
+    run {
+        echo "I should not run"
+    }
+}

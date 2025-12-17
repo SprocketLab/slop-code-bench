@@ -1,0 +1,17 @@
+mtl_version 1.5
+
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline LagTrends using Sale {
+  group_by(['item'])
+  aggregate sum(quantity) as qty
+  calc prev_qty = lag(qty, 1) : float @stage(post_agg)
+}

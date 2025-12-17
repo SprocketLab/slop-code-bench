@@ -1,0 +1,8 @@
+experiment_name: bad-world
+training:
+  optimizer: adam
+resources:
+  accelerators:
+    - type: a100
+      count: 2
+  world_size: 0

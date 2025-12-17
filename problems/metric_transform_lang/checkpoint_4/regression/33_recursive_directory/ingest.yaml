@@ -1,0 +1,7 @@
+sources:
+  - name: main
+    inputs:
+      - "data"
+    format: auto
+    schema: BaseSale
+    precedence: 10

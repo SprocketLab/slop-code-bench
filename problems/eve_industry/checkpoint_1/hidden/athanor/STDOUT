@@ -1,0 +1,20 @@
+ITEM: Athanor (35835)
+Group: Structure > Refinery
+Market Group: Structures > Refineries
+Tech Level: Tech I
+Volume: 8000.00
+
+Recipe:
+Activity: Manufacturing
+Output Quantity: 1
+Run Time: 10000
+| Item | Quantity | Buildable |
+|:-:|:-:|---:|
+| Structure Acceleration Coils | 1 | Yes |
+| Structure Construction Parts | 1 | Yes |
+| Structure Docking Bay | 1 | Yes |
+| Structure Electromagnetic Sensor | 1 | Yes |
+| Structure Hangar Array | 1 | Yes |
+| Structure Repair Facility | 1 | Yes |
+| Structure Reprocessing Plant | 3 | Yes |
+| Structure Storage Bay | 1 | Yes |

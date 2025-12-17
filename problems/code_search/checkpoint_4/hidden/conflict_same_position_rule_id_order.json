@@ -1,0 +1,142 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "rule_id": "aaa",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "match": "foo()"
+    },
+    {
+      "event": "fix",
+      "rule_id": "aaa",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "replacement": "AAA",
+      "applied": true,
+      "skipped_reason": null
+    },
+    {
+      "rule_id": "bbb",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "match": "foo()"
+    },
+    {
+      "event": "fix",
+      "rule_id": "bbb",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "replacement": "BBB",
+      "applied": false,
+      "skipped_reason": "overlap"
+    },
+    {
+      "rule_id": "zzz",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "match": "foo()"
+    },
+    {
+      "event": "fix",
+      "rule_id": "zzz",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 1,
+        "col": 5
+      },
+      "end": {
+        "line": 1,
+        "col": 10
+      },
+      "replacement": "ZZZ",
+      "applied": false,
+      "skipped_reason": "overlap"
+    }
+  ],
+  "expected_files": {
+    "proj/code.py": "    AAA"
+  },
+  "input_files": {
+    "proj/code.py": "    foo()"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "ZZZ"
+      },
+      "id": "zzz",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "foo()"
+    },
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "BBB"
+      },
+      "id": "bbb",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "foo()"
+    },
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "AAA"
+      },
+      "id": "aaa",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "foo()"
+    }
+  ]
+}

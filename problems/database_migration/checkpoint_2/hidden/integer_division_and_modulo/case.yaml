@@ -1,0 +1,20 @@
+arguments: migrate migration.json app.db
+input_files:
+- path: app.db
+  file_type: sqlite
+- content: "{\n  \"version\": 2,\n  \"description\": \"Split cents into dollars and\
+    \ cents\",\n  \"operations\": [\n    {\n      \"type\": \"add_column\",\n    \
+    \  \"table\": \"transactions\",\n      \"column\": {\n        \"name\": \"dollars\"\
+    ,\n        \"type\": \"INTEGER\"\n      }\n    },\n    {\n      \"type\": \"add_column\"\
+    ,\n      \"table\": \"transactions\",\n      \"column\": {\n        \"name\":\
+    \ \"cents\",\n        \"type\": \"INTEGER\"\n      }\n    },\n    {\n      \"\
+    type\": \"transform_data\",\n      \"table\": \"transactions\",\n      \"transformations\"\
+    : [\n        {\n          \"column\": \"dollars\",\n          \"expression\":\
+    \ \"amount_cents / 100\"\n        },\n        {\n          \"column\": \"cents\"\
+    ,\n          \"expression\": \"amount_cents % 100\"\n        }\n      ]\n    }\n\
+    \  ]\n}"
+  file_type: json
+  path: migration.json
+tracked_files:
+- app.db
+expected_status: 0

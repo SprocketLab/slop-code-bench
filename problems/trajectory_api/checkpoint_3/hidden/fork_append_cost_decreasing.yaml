@@ -1,0 +1,36 @@
+case:
+  body:
+    up_to_step: 3
+    status: in_progress
+    append:
+      - role: assistant
+        content: Invalid - cost less than parent
+        input_tokens: 25
+        output_tokens: 150
+        cost: 0.005
+  headers:
+    content-type: application/json; charset=utf-8
+    if-match: W/"1"
+  id: fork_append_cost_decreasing
+  method: POST
+  path: /trajectories/{{store.hidden_create_for_running_totals}}/fork
+expected:
+  output:
+    properties:
+      error:
+        properties:
+          code:
+            const: VALIDATION_FAILED
+          message:
+            type: string
+          field_path:
+            const: append[0].cost
+        required:
+          - code
+          - message
+          - field_path
+        type: object
+    required:
+      - error
+    type: object
+  status_code: 422

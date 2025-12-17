@@ -1,0 +1,3 @@
+experiment_name: hdefault
+training:
+  learning_rate: 0.01

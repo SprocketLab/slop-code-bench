@@ -1,0 +1,59 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "a.js",
+      "language": "javascript",
+      "match": "X",
+      "rule_id": "x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "m.cpp",
+      "language": "cpp",
+      "match": "X",
+      "rule_id": "x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 2,
+        "line": 1
+      },
+      "file": "z.py",
+      "language": "python",
+      "match": "X",
+      "rule_id": "x",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/a.js": "X",
+    "proj/m.cpp": "X",
+    "proj/z.py": "X"
+  },
+  "rules.json": [
+    {
+      "id": "x",
+      "kind": "exact",
+      "pattern": "X"
+    }
+  ]
+}

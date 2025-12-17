@@ -1,0 +1,5 @@
+[
+  {"location": "A", "total": 10.0, "lag5": null, "lead10": null},
+  {"location": "B", "total": 20.0, "lag5": null, "lead10": null},
+  {"location": "C", "total": 30.0, "lag5": null, "lead10": null}
+]

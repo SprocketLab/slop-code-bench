@@ -1,0 +1,6 @@
+x=12, y=8
+sum=20
+diff=4
+prod=96
+div=1
+mod=4

@@ -1,0 +1,51 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --infer strict data1.parquet data2.parquet
+  input_files:
+  - content:
+    - id: 1
+      value: 10
+    - id: 2
+      value: 20
+    file_type: parquet
+    path: data1.parquet
+  - content:
+    - id: 3
+      value: 30
+    - id: 4
+      value: 40
+    file_type: parquet
+    path: data2.parquet
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: value
+        type: int
+      - name: metadata
+        type:
+          struct:
+            fields:
+            - name: created_at
+              type: timestamp
+            - name: tags
+              type:
+                array:
+                  element: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      value: 10
+      metadata: null
+    - id: 2
+      value: 20
+      metadata: null
+    - id: 3
+      value: 30
+      metadata: null
+    - id: 4
+      value: 40
+      metadata: null
+  status_code: 0

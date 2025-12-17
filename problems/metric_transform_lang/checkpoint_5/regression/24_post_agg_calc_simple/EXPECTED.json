@@ -1,0 +1,4 @@
+[
+  {"location": "NYC", "n": 2, "total": 30.0, "avg_price": 15.0, "total_doubled": 60.0},
+  {"location": "SF", "n": 3, "total": 120.0, "avg_price": 40.0, "total_doubled": 240.0}
+]

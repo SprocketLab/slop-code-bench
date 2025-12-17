@@ -1,0 +1,74 @@
+arguments: validate migration_v1.json --migrations-dir migrations/
+input_files:
+- content: |
+    {
+      "version": 1,
+      "description": "Migration 1",
+      "depends_on": [3],
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "table1",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true}
+          ]
+        }
+      ]
+    }
+  file_type: json
+  path: migrations/migration_v1.json
+- content: |
+    {
+      "version": 2,
+      "description": "Migration 2",
+      "depends_on": [1],
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "table2",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true}
+          ]
+        }
+      ]
+    }
+  file_type: json
+  path: migrations/migration_v2.json
+- content: |
+    {
+      "version": 3,
+      "description": "Migration 3",
+      "depends_on": [2],
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "table3",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true}
+          ]
+        }
+      ]
+    }
+  file_type: json
+  path: migrations/migration_v3.json
+- content: |
+    {
+      "version": 1,
+      "description": "Migration 1",
+      "depends_on": [3],
+      "operations": [
+        {
+          "type": "create_table",
+          "table": "table1",
+          "columns": [
+            {"name": "id", "type": "INTEGER", "primary_key": true, "auto_increment": true}
+          ]
+        }
+      ]
+    }
+  file_type: json
+  path: migration_v1.json
+tracked_files:
+- app.db
+expected_status: 1
+

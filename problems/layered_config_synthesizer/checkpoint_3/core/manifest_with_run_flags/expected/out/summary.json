@@ -1,0 +1,1 @@
+{"failed":0,"runs":[{"conflicts":0,"notes":"no flags","run_id":"simple","status":"ok","warnings":0},{"conflicts":1,"notes":"has run flags","run_id":"flagged","status":"ok","warnings":1}],"succeeded":2,"total_runs":2}

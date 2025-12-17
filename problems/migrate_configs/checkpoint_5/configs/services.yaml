@@ -1,0 +1,5 @@
+services:
+  - name: api
+    port: 8080
+  - name: worker
+    port: 8081

@@ -1,0 +1,16 @@
+mtl_version 1.5
+schema Sale {
+  timestamp: timestamp
+  location: string
+  item: string
+  price: float
+  quantity: float
+  unit: string
+  category: string
+}
+
+pipeline ColumnCompare using Sale {
+  filter(price >= quantity)
+  aggregate count(*) as n,
+            sum(price) as total_price
+}

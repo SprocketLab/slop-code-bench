@@ -1,0 +1,21 @@
+id: integer_comparisons
+files:
+  query.sql: 'SELECT first_name, id, country FROM users WHERE id >= 30 AND id <= 45
+    ORDER BY id
+
+    '
+expected: '| first_name   |   id | country   |
+
+  |--------------|------|-----------|
+
+  | Othilia      |   31 | AR        |
+
+  | Gaylene      |   32 | AR        |
+
+  | Osmond       |   33 | AR        |
+
+  | Willard      |   43 | DE        |
+
+  | Brady        |   44 | AR        |
+
+  | Cristabel    |   45 | CH        |'

@@ -1,0 +1,3 @@
+timeout: 25
+region: eu-central-1
+service: shared

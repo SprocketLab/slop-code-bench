@@ -1,0 +1,50 @@
+[
+  {
+    "window_start": "2025-09-14T08:00:00Z",
+    "window_end": "2025-09-14T09:00:00Z",
+    "location": "NYC",
+    "category": "books",
+    "avg_price": 12.5,
+    "n": 2,
+    "total_rev": 65.0,
+    "growth": 65.0,
+    "growth_pct": 100.0,
+    "prev_rev": null
+  },
+  {
+    "window_start": "2025-09-14T08:00:00Z",
+    "window_end": "2025-09-14T09:00:00Z",
+    "location": "SF",
+    "category": "electronics",
+    "avg_price": 100.0,
+    "n": 1,
+    "total_rev": 100.0,
+    "growth": 35.0,
+    "growth_pct": 53.84615384615385,
+    "prev_rev": 65.0
+  },
+  {
+    "window_start": "2025-09-14T09:00:00Z",
+    "window_end": "2025-09-14T10:00:00Z",
+    "location": "NYC",
+    "category": "books",
+    "avg_price": 20.0,
+    "n": 1,
+    "total_rev": 40.0,
+    "growth": -60.0,
+    "growth_pct": -60.0,
+    "prev_rev": 100.0
+  },
+  {
+    "window_start": "2025-09-14T09:00:00Z",
+    "window_end": "2025-09-14T10:00:00Z",
+    "location": "SF",
+    "category": "electronics",
+    "avg_price": 120.0,
+    "n": 1,
+    "total_rev": 240.0,
+    "growth": 200.0,
+    "growth_pct": 500.0,
+    "prev_rev": 40.0
+  }
+]

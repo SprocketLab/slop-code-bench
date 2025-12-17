@@ -1,0 +1,28 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: search_has_parent_false
+  method: GET
+  path: /trajectories?has_parent=false
+expected:
+  output:
+    properties:
+      items:
+        type: array
+        minItems: 1
+        items:
+          properties:
+            lineage:
+              properties:
+                parent_id:
+                  const: null
+              required:
+                - parent_id
+              type: object
+          required:
+            - lineage
+          type: object
+    required:
+      - items
+    type: object
+  status_code: 200

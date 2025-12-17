@@ -1,0 +1,18 @@
+arguments: --now 2025-01-15T09:00:00Z --schedule schedule.yaml --duration 1 --mount {{static:files}} --backup backup
+input_files:
+- content:
+    jobs:
+    - destination: backup://empty
+      exclude:
+      - '**/*'
+      id: all-excluded
+      source: mount://
+      when:
+        at: '09:00'
+        kind: daily
+      strategy:
+        kind: verify
+    timezone: UTC
+    version: 1
+  file_type: yaml
+  path: schedule.yaml

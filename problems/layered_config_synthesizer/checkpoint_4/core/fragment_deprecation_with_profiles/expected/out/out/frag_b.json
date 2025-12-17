@@ -1,0 +1,1 @@
+{"experiment_name":"frag_b","logging":{"destination":"stderr","format":"text"},"resources":{"accelerators":[{"count":4,"type":"l4"}],"profile":"train_l4","world_size":4},"training":{"batch_size":18,"launcher":"torchrun","optimizer":"adam"}}

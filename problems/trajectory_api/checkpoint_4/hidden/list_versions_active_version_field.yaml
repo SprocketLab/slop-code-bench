@@ -1,0 +1,31 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: list_versions_active_version_field
+  method: GET
+  path: /environments/brand-new-env/versions
+expected:
+  output:
+    properties:
+      environment:
+        const: brand-new-env
+      active_version:
+        const: 1
+      items:
+        type: array
+        items:
+          properties:
+            version:
+              const: 1
+            active:
+              const: true
+          required:
+            - version
+            - active
+          type: object
+    required:
+      - environment
+      - active_version
+      - items
+    type: object
+  status_code: 200

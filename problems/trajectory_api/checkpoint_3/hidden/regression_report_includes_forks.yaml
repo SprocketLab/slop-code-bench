@@ -1,0 +1,38 @@
+case:
+  headers:
+    content-type: application/json; charset=utf-8
+  id: regression_report_includes_forks
+  method: GET
+  path: /reports?group_by=model
+expected:
+  output:
+    properties:
+      rows:
+        type: array
+        minItems: 1
+        items:
+          properties:
+            bucket:
+              type: [string, "null"]
+            group:
+              type: object
+            count_runs:
+              type: integer
+            sum_cost:
+              type: number
+            avg_steps:
+              type: number
+            avg_output_tokens:
+              type: number
+          required:
+            - bucket
+            - group
+            - count_runs
+            - sum_cost
+            - avg_steps
+            - avg_output_tokens
+          type: object
+    required:
+      - rows
+    type: object
+  status_code: 200

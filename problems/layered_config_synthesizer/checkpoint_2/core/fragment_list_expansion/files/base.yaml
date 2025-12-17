@@ -1,0 +1,7 @@
+experiment_name: listy
+training:
+  optimizer: adam
+  augmentations: "{{static:augments}}"
+resources:
+  profile: base
+  world_size: 2

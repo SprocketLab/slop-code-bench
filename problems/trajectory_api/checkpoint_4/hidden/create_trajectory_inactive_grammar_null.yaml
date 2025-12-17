@@ -1,0 +1,40 @@
+case:
+  body:
+    date: "2025-10-05T00:00:00Z"
+    task: inactive_grammar_task
+    environment: activate-false-env
+    model: model-inactive
+    framework: framework-inactive
+    metrics: {}
+    trajectory:
+      - role: user
+        content: Test with inactive grammar
+        input_tokens: null
+        output_tokens: null
+        cost: null
+      - role: assistant
+        content: '<tool test_tool args="test"/> Response'
+        input_tokens: 10
+        output_tokens: 15
+        cost: 0.001
+  headers:
+    content-type: application/json; charset=utf-8
+  id: create_trajectory_inactive_grammar_null
+  method: POST
+  path: /trajectories
+expected:
+  output:
+    properties:
+      id:
+        type: string
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      environment:
+        const: activate-false-env
+      environment_version:
+        type: "null"
+    required:
+      - id
+      - environment
+      - environment_version
+    type: object
+  status_code: 201

@@ -1,0 +1,17 @@
+{
+  "arguments": "rules.json configs",
+  "files": {
+    "configs/arrays/servers.json": "{\n  \"primary_endpoint\": \"unused\",\n  \"servers\": [\n    {\"host\": \"api.example.com\", \"port\": 8080},\n    {\"host\": \"backup.example.com\", \"port\": 8081}\n  ]\n}\n"
+  },
+  "rules": {
+    "build_primary_url": {
+      "type": "template_string",
+      "key": "primary_endpoint",
+      "variables": {
+        "host": "servers[0].host",
+        "port": "servers[0].port"
+      },
+      "template": "http://${host}:${port}"
+    }
+  }
+}

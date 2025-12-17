@@ -1,0 +1,42 @@
+{
+  "case": {
+    "body": {
+      "config": {
+        "db": {
+          "pool": 8
+        }
+      },
+      "includes": [
+        {
+          "name": "base",
+          "scope": {
+            "env": "prod"
+          }
+        }
+      ],
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "inherits_active": true
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "id": "create_billing_v2_override_pool",
+    "method": "POST",
+    "path": "/v1/configs/billing"
+  },
+  "expected": {
+    "output": {
+      "active": true,
+      "name": "billing",
+      "scope": {
+        "app": "billing",
+        "env": "prod"
+      },
+      "version": 2
+    },
+    "status_code": 201
+  }
+}

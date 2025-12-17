@@ -1,0 +1,56 @@
+case:
+  arguments: --output output.csv --key id file1.csv file2.csv file3.csv
+  input_files:
+  - content:
+    - col_a: a1
+      col_shared: s1
+      id: '1'
+    - col_a: a3
+      col_shared: s3
+      id: '3'
+    file_type: csv
+    path: file1.csv
+  - content:
+    - col_b: b2
+      col_shared: s2
+      id: '2'
+    - col_b: b4
+      col_shared: s4
+      id: '4'
+    file_type: csv
+    path: file2.csv
+  - content:
+    - col_c: c5
+      col_shared: s5
+      id: '5'
+    file_type: csv
+    path: file3.csv
+expected:
+  files:
+    output.csv:
+    - col_a: a1
+      col_b: null
+      col_c: null
+      col_shared: s1
+      id: 1
+    - col_a: null
+      col_b: b2
+      col_c: null
+      col_shared: s2
+      id: 2
+    - col_a: a3
+      col_b: null
+      col_c: null
+      col_shared: s3
+      id: 3
+    - col_a: null
+      col_b: b4
+      col_c: null
+      col_shared: s4
+      id: 4
+    - col_a: null
+      col_b: null
+      col_c: c5
+      col_shared: s5
+      id: 5
+  status_code: 0

@@ -1,0 +1,8 @@
+- Cloak should only be used if the time to warp + jump saves overall time waiting. **USE WARP TIME CALC**
+    - Also changes the calculus for station selection.
+- Max fuel in cargo bay + manifests
+    - Fuel bay vs cargo bay
+- Route Optimizations:
+    - Fuel Used
+    - Min Jumps
+    - Min waiting time

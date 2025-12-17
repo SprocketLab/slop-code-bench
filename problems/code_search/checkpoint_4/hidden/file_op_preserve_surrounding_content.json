@@ -1,0 +1,56 @@
+{
+  "arguments": "proj --rules rules.json --apply-fixes",
+  "expected": [
+    {
+      "rule_id": "fix_print",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 5,
+        "col": 5
+      },
+      "end": {
+        "line": 5,
+        "col": 18
+      },
+      "match": "print(\"test\")"
+    },
+    {
+      "event": "fix",
+      "rule_id": "fix_print",
+      "file": "code.py",
+      "language": "python",
+      "start": {
+        "line": 5,
+        "col": 5
+      },
+      "end": {
+        "line": 5,
+        "col": 18
+      },
+      "replacement": "logger.info(\"test\")",
+      "applied": true,
+      "skipped_reason": null
+    }
+  ],
+  "expected_files": {
+    "proj/code.py": "# Header comment\nimport sys\n\ndef foo():\n    logger.info(\"test\")\n    return 42\n\n# Footer"
+  },
+  "input_files": {
+    "proj/code.py": "# Header comment\nimport sys\n\ndef foo():\n    print(\"test\")\n    return 42\n\n# Footer"
+  },
+  "rules.json": [
+    {
+      "fix": {
+        "kind": "replace",
+        "template": "logger.info(\"test\")"
+      },
+      "id": "fix_print",
+      "kind": "exact",
+      "languages": [
+        "python"
+      ],
+      "pattern": "print(\"test\")"
+    }
+  ]
+}

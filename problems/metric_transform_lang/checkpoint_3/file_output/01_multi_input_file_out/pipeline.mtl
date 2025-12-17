@@ -1,0 +1,13 @@
+schema BaseSale {
+  timestamp: timestamp
+  price: float
+  quantity: float
+}
+
+schema WideSale extends BaseSale {
+  revenue: float = price * quantity
+}
+
+pipeline P using WideSale {
+  aggregate sum(revenue) as total_rev
+}

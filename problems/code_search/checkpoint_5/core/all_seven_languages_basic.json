@@ -1,0 +1,119 @@
+{
+  "arguments": "proj --rules rules.json",
+  "expected": [
+    {
+      "end": {
+        "col": 6,
+        "line": 1
+      },
+      "file": "a.cpp",
+      "language": "cpp",
+      "match": "const",
+      "rule_id": "const_keyword",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 6,
+        "line": 1
+      },
+      "file": "b.go",
+      "language": "go",
+      "match": "const",
+      "rule_id": "const_keyword",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 6,
+        "line": 1
+      },
+      "file": "c.hs",
+      "language": "haskell",
+      "match": "const",
+      "rule_id": "const_keyword",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 6,
+        "line": 1
+      },
+      "file": "d.java",
+      "language": "java",
+      "match": "const",
+      "rule_id": "const_keyword",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 6,
+        "line": 1
+      },
+      "file": "e.js",
+      "language": "javascript",
+      "match": "const",
+      "rule_id": "const_keyword",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 6,
+        "line": 1
+      },
+      "file": "f.py",
+      "language": "python",
+      "match": "const",
+      "rule_id": "const_keyword",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    },
+    {
+      "end": {
+        "col": 6,
+        "line": 1
+      },
+      "file": "g.rs",
+      "language": "rust",
+      "match": "const",
+      "rule_id": "const_keyword",
+      "start": {
+        "col": 1,
+        "line": 1
+      }
+    }
+  ],
+  "input_files": {
+    "proj/a.cpp": "const int x = 5;",
+    "proj/b.go": "const x = 5",
+    "proj/c.hs": "const x = 5",
+    "proj/d.java": "const int x = 5;",
+    "proj/e.js": "const x = 5;",
+    "proj/f.py": "const = 5",
+    "proj/g.rs": "const X: i32 = 5;"
+  },
+  "rules.json": [
+    {
+      "id": "const_keyword",
+      "kind": "exact",
+      "pattern": "const"
+    }
+  ]
+}

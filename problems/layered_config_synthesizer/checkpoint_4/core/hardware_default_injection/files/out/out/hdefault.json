@@ -1,0 +1,1 @@
+{"experiment_name":"hdefault","resources":{"accelerators":[{"count":8,"type":"a100"}],"profile":"train_a100","world_size":16},"training":{"batch_size":32,"launcher":"torchrun","learning_rate":0.01,"optimizer":"adam"}}

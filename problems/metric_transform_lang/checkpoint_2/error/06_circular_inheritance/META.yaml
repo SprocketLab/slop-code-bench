@@ -1,0 +1,4 @@
+
+expected:
+  status_code: 1
+  stderr: ERROR:bad_dsl:.*circular.*

@@ -1,0 +1,9 @@
+{
+  "total_price": 36.0,
+  "avg_price": 12.0,
+  "median_qty": 2.0,
+  "price_std": 1.632993161855452,
+  "price_var": 2.6666666666666665,
+  "min_price": 10.0,
+  "max_price": 14.0
+}

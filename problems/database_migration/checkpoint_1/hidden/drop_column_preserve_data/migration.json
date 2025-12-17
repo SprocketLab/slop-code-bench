@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "operations": [
+    {
+      "type": "drop_column",
+      "table": "products",
+      "column": "description"
+    }
+  ],
+  "description": "Drop description column from products table"
+}

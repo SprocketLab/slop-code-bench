@@ -1,0 +1,2 @@
+filter(item in 'apple')
+aggregate count(*) as n
