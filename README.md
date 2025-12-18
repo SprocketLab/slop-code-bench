@@ -130,6 +130,6 @@ If you found this useful, please cite us as:
                   Changho Shin and Alex Gu and Albert Ge and 
                   Dyah Adila and Aws Albarghouthi and Frederic Sala},
   year         = {2025},
-  howpublished = {\url{https://github.com/your-repo}},
+  howpublished = {\url{https://github.com/SprocketLab/slop-code-bench}},
 }
 ```
