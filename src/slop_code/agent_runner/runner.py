@@ -661,6 +661,14 @@ class AgentRunner:
                 pass_policy=self.run_spec.pass_policy,
                 evaluation_result=None,
             )
+
+        # Transition to EVALUATING state before starting evaluation
+        self.metrics_tracker.state = AgentStateEnum.EVALUATING
+        logger.info(
+            "Starting checkpoint evaluation",
+            checkpoint=checkpoint.name,
+        )
+
         report, _ = evaluate_agent_snapshot(
             checkpoint=checkpoint,
             save_dir=checkpoint_save_dir,

@@ -2,7 +2,7 @@ type: codex
 binary: codex
 
 version: 0.74.0
-timeout: 3600 # seconds; adjust to fit expected checkpoint duration
+timeout: 7200 # seconds; adjust to fit expected checkpoint duration
 extra_args: []
 env: {}
 cost_limits:
