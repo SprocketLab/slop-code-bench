@@ -29,6 +29,7 @@ from slop_code.evaluation import ProblemConfig
 from slop_code.evaluation import run_checkpoint as evaluate_checkpoint
 from slop_code.execution import EnvironmentSpec
 from slop_code.execution import Session
+from slop_code.execution import SnapshotDiff
 from slop_code.execution import resolve_static_assets
 from slop_code.logging import get_logger
 from slop_code.metrics import SnapshotQualityReport
@@ -312,11 +313,8 @@ def _run_inference(
             checkpoint=checkpoint_name,
             changes=repr(diff),
         )
-    reporting.save_agent_checkpoint_info(
-        save_dir, diff, result, agent, compress_artifacts=compress_artifacts
-    )
 
-    return snapshot_dir, result
+    return snapshot_dir, result, diff
 
 
 def run_checkpoint(
@@ -331,7 +329,7 @@ def run_checkpoint(
     *,
     is_first_checkpoint: bool = True,
     compress_artifacts: bool = False,
-) -> tuple[Path, CheckpointInferenceResult | None]:
+) -> tuple[Path, CheckpointInferenceResult | None, SnapshotDiff]:
     task = get_task_for_checkpoint(
         checkpoint=checkpoint,
         template=template,
@@ -340,7 +338,7 @@ def run_checkpoint(
         is_first_checkpoint=is_first_checkpoint,
         output_path=save_dir,
     )
-    snapshot_dir, result = _run_inference(
+    snapshot_dir, result, diff = _run_inference(
         checkpoint_name=checkpoint.name,
         session=session,
         agent=agent,
@@ -349,7 +347,7 @@ def run_checkpoint(
         replay_path=replay_path,
         compress_artifacts=compress_artifacts,
     )
-    return snapshot_dir, result
+    return snapshot_dir, result, diff
 
 
 class AgentRunner:
@@ -614,7 +612,7 @@ class AgentRunner:
         self._setup_for_checkpoint(checkpoint)
         self.metrics_tracker.state = AgentStateEnum.RUNNING
         compress = self.run_spec.compress_artifacts
-        snapshot_dir, result = run_checkpoint(
+        snapshot_dir, result, diff = run_checkpoint(
             agent=self.agent,
             session=self.session,
             save_dir=checkpoint_save_dir,
@@ -625,6 +623,9 @@ class AgentRunner:
             replay_path=self.replay_path,
             is_first_checkpoint=is_first_checkpoint,
             compress_artifacts=compress,
+        )
+        reporting.save_agent_checkpoint_info(
+            checkpoint_save_dir, diff, result, self.agent, compress_artifacts=compress
         )
         artifacts_path = get_artifacts_path(
             checkpoint_save_dir, compress=compress

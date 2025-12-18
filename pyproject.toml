@@ -111,7 +111,7 @@ testpaths = [
 [tool.ruff]
 exclude = [".venv",".gitignore", ".dockerignore"]
 line-length = 80
-extend-exclude = ["tests/mining/fixtures/*",".vscode/*","scratch/attempts/*","debug_code/*", "repos/*", "data/*",".venv/*",".pytest_cache/*", ".cache/*",".local/*", "tests/mining/fixtures/*","scripts/attempts/*","problems/**/solution/*"]
+extend-exclude = ["tests/mining/fixtures/*",".vscode/*","scratch/attempts/*","debug_code/*", "repos/*", "data/*",".venv/*",".pytest_cache/*", ".cache/*",".local/*", "tests/mining/fixtures/*","scripts/attempts/*","problems/**/solution/**"]
 show-fixes = true
 
 [tool.ruff.lint.isort]
