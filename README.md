@@ -11,7 +11,8 @@
 ![](assets/overview.png)
 ---
 
-**SlopCodeBench** measures *code erosion under iterative specification refinement* — quantifying how code quality degrades as AI agents iterate on programming problems. As agents receive feedback and refine their solutions, they often introduce subtle degradations: unnecessary abstractions, defensive programming patterns, and structural bloat. This benchmark captures and measures that drift.
+**SlopCodeBench** evaluates coding agents under iterative specification refinement: the agent implements a spec, then extends its own code as the spec changes. This exposes behaviors that single-shot benchmarks cannot measure, including path dependence, non-convergence, and trade-offs between explicit handling and structural stability. We release SCBench as an open, community-driven evaluation primitive rather than a finalized benchmark.
+
 
 We actively want more problems, follow [the creating a problem guide and create a pr!](/docs/contributing-problems/).
 
