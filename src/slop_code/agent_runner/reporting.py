@@ -360,7 +360,7 @@ def save_agent_checkpoint_info(
     checkpoint_result: CheckpointInferenceResult,
     agent: Agent,
     *,
-    compress_artifacts: bool = True,
+    compress_artifacts: bool = False,
 ) -> None:
     logger.info(
         "Saving agent checkpoint info",

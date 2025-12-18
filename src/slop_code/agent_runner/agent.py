@@ -23,6 +23,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import field_validator
+from pydantic import model_validator
 from pydantic.fields import FieldInfo
 
 from slop_code.agent_runner.credentials import ProviderCredential
@@ -112,6 +113,26 @@ class AgentConfigBase(BaseModel):
                 f"Agent type mismatch. Expected '{expected}', got '{value}'."
             )
         return value
+
+    @model_validator(mode="after")
+    def _validate_version_for_docker_template(self) -> AgentConfigBase:
+        """Ensure agents with docker_template have a non-empty version.
+
+        Docker templates use {{ version }} to install the correct version of
+        agent CLI tools. Without a version, the template renders incorrectly
+        and causes Docker build failures.
+
+        Raises:
+            ValueError: If docker_template is set but version is None or empty string
+        """
+        if self.docker_template is not None:
+            if self.version is None or (isinstance(self.version, str) and not self.version.strip()):
+                raise ValueError(
+                    f"Agent '{self.type}' has a docker_template but missing or empty 'version'. "
+                    f"Agents with docker templates require a non-empty version string to install "
+                    f"the correct CLI tool version. Please set 'version' in the config YAML."
+                )
+        return self
 
     def get_image(self, env_name: str) -> str:
         if self.version is not None:

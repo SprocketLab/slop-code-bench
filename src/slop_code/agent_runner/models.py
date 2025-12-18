@@ -171,4 +171,4 @@ class AgentRunSpec(BaseModel):
     compress_artifacts: Annotated[
         bool,
         Field(description="Whether to compress agent artifacts into a tar.gz"),
-    ] = True
+    ] = False

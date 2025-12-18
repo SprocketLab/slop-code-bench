@@ -288,7 +288,7 @@ def _run_inference(
     save_dir: Path,
     replay_path: Path | None = None,
     *,
-    compress_artifacts: bool = True,
+    compress_artifacts: bool = False,
 ):
     logger.info("Running inference for checkpoint", checkpoint=checkpoint_name)
     snapshot_dir = save_dir / common.SNAPSHOT_DIR_NAME
@@ -330,7 +330,7 @@ def run_checkpoint(
     replay_path: Path | None = None,
     *,
     is_first_checkpoint: bool = True,
-    compress_artifacts: bool = True,
+    compress_artifacts: bool = False,
 ) -> tuple[Path, CheckpointInferenceResult | None]:
     task = get_task_for_checkpoint(
         checkpoint=checkpoint,

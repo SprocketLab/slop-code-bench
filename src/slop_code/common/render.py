@@ -26,7 +26,7 @@ ENTRYPOINT_PLACEHOLDER_PATTERN = re.compile(r"%%%ENTRYPOINT:entry_file%%%")
 ENTRYPOINT_COMMAND_PLACEHOLDER_PATTERN = re.compile(
     r"%%%ENTRYPOINT:entry_command%%%"
 )
-CANARY_HTML_COMMENT_PATTERN = re.compile(r"^<!-- .+ -->\n?")
+CANARY_HTML_COMMENT_PATTERN = re.compile(r"^<!-- [\s\S]+ -->\n?")
 
 
 def strip_canary_string(text: str) -> str:

@@ -38,7 +38,7 @@ class OpenCodeAgentConfig(AgentConfigBase):
     type: Literal["opencode"] = "opencode"
     config: dict[str, JsonValue] = Field(default_factory=dict)
     docker_template: Path = Path(__file__).parent / "docker.j2"
-    version: str = "1.0.134"
+    version: str
     env: dict[str, str] = Field(
         default_factory=dict,
         description="Environment variable overrides applied to the invocation.",

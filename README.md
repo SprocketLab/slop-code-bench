@@ -18,6 +18,15 @@ We actively want more problems, follow [the creating a problem guide and create 
 > [!NOTE]
 > This is an initial release. We're actively developing and welcome feedback via [GitHub Issues](https://github.com/SprocketLab/slop-code-bench/issues).
 
+## Prerequisites
+
+Before installing, ensure you have:
+- **Python 3.12+** installed
+- **Docker** installed and running ([Get Docker](https://docs.docker.com/get-docker/))
+- An **API key** for your chosen agent (e.g., Anthropic, OpenAI, Google)
+- **8GB+ RAM** recommended for running evaluations
+- **10GB+ disk space** for Docker images and workspaces
+
 ## 🚀 Install
 
 ```bash
@@ -27,21 +36,51 @@ export ANTHROPIC_API_KEY="your-key"
 
 # Run!
 uv run slop-code run \
-  --agent configs/agents/claude_code-2.0.51.yaml \
+  --agent claude_code \
   --model anthropic/opus-4.5 \
   --environment configs/environments/docker-python3.12-uv.yaml \
   --prompt configs/prompts/just-solve.jinja \
   --problem file_backup \
   --problem execution_server \
-  thinking=low
+  thinking=low \
+  version=2.0.51
 ```
+
+**Parameter Reference:**
+- `thinking=none|low|medium|high` - Controls extended thinking budget based on agent.
+- `version=X.Y.Z` - Agent version to use.
 
 Results are saved to:
 ```
 outputs/opus-4.5/claude_code-just-solve_low_{timestamp}/
 ```
 
-Docker images are built automatically on first run.
+**First Run:** Docker images build automatically for that _VERSION_ of the agent (5-10 minutes). Subsequent runs are faster.
+
+### Troubleshooting
+
+**Docker not found:**
+```bash
+# Check Docker is running
+docker ps
+# If not running, start Docker Desktop or daemon
+```
+
+**API key not found:**
+```bash
+# Verify your environment variable is set
+echo $ANTHROPIC_API_KEY
+# Or pass it directly
+ANTHROPIC_API_KEY="your-key" uv run slop-code run ...
+```
+
+**Out of disk space:**
+```bash
+# Clean up old Docker images
+docker system prune -a
+```
+
+For more issues, see [GitHub Issues](https://github.com/SprocketLab/slop-code-bench/issues).
 
 ## 📊 Evaluation
 
@@ -68,18 +107,20 @@ We welcome contributions. Two ways to help:
 
 This is early-stage software. Your contributions will shape its direction.
 
-## 📚 Documentation
+## Documentation
 
 | Guide | Description |
 |-------|-------------|
+| [❓ FAQ](docs/FAQ.md) | Frequently asked questions |
 | [📖 Problem Tutorial](docs/problems/tutorial.md) | Create your first problem (30 min hands-on) |
 | [📋 Quick Reference](docs/problems/quick-reference.md) | One-page cheat sheet for problem authoring |
 | [🤖 Agent Guide](docs/agents/README.md) | Configure agents, models, and credentials |
 | [🏗️ Architecture](docs/execution/README.md) | How sessions, workspaces, and runtimes work |
 | [✅ Evaluation System](docs/evaluation/README.md) | Test cases, adapters, loaders, and verifiers |
 | [💡 Problem Design](docs/contributing-problems/README.md) | What makes a good evaluation problem |
+| [⚠️ Known Issues](docs/KNOWN_ISSUES.md) | Current limitations and workarounds |
 
-## 📖 Citing Us
+## Citing Us
 
 If you found this useful, please cite us as:
 ```bibtex
