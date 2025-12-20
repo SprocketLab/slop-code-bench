@@ -79,15 +79,26 @@ class Session:
         env_vars: dict[str, str] | None = None,
         setup_command: str | None = None,
         disable_setup: bool = False,
+        command: str | None = None,
         **runtime_kwargs: Any,
     ) -> SubmissionRuntime:
         """Spawn a new runtime for this session.
+
+        Args:
+            ports: Port mappings
+            mounts: Volume mounts
+            env_vars: Environment variables for runtime
+            setup_command: Additional setup command
+            disable_setup: Whether to disable setup commands
+            command: Command for single-shot execution (uses docker run)
+            **runtime_kwargs: Additional runtime-specific arguments
 
         Returns:
             New runtime instance configured for this session
         """
         logger.debug(
             "Spawning new runtime",
+            single_shot=command is not None,
             verbose=True,
         )
 
@@ -101,6 +112,7 @@ class Session:
             setup_command=setup_command,
             is_evaluation=not self.is_agent_infer,
             disable_setup=disable_setup,
+            command=command,
             **runtime_kwargs,
         )
 

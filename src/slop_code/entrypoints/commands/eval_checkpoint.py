@@ -33,108 +33,80 @@ def render_pytest_results(
     results,
     verbosity: int,
 ) -> None:
-    summary = Table(title="Execution Summary")
-    summary.add_column("Field", width=22)
-    summary.add_column("Value", overflow="fold")
-    summary.add_row("Problem", results.problem_name)
-    summary.add_row("Checkpoint", results.checkpoint_name)
-    summary.add_row("Duration (s)", f"{results.duration:.2f}")
-    summary.add_row("Entrypoint", results.entrypoint)
-    summary.add_row("Pytest Exit Code", str(results.pytest_exit_code))
-    summary.add_row(
-        "Exit Meaning",
-        EXIT_CODE_MEANINGS.get(results.pytest_exit_code, "unknown"),
-    )
-    summary.add_row("Tests Collected", str(results.pytest_collected))
-    summary.add_row(
-        "Infrastructure Failure",
-        "yes" if results.infrastructure_failure else "no",
-    )
-    console.print(summary)
-
+    # Compact header
     status_counts = Counter(test.status for test in results.tests)
-    status_table = Table(title="Status Summary")
-    status_table.add_column("Status")
-    status_table.add_column("Count", justify="right")
-    for status in ["passed", "failed", "error", "skipped"]:
-        status_table.add_row(status, str(status_counts.get(status, 0)))
-    console.print(status_table)
+    passed = status_counts.get("passed", 0)
+    failed = status_counts.get("failed", 0) + status_counts.get("error", 0)
+    skipped = status_counts.get("skipped", 0)
+    total = len(results.tests)
 
-    group_table = Table(title="Group Summary")
-    group_table.add_column("Group")
-    group_table.add_column("Num Passed", justify="right")
-    group_table.add_column("Num Tests", justify="right")
-    group_table.add_column("Pass Rate", justify="right")
+    # One-line status
+    status_parts = []
+    if passed:
+        status_parts.append(f"[green]{passed} passed[/green]")
+    if failed:
+        status_parts.append(f"[red]{failed} failed[/red]")
+    if skipped:
+        status_parts.append(f"[yellow]{skipped} skipped[/yellow]")
+
+    console.print(
+        f"\n[bold]{results.problem_name}[/bold] / {results.checkpoint_name} "
+        f"— {', '.join(status_parts)} ({results.duration:.1f}s)"
+    )
+
+    if results.infrastructure_failure:
+        console.print("[red bold]⚠ Infrastructure failure detected[/red bold]")
+
+    # Group summary table (compact)
+    group_table = Table(show_header=True, box=None, padding=(0, 2))
+    group_table.add_column("Group", style="dim")
+    group_table.add_column("Result", justify="right")
+
     total_passed = 0
     total_tests = 0
     for group_type in GroupType:
-        passed = results.pass_counts.get(group_type, 0)
-        total = results.total_counts.get(group_type, 0)
-        total_passed += passed
-        total_tests += total
-        pass_rate = f"{(passed / total):.2%}" if total else "n/a"
-        group_table.add_row(
-            group_type.value,
-            str(passed),
-            str(total),
-            pass_rate,
-        )
-    group_table.add_section()
-    total_rate = f"{(total_passed / total_tests):.2%}" if total_tests else "n/a"
-    group_table.add_row(
-        "Total",
-        str(total_passed),
-        str(total_tests),
-        total_rate,
-    )
-    console.print(group_table)
+        group_passed = results.pass_counts.get(group_type, 0)
+        group_total = results.total_counts.get(group_type, 0)
+        if group_total == 0:
+            continue
+        total_passed += group_passed
+        total_tests += group_total
+        if group_passed == group_total:
+            result_str = f"[green]{group_passed}/{group_total}[/green]"
+        else:
+            result_str = f"[red]{group_passed}/{group_total}[/red]"
+        group_table.add_row(group_type.value, result_str)
 
+    if total_tests > 0:
+        console.print(group_table)
+
+    # Show failed tests only (unless verbose)
     failed_tests = [
         test
         for test in results.tests
         if test.status in {"failed", "error"}
     ]
-    show_tests = verbosity > 0 or failed_tests or results.infrastructure_failure
 
-    if show_tests:
-        tests_table = Table(title="Test Results", show_lines=True)
-        tests_table.add_column("Test", width=40, overflow="fold")
-        tests_table.add_column("Status", width=10)
-        tests_table.add_column("Group", width=14)
-        tests_table.add_column("Duration(ms)", width=12, justify="right")
-        tests_table.add_column("Failure", overflow="fold")
+    if failed_tests:
+        console.print(f"\n[red bold]Failed Tests ({len(failed_tests)}):[/red bold]")
+        for test_result in failed_tests:
+            # Extract just the test name from nodeid (includes param like [case1])
+            test_name = test_result.id.split("::")[-1] if "::" in test_result.id else test_result.id
+            console.print(f"  [red]✗[/red] {test_name}")
+
+    # Verbose mode: show all tests
+    if verbosity > 1:
+        console.print(f"\n[bold]All Tests ({total}):[/bold]")
         for test_result in sorted(
             results.tests, key=lambda x: (x.group_type.value, x.status, x.id)
         ):
-            test_label = test_result.id
-            if test_result.file_path and test_result.file_path not in test_label:
-                test_label = f"{test_result.file_path}::{test_label}"
-            tests_table.add_row(
-                test_label,
-                test_result.status,
-                test_result.group_type.value,
-                f"{test_result.duration_ms:.2f}",
-                test_result.failure_message or "",
-            )
-        console.print(tests_table)
-
-    if failed_tests:
-        failure_table = Table(title="Failure Details", show_lines=True)
-        failure_table.add_column("Test", width=40, overflow="fold")
-        failure_table.add_column("Group", width=14)
-        failure_table.add_column("Status", width=10)
-        failure_table.add_column("Message", overflow="fold")
-        for test_result in failed_tests:
-            test_label = test_result.id
-            if test_result.file_path and test_result.file_path not in test_label:
-                test_label = f"{test_result.file_path}::{test_label}"
-            failure_table.add_row(
-                test_label,
-                test_result.group_type.value,
-                test_result.status,
-                test_result.failure_message or "",
-            )
-        console.print(failure_table)
+            test_name = test_result.id.split("::")[-1] if "::" in test_result.id else test_result.id
+            if test_result.status == "passed":
+                console.print(f"  [green]✓[/green] {test_name}")
+            elif test_result.status == "skipped":
+                console.print(f"  [yellow]○[/yellow] {test_name}")
+            else:
+                console.print(f"  [red]✗[/red] {test_name}")
 
 
 def register(app: typer.Typer, name: str) -> None:

@@ -44,6 +44,7 @@ from slop_code.execution import EnvironmentSpec
 from slop_code.execution import Session
 from slop_code.execution.assets import resolve_static_assets
 from slop_code.logging import get_logger
+from slop_code.common import WORKSPACE_TEST_DIR
 
 logger = get_logger(__name__)
 
@@ -167,7 +168,7 @@ class PytestRunner:
         """
         import shutil
 
-        workspace_tests = workspace_path / "tests"
+        workspace_tests = workspace_path / WORKSPACE_TEST_DIR
         problem_tests = self.problem.path / "tests"
 
         if workspace_tests.exists():
@@ -215,15 +216,37 @@ class PytestRunner:
                 if item.name == "conftest.py":
                     # Always copy conftest.py
                     shutil.copy2(item, workspace_tests / item.name)
+                    logger.debug(
+                        "Copying conftest.py",
+                        source=str(item),
+                        dest=str(workspace_tests / item.name),
+                    )
                 elif is_checkpoint_test:
                     # Only copy checkpoint test files for checkpoints 0..N
                     if item.name in checkpoint_files:
+                        logger.debug(
+                            "Copying checkpoint test file",
+                            source=str(item),
+                            dest=str(workspace_tests / item.name),
+                        )
                         shutil.copy2(item, workspace_tests / item.name)
                 else:
                     # Copy non-test files (helpers, __init__.py, etc.)
+                    logger.debug(
+                        "Copying non-test file",
+                        source=str(item),
+                        dest=str(workspace_tests / item.name),
+                    )
                     shutil.copy2(item, workspace_tests / item.name)
             elif item.is_dir():
+                if item.name == "__pycache__":
+                    continue
                 # Copy subdirectories (e.g., fixtures, data)
+                logger.debug(
+                    "Copying subdirectory",
+                    source=str(item),
+                    dest=str(workspace_tests / item.name),
+                )
                 shutil.copytree(item, workspace_tests / item.name)
 
     def _generate_pytest_ini(self, workspace_path: Path) -> None:
@@ -315,7 +338,9 @@ markers =
         quoted_extra_args = [shlex.quote(arg) for arg in extra_args]
 
         # Build uvx --with flags for each dependency (base + problem-specific)
-        all_deps = list(self.TEST_DEPENDENCIES) + list(self.problem.test_dependencies or [])
+        all_deps = list(self.TEST_DEPENDENCIES) + list(
+            self.problem.test_dependencies or []
+        )
         with_flags = [f"--with={dep}" for dep in all_deps]
 
         # Build timeout args if specified
@@ -335,6 +360,7 @@ markers =
             "--json-report-file=.scbench/pytest-report.json",
             "-vv",  # Verbose output
             *quoted_extra_args,
+            WORKSPACE_TEST_DIR,
         ]
 
         return " ".join(cmd_parts)
@@ -514,9 +540,7 @@ markers =
     ) -> dict[str, Any] | None:
         """Parse pytest-json-report output if available."""
         if not report_path.exists():
-            logger.debug(
-                "Pytest JSON report not found", path=str(report_path)
-            )
+            logger.debug("Pytest JSON report not found", path=str(report_path))
             return None
 
         try:
@@ -644,9 +668,7 @@ markers =
         for test_data in ctrf_tests:
             if test_data.get("status") not in {"failed", "error"}:
                 continue
-            message = self._lookup_failure_message(
-                test_data, failure_index
-            )
+            message = self._lookup_failure_message(test_data, failure_index)
             if not message:
                 continue
             test_data["message"] = self._merge_failure_messages(
@@ -687,8 +709,16 @@ markers =
             >>> result.status
             'passed'
         """
-        # Extract file path and infer checkpoint
+        # Extract file path from filePath or infer from test name (nodeid)
+        # CTRF filePath may be empty, but the name field contains the nodeid
+        # which has the format: path/to/test_file.py::TestClass::test_method
         file_path = test_data.get("filePath", "")
+        if not file_path:
+            name = test_data.get("name", "")
+            if "::" in name:
+                # Extract file path from nodeid (everything before first ::)
+                file_path = name.split("::")[0]
+
         test_checkpoint = self._infer_checkpoint_from_file(file_path)
 
         # Extract markers (CTRF uses "tags" field)
@@ -717,6 +747,100 @@ markers =
                 "message"
             ),  # Optional failure message
         )
+
+    def _convert_pytest_report_test_to_result(
+        self, test_data: dict[str, Any]
+    ) -> TestResult:
+        """Convert a pytest-json-report test entry to a TestResult model.
+
+        pytest-json-report expands parametrized tests into individual entries,
+        unlike CTRF which collapses them. This method handles the pytest-json-report
+        format which includes:
+        - nodeid: Full test ID like "tests/test_file.py::test_func[param]"
+        - outcome: "passed" | "failed" | "skipped" | "error"
+        - duration: Execution time in seconds (float)
+        - keywords: List of markers/keywords
+        - call/setup/teardown: Phase data with failure details
+
+        Args:
+            test_data: pytest-json-report test object from the "tests" array
+
+        Returns:
+            TestResult model instance
+        """
+        nodeid = test_data.get("nodeid", "")
+
+        # Extract file path from nodeid (everything before first ::)
+        file_path = ""
+        if "::" in nodeid:
+            file_path = nodeid.split("::")[0]
+
+        test_checkpoint = self._infer_checkpoint_from_file(file_path)
+
+        # Extract markers from keywords
+        # pytest-json-report stores markers in the keywords list
+        keywords = test_data.get("keywords", []) or []
+        # Filter to only include our known markers
+        known_markers = set(self.problem.markers.keys()) if self.problem.markers else set()
+        markers = [kw for kw in keywords if kw in known_markers]
+
+        # Determine group type using categorization logic
+        group_type = self._determine_group_type(
+            test_checkpoint=test_checkpoint,
+            markers=markers,
+            current_checkpoint=self.checkpoint.name,
+        )
+
+        # Map pytest outcome to our status format
+        outcome = test_data.get("outcome", "error")
+        # pytest uses "passed", "failed", "skipped", "error", "xfailed", "xpassed"
+        status_map = {
+            "passed": "passed",
+            "failed": "failed",
+            "skipped": "skipped",
+            "error": "error",
+            "xfailed": "skipped",  # Expected failure = skip
+            "xpassed": "passed",   # Unexpected pass = pass
+        }
+        status = status_map.get(outcome, "error")
+
+        # Extract failure message from call phase
+        failure_message = self._extract_failure_message(test_data)
+
+        # Duration is in seconds, convert to milliseconds
+        duration_seconds = test_data.get("duration", 0) or 0
+        duration_ms = duration_seconds * 1000
+
+        return TestResult(
+            id=nodeid,
+            checkpoint=test_checkpoint,
+            group_type=group_type,
+            status=status,
+            duration_ms=duration_ms,
+            file_path=file_path,
+            markers=markers,
+            failure_message=failure_message,
+        )
+
+    def _parse_pytest_report_tests(
+        self, report_data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        """Extract test entries from pytest-json-report.
+
+        Args:
+            report_data: Parsed pytest-json-report JSON
+
+        Returns:
+            List of test entry dictionaries
+        """
+        if not report_data:
+            return []
+
+        tests = report_data.get("tests", [])
+        if not isinstance(tests, list):
+            return []
+
+        return tests
 
     def _check_collection_line(self, stdout: str) -> tuple[bool, int]:
         """Parse pytest stdout for collection line.
@@ -826,16 +950,20 @@ markers =
             self._copy_tests_from_problem(workspace_path)
 
             # STEP 2: Materialize static assets into tests/assets/
-            materialized_assets = session.workspace.materialize_static_assets_for_tests()
+            materialized_assets = (
+                session.workspace.materialize_static_assets_for_tests()
+            )
 
             # Build environment variables for static assets
+            # Use relative paths so they work inside Docker container
             asset_env_vars: dict[str, str] = {}
             if materialized_assets:
-                assets_dir = workspace_path / "tests" / "assets"
+                assets_dir = Path(WORKSPACE_TEST_DIR, "assets")
                 asset_env_vars["SCBENCH_ASSETS_DIR"] = str(assets_dir)
-                for name, path in materialized_assets.items():
+                for name in materialized_assets:
                     env_key = f"SCBENCH_ASSET_{name.upper()}"
-                    asset_env_vars[env_key] = str(path)
+                    # Use relative path (works in container where cwd is /workspace)
+                    asset_env_vars[env_key] = str(assets_dir / name)
                 logger.info(
                     "Static assets materialized",
                     asset_count=len(materialized_assets),
@@ -858,17 +986,16 @@ markers =
             )
             logger.debug("Pytest command", command=pytest_cmd)
 
-            # STEP 5: Execute pytest
+            # STEP 5: Execute pytest (single-shot mode - no persistent container)
             logger.info("Executing pytest")
-            runtime = session.spawn()
+            full_env = {
+                **self.environment.get_full_env(self.checkpoint.env),
+                **asset_env_vars,
+            }
+            runtime = session.spawn(command=pytest_cmd)
             try:
-                # Merge asset env vars with checkpoint env
-                full_env = {
-                    **self.environment.get_full_env(self.checkpoint.env),
-                    **asset_env_vars,
-                }
                 exec_result = runtime.execute(
-                    pytest_cmd,
+                    "",  # command already set via spawn()
                     full_env,
                     None,  # stdin
                     None,  # timeout handled by pytest-timeout
@@ -896,19 +1023,30 @@ markers =
                     verbose=True,
                 )
 
-            # STEP 6: Parse CTRF report
-            ctrf_path = workspace_path / ".scbench" / "ctrf-report.json"
-            ctrf_tests, ctrf_report = self._parse_ctrf_report(ctrf_path)
+            # STEP 6: Parse test reports
+            # We prefer pytest-json-report as primary source because it expands
+            # parametrized tests into individual entries. CTRF collapses them.
             pytest_report_path = (
                 workspace_path / ".scbench" / "pytest-report.json"
             )
-            pytest_report = self._parse_pytest_json_report(
-                pytest_report_path
-            )
-            if pytest_report:
-                failure_index = self._build_failure_index(pytest_report)
-                self._augment_ctrf_with_failures(
-                    ctrf_tests, failure_index
+            pytest_report = self._parse_pytest_json_report(pytest_report_path)
+            pytest_report_tests = self._parse_pytest_report_tests(pytest_report)
+
+            # Also parse CTRF for backwards compatibility and as fallback
+            ctrf_path = workspace_path / ".scbench" / "ctrf-report.json"
+            ctrf_tests, ctrf_report = self._parse_ctrf_report(ctrf_path)
+
+            # Determine which source to use for test results
+            use_pytest_report = len(pytest_report_tests) > 0
+            if use_pytest_report:
+                logger.debug(
+                    "Using pytest-json-report as primary test source",
+                    num_tests=len(pytest_report_tests),
+                )
+            elif ctrf_tests:
+                logger.debug(
+                    "Falling back to CTRF report",
+                    num_tests=len(ctrf_tests),
                 )
 
             # STEP 7: Check for infrastructure failures
@@ -950,15 +1088,22 @@ markers =
                 pytest_exit_code=exec_result.exit_code,
                 pytest_collected=num_collected,
                 infrastructure_failure=infrastructure_failure,
-                pytest_stdout=exec_result.stdout,
-                pytest_stderr=exec_result.stderr,
+                stdout=exec_result.stdout,
+                stderr=exec_result.stderr,
                 pytest_ctrf_report=ctrf_report,
             )
 
-            # STEP 9: Convert CTRF tests to TestResults
-            for test_data in ctrf_tests:
-                test_result = self._convert_ctrf_test_to_result(test_data)
-                results.add_test_result(test_result)
+            # STEP 9: Convert test entries to TestResults
+            # Use pytest-json-report if available (expands parametrized tests),
+            # otherwise fall back to CTRF (collapses parametrized tests)
+            if use_pytest_report:
+                for test_data in pytest_report_tests:
+                    test_result = self._convert_pytest_report_test_to_result(test_data)
+                    results.add_test_result(test_result)
+            else:
+                for test_data in ctrf_tests:
+                    test_result = self._convert_ctrf_test_to_result(test_data)
+                    results.add_test_result(test_result)
 
             status_counts = Counter(
                 test_result.status for test_result in results.tests

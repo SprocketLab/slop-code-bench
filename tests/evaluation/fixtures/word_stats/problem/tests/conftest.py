@@ -6,7 +6,7 @@ This conftest.py provides fixtures that are populated by the SCBench pytest runn
 - checkpoint: The current checkpoint being evaluated
 """
 
-import json
+import os
 import pytest
 
 
@@ -24,12 +24,6 @@ def pytest_addoption(parser):
         default="checkpoint_1",
         help="Current checkpoint being evaluated",
     )
-    parser.addoption(
-        "--static-assets",
-        action="store",
-        default="{}",
-        help="JSON dict of static asset name -> path",
-    )
 
 
 @pytest.fixture
@@ -45,7 +39,16 @@ def checkpoint(request) -> str:
 
 
 @pytest.fixture
-def static_assets(request) -> dict[str, str]:
-    """Get the static assets dict (name -> path)."""
-    assets_json = request.config.getoption("--static-assets")
-    return json.loads(assets_json)
+def static_assets() -> dict[str, str]:
+    """Get the static assets dict (name -> path) from environment variables.
+
+    The SCBench pytest runner sets SCBENCH_ASSET_{NAME} environment variables
+    for each static asset.
+    """
+    prefix = "SCBENCH_ASSET_"
+    assets = {}
+    for key, value in os.environ.items():
+        if key.startswith(prefix):
+            name = key[len(prefix):].lower()
+            assets[name] = value
+    return assets

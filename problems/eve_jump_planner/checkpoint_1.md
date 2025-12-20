@@ -102,7 +102,7 @@ JUMP 7.16 LY: Ahbazon (72K isotopes)
 DOCK: Ahbazon VI - Imperial Shipment Storage
 SUMMARY:
   End Cooldown: 00:02
-  End Fatigue: 00:23
+  End Fatigue: 00:21
   Isotopes Used: 103K
   Time Waiting: 00:02
   Total LY: 10.22

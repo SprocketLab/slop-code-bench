@@ -22,6 +22,7 @@ from slop_code.evaluation.pytest_runner import PytestRunner
 from slop_code.evaluation.pytest_runner import run_checkpoint_pytest
 from slop_code.evaluation.report import GroupType
 from slop_code.execution import EnvironmentSpec
+from slop_code.common import WORKSPACE_TEST_DIR
 
 
 @pytest.fixture
@@ -37,6 +38,7 @@ def mock_problem_config():
         "error": "error handling tests",
     }
     problem.static_assets = {}
+    problem.test_dependencies = []
 
     # Mock iterate_checkpoint_items to return checkpoints in order
     problem.iterate_checkpoint_items.return_value = [
@@ -289,10 +291,7 @@ class TestPytestRunner:
             submission_path=Path("/tmp/test"),
         )
 
-        cmd = runner._build_pytest_command(
-            test_files=["tests/test_checkpoint_1.py"],
-            static_assets={},
-        )
+        cmd = runner._build_pytest_command()
 
         assert "--with=httpx" in cmd
         assert "--with=pytest-asyncio" in cmd
@@ -312,10 +311,7 @@ class TestPytestRunner:
             submission_path=Path("/tmp/test"),
         )
 
-        cmd = runner._build_pytest_command(
-            test_files=["tests/test_checkpoint_1.py"],
-            static_assets={},
-        )
+        cmd = runner._build_pytest_command()
 
         # Only base deps
         assert cmd.count("--with=") == len(PytestRunner.TEST_DEPENDENCIES)
@@ -332,10 +328,7 @@ class TestPytestRunner:
             submission_path=Path("/tmp/test"),
         )
 
-        cmd = runner._build_pytest_command(
-            test_files=["tests/test_checkpoint_1.py"],
-            static_assets={},
-        )
+        cmd = runner._build_pytest_command()
 
         # Should work without error, only base deps
         assert "--with=pytest" in cmd
@@ -568,6 +561,347 @@ class TestPytestRunner:
         assert result.duration_ms == 0  # Default
         assert result.file_path == ""  # Default
 
+    def test_convert_ctrf_test_parametrized_single_param(self, pytest_runner):
+        """Parametrized test with single parameter is parsed correctly."""
+        ctrf_test = {
+            "name": "test_calculation[1]",
+            "status": "passed",
+            "duration": 100,
+            "filePath": "tests/test_checkpoint_2.py",
+            "tags": [],
+        }
+
+        result = pytest_runner._convert_ctrf_test_to_result(ctrf_test)
+
+        assert result.id == "test_calculation[1]"
+        assert result.status == "passed"
+        assert result.checkpoint == "checkpoint_2"
+        assert result.file_path == "tests/test_checkpoint_2.py"
+
+    def test_convert_ctrf_test_parametrized_multiple_params(self, pytest_runner):
+        """Parametrized test with multiple parameters is parsed correctly."""
+        ctrf_test = {
+            "name": "test_func[param1-param2-param3]",
+            "status": "failed",
+            "duration": 50,
+            "filePath": "tests/test_checkpoint_2.py",
+            "tags": ["functionality"],
+            "message": "AssertionError",
+        }
+
+        result = pytest_runner._convert_ctrf_test_to_result(ctrf_test)
+
+        assert result.id == "test_func[param1-param2-param3]"
+        assert result.status == "failed"
+        assert result.checkpoint == "checkpoint_2"
+        assert result.markers == ["functionality"]
+        assert result.failure_message == "AssertionError"
+
+    def test_convert_ctrf_test_parametrized_with_special_chars(self, pytest_runner):
+        """Parametrized test with special chars in params (=, _) is parsed correctly."""
+        ctrf_test = {
+            "name": "test_func[range=5_reduction=90]",
+            "status": "passed",
+            "duration": 75,
+            "filePath": "tests/test_checkpoint_1.py",
+            "tags": [],
+        }
+
+        result = pytest_runner._convert_ctrf_test_to_result(ctrf_test)
+
+        assert result.id == "test_func[range=5_reduction=90]"
+        assert result.checkpoint == "checkpoint_1"
+        assert result.group_type == GroupType.REGRESSION  # Prior checkpoint
+
+    def test_convert_ctrf_test_parametrized_with_nodeid_format(self, pytest_runner):
+        """Parametrized test with full nodeid format is parsed correctly."""
+        ctrf_test = {
+            "name": "tests/test_checkpoint_2.py::TestClass::test_method[case1]",
+            "status": "passed",
+            "duration": 100,
+            "filePath": "",  # Empty filePath, should extract from name
+            "tags": [],
+        }
+
+        result = pytest_runner._convert_ctrf_test_to_result(ctrf_test)
+
+        assert result.id == "tests/test_checkpoint_2.py::TestClass::test_method[case1]"
+        assert result.file_path == "tests/test_checkpoint_2.py"
+        assert result.checkpoint == "checkpoint_2"
+
+
+class TestParametrizedFailureLookup:
+    """Tests for failure message lookup with parametrized tests."""
+
+    def test_lookup_failure_message_parametrized_exact_match(self, pytest_runner):
+        """Failure message found for specific parametrized variant via exact match."""
+        failure_index = {
+            "tests/test_checkpoint_1.py::test_func[case1]": "Error for case1",
+            "tests/test_checkpoint_1.py::test_func[case2]": "Error for case2",
+        }
+        test_data = {
+            "name": "test_func[case2]",
+            "filePath": "tests/test_checkpoint_1.py",
+        }
+
+        message = pytest_runner._lookup_failure_message(test_data, failure_index)
+
+        assert message == "Error for case2"
+
+    def test_lookup_failure_message_parametrized_all_variants(self, pytest_runner):
+        """Each parametrized variant gets its own failure message."""
+        failure_index = {
+            "tests/test_checkpoint_2.py::test_calc[1]": "Failed with input 1",
+            "tests/test_checkpoint_2.py::test_calc[2]": "Failed with input 2",
+            "tests/test_checkpoint_2.py::test_calc[3]": "Failed with input 3",
+        }
+
+        for i in range(1, 4):
+            test_data = {
+                "name": f"test_calc[{i}]",
+                "filePath": "tests/test_checkpoint_2.py",
+            }
+            message = pytest_runner._lookup_failure_message(test_data, failure_index)
+            assert message == f"Failed with input {i}"
+
+    def test_lookup_failure_message_parametrized_with_special_ids(self, pytest_runner):
+        """Failure lookup works with complex parameter IDs."""
+        failure_index = {
+            "tests/test_checkpoint_1.py::test_route[range=5_reduction=90]": "Route failed",
+        }
+        test_data = {
+            "name": "test_route[range=5_reduction=90]",
+            "filePath": "tests/test_checkpoint_1.py",
+        }
+
+        message = pytest_runner._lookup_failure_message(test_data, failure_index)
+
+        assert message == "Route failed"
+
+    def test_build_failure_index_with_parametrized_tests(self, pytest_runner):
+        """_build_failure_index correctly indexes parametrized test failures."""
+        report_data = {
+            "tests": [
+                {
+                    "nodeid": "tests/test_checkpoint_1.py::test_func[case1]",
+                    "call": {"outcome": "passed"},
+                },
+                {
+                    "nodeid": "tests/test_checkpoint_1.py::test_func[case2]",
+                    "call": {"outcome": "failed", "longreprtext": "case2 failed"},
+                },
+                {
+                    "nodeid": "tests/test_checkpoint_1.py::test_func[case3]",
+                    "call": {"outcome": "failed", "longreprtext": "case3 failed"},
+                },
+            ]
+        }
+
+        failure_index = pytest_runner._build_failure_index(report_data)
+
+        # Only failed tests should be in the index
+        assert len(failure_index) == 2
+        assert "tests/test_checkpoint_1.py::test_func[case2]" in failure_index
+        assert "tests/test_checkpoint_1.py::test_func[case3]" in failure_index
+        assert failure_index["tests/test_checkpoint_1.py::test_func[case2]"] == "case2 failed"
+        assert failure_index["tests/test_checkpoint_1.py::test_func[case3]"] == "case3 failed"
+
+
+class TestParametrizedAugmentation:
+    """Tests for augmenting CTRF with failures for parametrized tests."""
+
+    def test_augment_ctrf_with_failures_parametrized(self, pytest_runner):
+        """Parametrized test failures get correct messages from pytest-json-report."""
+        ctrf_tests = [
+            {
+                "name": "test_func[case1]",
+                "status": "passed",
+                "filePath": "tests/test_checkpoint_1.py",
+            },
+            {
+                "name": "test_func[case2]",
+                "status": "failed",
+                "filePath": "tests/test_checkpoint_1.py",
+            },
+            {
+                "name": "test_func[case3]",
+                "status": "passed",
+                "filePath": "tests/test_checkpoint_1.py",
+            },
+        ]
+        failure_index = {
+            "tests/test_checkpoint_1.py::test_func[case2]": "AssertionError: case2 wrong",
+        }
+
+        pytest_runner._augment_ctrf_with_failures(ctrf_tests, failure_index)
+
+        # Only case2 should have a message
+        assert ctrf_tests[0].get("message") is None
+        assert ctrf_tests[1]["message"] == "AssertionError: case2 wrong"
+        assert ctrf_tests[2].get("message") is None
+
+    def test_augment_ctrf_with_failures_multiple_parametrized_failures(self, pytest_runner):
+        """Multiple parametrized test failures each get their own message."""
+        ctrf_tests = [
+            {
+                "name": "test_calc[1]",
+                "status": "failed",
+                "filePath": "tests/test_checkpoint_2.py",
+            },
+            {
+                "name": "test_calc[2]",
+                "status": "failed",
+                "filePath": "tests/test_checkpoint_2.py",
+            },
+        ]
+        failure_index = {
+            "tests/test_checkpoint_2.py::test_calc[1]": "Error: 1 is wrong",
+            "tests/test_checkpoint_2.py::test_calc[2]": "Error: 2 is wrong",
+        }
+
+        pytest_runner._augment_ctrf_with_failures(ctrf_tests, failure_index)
+
+        assert ctrf_tests[0]["message"] == "Error: 1 is wrong"
+        assert ctrf_tests[1]["message"] == "Error: 2 is wrong"
+
+
+class TestPytestJsonReportConversion:
+    """Tests for pytest-json-report to TestResult conversion."""
+
+    def test_convert_pytest_report_test_basic(self, pytest_runner):
+        """Basic pytest-json-report test entry is converted correctly."""
+        test_data = {
+            "nodeid": "tests/test_checkpoint_2.py::test_example",
+            "outcome": "passed",
+            "duration": 0.123,
+            "keywords": ["test_example", "TestClass"],
+        }
+
+        result = pytest_runner._convert_pytest_report_test_to_result(test_data)
+
+        assert result.id == "tests/test_checkpoint_2.py::test_example"
+        assert result.status == "passed"
+        assert result.file_path == "tests/test_checkpoint_2.py"
+        assert result.checkpoint == "checkpoint_2"
+        assert result.duration_ms == 123.0  # Converted from seconds to ms
+
+    def test_convert_pytest_report_test_parametrized(self, pytest_runner):
+        """Parametrized test with [param] in nodeid is converted correctly."""
+        test_data = {
+            "nodeid": "tests/test_checkpoint_2.py::test_calculation[input=1]",
+            "outcome": "passed",
+            "duration": 0.05,
+            "keywords": ["test_calculation", "parametrize"],
+        }
+
+        result = pytest_runner._convert_pytest_report_test_to_result(test_data)
+
+        assert result.id == "tests/test_checkpoint_2.py::test_calculation[input=1]"
+        assert result.status == "passed"
+        assert result.checkpoint == "checkpoint_2"
+
+    def test_convert_pytest_report_test_failed_with_message(self, pytest_runner):
+        """Failed test extracts failure message from call phase."""
+        test_data = {
+            "nodeid": "tests/test_checkpoint_2.py::test_fail",
+            "outcome": "failed",
+            "duration": 0.1,
+            "keywords": [],
+            "call": {
+                "outcome": "failed",
+                "longreprtext": "AssertionError: expected 5, got 3",
+            },
+        }
+
+        result = pytest_runner._convert_pytest_report_test_to_result(test_data)
+
+        assert result.status == "failed"
+        assert result.failure_message == "AssertionError: expected 5, got 3"
+
+    def test_convert_pytest_report_test_with_markers(self, pytest_runner):
+        """Test with known markers extracts them correctly."""
+        test_data = {
+            "nodeid": "tests/test_checkpoint_2.py::test_optional",
+            "outcome": "passed",
+            "duration": 0.05,
+            "keywords": ["test_optional", "functionality", "some_other_keyword"],
+        }
+
+        result = pytest_runner._convert_pytest_report_test_to_result(test_data)
+
+        # Only known markers (from problem.markers) should be extracted
+        assert "functionality" in result.markers
+        assert result.group_type == GroupType.FUNCTIONALITY
+
+    def test_convert_pytest_report_test_regression(self, pytest_runner):
+        """Test from prior checkpoint is marked as regression."""
+        test_data = {
+            "nodeid": "tests/test_checkpoint_1.py::test_old",
+            "outcome": "passed",
+            "duration": 0.03,
+            "keywords": [],
+        }
+
+        result = pytest_runner._convert_pytest_report_test_to_result(test_data)
+
+        assert result.checkpoint == "checkpoint_1"
+        assert result.group_type == GroupType.REGRESSION
+
+    def test_convert_pytest_report_test_skipped(self, pytest_runner):
+        """Skipped test is converted with correct status."""
+        test_data = {
+            "nodeid": "tests/test_checkpoint_2.py::test_skip",
+            "outcome": "skipped",
+            "duration": 0.001,
+            "keywords": [],
+        }
+
+        result = pytest_runner._convert_pytest_report_test_to_result(test_data)
+
+        assert result.status == "skipped"
+
+    def test_convert_pytest_report_test_xfailed(self, pytest_runner):
+        """Expected failure (xfail) is converted to skipped."""
+        test_data = {
+            "nodeid": "tests/test_checkpoint_2.py::test_xfail",
+            "outcome": "xfailed",
+            "duration": 0.01,
+            "keywords": [],
+        }
+
+        result = pytest_runner._convert_pytest_report_test_to_result(test_data)
+
+        assert result.status == "skipped"
+
+    def test_parse_pytest_report_tests_valid(self, pytest_runner):
+        """_parse_pytest_report_tests extracts test entries."""
+        report_data = {
+            "tests": [
+                {"nodeid": "test1", "outcome": "passed"},
+                {"nodeid": "test2", "outcome": "failed"},
+            ]
+        }
+
+        tests = pytest_runner._parse_pytest_report_tests(report_data)
+
+        assert len(tests) == 2
+        assert tests[0]["nodeid"] == "test1"
+        assert tests[1]["nodeid"] == "test2"
+
+    def test_parse_pytest_report_tests_empty(self, pytest_runner):
+        """_parse_pytest_report_tests returns empty list for empty report."""
+        assert pytest_runner._parse_pytest_report_tests(None) == []
+        assert pytest_runner._parse_pytest_report_tests({}) == []
+        assert pytest_runner._parse_pytest_report_tests({"tests": []}) == []
+
+    def test_parse_pytest_report_tests_invalid_format(self, pytest_runner):
+        """_parse_pytest_report_tests handles invalid tests field."""
+        report_data = {"tests": "not a list"}
+
+        tests = pytest_runner._parse_pytest_report_tests(report_data)
+
+        assert tests == []
+
 
 class TestRunCheckpointPytest:
     """Tests for run_checkpoint_pytest function."""
@@ -608,7 +942,7 @@ class TestPytestRunnerRunMethod:
         # Create a mock submission directory with tests/ subdirectory
         submission_path = tmp_path / "submission"
         submission_path.mkdir()
-        tests_dir = submission_path / "tests"
+        tests_dir = submission_path / WORKSPACE_TEST_DIR
         tests_dir.mkdir()
         # Create a test file (no pyproject.toml needed with uvx)
         (tests_dir / "test_checkpoint_1.py").write_text("# test file")
@@ -728,7 +1062,7 @@ class TestPytestRunnerRunMethod:
 
         # Mock materialized asset paths
         materialized_assets = {
-            "stopwords": submission_path / "tests" / "assets" / "stopwords"
+            "stopwords": submission_path / WORKSPACE_TEST_DIR / "assets" / "stopwords"
         }
 
         exec_result = Mock()
@@ -784,9 +1118,8 @@ class TestPytestRunnerRunMethod:
         env_passed = execute_call[0][1]  # Second positional arg is env dict
         assert "SCBENCH_ASSETS_DIR" in env_passed
         assert "SCBENCH_ASSET_STOPWORDS" in env_passed
-        assert env_passed["SCBENCH_ASSET_STOPWORDS"] == str(
-            materialized_assets["stopwords"]
-        )
+        # Env vars use relative paths for Docker container compatibility
+        assert env_passed["SCBENCH_ASSET_STOPWORDS"] == f"{WORKSPACE_TEST_DIR}/assets/stopwords"
 
         # Verify session was created with resolved assets
         _, kwargs = mock_session_cls.from_environment_spec.call_args
@@ -805,7 +1138,7 @@ class TestPytestRunnerRunMethod:
         # Create submission directory with tests
         submission_path = tmp_path / "submission"
         submission_path.mkdir()
-        tests_dir = submission_path / "tests"
+        tests_dir = submission_path / WORKSPACE_TEST_DIR
         tests_dir.mkdir()
         # Create a test file (no pyproject.toml needed with uvx)
         (tests_dir / "test_checkpoint_1.py").write_text("# test file")
@@ -871,7 +1204,7 @@ class TestPytestRunnerRunMethod:
         # Create submission directory
         submission_path = tmp_path / "submission"
         submission_path.mkdir()
-        tests_dir = submission_path / "tests"
+        tests_dir = submission_path / WORKSPACE_TEST_DIR
         tests_dir.mkdir()
         # Create a test file (no pyproject.toml needed with uvx)
         (tests_dir / "test_checkpoint_1.py").write_text("# test file")
@@ -956,6 +1289,130 @@ class TestPytestRunnerRunMethod:
         failed_test = [t for t in results.tests if t.status == "failed"][0]
         assert failed_test.failure_message == "AssertionError: expected True"
 
+    def test_run_with_parametrized_tests(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """run() correctly handles CTRF with multiple parametrized test variants."""
+        from unittest.mock import MagicMock, patch
+
+        # Create submission directory
+        submission_path = tmp_path / "submission"
+        submission_path.mkdir()
+        tests_dir = submission_path / WORKSPACE_TEST_DIR
+        tests_dir.mkdir()
+        (tests_dir / "test_checkpoint_1.py").write_text("# test file")
+
+        # CTRF with parametrized test variants - 3 variants, 2 pass, 1 fails
+        ctrf_data = {
+            "results": {
+                "tool": {"name": "pytest"},
+                "tests": [
+                    {
+                        "name": "test_calculation[input=1]",
+                        "status": "passed",
+                        "duration": 100,
+                        "filePath": "tests/test_checkpoint_2.py",
+                        "tags": [],
+                    },
+                    {
+                        "name": "test_calculation[input=2]",
+                        "status": "failed",
+                        "duration": 50,
+                        "filePath": "tests/test_checkpoint_2.py",
+                        "tags": [],
+                        "message": "AssertionError: input=2 failed",
+                    },
+                    {
+                        "name": "test_calculation[input=3]",
+                        "status": "passed",
+                        "duration": 75,
+                        "filePath": "tests/test_checkpoint_2.py",
+                        "tags": [],
+                    },
+                    # Also include a regression test from checkpoint_1
+                    {
+                        "name": "test_basic[case1]",
+                        "status": "passed",
+                        "duration": 30,
+                        "filePath": "tests/test_checkpoint_1.py",
+                        "tags": [],
+                    },
+                ],
+            }
+        }
+
+        # Mock execution result
+        mock_pytest_result = Mock()
+        mock_pytest_result.exit_code = 1  # Some tests failed
+        mock_pytest_result.stdout = "collected 4 items\n\n3 passed, 1 failed"
+        mock_pytest_result.stderr = ""
+        mock_pytest_result.elapsed = 0.5
+
+        mock_runtime = MagicMock()
+        mock_runtime.execute.return_value = mock_pytest_result
+
+        mock_session = MagicMock()
+        mock_session.spawn.return_value = mock_runtime
+
+        mock_workspace = MagicMock()
+        mock_workspace.working_dir = submission_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=submission_path,
+        )
+
+        mock_session.workspace = mock_workspace
+
+        with (
+            patch(
+                "slop_code.evaluation.pytest_runner.Session"
+            ) as mock_session_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.resolve_static_assets"
+            ) as mock_resolve,
+        ):
+            mock_session_cls.from_environment_spec.return_value = mock_session
+            mock_resolve.return_value = {}
+
+            scbench_dir = submission_path / ".scbench"
+            scbench_dir.mkdir()
+            (scbench_dir / "ctrf-report.json").write_text(json.dumps(ctrf_data))
+
+            results = runner.run()
+
+        # Verify all 4 parametrized variants are counted as separate tests
+        assert len(results.tests) == 4
+        assert results.pytest_collected == 4
+
+        # Verify correct pass/fail counts
+        # 3 tests from checkpoint_2 (current): 2 passed, 1 failed - all CORE
+        assert results.total_counts[GroupType.CORE] == 3
+        assert results.pass_counts[GroupType.CORE] == 2
+
+        # 1 test from checkpoint_1 (prior): passed - REGRESSION
+        assert results.total_counts[GroupType.REGRESSION] == 1
+        assert results.pass_counts[GroupType.REGRESSION] == 1
+
+        # Verify each parametrized variant has correct ID
+        test_ids = [t.id for t in results.tests]
+        assert "test_calculation[input=1]" in test_ids
+        assert "test_calculation[input=2]" in test_ids
+        assert "test_calculation[input=3]" in test_ids
+        assert "test_basic[case1]" in test_ids
+
+        # Verify failure message is captured for the failed variant
+        failed_tests = [t for t in results.tests if t.status == "failed"]
+        assert len(failed_tests) == 1
+        assert failed_tests[0].id == "test_calculation[input=2]"
+        assert failed_tests[0].failure_message == "AssertionError: input=2 failed"
+
 
 def docker_available() -> bool:
     """Check if Docker is available and running."""
@@ -1005,9 +1462,9 @@ class TestCopyTestsFromProblem:
         runner._copy_tests_from_problem(workspace_path)
 
         # Verify tests were copied
-        assert (workspace_path / "tests").exists()
-        assert (workspace_path / "tests" / "test_checkpoint_1.py").exists()
-        assert (workspace_path / "tests" / "conftest.py").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR).exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "test_checkpoint_1.py").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "conftest.py").exists()
 
     def test_does_not_overwrite_existing_tests(
         self,
@@ -1027,7 +1484,7 @@ class TestCopyTestsFromProblem:
         # Create workspace WITH existing tests
         workspace_path = tmp_path / "workspace"
         workspace_path.mkdir()
-        workspace_tests = workspace_path / "tests"
+        workspace_tests = workspace_path / WORKSPACE_TEST_DIR
         workspace_tests.mkdir()
         (workspace_tests / "test_checkpoint_1.py").write_text("# workspace test")
 
@@ -1115,12 +1572,12 @@ class TestCopyTestsFromProblem:
         runner._copy_tests_from_problem(workspace_path)
 
         # Verify only checkpoints 1 and 2 were copied
-        assert (workspace_path / "tests").exists()
-        assert (workspace_path / "tests" / "conftest.py").exists()
-        assert (workspace_path / "tests" / "test_checkpoint_1.py").exists()
-        assert (workspace_path / "tests" / "test_checkpoint_2.py").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR).exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "conftest.py").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "test_checkpoint_1.py").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "test_checkpoint_2.py").exists()
         # checkpoint_3 should NOT be copied
-        assert not (workspace_path / "tests" / "test_checkpoint_3.py").exists()
+        assert not (workspace_path / WORKSPACE_TEST_DIR / "test_checkpoint_3.py").exists()
 
     def test_copies_non_checkpoint_test_files(
         self,
@@ -1155,8 +1612,8 @@ class TestCopyTestsFromProblem:
         runner._copy_tests_from_problem(workspace_path)
 
         # Verify non-checkpoint files are copied
-        assert (workspace_path / "tests" / "helpers.py").exists()
-        assert (workspace_path / "tests" / "__init__.py").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "helpers.py").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "__init__.py").exists()
 
     def test_copies_subdirectories(
         self,
@@ -1193,8 +1650,8 @@ class TestCopyTestsFromProblem:
         runner._copy_tests_from_problem(workspace_path)
 
         # Verify subdirectory was copied
-        assert (workspace_path / "tests" / "fixtures").exists()
-        assert (workspace_path / "tests" / "fixtures" / "data.json").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "fixtures").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "fixtures" / "data.json").exists()
 
 
 class TestSessionCreation:
@@ -1212,7 +1669,7 @@ class TestSessionCreation:
 
         submission_path = tmp_path / "submission"
         submission_path.mkdir()
-        tests_dir = submission_path / "tests"
+        tests_dir = submission_path / WORKSPACE_TEST_DIR
         tests_dir.mkdir()
         # Create a test file (no pyproject.toml needed with uvx)
         (tests_dir / "test_checkpoint_1.py").write_text("# test file")
@@ -1304,12 +1761,12 @@ class TestTestMaterialization:
         runner._copy_tests_from_problem(workspace_path)
 
         # CRITICAL: Tests should be in workspace_path
-        assert (workspace_path / "tests").exists()
-        assert (workspace_path / "tests" / "test_checkpoint_1.py").exists()
-        assert (workspace_path / "tests" / "conftest.py").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR).exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "test_checkpoint_1.py").exists()
+        assert (workspace_path / WORKSPACE_TEST_DIR / "conftest.py").exists()
 
         # CRITICAL: submission_path should NOT have tests directory created
-        assert not (submission_path / "tests").exists()
+        assert not (submission_path / WORKSPACE_TEST_DIR).exists()
 
     def test_submission_path_unchanged_after_test_copy(
         self,
@@ -1380,7 +1837,7 @@ class TestSnapshotLocationRegression:
         # Setup mock session with SEPARATE workspace directory
         workspace_path = tmp_path / "workspace"
         workspace_path.mkdir()
-        workspace_tests = workspace_path / "tests"
+        workspace_tests = workspace_path / WORKSPACE_TEST_DIR
         workspace_tests.mkdir()
         (workspace_tests / "pyproject.toml").write_text("[project]\nname = 'tests'\n")
 
@@ -1462,7 +1919,7 @@ class TestSnapshotLocationRegression:
         # Create a DISTINCT workspace path
         workspace_path = tmp_path / "workspace"
         workspace_path.mkdir()
-        workspace_tests = workspace_path / "tests"
+        workspace_tests = workspace_path / WORKSPACE_TEST_DIR
         workspace_tests.mkdir()
         # Create a test file (no pyproject.toml needed with uvx)
         (workspace_tests / "test_checkpoint_1.py").write_text("# test file")

@@ -5,7 +5,7 @@ tags:
   - e2e-test
   - cli
 timeout: 30
-entry_file: main.py
+entry_file: main
 
 static_assets:
   stopwords:

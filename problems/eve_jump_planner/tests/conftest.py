@@ -11,6 +11,7 @@ import shlex
 
 import pytest
 from pathlib import Path
+import os
 
 
 def pytest_addoption(parser):
@@ -26,12 +27,6 @@ def pytest_addoption(parser):
         action="store",
         required=True,
         help="Current checkpoint being evaluated",
-    )
-    parser.addoption(
-        "--static-assets",
-        action="store",
-        default="{}",
-        help="JSON dict of static asset paths (includes sde_dir)",
     )
 
 
@@ -49,13 +44,6 @@ def checkpoint_name(request):
 
 
 @pytest.fixture(scope="session")
-def static_assets(request):
-    """Get static assets (including sde_dir)."""
-    assets_json = request.config.getoption("--static-assets")
-    return json.loads(assets_json)
-
-
-@pytest.fixture(scope="session")
-def sde_dir(static_assets):
+def sde_dir():
     """Get SDE directory path from static assets."""
-    return Path(static_assets["sde_dir"])
+    return Path(__file__).parent / "assets" / "sde_dir"

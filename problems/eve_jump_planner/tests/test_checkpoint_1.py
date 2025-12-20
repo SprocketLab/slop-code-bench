@@ -62,7 +62,7 @@ TURNUR_AHB = {
             "DOCK: Ahbazon VI - Imperial Shipment Storage\n"
             "SUMMARY:\n"
             "  End Cooldown: 00:02\n"
-            "  End Fatigue: 00:20\n"
+            "  End Fatigue: 00:21\n"
             "  Isotopes Used: 103K\n"
             "  Time Waiting: 00:02\n"
             "  Total LY: 10.22"
@@ -155,10 +155,10 @@ FATIGUE_CAPS = {
             "JUMP 3.81 LY: B-G1LG (39K isotopes)\n"
             "DOCK: B-G1LG VI - Moon 3 - True Power Mining Outpost\n"
             "SUMMARY:\n"
-            "  End Cooldown: 00:30\n"
+            "  End Cooldown: 00:28\n"
             "  End Fatigue: 05:00\n"
             "  Isotopes Used: 877K\n"
-            "  Time Waiting: 02:30\n"
+            "  Time Waiting: 02:20\n"
             "  Total LY: 87.67"
         }
     ],
@@ -227,7 +227,7 @@ JITA_AMA = {
             "DOCK: Amamake VI - Moon 2 - Nurtura Food Packaging\n"
             "SUMMARY:\n"
             "  End Cooldown: 00:02\n"
-            "  End Fatigue: 00:27\n"
+            "  End Fatigue: 00:28\n"
             "  Isotopes Used: 147K\n"
             "  Time Waiting: 00:03\n"
             "  Total LY: 14.62",
@@ -313,8 +313,8 @@ MESY_SISEIDE = {
             "JUMP 4.20 LY: Siseide (43K isotopes)\n"
             "DOCK: Siseide VIII - Expert Distribution Warehouse\n"
             "SUMMARY:\n"
-            "  End Cooldown: 00:02\n"
-            "  End Fatigue: 00:30\n"
+            "  End Cooldown: 00:03\n"
+            "  End Fatigue: 00:31\n"
             "  Isotopes Used: 164K\n"
             "  Time Waiting: 00:05\n"
             "  Total LY: 16.38",
@@ -336,10 +336,10 @@ MESY_SISEIDE = {
             "JUMP 4.20 LY: Siseide (43K isotopes)\n"
             "DOCK: Siseide VIII - Expert Distribution Warehouse\n"
             "SUMMARY:\n"
-            "  End Cooldown: 00:30\n"
+            "  End Cooldown: 00:29\n"
             "  End Fatigue: 05:00\n"
             "  Isotopes Used: 164K\n"
-            "  Time Waiting: 00:30\n"
+            "  Time Waiting: 00:27\n"
             "  Total LY: 16.38",
         },
         {
@@ -360,10 +360,10 @@ MESY_SISEIDE = {
             "JUMP 4.20 LY: Siseide (22K isotopes)\n"
             "DOCK: Siseide VIII - Expert Distribution Warehouse\n"
             "SUMMARY:\n"
-            "  End Cooldown: 00:30\n"
+            "  End Cooldown: 00:29\n"
             "  End Fatigue: 05:00\n"
             "  Isotopes Used: 82K\n"
-            "  Time Waiting: 00:30\n"
+            "  Time Waiting: 00:27\n"
             "  Total LY: 16.38",
         },
         {

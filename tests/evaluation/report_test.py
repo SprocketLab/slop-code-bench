@@ -128,7 +128,8 @@ class TestTestResult:
         data = result.model_dump()
         assert data["id"] == "test_example"
         assert data["group_type"] == "Core"  # Serializes as string
-        assert data["markers"] == ["slow"]
+        # markers is excluded from serialization to reduce output verbosity
+        assert "markers" not in data
 
 
 class TestCorrectnessResults:
@@ -504,29 +505,3 @@ class TestCorrectnessResults:
         assert loaded.problem_name == "test"
         assert len(loaded.tests) == 1
         assert loaded.tests[0].id == "test_example"
-
-    def test_save_writes_pytest_logs(self):
-        """save() writes pytest stdout/stderr logs when present."""
-        results = CorrectnessResults(
-            problem_name="test",
-            problem_version=1,
-            checkpoint_name="checkpoint_1",
-            checkpoint_version=1,
-            duration=5.0,
-            entrypoint="python main.py",
-            pytest_exit_code=1,
-            pytest_collected=1,
-            pytest_stdout="stdout line\n",
-            pytest_stderr="stderr line\n",
-        )
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            save_path = Path(tmpdir)
-            results.save(save_path)
-
-            stdout_log = save_path / "pytest_stdout.log"
-            stderr_log = save_path / "pytest_stderr.log"
-            assert stdout_log.exists()
-            assert stderr_log.exists()
-            assert stdout_log.read_text() == "stdout line\n"
-            assert stderr_log.read_text() == "stderr line\n"

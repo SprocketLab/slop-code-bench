@@ -220,4 +220,4 @@ dashboard/.web
 dashboard/*.py[cod]
 **/.DS_Store
 .DS_STORE
-.claude/*
+.claude/settings.local.json

@@ -26,6 +26,7 @@ from slop_code.common.constants import QUALITY_DIR
 from slop_code.common.constants import QUALITY_METRIC_SAVENAME
 from slop_code.common.constants import RUBRIC_FILENAME
 from slop_code.common.constants import RUN_INFO_FILENAME
+from slop_code.common.constants import WORKSPACE_TEST_DIR
 from slop_code.common.constants import SNAPSHOT_DIR_NAME
 from slop_code.common.constants import SUMMARY_FILENAME
 from slop_code.common.constants import SYMBOLS_QUALITY_SAVENAME
@@ -77,6 +78,7 @@ __all__ = [
     "PROMPT_FILENAME",
     "RUN_INFO_FILENAME",
     "SNAPSHOT_DIR_NAME",
+    "WORKSPACE_TEST_DIR",
     "get_save_spec_dump",
     # Rendering
     "get_file_params",

@@ -13,6 +13,8 @@ DIFF_FILENAME = "diff.json"
 RUBRIC_FILENAME = "rubric.jsonl"
 QUALITY_METRIC_SAVENAME = "overall_quality.json"
 
+WORKSPACE_TEST_DIR = ".evaluation_tests"
+
 # Quality analysis directory and files
 QUALITY_DIR = "quality_analysis"
 FILES_QUALITY_SAVENAME = "files.jsonl"

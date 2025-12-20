@@ -82,13 +82,19 @@ class TestResult(BaseModel):
     status: Literal["passed", "failed", "skipped", "error"] = Field(
         description="Test outcome from pytest"
     )
-    duration_ms: float = Field(description="Test execution time in milliseconds")
+    duration_ms: float = Field(
+        description="Test execution time in milliseconds"
+    )
     file_path: str = Field(description="Test file path relative to tests/")
     markers: list[str] = Field(
-        default_factory=list, description="Pytest markers applied to this test"
+        default_factory=list,
+        description="Pytest markers applied to this test",
+        exclude=True,  # Don't include in JSON serialization
     )
     failure_message: str | None = Field(
-        default=None, description="Failure message if test failed/errored"
+        default=None,
+        description="Failure message if test failed/errored",
+        exclude=True,  # Don't include in JSON serialization
     )
 
 
@@ -176,8 +182,8 @@ class CorrectnessResults(BaseModel):
         pytest_exit_code: Exit code from pytest execution
         pytest_collected: Number of tests collected by pytest
         infrastructure_failure: Whether pytest execution itself failed
-        pytest_stdout: Captured pytest stdout (not stored in evaluation.json)
-        pytest_stderr: Captured pytest stderr (not stored in evaluation.json)
+        stdout: Captured pytest stdout (not stored in evaluation.json)
+        stderr: Captured pytest stderr (not stored in evaluation.json)
         pytest_ctrf_report: Raw CTRF JSON report (not stored in evaluation.json)
 
     Example:
@@ -199,7 +205,9 @@ class CorrectnessResults(BaseModel):
     problem_name: str = Field(description="Name of the problem")
     problem_version: int = Field(description="Version number of the problem")
     checkpoint_name: str = Field(description="Name of the checkpoint")
-    checkpoint_version: int = Field(description="Version number of the checkpoint")
+    checkpoint_version: int = Field(
+        description="Version number of the checkpoint"
+    )
     duration: float = Field(description="Total evaluation duration in seconds")
     entrypoint: str = Field(description="Command used to run the submission")
 
@@ -218,17 +226,19 @@ class CorrectnessResults(BaseModel):
 
     # Pytest execution metadata
     pytest_exit_code: int = Field(description="Exit code from pytest execution")
-    pytest_collected: int = Field(description="Number of tests collected by pytest")
+    pytest_collected: int = Field(
+        description="Number of tests collected by pytest"
+    )
     infrastructure_failure: bool = Field(
         default=False,
         description="Whether pytest execution itself failed (not just test failures)",
     )
-    pytest_stdout: str | None = Field(
+    stdout: str | None = Field(
         default=None,
         exclude=True,
         description="Captured pytest stdout (not stored in evaluation.json)",
     )
-    pytest_stderr: str | None = Field(
+    stderr: str | None = Field(
         default=None,
         exclude=True,
         description="Captured pytest stderr (not stored in evaluation.json)",
@@ -329,25 +339,16 @@ class CorrectnessResults(BaseModel):
         with save_path.open("w") as f:
             json.dump(self.model_dump(mode="json"), f, indent=2)
 
-        if self.pytest_stdout is not None:
-            (save_dir / "pytest_stdout.log").write_text(
-                self.pytest_stdout, encoding="utf-8"
-            )
-        if self.pytest_stderr is not None:
-            (save_dir / "pytest_stderr.log").write_text(
-                self.pytest_stderr, encoding="utf-8"
-            )
-
         evaluation_dir = save_dir / "evaluation"
         evaluation_dir.mkdir(parents=True, exist_ok=True)
 
-        if self.pytest_stdout is not None:
-            (evaluation_dir / "stdout").write_text(
-                self.pytest_stdout, encoding="utf-8"
+        if self.stdout is not None:
+            (evaluation_dir / "stdout.txt").write_text(
+                self.stdout, encoding="utf-8"
             )
-        if self.pytest_stderr is not None:
-            (evaluation_dir / "stderr").write_text(
-                self.pytest_stderr, encoding="utf-8"
+        if self.stderr is not None:
+            (evaluation_dir / "stderr.txt").write_text(
+                self.stderr, encoding="utf-8"
             )
         if self.pytest_ctrf_report is not None:
             report_path = evaluation_dir / "report.json"

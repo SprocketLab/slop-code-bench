@@ -669,7 +669,7 @@ def find_path(
 
             # Calculate fatigue for this jump
             new_fatigue, new_cooldown = calculate_fatigue(
-                distance, fatigue, reduction_percent
+                distance, fatigue - wait_before_jump, reduction_percent
             )
 
             new_wait = total_wait + wait_before_jump
@@ -920,7 +920,9 @@ def main():
                     wait_before_jump = current_cooldown
                     total_wait += wait_before_jump
                     new_fatigue, new_cooldown = calculate_fatigue(
-                        distance, current_fatigue, args.reduction
+                        distance,
+                        current_fatigue - wait_before_jump,
+                        args.reduction,
                     )
                     current_fatigue = new_fatigue
                     current_cooldown = new_cooldown
@@ -1006,7 +1008,7 @@ def main():
 
         # Calculate fatigue for this jump
         new_fatigue, new_cooldown = calculate_fatigue(
-            distance, current_fatigue, args.reduction
+            distance, current_fatigue - wait_before_jump, args.reduction
         )
 
         # Isotopes used for this jump (distance-proportional)

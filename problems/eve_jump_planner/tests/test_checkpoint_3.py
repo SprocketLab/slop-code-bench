@@ -191,44 +191,28 @@ CLOAK_ADVANTAGE = {
     "cases": [
         {
             "extra": 3,
-            "expected": "START: S-U8A4 VI - Moon 1 - Ishukone Corporation Factory\n"
-            "UNDOCK\n"
-            "JUMP 2.93 LY: Pertnineere (30K isotopes)\n"
-            "DOCK: Pertnineere IV - Quafe Company Factory\n"
-            "UNDOCK\n"
-            "JUMP 9.19 LY: Ahbazon (92K isotopes)\n"
-            "DOCK: Ahbazon VIII - Moon 2 - Carthum Conglomerate Warehouse\n"
-            "UNDOCK\n"
-            "GO: Ahbazon (0.4) -> Hykkota (0.8) -> Ansila (0.9) -> Ikuchi (1.0) -> Jita (0.9)\n"
-            "DOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant\n"
-            "SUMMARY:\n"
-            "  End Cooldown: 00:02\n"
-            "  End Fatigue: 00:23\n"
-            "  Isotopes Used: 122K\n"
-            "  Time Waiting: 00:02\n"
-            "  Total LY: 12.12",
-        },
-        {
-            "extra": 3,
-            "cloak": True,
-            "expected": "START: S-U8A4 VI - Moon 1 - Ishukone Corporation Factory\n"
-            "UNDOCK\n"
-            "GO: S-U8A4 (-0.4) -> 6-U2M8 (-0.3)\n"
-            "JUMP 2.85 LY: Y9G-KS (29K isotopes)\n"
-            "DOCK: Y9G-KS VI - Moon 14 - Intaki Syndicate Bureau\n"
-            "UNDOCK\n"
-            "GO: Y9G-KS (-0.4) -> UTKS-5 (-0.4)\n"
-            "JUMP 8.48 LY: Ahbazon (85K isotopes)\n"
-            "DOCK: Ahbazon VIII - Moon 2 - Carthum Conglomerate Warehouse\n"
-            "UNDOCK\n"
-            "GO: Ahbazon (0.4) -> Hykkota (0.8) -> Ansila (0.9) -> Ikuchi (1.0) -> Jita (0.9)\n"
-            "DOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant\n"
-            "SUMMARY:\n"
-            "  End Cooldown: 00:02\n"
-            "  End Fatigue: 00:22\n"
-            "  Isotopes Used: 114K\n"
-            "  Time Waiting: 00:02\n"
-            "  Total LY: 11.33",
+            "expected": """START: S-U8A4 VI - Moon 1 - Ishukone Corporation Factory
+UNDOCK
+JUMP 2.93 LY: Pertnineere (30K isotopes)
+DOCK: Pertnineere IV - Quafe Company Factory
+UNDOCK
+JUMP 4.54 LY: Leran (46K isotopes)
+DOCK: Leran VI - Civic Court Accounting
+UNDOCK
+JUMP 3.88 LY: Chamja (39K isotopes)
+DOCK: Chamja V - Moon 12 - Core Complexion Inc. Warehouse
+UNDOCK
+JUMP 1.85 LY: Ahbazon (19K isotopes)
+DOCK: Ahbazon VIII - Moon 2 - Carthum Conglomerate Warehouse
+UNDOCK
+GO: Ahbazon (0.4) -> Hykkota (0.8) -> Ansila (0.9) -> Ikuchi (1.0) -> Jita (0.9)
+DOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant
+SUMMARY:
+  End Cooldown: 00:02
+  End Fatigue: 00:23
+  Isotopes Used: 122K
+  Time Waiting: 00:02
+  Total LY: 12.12""",
         },
         {
             "extra": 3,
@@ -237,25 +221,46 @@ CLOAK_ADVANTAGE = {
             "expected": """START: S-U8A4 VI - Moon 1 - Ishukone Corporation Factory
 UNDOCK
 GO: S-U8A4 (-0.4) -> 6-U2M8 (-0.3)
-JUMP 2.57 LY: IIRH-G (26K isotopes)
-DOCK: IIRH-G VIII - Intaki Space Police Logistic Support
+JUMP 2.12 LY: 35-RK9 (22K isotopes)
+DOCK: 35-RK9 IX - Moon 4 - Intaki Syndicate Bureau
 UNDOCK
-GO: IIRH-G (-0.3) -> VV-VCR (-0.2)
-JUMP 3.90 LY: Ladistier (39K isotopes)
-DOCK: Ladistier VI - Moon 4 - President Bureau
+GO: 35-RK9 (-0.2) -> IIRH-G (-0.3)
+JUMP 4.81 LY: Leran (49K isotopes)
+DOCK: Leran VI - Civic Court Accounting
 UNDOCK
-GO: Ladistier (0.3) -> Old Man Star (0.3)
-JUMP 2.35 LY: Yvangier (24K isotopes)
-DOCK: Yvangier VIII - X-Sense Chemical Storage
+GO: Leran (0.4) -> Pashanai (0.5)
+JUMP 4.91 LY: Ahbazon (50K isotopes)
+DOCK: Ahbazon VIII - Moon 2 - Carthum Conglomerate Warehouse
 UNDOCK
-GO: Yvangier (0.4) -> Charmerout (0.6) -> Jolevier (0.9) -> Yashunen (1.0) -> Hatakani (0.9) -> Sivala (0.6) -> Uedama (0.5) -> Juunigaishi (0.6) -> Anttiri (0.7) -> Sirppala (0.9) -> Urlen (1.0) -> Perimeter (1.0) -> Jita (0.9)
+GO: Ahbazon (0.4) -> Hykkota (0.8) -> Ansila (0.9) -> Ikuchi (1.0) -> Jita (0.9)
 DOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant
 SUMMARY:
   End Cooldown: 00:02
-  End Fatigue: 00:19
-  Isotopes Used: 89K
+  End Fatigue: 00:23
+  Isotopes Used: 119K
   Time Waiting: 00:03
-  Total LY: 8.82""",
+  Total LY: 11.84""",
+        },
+        {
+            "extra": 20,
+            "range": 5,
+            "cloak": False,
+            "expected": """SSTART: S-U8A4 VI - Moon 1 - Ishukone Corporation Factory
+UNDOCK
+JUMP 2.64 LY: 35-RK9 (27K isotopes)
+DOCK: 35-RK9 IX - Moon 4 - Intaki Syndicate Bureau
+UNDOCK
+JUMP 3.25 LY: Covryn (33K isotopes)
+DOCK: Covryn VII - Moon 2 - Poteque Pharmaceuticals Biotech Production
+UNDOCK
+GO: Covryn (0.4) -> Stacmon (0.6) -> Aidart (0.6) -> Cistuvaert (1.0) -> Alentene (0.9) -> Merolles (0.9) -> Tar (0.8) -> Pakhshi (0.8) -> Synchelle (0.9) -> Kassigainen (0.9) -> Hatakani (0.9) -> Sivala (0.6) -> Uedama (0.5) -> Juunigaishi (0.6) -> Anttiri (0.7) -> Sirppala (0.9) -> Urlen (1.0) -> Perimeter (1.0) -> Jita (0.9)
+DOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant
+SUMMARY:
+  End Cooldown: 00:02
+  End Fatigue: 00:16
+  Isotopes Used: 59K
+  Time Waiting: 00:02
+  Total LY: 5.89""",
         },
     ],
 }

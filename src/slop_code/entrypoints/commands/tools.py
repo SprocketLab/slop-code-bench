@@ -144,4 +144,4 @@ def run_case(
         typer.echo(json.dumps(payload, indent=2))
         return
 
-    typer.echo(results.pytest_stdout or "", nl=False)
+    typer.echo(results.stdout or "", nl=False)
