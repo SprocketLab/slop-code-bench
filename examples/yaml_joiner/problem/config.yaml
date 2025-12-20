@@ -1,49 +1,31 @@
-version: 1 # Version of this problem.
-name: yaml_joiner # Name of the problem
-description: A simple yaml problem to demonstrate static files/group files # Concise description of the problem
-tags: # Tags for the problem
-    - tutorial 
-    - cli
-timeout: 10 # default timeout to use
-env: # default environment variables to set for the problem
-    NAME: yaml_joiner 
-    PURPOSE: "define problem"
-    LEVEL: problem
-checkpoints: # List of checkpoints in the problem, they are the exact DIRECTORY names.
-  checkpoint_1:
-    version: 1
-    timeout: 10
-    specification: spec.md
-    state: Core Tests
-    groups:
-      core:
-        group_files:
-          - dummy/ignore.yaml
-        type: Core
-    order: 1
-  checkpoint_2:
-    version: 1
-    order: 2
-    path: checkpoint_2
-    timeout: 10
-    specification: spec.md
-    state: Core Tests
-    groups:
-      random:
-        group_files:
-          - dummy/ignore.yaml
-        type: Core
-    regressions:
-      - checkpoint: checkpoint_1
-        groups: [core]
+version: 1
+name: yaml_joiner
+description: A simple yaml problem to demonstrate static files/group files
+tags:
+  - tutorial
+  - cli
+category: example
+difficulty: Easy
+entry_file: solution
+timeout: 10
+
 static_assets:
   cfg_dir:
     path: static_cfgs
-entry_file: solution
-loader_script: loader.py
-loader_entrypoint: Loader
 
-adapter:
-  type: cli
-  tracked_files:
-  - result.yaml
+checkpoints:
+  checkpoint_1:
+    version: 1
+    order: 1
+    state: Core Tests
+    timeout: 10
+
+  checkpoint_2:
+    version: 1
+    order: 2
+    state: Core Tests
+    timeout: 10
+
+markers:
+  functionality: "non-core / nice-to-have tests"
+  error: "error-handling / edge-case tests"

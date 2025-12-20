@@ -1,17 +1,33 @@
-prompt_version: 3 # Version of prompt used to create the problem
-version: 1 # Version of this problem.
-name: calculator # Name of the problem
-description: This problem is for the tutorial # Concise description of the problem
-tags: # Tags for the problem
-    - tutorial 
-    - cli
-timeout: 10 # default timeout to use
-env: # default environment variables to set for the problem
-    NAME: tutorial 
-    PURPOSE: "define problem"
-    LEVEL: problem
-checkpoints: # List of checkpoints in the problem, they are the exact DIRECTORY names.
-- checkpoint_1
-- checkpoint_2
-- checkpoint_3
+version: 1
+name: calculator
+description: This problem is for the tutorial
+tags:
+  - tutorial
+  - cli
+category: example
+difficulty: Easy
 entry_file: calculator
+timeout: 10
+
+checkpoints:
+  checkpoint_1:
+    version: 1
+    order: 1
+    state: Core Tests
+    timeout: 30
+
+  checkpoint_2:
+    version: 1
+    order: 2
+    state: Core Tests
+    timeout: 30
+
+  checkpoint_3:
+    version: 1
+    order: 3
+    state: Core Tests
+    timeout: 30
+
+markers:
+  functionality: "non-core / nice-to-have tests"
+  error: "error-handling / edge-case tests"

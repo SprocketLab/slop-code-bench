@@ -650,11 +650,17 @@ markers =
             is_agent_infer=False,
         )
 
+        # Resolve static assets (needed for mounts + pytest args)
+        resolved_assets = resolve_static_assets(
+            base_path=self.problem.path,
+            assets=self.problem.static_assets,
+        )
+
         # Create session for execution
         session = Session(
             spec=self.environment,
             workspace=workspace,
-            static_assets=None,
+            static_assets=resolved_assets,
             is_agent_infer=False,
         )
 
@@ -675,23 +681,23 @@ markers =
             test_files = self._get_test_files_for_checkpoint()
             logger.info("Running test files", files=test_files)
 
-            # STEP 4: Resolve static assets (pass paths to pytest)
-            resolved_assets = resolve_static_assets(
-                base_path=self.problem.path,
-                assets=self.problem.static_assets,
-            )
-
             # Convert to dict of name -> string path
-            static_assets_dict = {
-                name: str(asset.absolute_path)
-                for name, asset in resolved_assets.items()
-            }
+            if self.environment.type == "docker":
+                static_assets_dict = {
+                    name: (Path("/static") / asset.save_path).as_posix()
+                    for name, asset in resolved_assets.items()
+                }
+            else:
+                static_assets_dict = {
+                    name: str(asset.absolute_path)
+                    for name, asset in resolved_assets.items()
+                }
 
-            # STEP 5: Build pytest command
+            # STEP 4: Build pytest command
             pytest_cmd = self._build_pytest_command(test_files, static_assets_dict)
             logger.debug("Pytest command", command=pytest_cmd)
 
-            # STEP 6: Execute pytest in Docker
+            # STEP 5: Execute pytest in Docker
             logger.info("Executing pytest")
             runtime = session.spawn()
             try:
@@ -710,11 +716,11 @@ markers =
                 duration=exec_result.elapsed,
             )
 
-            # STEP 7: Parse CTRF report
+            # STEP 6: Parse CTRF report
             ctrf_path = workspace_path / ".scbench" / "ctrf-report.json"
             ctrf_tests = self._parse_ctrf_report(ctrf_path)
 
-            # STEP 8: Check for infrastructure failures
+            # STEP 7: Check for infrastructure failures
             collection_ok, num_collected = self._check_collection_line(
                 exec_result.stdout
             )
@@ -741,7 +747,7 @@ markers =
                     ),
                 )
 
-            # STEP 9: Build CorrectnessResults
+            # STEP 8: Build CorrectnessResults
             results = CorrectnessResults(
                 problem_name=self.problem.name,
                 problem_version=self.problem.version,
@@ -754,7 +760,7 @@ markers =
                 infrastructure_failure=infrastructure_failure,
             )
 
-            # STEP 10: Convert CTRF tests to TestResults and add to results
+            # STEP 9: Convert CTRF tests to TestResults and add to results
             for test_data in ctrf_tests:
                 test_result = self._convert_ctrf_test_to_result(test_data)
                 results.add_test_result(test_result)

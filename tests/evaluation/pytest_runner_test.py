@@ -63,6 +63,7 @@ def mock_checkpoint_config():
 def mock_environment():
     """Create a mock EnvironmentSpec for testing."""
     env = Mock(spec=EnvironmentSpec)
+    env.type = "local"
     env.get_command.return_value = "python main.py"
     env.get_full_env.return_value = {}
     return env
@@ -617,6 +618,170 @@ class TestPytestRunnerRunMethod:
         assert results.pass_counts[GroupType.FUNCTIONALITY] == 1
         assert results.pass_counts[GroupType.REGRESSION] == 1
 
+    def test_run_passes_container_asset_paths_for_docker(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """run() uses container paths for static assets in Docker."""
+        from unittest.mock import MagicMock, patch
+
+        submission_path = tmp_path / "submission"
+        submission_path.mkdir()
+
+        mock_environment.type = "docker"
+
+        resolved_asset = Mock()
+        resolved_asset.absolute_path = Path("/host/stopwords.txt")
+        resolved_asset.save_path = Path("static/stopwords.txt")
+        resolved_assets = {"stopwords": resolved_asset}
+
+        captured_assets: dict[str, str] = {}
+
+        def _capture_assets(
+            _test_files: list[str],
+            static_assets: dict[str, str],
+        ) -> str:
+            captured_assets.update(static_assets)
+            return "pytest"
+
+        exec_result = Mock()
+        exec_result.exit_code = 0
+        exec_result.stdout = "collected 1 item"
+        exec_result.stderr = ""
+        exec_result.elapsed = 0.1
+
+        runtime = MagicMock()
+        runtime.execute.return_value = exec_result
+
+        session = MagicMock()
+        session.spawn.return_value = runtime
+
+        workspace = MagicMock()
+        workspace.working_dir = submission_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=submission_path,
+        )
+
+        with (
+            patch(
+                "slop_code.evaluation.pytest_runner.Snapshot"
+            ) as mock_snapshot_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.Workspace"
+            ) as mock_workspace_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.Session"
+            ) as mock_session_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.resolve_static_assets"
+            ) as mock_resolve,
+            patch.object(runner, "_setup_test_environment", return_value=None),
+            patch.object(runner, "_generate_pytest_ini", return_value=None),
+            patch.object(runner, "_parse_ctrf_report", return_value=[]),
+            patch.object(
+                runner, "_build_pytest_command", side_effect=_capture_assets
+            ),
+        ):
+            mock_snapshot_cls.from_directory.return_value = Mock()
+            mock_workspace_cls.return_value = workspace
+            mock_session_cls.return_value = session
+            mock_resolve.return_value = resolved_assets
+
+            runner.run()
+
+        assert captured_assets["stopwords"] == "/static/static/stopwords.txt"
+        _, kwargs = mock_session_cls.call_args
+        assert kwargs["static_assets"] == resolved_assets
+
+    def test_run_passes_host_asset_paths_for_local(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """run() uses host paths for static assets in local runs."""
+        from unittest.mock import MagicMock, patch
+
+        submission_path = tmp_path / "submission"
+        submission_path.mkdir()
+
+        mock_environment.type = "local"
+
+        resolved_asset = Mock()
+        resolved_asset.absolute_path = Path("/host/stopwords.txt")
+        resolved_asset.save_path = Path("static/stopwords.txt")
+        resolved_assets = {"stopwords": resolved_asset}
+
+        captured_assets: dict[str, str] = {}
+
+        def _capture_assets(
+            _test_files: list[str],
+            static_assets: dict[str, str],
+        ) -> str:
+            captured_assets.update(static_assets)
+            return "pytest"
+
+        exec_result = Mock()
+        exec_result.exit_code = 0
+        exec_result.stdout = "collected 1 item"
+        exec_result.stderr = ""
+        exec_result.elapsed = 0.1
+
+        runtime = MagicMock()
+        runtime.execute.return_value = exec_result
+
+        session = MagicMock()
+        session.spawn.return_value = runtime
+
+        workspace = MagicMock()
+        workspace.working_dir = submission_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=submission_path,
+        )
+
+        with (
+            patch(
+                "slop_code.evaluation.pytest_runner.Snapshot"
+            ) as mock_snapshot_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.Workspace"
+            ) as mock_workspace_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.Session"
+            ) as mock_session_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.resolve_static_assets"
+            ) as mock_resolve,
+            patch.object(runner, "_setup_test_environment", return_value=None),
+            patch.object(runner, "_generate_pytest_ini", return_value=None),
+            patch.object(runner, "_parse_ctrf_report", return_value=[]),
+            patch.object(
+                runner, "_build_pytest_command", side_effect=_capture_assets
+            ),
+        ):
+            mock_snapshot_cls.from_directory.return_value = Mock()
+            mock_workspace_cls.return_value = workspace
+            mock_session_cls.return_value = session
+            mock_resolve.return_value = resolved_assets
+
+            runner.run()
+
+        assert captured_assets["stopwords"] == "/host/stopwords.txt"
+        _, kwargs = mock_session_cls.call_args
+        assert kwargs["static_assets"] == resolved_assets
+
     def test_run_handles_infrastructure_failure(
         self,
         mock_problem_config,
@@ -804,7 +969,22 @@ class TestPytestRunnerRunMethod:
         assert failed_test.failure_message == "AssertionError: expected True"
 
 
-@pytest.mark.skip("End-to-end test - requires Docker environment")
+def docker_available() -> bool:
+    """Check if Docker is available and running."""
+    try:
+        import docker
+
+        client = docker.from_env()
+        client.ping()
+        return True
+    except Exception:
+        return False
+
+
+@pytest.mark.skipif(
+    not docker_available(),
+    reason="Docker is not available or not running",
+)
 class TestPytestRunnerE2E:
     """End-to-end tests that require actual Docker and problem setup."""
 
