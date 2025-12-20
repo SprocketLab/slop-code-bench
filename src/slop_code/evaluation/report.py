@@ -12,6 +12,7 @@ import json
 from collections.abc import Mapping
 from enum import Enum
 from pathlib import Path
+from typing import Any
 from typing import Literal
 
 from pydantic import BaseModel
@@ -175,6 +176,9 @@ class CorrectnessResults(BaseModel):
         pytest_exit_code: Exit code from pytest execution
         pytest_collected: Number of tests collected by pytest
         infrastructure_failure: Whether pytest execution itself failed
+        pytest_stdout: Captured pytest stdout (not stored in evaluation.json)
+        pytest_stderr: Captured pytest stderr (not stored in evaluation.json)
+        pytest_ctrf_report: Raw CTRF JSON report (not stored in evaluation.json)
 
     Example:
         >>> results = CorrectnessResults(
@@ -218,6 +222,21 @@ class CorrectnessResults(BaseModel):
     infrastructure_failure: bool = Field(
         default=False,
         description="Whether pytest execution itself failed (not just test failures)",
+    )
+    pytest_stdout: str | None = Field(
+        default=None,
+        exclude=True,
+        description="Captured pytest stdout (not stored in evaluation.json)",
+    )
+    pytest_stderr: str | None = Field(
+        default=None,
+        exclude=True,
+        description="Captured pytest stderr (not stored in evaluation.json)",
+    )
+    pytest_ctrf_report: dict[str, Any] | None = Field(
+        default=None,
+        exclude=True,
+        description="Raw CTRF JSON report (not stored in evaluation.json)",
     )
 
     def add_test_result(self, result: TestResult) -> None:
@@ -309,3 +328,28 @@ class CorrectnessResults(BaseModel):
 
         with save_path.open("w") as f:
             json.dump(self.model_dump(mode="json"), f, indent=2)
+
+        if self.pytest_stdout is not None:
+            (save_dir / "pytest_stdout.log").write_text(
+                self.pytest_stdout, encoding="utf-8"
+            )
+        if self.pytest_stderr is not None:
+            (save_dir / "pytest_stderr.log").write_text(
+                self.pytest_stderr, encoding="utf-8"
+            )
+
+        evaluation_dir = save_dir / "evaluation"
+        evaluation_dir.mkdir(parents=True, exist_ok=True)
+
+        if self.pytest_stdout is not None:
+            (evaluation_dir / "stdout").write_text(
+                self.pytest_stdout, encoding="utf-8"
+            )
+        if self.pytest_stderr is not None:
+            (evaluation_dir / "stderr").write_text(
+                self.pytest_stderr, encoding="utf-8"
+            )
+        if self.pytest_ctrf_report is not None:
+            report_path = evaluation_dir / "report.json"
+            with report_path.open("w", encoding="utf-8") as f:
+                json.dump(self.pytest_ctrf_report, f, indent=2)

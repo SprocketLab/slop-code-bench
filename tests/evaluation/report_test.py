@@ -11,7 +11,7 @@ import pytest
 from slop_code.evaluation.report import (
     CorrectnessResults,
     GroupType,
-    TestResult,
+    TestResult as EvalTestResult,
 )
 
 
@@ -47,7 +47,7 @@ class TestTestResult:
 
     def test_create_minimal(self):
         """Can create TestResult with minimal required fields."""
-        result = TestResult(
+        result = EvalTestResult(
             id="test_example",
             checkpoint="checkpoint_1",
             group_type=GroupType.CORE,
@@ -62,7 +62,7 @@ class TestTestResult:
 
     def test_create_with_all_fields(self):
         """Can create TestResult with all fields."""
-        result = TestResult(
+        result = EvalTestResult(
             id="test_failure",
             checkpoint="checkpoint_2",
             group_type=GroupType.FUNCTIONALITY,
@@ -80,7 +80,7 @@ class TestTestResult:
         """Status field accepts only valid values."""
         # Valid statuses
         for status in ["passed", "failed", "skipped", "error"]:
-            result = TestResult(
+            result = EvalTestResult(
                 id="test",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -92,7 +92,7 @@ class TestTestResult:
 
         # Invalid status should raise validation error
         with pytest.raises(Exception):  # Pydantic ValidationError
-            TestResult(
+            EvalTestResult(
                 id="test",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -104,7 +104,7 @@ class TestTestResult:
     def test_group_type_values(self):
         """Can create TestResult with any GroupType."""
         for group_type in GroupType:
-            result = TestResult(
+            result = EvalTestResult(
                 id="test",
                 checkpoint="checkpoint_1",
                 group_type=group_type,
@@ -116,7 +116,7 @@ class TestTestResult:
 
     def test_serialization(self):
         """TestResult serializes to dict correctly."""
-        result = TestResult(
+        result = EvalTestResult(
             id="test_example",
             checkpoint="checkpoint_1",
             group_type=GroupType.CORE,
@@ -165,7 +165,7 @@ class TestCorrectnessResults:
 
         # Add passing CORE test
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_1",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -180,7 +180,7 @@ class TestCorrectnessResults:
 
         # Add failing CORE test
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_2",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -209,7 +209,7 @@ class TestCorrectnessResults:
         # Two passing CORE tests
         for i in range(2):
             results.add_test_result(
-                TestResult(
+                EvalTestResult(
                     id=f"test_{i}",
                     checkpoint="checkpoint_1",
                     group_type=GroupType.CORE,
@@ -236,7 +236,7 @@ class TestCorrectnessResults:
 
         # One passing, one failing CORE test
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_pass",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -246,7 +246,7 @@ class TestCorrectnessResults:
             )
         )
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_fail",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -273,7 +273,7 @@ class TestCorrectnessResults:
 
         # Only ERROR test, no CORE
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_error",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.ERROR,
@@ -300,7 +300,7 @@ class TestCorrectnessResults:
 
         # CORE passes
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_core",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -312,7 +312,7 @@ class TestCorrectnessResults:
 
         # FUNCTIONALITY passes
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_func",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.FUNCTIONALITY,
@@ -324,7 +324,7 @@ class TestCorrectnessResults:
 
         # ERROR fails (should be ignored)
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_error",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.ERROR,
@@ -351,7 +351,7 @@ class TestCorrectnessResults:
 
         # CORE passes
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_core",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -363,7 +363,7 @@ class TestCorrectnessResults:
 
         # FUNCTIONALITY fails
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_func",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.FUNCTIONALITY,
@@ -422,7 +422,7 @@ class TestCorrectnessResults:
         )
 
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_1",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -446,6 +446,8 @@ class TestCorrectnessResults:
             assert data["problem_name"] == "test"
             assert data["checkpoint_name"] == "checkpoint_1"
             assert len(data["tests"]) == 1
+            assert "pytest_stdout" not in data
+            assert "pytest_stderr" not in data
 
     def test_save_creates_directory(self):
         """save() creates directory if it doesn't exist."""
@@ -481,7 +483,7 @@ class TestCorrectnessResults:
         )
 
         results.add_test_result(
-            TestResult(
+            EvalTestResult(
                 id="test_example",
                 checkpoint="checkpoint_1",
                 group_type=GroupType.CORE,
@@ -502,3 +504,29 @@ class TestCorrectnessResults:
         assert loaded.problem_name == "test"
         assert len(loaded.tests) == 1
         assert loaded.tests[0].id == "test_example"
+
+    def test_save_writes_pytest_logs(self):
+        """save() writes pytest stdout/stderr logs when present."""
+        results = CorrectnessResults(
+            problem_name="test",
+            problem_version=1,
+            checkpoint_name="checkpoint_1",
+            checkpoint_version=1,
+            duration=5.0,
+            entrypoint="python main.py",
+            pytest_exit_code=1,
+            pytest_collected=1,
+            pytest_stdout="stdout line\n",
+            pytest_stderr="stderr line\n",
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            save_path = Path(tmpdir)
+            results.save(save_path)
+
+            stdout_log = save_path / "pytest_stdout.log"
+            stderr_log = save_path / "pytest_stderr.log"
+            assert stdout_log.exists()
+            assert stderr_log.exists()
+            assert stdout_log.read_text() == "stdout line\n"
+            assert stderr_log.read_text() == "stderr line\n"

@@ -6,8 +6,8 @@ dependencies.
 
 Architecture:
 1. PytestRunner orchestrates test execution for a checkpoint
-2. uv initializes test environment inside Docker
-3. pytest runs with CTRF JSON reporter plugin
+2. pytest runs via uvx for isolated execution (no interference with solution)
+3. pytest-json-ctrf generates CTRF JSON report
 4. CTRF report parsed and converted to TestResult objects
 5. Results aggregated into CorrectnessResults
 
@@ -31,6 +31,7 @@ from __future__ import annotations
 import json
 import re
 import shlex
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -41,8 +42,6 @@ from slop_code.evaluation.report import GroupType
 from slop_code.evaluation.report import TestResult
 from slop_code.execution import EnvironmentSpec
 from slop_code.execution import Session
-from slop_code.execution import Snapshot
-from slop_code.execution import Workspace
 from slop_code.execution.assets import resolve_static_assets
 from slop_code.logging import get_logger
 
@@ -68,19 +67,33 @@ INFRA_FAILURE_CODES = {
     EXIT_NOTESTSCOLLECTED,
 }
 
+MAX_LOG_OUTPUT = 4000
+
+
+def _truncate_output(text: str | None, limit: int = MAX_LOG_OUTPUT) -> str:
+    if text is None:
+        return ""
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}...<truncated {len(text) - limit} chars>"
+
 
 class PytestRunner:
     """Orchestrates pytest execution for a checkpoint evaluation.
 
     This class manages the full lifecycle of running pytest tests for a checkpoint:
-    1. Sets up test environment (uv init, install deps)
+    1. Copies tests from problem directory if needed
     2. Generates pytest.ini with markers
     3. Determines which test files to run (current + prior checkpoints)
     4. Builds pytest command with entrypoint and static assets
-    5. Executes pytest in Docker
+    5. Executes pytest via uvx (isolated from solution's environment)
     6. Parses CTRF JSON report
     7. Converts test results to TestResult objects
     8. Aggregates into CorrectnessResults
+
+    Note: Tests are executed using `uvx` to ensure complete isolation from
+    the solution's Python environment. This allows testing solutions that
+    use different package managers (pip, uv) or even non-Python solutions.
 
     Attributes:
         problem: Problem configuration
@@ -175,85 +188,42 @@ class PytestRunner:
 
         return test_files
 
-    def _setup_test_environment(
-        self, workspace_path: Path, session: Session
-    ) -> None:
-        """Initialize test environment with uv inside Docker.
+    def _copy_tests_from_problem(self, workspace_path: Path) -> None:
+        """Copy tests from problem directory to workspace if needed.
 
-        Sets up the tests/ directory as a uv project and installs default dependencies.
-        Respects any additional dependencies in tests/pyproject.toml if it exists.
-
-        Steps:
-        1. Check if tests/pyproject.toml exists
-        2. If not, run `uv init --no-readme` in tests/
-        3. Add default dependencies: pytest, pytest-json-ctrf, jsonschema, deepdiff
-        4. Any additional deps in pyproject.toml are preserved
+        If the workspace doesn't have a tests/ directory but the problem does,
+        copy the problem's tests to the workspace. This allows tests to be
+        defined at the problem level rather than duplicated in each solution.
 
         Args:
             workspace_path: Path to the workspace root
-            session: Session instance for spawning runtimes
-
-        Raises:
-            RuntimeError: If uv commands fail
         """
-        tests_dir = workspace_path / "tests"
+        import shutil
 
-        if not tests_dir.exists():
+        workspace_tests = workspace_path / "tests"
+        problem_tests = self.problem.path / "tests"
+
+        if workspace_tests.exists():
+            logger.debug(
+                "Workspace already has tests directory",
+                workspace_tests=str(workspace_tests),
+            )
+            return
+
+        if not problem_tests.exists():
             raise RuntimeError(
-                f"Tests directory not found: {tests_dir}\n"
-                f"Expected problem to have tests/ directory with test files"
+                f"No tests directory found.\n"
+                f"  Checked workspace: {workspace_tests}\n"
+                f"  Checked problem: {problem_tests}\n"
+                f"Expected tests/ directory with test files in one of these locations."
             )
 
-        # Initialize uv project if pyproject.toml doesn't exist
-        pyproject_file = tests_dir / "pyproject.toml"
-        if not pyproject_file.exists():
-            logger.debug("Initializing uv project in tests/")
-            runtime = session.spawn()
-            try:
-                result = runtime.execute(
-                    "cd tests && uv init --no-readme",
-                    env={},
-                    stdin=None,
-                    timeout=60,
-                )
-                if result.exit_code != 0:
-                    raise RuntimeError(
-                        f"uv init failed with exit code {result.exit_code}\n"
-                        f"stdout: {result.stdout}\n"
-                        f"stderr: {result.stderr}"
-                    )
-            finally:
-                runtime.cleanup()
-
-        # Add default test dependencies
-        # These are the core deps needed for pytest-based evaluation
-        default_deps = [
-            "pytest",  # Test framework
-            "pytest-json-ctrf",  # CTRF JSON report plugin
-            "jsonschema",  # JSON schema validation (for test cases)
-            "deepdiff",  # Deep comparison utilities
-        ]
-
-        logger.debug("Adding default test dependencies", deps=default_deps)
-        runtime = session.spawn()
-        try:
-            deps_str = " ".join(default_deps)
-            result = runtime.execute(
-                f"cd tests && uv add {deps_str}",
-                env={},
-                stdin=None,
-                timeout=120,
-            )
-            if result.exit_code != 0:
-                raise RuntimeError(
-                    f"uv add failed with exit code {result.exit_code}\n"
-                    f"stdout: {result.stdout}\n"
-                    f"stderr: {result.stderr}"
-                )
-        finally:
-            runtime.cleanup()
-
-        logger.info("Test environment setup complete", tests_dir=str(tests_dir))
+        logger.debug(
+            "Copying tests from problem directory to workspace",
+            source=str(problem_tests),
+            dest=str(workspace_tests),
+        )
+        shutil.copytree(problem_tests, workspace_tests)
 
     def _generate_pytest_ini(self, workspace_path: Path) -> None:
         """Generate pytest.ini in the workspace root.
@@ -293,25 +263,44 @@ markers =
 
         logger.debug("Generated pytest.ini", path=str(pytest_ini_path))
 
+    # Test dependencies installed via uvx for isolated execution
+    TEST_DEPENDENCIES = [
+        "pytest",  # Test framework
+        "pytest-json-ctrf",  # CTRF JSON report plugin
+        "pytest-json-report",  # Detailed failure reports
+        "pytest-timeout",  # Session-level timeout support
+        "jsonschema",  # JSON schema validation (for test cases)
+        "deepdiff",  # Deep comparison utilities
+    ]
+
     def _build_pytest_command(
         self,
         test_files: list[str],
         static_assets: dict[str, str],
+        extra_args: list[str] | None = None,
+        timeout: float | None = None,
     ) -> str:
         """Build the pytest command to execute.
 
         Constructs a pytest command that:
-        1. Runs via uv (uv run pytest ...)
+        1. Runs via uvx with ephemeral dependencies (uvx --with=... pytest ...)
         2. Runs specific test files (tests/test_checkpoint_1.py ...)
         3. Passes entrypoint as --entrypoint CLI option
         4. Passes checkpoint name as --checkpoint CLI option
         5. Passes static assets as JSON via --static-assets CLI option
         6. Generates CTRF report via --ctrf option
-        7. Uses verbose output (-v)
+        7. Generates pytest JSON report via --json-report option
+        8. Uses verbose output (-v)
+        9. Applies session-level timeout via pytest-timeout if specified
+
+        Using uvx ensures tests run in an isolated environment that doesn't
+        interfere with the solution's own pyproject.toml or virtualenv.
 
         Args:
             test_files: List of test file paths to run
             static_assets: Dict of asset name -> resolved path
+            extra_args: Additional pytest args to append (e.g., ["-k", "name"])
+            timeout: Session-level timeout in seconds (applied via pytest-timeout)
 
         Returns:
             Full pytest command string (properly shell-quoted)
@@ -321,7 +310,7 @@ markers =
             ...     ["tests/test_checkpoint_1.py"],
             ...     {"sde_dir": "/workspace/sde"}
             ... )
-            'uv run pytest tests/test_checkpoint_1.py --entrypoint="python main.py" ...'
+            'uvx --with=pytest --with=pytest-json-ctrf ... pytest tests/test_checkpoint_1.py ...'
         """
         entrypoint = self._get_entrypoint_command()
 
@@ -329,21 +318,39 @@ markers =
         assets_json = json.dumps(static_assets)
 
         # Build command parts
+        quoted_test_files = [shlex.quote(test_file) for test_file in test_files]
+        extra_args = extra_args or []
+        quoted_extra_args = [shlex.quote(arg) for arg in extra_args]
+
+        # Build uvx --with flags for each dependency
+        with_flags = [f"--with={dep}" for dep in self.TEST_DEPENDENCIES]
+
+        # Build timeout args if specified
+        timeout_args = []
+        if timeout is not None:
+            timeout_args = [f"--timeout={int(timeout)}"]
+
         cmd_parts = [
-            "uv",
-            "run",
+            "uvx",
+            *with_flags,
             "pytest",
-            *test_files,  # Expand test file list
+            *timeout_args,
+            *quoted_test_files,
             f"--entrypoint={shlex.quote(entrypoint)}",
             f"--checkpoint={shlex.quote(self.checkpoint.name)}",
             f"--static-assets={shlex.quote(assets_json)}",
             "--ctrf=.scbench/ctrf-report.json",  # CTRF report output path
-            "-v",  # Verbose output
+            "--json-report",
+            "--json-report-file=.scbench/pytest-report.json",
+            "-vv",  # Verbose output
+            *quoted_extra_args,
         ]
 
         return " ".join(cmd_parts)
 
-    def _parse_ctrf_report(self, ctrf_path: Path) -> list[dict[str, Any]]:
+    def _parse_ctrf_report(
+        self, ctrf_path: Path
+    ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
         """Parse CTRF JSON report from pytest-json-ctrf plugin.
 
         CTRF (Common Test Report Format) is a standardized JSON format for test results.
@@ -372,16 +379,20 @@ markers =
             ctrf_path: Path to CTRF JSON file
 
         Returns:
-            List of test dictionaries from the "tests" array
+            Tuple of (tests, report_data)
+            - tests: List of test dictionaries from the "tests" array
+            - report_data: Full CTRF JSON report (or None if missing/invalid)
 
         Example:
-            >>> tests = runner._parse_ctrf_report(Path(".scbench/ctrf-report.json"))
+            >>> tests, report = runner._parse_ctrf_report(
+            ...     Path(".scbench/ctrf-report.json")
+            ... )
             >>> len(tests)
             10
         """
         if not ctrf_path.exists():
             logger.error("CTRF report not found", path=str(ctrf_path))
-            return []
+            return [], None
 
         try:
             with ctrf_path.open() as f:
@@ -393,7 +404,7 @@ markers =
             logger.info(
                 "Parsed CTRF report", test_count=len(tests), path=str(ctrf_path)
             )
-            return tests
+            return tests, data
 
         except json.JSONDecodeError as e:
             logger.error(
@@ -402,7 +413,7 @@ markers =
                 error=str(e),
                 exc_info=True,
             )
-            return []
+            return [], None
         except Exception as e:
             logger.error(
                 "Unexpected error parsing CTRF report",
@@ -410,7 +421,7 @@ markers =
                 error=str(e),
                 exc_info=True,
             )
-            return []
+            return [], None
 
     def _infer_checkpoint_from_file(self, file_path: str) -> str:
         """Extract checkpoint name from test file path.
@@ -507,7 +518,157 @@ markers =
 
         return GroupType.CORE
 
-    def _convert_ctrf_test_to_result(self, test_data: dict[str, Any]) -> TestResult:
+    def _parse_pytest_json_report(
+        self, report_path: Path
+    ) -> dict[str, Any] | None:
+        """Parse pytest-json-report output if available."""
+        if not report_path.exists():
+            logger.debug(
+                "Pytest JSON report not found", path=str(report_path)
+            )
+            return None
+
+        try:
+            with report_path.open() as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            logger.error(
+                "Failed to parse pytest JSON report as JSON",
+                path=str(report_path),
+                error=str(e),
+                exc_info=True,
+            )
+            return None
+        except Exception as e:
+            logger.error(
+                "Unexpected error parsing pytest JSON report",
+                path=str(report_path),
+                error=str(e),
+                exc_info=True,
+            )
+            return None
+
+    def _stringify_failure_detail(self, value: Any) -> str:
+        if isinstance(value, str):
+            return value
+
+        if isinstance(value, dict):
+            repr_crash = value.get("reprcrash")
+            if isinstance(repr_crash, dict):
+                message = repr_crash.get("message")
+                path = repr_crash.get("path")
+                lineno = repr_crash.get("lineno")
+                parts = []
+                if path and lineno is not None:
+                    parts.append(f"{path}:{lineno}")
+                if message:
+                    parts.append(str(message))
+                if parts:
+                    return "\n".join(parts)
+
+        return json.dumps(value, indent=2, ensure_ascii=True)
+
+    def _extract_failure_message(
+        self, report_test: dict[str, Any]
+    ) -> str | None:
+        for phase in ["call", "setup", "teardown"]:
+            phase_data = report_test.get(phase) or {}
+            if phase_data.get("outcome") not in {"failed", "error"}:
+                continue
+            for key in ["longreprtext", "longrepr", "crash", "message"]:
+                value = phase_data.get(key)
+                if value:
+                    return self._stringify_failure_detail(value)
+        return None
+
+    def _build_failure_index(
+        self, report_data: dict[str, Any]
+    ) -> dict[str, str]:
+        tests = report_data.get("tests", [])
+        if not isinstance(tests, list):
+            return {}
+
+        failure_index: dict[str, str] = {}
+        for test_entry in tests:
+            if not isinstance(test_entry, dict):
+                continue
+            node_id = test_entry.get("nodeid")
+            if not node_id:
+                continue
+            message = self._extract_failure_message(test_entry)
+            if message:
+                failure_index[node_id] = message
+        return failure_index
+
+    def _lookup_failure_message(
+        self,
+        test_data: dict[str, Any],
+        failure_index: dict[str, str],
+    ) -> str | None:
+        name = test_data.get("name") or ""
+        file_path = test_data.get("filePath") or ""
+        candidates = [name]
+        if file_path and name and "::" not in name:
+            candidates.append(f"{file_path}::{name}")
+
+        for candidate in candidates:
+            if candidate in failure_index:
+                return failure_index[candidate]
+
+        if not name:
+            return None
+
+        suffix = f"::{name}"
+        matches = []
+        for node_id, message in failure_index.items():
+            if file_path and not node_id.startswith(f"{file_path}::"):
+                continue
+            if node_id.endswith(suffix):
+                matches.append(message)
+
+        if len(matches) == 1:
+            return matches[0]
+        return None
+
+    def _merge_failure_messages(
+        self, existing: str | None, message: str
+    ) -> str:
+        if not existing:
+            return message
+        if message in existing:
+            return existing
+        if existing in message:
+            return message
+        return f"{existing}\n\n{message}"
+
+    def _augment_ctrf_with_failures(
+        self,
+        ctrf_tests: list[dict[str, Any]],
+        failure_index: dict[str, str],
+    ) -> None:
+        if not failure_index:
+            return
+
+        updated = 0
+        for test_data in ctrf_tests:
+            if test_data.get("status") not in {"failed", "error"}:
+                continue
+            message = self._lookup_failure_message(
+                test_data, failure_index
+            )
+            if not message:
+                continue
+            test_data["message"] = self._merge_failure_messages(
+                test_data.get("message"), message
+            )
+            updated += 1
+
+        if updated:
+            logger.debug("Augmented CTRF failures", count=updated)
+
+    def _convert_ctrf_test_to_result(
+        self, test_data: dict[str, Any]
+    ) -> TestResult:
         """Convert a CTRF test result to a TestResult model.
 
         CTRF test schema (relevant fields):
@@ -555,11 +716,15 @@ markers =
             id=test_data.get("name", "unknown"),
             checkpoint=test_checkpoint,
             group_type=group_type,
-            status=test_data.get("status", "error"),  # Default to "error" if missing
+            status=test_data.get(
+                "status", "error"
+            ),  # Default to "error" if missing
             duration_ms=test_data.get("duration", 0),
             file_path=file_path,
             markers=markers,
-            failure_message=test_data.get("message"),  # Optional failure message
+            failure_message=test_data.get(
+                "message"
+            ),  # Optional failure message
         )
 
     def _check_collection_line(self, stdout: str) -> tuple[bool, int]:
@@ -600,23 +765,33 @@ markers =
             logger.warning("Pytest collected 0 tests")
             return False, 0
 
-        logger.debug("Pytest collection successful", num_collected=num_collected)
+        logger.debug(
+            "Pytest collection successful", num_collected=num_collected
+        )
         return True, num_collected
 
-    def run(self) -> CorrectnessResults:
+    def run(
+        self,
+        test_files: list[str] | None = None,
+        pytest_args: list[str] | None = None,
+    ) -> CorrectnessResults:
         """Execute pytest for this checkpoint and return results.
 
         This is the main orchestration method that:
         1. Creates workspace and session
-        2. Sets up test environment (uv)
+        2. Copies tests from problem directory if needed
         3. Generates pytest.ini
         4. Determines test files to run
         5. Resolves static assets
-        6. Builds and executes pytest command
-        7. Parses CTRF report
+        6. Builds and executes pytest command (via uvx for isolation)
+        7. Parses CTRF + pytest JSON reports
         8. Detects infrastructure failures
         9. Converts CTRF tests to TestResults
         10. Returns CorrectnessResults
+
+        Args:
+            test_files: Override list of test files/nodeids to run
+            pytest_args: Extra pytest args (e.g., ["-k", "pattern"])
 
         Returns:
             CorrectnessResults with test outcomes and metadata
@@ -634,20 +809,8 @@ markers =
             "Starting pytest evaluation",
             problem=self.problem.name,
             checkpoint=self.checkpoint.name,
-        )
-
-        # Create snapshot from submission path
-        snapshot = Snapshot.from_directory(
-            self.submission_path,
-            env={},
-            keep_globs={"**/*"},
-        )
-
-        # Create workspace with snapshot
-        workspace = Workspace(
-            initial_snapshot=snapshot,
-            snapshot_fn=lambda p: Snapshot.from_directory(p, env={}),
-            is_agent_infer=False,
+            environment=self.environment.type,
+            submission_path=str(self.submission_path),
         )
 
         # Resolve static assets (needed for mounts + pytest args)
@@ -656,10 +819,10 @@ markers =
             assets=self.problem.static_assets,
         )
 
-        # Create session for execution
-        session = Session(
+        # Create session using factory method (handles snapshot properly)
+        session = Session.from_environment_spec(
             spec=self.environment,
-            workspace=workspace,
+            base_dir=self.submission_path,
             static_assets=resolved_assets,
             is_agent_infer=False,
         )
@@ -667,18 +830,22 @@ markers =
         try:
             # Prepare workspace and session
             session.prepare()
-            workspace_path = workspace.working_dir
+            workspace_path = session.workspace.working_dir
+            logger.debug("Workspace prepared", path=str(workspace_path))
 
-            # STEP 1: Setup test environment (uv init + uv add deps)
-            logger.debug("Setting up test environment")
-            self._setup_test_environment(workspace_path, session)
+            # STEP 1: Copy tests from problem directory if needed
+            logger.debug("Copying tests from problem directory if needed")
+            self._copy_tests_from_problem(workspace_path)
 
             # STEP 2: Generate pytest.ini with markers
             logger.debug("Generating pytest.ini")
             self._generate_pytest_ini(workspace_path)
 
             # STEP 3: Determine which test files to run
-            test_files = self._get_test_files_for_checkpoint()
+            if test_files is None:
+                test_files = self._get_test_files_for_checkpoint()
+            elif len(test_files) == 0:
+                raise RuntimeError("test_files cannot be empty")
             logger.info("Running test files", files=test_files)
 
             # Convert to dict of name -> string path
@@ -692,9 +859,24 @@ markers =
                     name: str(asset.absolute_path)
                     for name, asset in resolved_assets.items()
                 }
+            logger.info(
+                "Static assets resolved",
+                asset_count=len(static_assets_dict),
+                assets=list(static_assets_dict.keys()),
+            )
+            logger.debug(
+                "Static asset paths",
+                assets=static_assets_dict,
+                verbose=True,
+            )
 
             # STEP 4: Build pytest command
-            pytest_cmd = self._build_pytest_command(test_files, static_assets_dict)
+            pytest_cmd = self._build_pytest_command(
+                test_files,
+                static_assets_dict,
+                pytest_args,
+                timeout=self.checkpoint.timeout,
+            )
             logger.debug("Pytest command", command=pytest_cmd)
 
             # STEP 5: Execute pytest in Docker
@@ -705,7 +887,7 @@ markers =
                     pytest_cmd,
                     self.environment.get_full_env(self.checkpoint.env),
                     None,  # stdin
-                    self.checkpoint.timeout,
+                    None,  # timeout handled by pytest-timeout
                 )
             finally:
                 runtime.cleanup()
@@ -715,10 +897,35 @@ markers =
                 exit_code=exec_result.exit_code,
                 duration=exec_result.elapsed,
             )
+            if exec_result.exit_code != EXIT_OK:
+                logger.warning(
+                    "Pytest execution reported failure",
+                    exit_code=exec_result.exit_code,
+                    stdout=_truncate_output(exec_result.stdout),
+                    stderr=_truncate_output(exec_result.stderr),
+                )
+            else:
+                logger.debug(
+                    "Pytest stdout/stderr",
+                    stdout=_truncate_output(exec_result.stdout),
+                    stderr=_truncate_output(exec_result.stderr),
+                    verbose=True,
+                )
 
             # STEP 6: Parse CTRF report
             ctrf_path = workspace_path / ".scbench" / "ctrf-report.json"
-            ctrf_tests = self._parse_ctrf_report(ctrf_path)
+            ctrf_tests, ctrf_report = self._parse_ctrf_report(ctrf_path)
+            pytest_report_path = (
+                workspace_path / ".scbench" / "pytest-report.json"
+            )
+            pytest_report = self._parse_pytest_json_report(
+                pytest_report_path
+            )
+            if pytest_report:
+                failure_index = self._build_failure_index(pytest_report)
+                self._augment_ctrf_with_failures(
+                    ctrf_tests, failure_index
+                )
 
             # STEP 7: Check for infrastructure failures
             collection_ok, num_collected = self._check_collection_line(
@@ -726,7 +933,8 @@ markers =
             )
 
             infrastructure_failure = (
-                exec_result.exit_code in INFRA_FAILURE_CODES or not collection_ok
+                exec_result.exit_code in INFRA_FAILURE_CODES
+                or not collection_ok
             )
 
             if infrastructure_failure:
@@ -758,6 +966,9 @@ markers =
                 pytest_exit_code=exec_result.exit_code,
                 pytest_collected=num_collected,
                 infrastructure_failure=infrastructure_failure,
+                pytest_stdout=exec_result.stdout,
+                pytest_stderr=exec_result.stderr,
+                pytest_ctrf_report=ctrf_report,
             )
 
             # STEP 9: Convert CTRF tests to TestResults and add to results
@@ -765,6 +976,9 @@ markers =
                 test_result = self._convert_ctrf_test_to_result(test_data)
                 results.add_test_result(test_result)
 
+            status_counts = Counter(
+                test_result.status for test_result in results.tests
+            )
             logger.info(
                 "Pytest evaluation complete",
                 problem=self.problem.name,
@@ -772,6 +986,7 @@ markers =
                 pass_counts=dict(results.pass_counts),
                 total_counts=dict(results.total_counts),
                 infrastructure_failure=infrastructure_failure,
+                status_counts=dict(status_counts),
             )
 
             return results
@@ -786,6 +1001,8 @@ def run_checkpoint_pytest(
     problem: ProblemConfig,
     checkpoint: CheckpointConfig,
     env_spec: EnvironmentSpec,
+    test_files: list[str] | None = None,
+    pytest_args: list[str] | None = None,
 ) -> CorrectnessResults:
     """Run pytest evaluation for a checkpoint.
 
@@ -797,6 +1014,8 @@ def run_checkpoint_pytest(
         problem: Problem configuration
         checkpoint: Checkpoint configuration to evaluate
         env_spec: Execution environment specification
+        test_files: Override list of test files/nodeids to run
+        pytest_args: Extra pytest args (e.g., ["-k", "pattern"])
 
     Returns:
         CorrectnessResults with test outcomes and aggregated statistics
@@ -825,4 +1044,4 @@ def run_checkpoint_pytest(
         environment=env_spec,
         submission_path=submission_path,
     )
-    return runner.run()
+    return runner.run(test_files=test_files, pytest_args=pytest_args)

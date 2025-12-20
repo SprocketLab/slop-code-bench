@@ -4,11 +4,13 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from rich.console import Console
 
 from slop_code.common import PROBLEM_CONFIG_NAME
 from slop_code.common import SNAPSHOT_DIR_NAME
 from slop_code.entrypoints.commands import common
 from slop_code.entrypoints.config import loader as config_loader
+from slop_code.entrypoints.commands.eval_checkpoint import render_pytest_results
 from slop_code.entrypoints.evaluation.driver import evaluate_checkpoint
 from slop_code.entrypoints.evaluation.utils import gather_checkpoint_directories
 from slop_code.entrypoints.evaluation.utils import maybe_update_problem_report
@@ -119,6 +121,7 @@ def evaluate_problem_dir(
         verbose=ctx.obj.verbosity,
     )
 
+    console = Console()
     common.ensure_docker_ready(environment)
 
     problem = resolve_problem(
@@ -148,6 +151,8 @@ def evaluate_problem_dir(
             rubric_temperature=rubric_temperature,
             rubric_provider=rubric_provider,
         )
+        console.rule(f"{problem.name} / {name}")
+        render_pytest_results(console, result.report, ctx.obj.verbosity)
         results[name] = (result.report, result.quality)
     maybe_update_problem_report(
         submission_dir=submission_path, summaries=results

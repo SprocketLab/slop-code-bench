@@ -263,20 +263,42 @@ class TestPytestRunner:
         assert "error: error handling tests" in content
 
     def test_build_pytest_command(self, pytest_runner):
-        """_build_pytest_command builds correct command."""
+        """_build_pytest_command builds correct command using uvx."""
         cmd = pytest_runner._build_pytest_command(
             test_files=["tests/test_checkpoint_1.py"],
             static_assets={"sde_dir": "/data/sde"},
+            timeout=30,
         )
 
-        assert "uv run pytest" in cmd
+        # Verify uvx is used instead of uv run
+        assert cmd.startswith("uvx ")
+        assert "--with=pytest" in cmd
+        assert "--with=pytest-json-ctrf" in cmd
+        assert "--with=pytest-json-report" in cmd
+        assert "--with=pytest-timeout" in cmd
+        assert "--with=jsonschema" in cmd
+        assert "--with=deepdiff" in cmd
+        # Verify pytest is the command being run
+        assert " pytest " in cmd
+        assert "--timeout=30" in cmd
         assert "tests/test_checkpoint_1.py" in cmd
         assert "--entrypoint=" in cmd
         assert "--checkpoint=" in cmd
         assert "checkpoint_2" in cmd
         assert "--static-assets=" in cmd
         assert "--ctrf=.scbench/ctrf-report.json" in cmd
+        assert "--json-report" in cmd
+        assert "--json-report-file=.scbench/pytest-report.json" in cmd
         assert "-v" in cmd
+
+    def test_build_pytest_command_no_timeout(self, pytest_runner):
+        """_build_pytest_command omits timeout flag when not provided."""
+        cmd = pytest_runner._build_pytest_command(
+            test_files=["tests/test_checkpoint_1.py"],
+            static_assets={},
+        )
+
+        assert "--timeout" not in cmd
 
     def test_build_pytest_command_multiple_files(self, pytest_runner):
         """_build_pytest_command includes multiple test files."""
@@ -286,8 +308,11 @@ class TestPytestRunner:
                 "tests/test_checkpoint_2.py",
             ],
             static_assets={},
+            timeout=60,
         )
 
+        assert cmd.startswith("uvx ")
+        assert "--timeout=60" in cmd
         assert "tests/test_checkpoint_1.py" in cmd
         assert "tests/test_checkpoint_2.py" in cmd
 
@@ -306,27 +331,78 @@ class TestPytestRunner:
         ctrf_file = tmp_path / "report.json"
         ctrf_file.write_text(json.dumps(ctrf_data))
 
-        tests = pytest_runner._parse_ctrf_report(ctrf_file)
+        tests, report_data = pytest_runner._parse_ctrf_report(ctrf_file)
 
         assert len(tests) == 2
         assert tests[0]["name"] == "test_1"
         assert tests[1]["name"] == "test_2"
+        assert report_data == ctrf_data
+
+    def test_parse_pytest_json_report_valid(
+        self, pytest_runner, tmp_path
+    ):
+        """_parse_pytest_json_report parses valid JSON."""
+        report_data = {
+            "tests": [
+                {
+                    "nodeid": "tests/test_checkpoint_1.py::test_failure",
+                    "call": {
+                        "outcome": "failed",
+                        "longreprtext": "AssertionError: diff",
+                    },
+                }
+            ]
+        }
+        report_path = tmp_path / "pytest-report.json"
+        report_path.write_text(json.dumps(report_data))
+
+        loaded = pytest_runner._parse_pytest_json_report(report_path)
+
+        assert loaded == report_data
+
+    def test_augment_ctrf_with_failures(self, pytest_runner):
+        """Augment CTRF failures with pytest-json-report details."""
+        ctrf_tests = [
+            {
+                "name": "test_failure",
+                "status": "failed",
+                "filePath": "tests/test_checkpoint_1.py",
+            }
+        ]
+        report_data = {
+            "tests": [
+                {
+                    "nodeid": "tests/test_checkpoint_1.py::test_failure",
+                    "call": {
+                        "outcome": "failed",
+                        "longreprtext": "AssertionError: diff",
+                    },
+                }
+            ]
+        }
+
+        failure_index = pytest_runner._build_failure_index(report_data)
+        pytest_runner._augment_ctrf_with_failures(ctrf_tests, failure_index)
+
+        assert ctrf_tests[0]["message"] == "AssertionError: diff"
 
     def test_parse_ctrf_report_missing_file(self, pytest_runner, tmp_path):
         """_parse_ctrf_report returns empty list if file missing."""
         missing_file = tmp_path / "nonexistent.json"
-        tests = pytest_runner._parse_ctrf_report(missing_file)
+        tests, report_data = pytest_runner._parse_ctrf_report(missing_file)
 
         assert tests == []
+        assert report_data is None
 
     def test_parse_ctrf_report_invalid_json(self, pytest_runner, tmp_path):
         """_parse_ctrf_report returns empty list for invalid JSON."""
         invalid_file = tmp_path / "invalid.json"
         invalid_file.write_text("not valid json {{{")
 
-        tests = pytest_runner._parse_ctrf_report(invalid_file)
+        tests, report_data = pytest_runner._parse_ctrf_report(invalid_file)
 
         assert tests == []
+        assert report_data is None
 
     def test_parse_ctrf_report_missing_tests_key(self, pytest_runner, tmp_path):
         """_parse_ctrf_report returns empty list if tests key missing."""
@@ -335,9 +411,10 @@ class TestPytestRunner:
         ctrf_file = tmp_path / "report.json"
         ctrf_file.write_text(json.dumps(ctrf_data))
 
-        tests = pytest_runner._parse_ctrf_report(ctrf_file)
+        tests, report_data = pytest_runner._parse_ctrf_report(ctrf_file)
 
         assert tests == []
+        assert report_data == ctrf_data
 
     def test_check_collection_line_success(self, pytest_runner):
         """_check_collection_line finds collection line."""
@@ -509,8 +586,8 @@ class TestPytestRunnerRunMethod:
         submission_path.mkdir()
         tests_dir = submission_path / "tests"
         tests_dir.mkdir()
-        # Create pyproject.toml to skip uv init
-        (tests_dir / "pyproject.toml").write_text("[project]\nname = 'tests'\n")
+        # Create a test file (no pyproject.toml needed with uvx)
+        (tests_dir / "test_checkpoint_1.py").write_text("# test file")
 
         # Mock CTRF report data
         ctrf_data = {
@@ -542,23 +619,16 @@ class TestPytestRunnerRunMethod:
             }
         }
 
-        # Create mock execution results
-        # First call is uv add, second call is pytest
-        mock_uv_result = Mock()
-        mock_uv_result.exit_code = 0
-        mock_uv_result.stdout = "Resolved 4 packages"
-        mock_uv_result.stderr = ""
-        mock_uv_result.elapsed = 0.5
-
+        # Create mock execution result for pytest (only one call now with uvx)
         mock_pytest_result = Mock()
         mock_pytest_result.exit_code = 0
         mock_pytest_result.stdout = "collected 3 items\n\nall tests passed"
         mock_pytest_result.stderr = ""
         mock_pytest_result.elapsed = 1.5
 
-        # Create mock runtime that returns different results
+        # Create mock runtime that returns pytest result
         mock_runtime = MagicMock()
-        mock_runtime.execute.side_effect = [mock_uv_result, mock_pytest_result]
+        mock_runtime.execute.return_value = mock_pytest_result
 
         # Create mock session
         mock_session = MagicMock()
@@ -575,14 +645,10 @@ class TestPytestRunnerRunMethod:
             submission_path=submission_path,
         )
 
-        # Patch the dependencies
+        # Patch the dependencies - use Session.from_environment_spec factory
+        mock_session.workspace = mock_workspace
+
         with (
-            patch(
-                "slop_code.evaluation.pytest_runner.Snapshot"
-            ) as mock_snapshot_cls,
-            patch(
-                "slop_code.evaluation.pytest_runner.Workspace"
-            ) as mock_workspace_cls,
             patch(
                 "slop_code.evaluation.pytest_runner.Session"
             ) as mock_session_cls,
@@ -590,9 +656,7 @@ class TestPytestRunnerRunMethod:
                 "slop_code.evaluation.pytest_runner.resolve_static_assets"
             ) as mock_resolve,
         ):
-            mock_snapshot_cls.from_directory.return_value = Mock()
-            mock_workspace_cls.return_value = mock_workspace
-            mock_session_cls.return_value = mock_session
+            mock_session_cls.from_environment_spec.return_value = mock_session
             mock_resolve.return_value = {}
 
             # Write CTRF report that will be read
@@ -643,6 +707,8 @@ class TestPytestRunnerRunMethod:
         def _capture_assets(
             _test_files: list[str],
             static_assets: dict[str, str],
+            extra_args: list[str] | None = None,
+            timeout: float | None = None,
         ) -> str:
             captured_assets.update(static_assets)
             return "pytest"
@@ -669,35 +735,29 @@ class TestPytestRunnerRunMethod:
             submission_path=submission_path,
         )
 
+        session.workspace = workspace
+
         with (
-            patch(
-                "slop_code.evaluation.pytest_runner.Snapshot"
-            ) as mock_snapshot_cls,
-            patch(
-                "slop_code.evaluation.pytest_runner.Workspace"
-            ) as mock_workspace_cls,
             patch(
                 "slop_code.evaluation.pytest_runner.Session"
             ) as mock_session_cls,
             patch(
                 "slop_code.evaluation.pytest_runner.resolve_static_assets"
             ) as mock_resolve,
-            patch.object(runner, "_setup_test_environment", return_value=None),
+            patch.object(runner, "_copy_tests_from_problem", return_value=None),
             patch.object(runner, "_generate_pytest_ini", return_value=None),
-            patch.object(runner, "_parse_ctrf_report", return_value=[]),
+            patch.object(runner, "_parse_ctrf_report", return_value=([], None)),
             patch.object(
                 runner, "_build_pytest_command", side_effect=_capture_assets
             ),
         ):
-            mock_snapshot_cls.from_directory.return_value = Mock()
-            mock_workspace_cls.return_value = workspace
-            mock_session_cls.return_value = session
+            mock_session_cls.from_environment_spec.return_value = session
             mock_resolve.return_value = resolved_assets
 
             runner.run()
 
         assert captured_assets["stopwords"] == "/static/static/stopwords.txt"
-        _, kwargs = mock_session_cls.call_args
+        _, kwargs = mock_session_cls.from_environment_spec.call_args
         assert kwargs["static_assets"] == resolved_assets
 
     def test_run_passes_host_asset_paths_for_local(
@@ -725,6 +785,8 @@ class TestPytestRunnerRunMethod:
         def _capture_assets(
             _test_files: list[str],
             static_assets: dict[str, str],
+            extra_args: list[str] | None = None,
+            timeout: float | None = None,
         ) -> str:
             captured_assets.update(static_assets)
             return "pytest"
@@ -751,35 +813,29 @@ class TestPytestRunnerRunMethod:
             submission_path=submission_path,
         )
 
+        session.workspace = workspace
+
         with (
-            patch(
-                "slop_code.evaluation.pytest_runner.Snapshot"
-            ) as mock_snapshot_cls,
-            patch(
-                "slop_code.evaluation.pytest_runner.Workspace"
-            ) as mock_workspace_cls,
             patch(
                 "slop_code.evaluation.pytest_runner.Session"
             ) as mock_session_cls,
             patch(
                 "slop_code.evaluation.pytest_runner.resolve_static_assets"
             ) as mock_resolve,
-            patch.object(runner, "_setup_test_environment", return_value=None),
+            patch.object(runner, "_copy_tests_from_problem", return_value=None),
             patch.object(runner, "_generate_pytest_ini", return_value=None),
-            patch.object(runner, "_parse_ctrf_report", return_value=[]),
+            patch.object(runner, "_parse_ctrf_report", return_value=([], None)),
             patch.object(
                 runner, "_build_pytest_command", side_effect=_capture_assets
             ),
         ):
-            mock_snapshot_cls.from_directory.return_value = Mock()
-            mock_workspace_cls.return_value = workspace
-            mock_session_cls.return_value = session
+            mock_session_cls.from_environment_spec.return_value = session
             mock_resolve.return_value = resolved_assets
 
             runner.run()
 
         assert captured_assets["stopwords"] == "/host/stopwords.txt"
-        _, kwargs = mock_session_cls.call_args
+        _, kwargs = mock_session_cls.from_environment_spec.call_args
         assert kwargs["static_assets"] == resolved_assets
 
     def test_run_handles_infrastructure_failure(
@@ -797,15 +853,10 @@ class TestPytestRunnerRunMethod:
         submission_path.mkdir()
         tests_dir = submission_path / "tests"
         tests_dir.mkdir()
-        (tests_dir / "pyproject.toml").write_text("[project]\nname = 'tests'\n")
+        # Create a test file (no pyproject.toml needed with uvx)
+        (tests_dir / "test_checkpoint_1.py").write_text("# test file")
 
-        # Mock execution results - uv add succeeds, pytest has infra failure
-        mock_uv_result = Mock()
-        mock_uv_result.exit_code = 0
-        mock_uv_result.stdout = "Resolved 4 packages"
-        mock_uv_result.stderr = ""
-        mock_uv_result.elapsed = 0.5
-
+        # Mock execution result - pytest has infra failure (only one call with uvx)
         mock_pytest_result = Mock()
         mock_pytest_result.exit_code = 5  # EXIT_NOTESTSCOLLECTED
         mock_pytest_result.stdout = "ERROR: no tests collected"
@@ -813,7 +864,7 @@ class TestPytestRunnerRunMethod:
         mock_pytest_result.elapsed = 0.5
 
         mock_runtime = MagicMock()
-        mock_runtime.execute.side_effect = [mock_uv_result, mock_pytest_result]
+        mock_runtime.execute.return_value = mock_pytest_result
 
         mock_session = MagicMock()
         mock_session.spawn.return_value = mock_runtime
@@ -828,13 +879,9 @@ class TestPytestRunnerRunMethod:
             submission_path=submission_path,
         )
 
+        mock_session.workspace = mock_workspace
+
         with (
-            patch(
-                "slop_code.evaluation.pytest_runner.Snapshot"
-            ) as mock_snapshot_cls,
-            patch(
-                "slop_code.evaluation.pytest_runner.Workspace"
-            ) as mock_workspace_cls,
             patch(
                 "slop_code.evaluation.pytest_runner.Session"
             ) as mock_session_cls,
@@ -842,9 +889,7 @@ class TestPytestRunnerRunMethod:
                 "slop_code.evaluation.pytest_runner.resolve_static_assets"
             ) as mock_resolve,
         ):
-            mock_snapshot_cls.from_directory.return_value = Mock()
-            mock_workspace_cls.return_value = mock_workspace
-            mock_session_cls.return_value = mock_session
+            mock_session_cls.from_environment_spec.return_value = mock_session
             mock_resolve.return_value = {}
 
             # Create empty CTRF report directory
@@ -874,7 +919,8 @@ class TestPytestRunnerRunMethod:
         submission_path.mkdir()
         tests_dir = submission_path / "tests"
         tests_dir.mkdir()
-        (tests_dir / "pyproject.toml").write_text("[project]\nname = 'tests'\n")
+        # Create a test file (no pyproject.toml needed with uvx)
+        (tests_dir / "test_checkpoint_1.py").write_text("# test file")
 
         # CTRF with mix of passed and failed
         ctrf_data = {
@@ -899,13 +945,7 @@ class TestPytestRunnerRunMethod:
             }
         }
 
-        # Mock execution results - uv add succeeds, pytest has test failures
-        mock_uv_result = Mock()
-        mock_uv_result.exit_code = 0
-        mock_uv_result.stdout = "Resolved 4 packages"
-        mock_uv_result.stderr = ""
-        mock_uv_result.elapsed = 0.5
-
+        # Mock execution result - pytest has test failures (only one call with uvx)
         # Exit code 1 = tests ran but some failed
         mock_pytest_result = Mock()
         mock_pytest_result.exit_code = 1
@@ -914,7 +954,7 @@ class TestPytestRunnerRunMethod:
         mock_pytest_result.elapsed = 0.8
 
         mock_runtime = MagicMock()
-        mock_runtime.execute.side_effect = [mock_uv_result, mock_pytest_result]
+        mock_runtime.execute.return_value = mock_pytest_result
 
         mock_session = MagicMock()
         mock_session.spawn.return_value = mock_runtime
@@ -929,13 +969,9 @@ class TestPytestRunnerRunMethod:
             submission_path=submission_path,
         )
 
+        mock_session.workspace = mock_workspace
+
         with (
-            patch(
-                "slop_code.evaluation.pytest_runner.Snapshot"
-            ) as mock_snapshot_cls,
-            patch(
-                "slop_code.evaluation.pytest_runner.Workspace"
-            ) as mock_workspace_cls,
             patch(
                 "slop_code.evaluation.pytest_runner.Session"
             ) as mock_session_cls,
@@ -943,9 +979,7 @@ class TestPytestRunnerRunMethod:
                 "slop_code.evaluation.pytest_runner.resolve_static_assets"
             ) as mock_resolve,
         ):
-            mock_snapshot_cls.from_directory.return_value = Mock()
-            mock_workspace_cls.return_value = mock_workspace
-            mock_session_cls.return_value = mock_session
+            mock_session_cls.from_environment_spec.return_value = mock_session
             mock_resolve.return_value = {}
 
             scbench_dir = submission_path / ".scbench"
@@ -979,6 +1013,442 @@ def docker_available() -> bool:
         return True
     except Exception:
         return False
+
+
+class TestCopyTestsFromProblem:
+    """Regression tests for copying tests from problem directory to workspace."""
+
+    def test_copies_tests_when_workspace_has_none(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """Tests are copied from problem dir when workspace has no tests."""
+        # Create problem directory with tests
+        problem_path = tmp_path / "problem"
+        problem_path.mkdir()
+        problem_tests = problem_path / "tests"
+        problem_tests.mkdir()
+        (problem_tests / "test_checkpoint_1.py").write_text("# test file")
+        (problem_tests / "conftest.py").write_text("# conftest")
+
+        # Create workspace without tests
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+
+        mock_problem_config.path = problem_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=workspace_path,
+        )
+
+        # Call the method directly
+        runner._copy_tests_from_problem(workspace_path)
+
+        # Verify tests were copied
+        assert (workspace_path / "tests").exists()
+        assert (workspace_path / "tests" / "test_checkpoint_1.py").exists()
+        assert (workspace_path / "tests" / "conftest.py").exists()
+
+    def test_does_not_overwrite_existing_tests(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """Existing workspace tests are NOT overwritten."""
+        # Create problem directory with tests
+        problem_path = tmp_path / "problem"
+        problem_path.mkdir()
+        problem_tests = problem_path / "tests"
+        problem_tests.mkdir()
+        (problem_tests / "test_checkpoint_1.py").write_text("# problem test")
+
+        # Create workspace WITH existing tests
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+        workspace_tests = workspace_path / "tests"
+        workspace_tests.mkdir()
+        (workspace_tests / "test_checkpoint_1.py").write_text("# workspace test")
+
+        mock_problem_config.path = problem_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=workspace_path,
+        )
+
+        # Call the method directly
+        runner._copy_tests_from_problem(workspace_path)
+
+        # Verify workspace tests were NOT overwritten
+        content = (workspace_tests / "test_checkpoint_1.py").read_text()
+        assert content == "# workspace test"
+
+    def test_raises_error_when_no_tests_anywhere(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """RuntimeError raised when neither workspace nor problem has tests."""
+        # Create problem directory WITHOUT tests
+        problem_path = tmp_path / "problem"
+        problem_path.mkdir()
+
+        # Create workspace without tests
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+
+        mock_problem_config.path = problem_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=workspace_path,
+        )
+
+        # Should raise RuntimeError
+        with pytest.raises(RuntimeError, match="No tests directory found"):
+            runner._copy_tests_from_problem(workspace_path)
+
+
+class TestSessionCreation:
+    """Regression tests for proper Session creation (no source pollution)."""
+
+    def test_uses_session_factory_method(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """run() uses Session.from_environment_spec() factory method."""
+        from unittest.mock import MagicMock, patch
+
+        submission_path = tmp_path / "submission"
+        submission_path.mkdir()
+        tests_dir = submission_path / "tests"
+        tests_dir.mkdir()
+        # Create a test file (no pyproject.toml needed with uvx)
+        (tests_dir / "test_checkpoint_1.py").write_text("# test file")
+
+        mock_workspace = MagicMock()
+        mock_workspace.working_dir = submission_path
+
+        mock_session = MagicMock()
+        mock_session.workspace = mock_workspace
+
+        mock_result = MagicMock()
+        mock_result.exit_code = 0
+        mock_result.stdout = "collected 0 items"
+        mock_result.stderr = ""
+        mock_result.elapsed = 0.1
+
+        mock_runtime = MagicMock()
+        mock_runtime.execute.return_value = mock_result
+        mock_session.spawn.return_value = mock_runtime
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=submission_path,
+        )
+
+        with (
+            patch(
+                "slop_code.evaluation.pytest_runner.Session"
+            ) as mock_session_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.resolve_static_assets"
+            ) as mock_resolve,
+        ):
+            mock_session_cls.from_environment_spec.return_value = mock_session
+            mock_resolve.return_value = {}
+
+            scbench_dir = submission_path / ".scbench"
+            scbench_dir.mkdir()
+            (scbench_dir / "ctrf-report.json").write_text('{"results": {"tests": []}}')
+
+            runner.run()
+
+        # Verify Session.from_environment_spec was called (not direct instantiation)
+        mock_session_cls.from_environment_spec.assert_called_once()
+        # Verify direct Session() was NOT called
+        mock_session_cls.assert_not_called()
+
+
+class TestTestMaterialization:
+    """Regression tests ensuring tests are materialized to correct directory."""
+
+    def test_tests_copied_to_workspace_not_submission_path(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """Tests are copied to workspace directory, NOT submission_path."""
+        # Setup: problem has tests, we have separate submission and workspace dirs
+        problem_path = tmp_path / "problem"
+        problem_path.mkdir()
+        problem_tests = problem_path / "tests"
+        problem_tests.mkdir()
+        (problem_tests / "test_checkpoint_1.py").write_text("# test")
+        (problem_tests / "conftest.py").write_text("# conftest")
+
+        # submission_path is where agent code lives (NO tests)
+        submission_path = tmp_path / "submission"
+        submission_path.mkdir()
+        (submission_path / "main.py").write_text("# agent solution")
+
+        # workspace_path is the temporary execution directory (separate from submission)
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+
+        mock_problem_config.path = problem_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=submission_path,  # This is different from workspace
+        )
+
+        # Copy tests to WORKSPACE, not submission
+        runner._copy_tests_from_problem(workspace_path)
+
+        # CRITICAL: Tests should be in workspace_path
+        assert (workspace_path / "tests").exists()
+        assert (workspace_path / "tests" / "test_checkpoint_1.py").exists()
+        assert (workspace_path / "tests" / "conftest.py").exists()
+
+        # CRITICAL: submission_path should NOT have tests directory created
+        assert not (submission_path / "tests").exists()
+
+    def test_submission_path_unchanged_after_test_copy(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """Submission directory is not modified when copying tests to workspace."""
+        # Setup problem with tests
+        problem_path = tmp_path / "problem"
+        problem_path.mkdir()
+        problem_tests = problem_path / "tests"
+        problem_tests.mkdir()
+        (problem_tests / "test_checkpoint_1.py").write_text("# test")
+
+        # Create submission with specific content
+        submission_path = tmp_path / "submission"
+        submission_path.mkdir()
+        (submission_path / "main.py").write_text("# solution")
+        (submission_path / "helper.py").write_text("# helper")
+
+        # Create workspace
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+
+        # Record initial submission state
+        initial_files = set(f.name for f in submission_path.iterdir())
+
+        mock_problem_config.path = problem_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=submission_path,
+        )
+
+        # Copy tests to workspace
+        runner._copy_tests_from_problem(workspace_path)
+
+        # Verify submission_path was not modified
+        final_files = set(f.name for f in submission_path.iterdir())
+        assert initial_files == final_files, (
+            f"Submission directory was modified: "
+            f"initial={initial_files}, final={final_files}"
+        )
+
+
+class TestSnapshotLocationRegression:
+    """Regression tests ensuring snapshots don't pollute submission directory."""
+
+    def test_no_snapshot_archives_in_submission_path_after_run(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """No snapshot archives should appear in submission_path after run()."""
+        from unittest.mock import MagicMock, patch
+
+        # Setup submission directory
+        submission_path = tmp_path / "submission"
+        submission_path.mkdir()
+        (submission_path / "main.py").write_text("# solution")
+
+        # Setup mock session with SEPARATE workspace directory
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+        workspace_tests = workspace_path / "tests"
+        workspace_tests.mkdir()
+        (workspace_tests / "pyproject.toml").write_text("[project]\nname = 'tests'\n")
+
+        mock_workspace = MagicMock()
+        mock_workspace.working_dir = workspace_path  # Different from submission_path!
+
+        mock_session = MagicMock()
+        mock_session.workspace = mock_workspace
+
+        mock_result = MagicMock()
+        mock_result.exit_code = 0
+        mock_result.stdout = "collected 1 item"
+        mock_result.stderr = ""
+        mock_result.elapsed = 0.1
+
+        mock_runtime = MagicMock()
+        mock_runtime.execute.return_value = mock_result
+        mock_session.spawn.return_value = mock_runtime
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=submission_path,
+        )
+
+        with (
+            patch(
+                "slop_code.evaluation.pytest_runner.Session"
+            ) as mock_session_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.resolve_static_assets"
+            ) as mock_resolve,
+        ):
+            mock_session_cls.from_environment_spec.return_value = mock_session
+            mock_resolve.return_value = {}
+
+            # Create CTRF report in workspace
+            scbench_dir = workspace_path / ".scbench"
+            scbench_dir.mkdir()
+            (scbench_dir / "ctrf-report.json").write_text('{"results": {"tests": []}}')
+
+            runner.run()
+
+        # CRITICAL: No snapshot archives should be in submission_path
+        snapshot_patterns = ["*.tar.gz", "*.tar.bz2", "*.tar.xz", "*.tar"]
+        for pattern in snapshot_patterns:
+            archives = list(submission_path.glob(pattern))
+            assert len(archives) == 0, (
+                f"Found snapshot archive in submission_path: {archives}"
+            )
+
+            # Also check recursively
+            recursive_archives = list(submission_path.rglob(pattern))
+            assert len(recursive_archives) == 0, (
+                f"Found snapshot archive (recursive) in submission_path: {recursive_archives}"
+            )
+
+        # Verify submission_path only has original file
+        files_in_submission = list(submission_path.iterdir())
+        assert files_in_submission == [submission_path / "main.py"], (
+            f"Unexpected files in submission_path: {files_in_submission}"
+        )
+
+    def test_run_uses_workspace_working_dir_not_submission_path(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """run() operations use workspace.working_dir, not submission_path."""
+        from unittest.mock import MagicMock, patch
+
+        submission_path = tmp_path / "submission"
+        submission_path.mkdir()
+        (submission_path / "main.py").write_text("# solution")
+
+        # Create a DISTINCT workspace path
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+        workspace_tests = workspace_path / "tests"
+        workspace_tests.mkdir()
+        # Create a test file (no pyproject.toml needed with uvx)
+        (workspace_tests / "test_checkpoint_1.py").write_text("# test file")
+
+        mock_workspace = MagicMock()
+        mock_workspace.working_dir = workspace_path
+
+        mock_session = MagicMock()
+        mock_session.workspace = mock_workspace
+
+        mock_result = MagicMock()
+        mock_result.exit_code = 0
+        mock_result.stdout = "collected 1 item"
+        mock_result.stderr = ""
+        mock_result.elapsed = 0.1
+
+        mock_runtime = MagicMock()
+        mock_runtime.execute.return_value = mock_result
+        mock_session.spawn.return_value = mock_runtime
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=submission_path,
+        )
+
+        with (
+            patch(
+                "slop_code.evaluation.pytest_runner.Session"
+            ) as mock_session_cls,
+            patch(
+                "slop_code.evaluation.pytest_runner.resolve_static_assets"
+            ) as mock_resolve,
+            patch.object(
+                runner, "_copy_tests_from_problem", return_value=None
+            ) as mock_copy_tests,
+            patch.object(
+                runner, "_generate_pytest_ini", return_value=None
+            ) as mock_ini,
+        ):
+            mock_session_cls.from_environment_spec.return_value = mock_session
+            mock_resolve.return_value = {}
+
+            # Create CTRF report in workspace
+            scbench_dir = workspace_path / ".scbench"
+            scbench_dir.mkdir()
+            (scbench_dir / "ctrf-report.json").write_text('{"results": {"tests": []}}')
+
+            runner.run()
+
+        # Verify workspace_path (NOT submission_path) was passed to these methods
+        mock_copy_tests.assert_called_once()
+        call_args = mock_copy_tests.call_args
+        assert call_args[0][0] == workspace_path, (
+            f"_copy_tests_from_problem called with {call_args[0][0]}, "
+            f"expected {workspace_path}"
+        )
+
+        mock_ini.assert_called_once_with(workspace_path)
 
 
 @pytest.mark.skipif(
