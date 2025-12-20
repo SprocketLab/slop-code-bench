@@ -27,8 +27,9 @@ from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import model_validator
 
-from slop_code.evaluation.adapters.models import DEFAULT_GROUP_TYPE
-from slop_code.evaluation.adapters.models import GroupType
+from slop_code.evaluation.report import GroupType
+
+DEFAULT_GROUP_TYPE = GroupType.CORE
 from slop_code.evaluation.utils import nested_priority_merge
 from slop_code.execution import StaticAssetConfig
 from slop_code.logging import get_logger

@@ -2,7 +2,7 @@
 
 import pytest
 
-from slop_code.evaluation.adapters.models import GroupType
+from slop_code.evaluation.report import GroupType
 from slop_code.evaluation.config import CheckpointConfig, GroupConfig
 
 
