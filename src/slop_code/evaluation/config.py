@@ -700,6 +700,10 @@ class ProblemConfig(BaseConfig):
         },
         description="Custom pytest markers to register (marker_name -> description)",
     )
+    test_dependencies: list[str] = Field(
+        default_factory=list,
+        description="Additional pytest dependencies for this problem's tests.",
+    )
 
     @classmethod
     def from_yaml(cls, path: Path) -> ProblemConfig:

@@ -277,6 +277,69 @@ class TestPytestRunner:
         assert "-k" in cmd
         assert "test_specific" in cmd
 
+    def test_build_pytest_command_includes_problem_deps(
+        self, mock_problem_config, mock_checkpoint_config, mock_environment
+    ):
+        """_build_pytest_command includes problem test_dependencies."""
+        mock_problem_config.test_dependencies = ["httpx", "pytest-asyncio"]
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=Path("/tmp/test"),
+        )
+
+        cmd = runner._build_pytest_command(
+            test_files=["tests/test_checkpoint_1.py"],
+            static_assets={},
+        )
+
+        assert "--with=httpx" in cmd
+        assert "--with=pytest-asyncio" in cmd
+        # Base deps still included
+        assert "--with=pytest" in cmd
+        assert "--with=pytest-json-ctrf" in cmd
+
+    def test_build_pytest_command_no_problem_deps(
+        self, mock_problem_config, mock_checkpoint_config, mock_environment
+    ):
+        """Empty test_dependencies should not add extra --with flags."""
+        mock_problem_config.test_dependencies = []
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=Path("/tmp/test"),
+        )
+
+        cmd = runner._build_pytest_command(
+            test_files=["tests/test_checkpoint_1.py"],
+            static_assets={},
+        )
+
+        # Only base deps
+        assert cmd.count("--with=") == len(PytestRunner.TEST_DEPENDENCIES)
+
+    def test_build_pytest_command_default_deps(
+        self, mock_problem_config, mock_checkpoint_config, mock_environment
+    ):
+        """Missing test_dependencies field should default to empty list."""
+        mock_problem_config.test_dependencies = None
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=Path("/tmp/test"),
+        )
+
+        cmd = runner._build_pytest_command(
+            test_files=["tests/test_checkpoint_1.py"],
+            static_assets={},
+        )
+
+        # Should work without error, only base deps
+        assert "--with=pytest" in cmd
+
     def test_parse_ctrf_report_valid(self, pytest_runner, tmp_path):
         """_parse_ctrf_report parses valid CTRF JSON."""
         ctrf_data = {

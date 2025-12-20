@@ -162,3 +162,73 @@ class TestCheckpointConfig:
         base = config.get_base_config()
         assert base["env"] == {"VAR": "val"}
         assert base["timeout"] == 45
+
+
+# ============================================================================
+# ProblemConfig test_dependencies Tests
+# ============================================================================
+
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+from slop_code.evaluation.config import ProblemConfig
+
+
+class TestProblemConfigTestDependencies:
+    """Tests for ProblemConfig.test_dependencies field."""
+
+    def test_test_dependencies_default_empty_list(self):
+        """test_dependencies should default to empty list."""
+        config = ProblemConfig(
+            name="test",
+            path=Path("/test"),
+            version=1,
+            description="Test problem",
+            entry_file="main.py",
+            tags=["test"],
+            checkpoints={},
+            # NOT specifying test_dependencies - should use default
+        )
+        assert config.test_dependencies == []
+
+    def test_test_dependencies_accepts_list(self):
+        """test_dependencies should accept a list of strings."""
+        config = ProblemConfig(
+            name="test",
+            path=Path("/test"),
+            version=1,
+            description="Test problem",
+            entry_file="main.py",
+            tags=["test"],
+            checkpoints={},
+            test_dependencies=["httpx", "aiohttp"],
+        )
+        assert config.test_dependencies == ["httpx", "aiohttp"]
+
+    def test_test_dependencies_empty_list(self):
+        """test_dependencies should accept empty list."""
+        config = ProblemConfig(
+            name="test",
+            path=Path("/test"),
+            version=1,
+            description="Test problem",
+            entry_file="main.py",
+            tags=["test"],
+            checkpoints={},
+            test_dependencies=[],
+        )
+        assert config.test_dependencies == []
+
+    def test_test_dependencies_single_dep(self):
+        """test_dependencies should work with single dependency."""
+        config = ProblemConfig(
+            name="test",
+            path=Path("/test"),
+            version=1,
+            description="Test problem",
+            entry_file="main.py",
+            tags=["test"],
+            checkpoints={},
+            test_dependencies=["requests"],
+        )
+        assert config.test_dependencies == ["requests"]

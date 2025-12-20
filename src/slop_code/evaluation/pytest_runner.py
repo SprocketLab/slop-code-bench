@@ -314,8 +314,9 @@ markers =
         extra_args = extra_args or []
         quoted_extra_args = [shlex.quote(arg) for arg in extra_args]
 
-        # Build uvx --with flags for each dependency
-        with_flags = [f"--with={dep}" for dep in self.TEST_DEPENDENCIES]
+        # Build uvx --with flags for each dependency (base + problem-specific)
+        all_deps = list(self.TEST_DEPENDENCIES) + list(self.problem.test_dependencies or [])
+        with_flags = [f"--with={dep}" for dep in all_deps]
 
         # Build timeout args if specified
         timeout_args = []

@@ -56,7 +56,7 @@ Min Jumps > Min Time Waiting > Total Trip LY > Lexicographic sorting of systems
     * $t_{\text{f}}$ cannot be more than 5 hours while $t_{\text{c}}$ cannot be greater than 30 minutes.
     * Neither fatigue nor cooldown can drop below zero.
     * Fatigue/cooldown begin immediately after using the jump drive.
-  2. If `cooldown > 0` before the next jump, **wait** `ceil(remaining_seconds)` before proceeding.
+  2. If `cooldown > 0` before the next jump, **wait** the remaining time before proceeding.
 
 
 **Jump range** is measured from system centers:
