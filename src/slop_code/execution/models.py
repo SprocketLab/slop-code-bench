@@ -295,6 +295,10 @@ class EnvironmentSpec(BaseModel):
             Set of glob patterns to ignore
         """
         ignore_globs = set(self.snapshot.ignore_globs)
+
+        # Always ignore tests/assets/ (materialized static assets for tests)
+        ignore_globs.update({"tests/assets", "tests/assets/*"})
+
         for asset in (static_assets or {}).values():
             save_path = asset.save_path.as_posix().rstrip("/")
             if asset.absolute_path.is_dir():

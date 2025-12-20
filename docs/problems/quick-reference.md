@@ -355,14 +355,14 @@ slop-code tools run-case \
   --full
 
 # Combine with jq for filtering
-slop-code tools run-case ... | jq '.[] | select(.passed == false)'
+slop-code tools run-case ... --json | jq '.[] | select(.passed == false)'
 ```
 
 **Tips:**
 - Much faster than running the full evaluation pipeline
 - Use `--full` to see detailed diffs when debugging verification failures
 - Glob patterns work: `--group "error*"` or `--case "test_*"`
-- JSON output enables scripting and CI integration
+- Use `--json` for scripting and CI integration
 
 ## Common Issues
 

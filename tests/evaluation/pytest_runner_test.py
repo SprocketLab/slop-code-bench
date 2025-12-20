@@ -133,36 +133,6 @@ class TestPytestRunner:
             "main.py", is_agent_run=False
         )
 
-    def test_get_test_files_for_checkpoint_includes_current_and_prior(
-        self, pytest_runner
-    ):
-        """_get_test_files_for_checkpoint returns files up to current checkpoint."""
-        # Evaluating checkpoint_2, should get checkpoint_1 and checkpoint_2
-        files = pytest_runner._get_test_files_for_checkpoint()
-
-        assert files == [
-            "tests/test_checkpoint_1.py",
-            "tests/test_checkpoint_2.py",
-        ]
-        # Should NOT include checkpoint_3
-
-    def test_get_test_files_for_checkpoint_first_only(
-        self, mock_problem_config, mock_environment
-    ):
-        """First checkpoint only gets its own test file."""
-        checkpoint = Mock()
-        checkpoint.name = "checkpoint_1"
-        runner = PytestRunner(
-            problem=mock_problem_config,
-            checkpoint=checkpoint,
-            environment=mock_environment,
-            submission_path=Path("/tmp/submission"),
-        )
-
-        files = runner._get_test_files_for_checkpoint()
-
-        assert files == ["tests/test_checkpoint_1.py"]
-
     def test_infer_checkpoint_from_file(self, pytest_runner):
         """_infer_checkpoint_from_file extracts checkpoint name."""
         assert (
@@ -264,11 +234,7 @@ class TestPytestRunner:
 
     def test_build_pytest_command(self, pytest_runner):
         """_build_pytest_command builds correct command using uvx."""
-        cmd = pytest_runner._build_pytest_command(
-            test_files=["tests/test_checkpoint_1.py"],
-            static_assets={"sde_dir": "/data/sde"},
-            timeout=30,
-        )
+        cmd = pytest_runner._build_pytest_command(timeout=30)
 
         # Verify uvx is used instead of uv run
         assert cmd.startswith("uvx ")
@@ -281,11 +247,13 @@ class TestPytestRunner:
         # Verify pytest is the command being run
         assert " pytest " in cmd
         assert "--timeout=30" in cmd
-        assert "tests/test_checkpoint_1.py" in cmd
+        # Test files are discovered via pytest.ini testpaths, not passed explicitly
+        assert "test_checkpoint" not in cmd
         assert "--entrypoint=" in cmd
         assert "--checkpoint=" in cmd
         assert "checkpoint_2" in cmd
-        assert "--static-assets=" in cmd
+        # Static assets are now passed via env vars, not CLI
+        assert "--static-assets" not in cmd
         assert "--ctrf=.scbench/ctrf-report.json" in cmd
         assert "--json-report" in cmd
         assert "--json-report-file=.scbench/pytest-report.json" in cmd
@@ -293,28 +261,21 @@ class TestPytestRunner:
 
     def test_build_pytest_command_no_timeout(self, pytest_runner):
         """_build_pytest_command omits timeout flag when not provided."""
-        cmd = pytest_runner._build_pytest_command(
-            test_files=["tests/test_checkpoint_1.py"],
-            static_assets={},
-        )
+        cmd = pytest_runner._build_pytest_command()
 
         assert "--timeout" not in cmd
 
-    def test_build_pytest_command_multiple_files(self, pytest_runner):
-        """_build_pytest_command includes multiple test files."""
+    def test_build_pytest_command_with_extra_args(self, pytest_runner):
+        """_build_pytest_command includes extra pytest args."""
         cmd = pytest_runner._build_pytest_command(
-            test_files=[
-                "tests/test_checkpoint_1.py",
-                "tests/test_checkpoint_2.py",
-            ],
-            static_assets={},
+            extra_args=["-k", "test_specific"],
             timeout=60,
         )
 
         assert cmd.startswith("uvx ")
         assert "--timeout=60" in cmd
-        assert "tests/test_checkpoint_1.py" in cmd
-        assert "tests/test_checkpoint_2.py" in cmd
+        assert "-k" in cmd
+        assert "test_specific" in cmd
 
     def test_parse_ctrf_report_valid(self, pytest_runner, tmp_path):
         """_parse_ctrf_report parses valid CTRF JSON."""
@@ -682,14 +643,14 @@ class TestPytestRunnerRunMethod:
         assert results.pass_counts[GroupType.FUNCTIONALITY] == 1
         assert results.pass_counts[GroupType.REGRESSION] == 1
 
-    def test_run_passes_container_asset_paths_for_docker(
+    def test_run_materializes_static_assets_and_passes_env_vars(
         self,
         mock_problem_config,
         mock_checkpoint_config,
         mock_environment,
         tmp_path,
     ):
-        """run() uses container paths for static assets in Docker."""
+        """run() materializes static assets and passes paths via env vars."""
         from unittest.mock import MagicMock, patch
 
         submission_path = tmp_path / "submission"
@@ -702,16 +663,10 @@ class TestPytestRunnerRunMethod:
         resolved_asset.save_path = Path("static/stopwords.txt")
         resolved_assets = {"stopwords": resolved_asset}
 
-        captured_assets: dict[str, str] = {}
-
-        def _capture_assets(
-            _test_files: list[str],
-            static_assets: dict[str, str],
-            extra_args: list[str] | None = None,
-            timeout: float | None = None,
-        ) -> str:
-            captured_assets.update(static_assets)
-            return "pytest"
+        # Mock materialized asset paths
+        materialized_assets = {
+            "stopwords": submission_path / "tests" / "assets" / "stopwords"
+        }
 
         exec_result = Mock()
         exec_result.exit_code = 0
@@ -722,11 +677,15 @@ class TestPytestRunnerRunMethod:
         runtime = MagicMock()
         runtime.execute.return_value = exec_result
 
-        session = MagicMock()
-        session.spawn.return_value = runtime
-
         workspace = MagicMock()
         workspace.working_dir = submission_path
+        workspace.materialize_static_assets_for_tests.return_value = (
+            materialized_assets
+        )
+
+        session = MagicMock()
+        session.spawn.return_value = runtime
+        session.workspace = workspace
 
         runner = PytestRunner(
             problem=mock_problem_config,
@@ -734,8 +693,6 @@ class TestPytestRunnerRunMethod:
             environment=mock_environment,
             submission_path=submission_path,
         )
-
-        session.workspace = workspace
 
         with (
             patch(
@@ -748,7 +705,7 @@ class TestPytestRunnerRunMethod:
             patch.object(runner, "_generate_pytest_ini", return_value=None),
             patch.object(runner, "_parse_ctrf_report", return_value=([], None)),
             patch.object(
-                runner, "_build_pytest_command", side_effect=_capture_assets
+                runner, "_build_pytest_command", return_value="pytest"
             ),
         ):
             mock_session_cls.from_environment_spec.return_value = session
@@ -756,85 +713,19 @@ class TestPytestRunnerRunMethod:
 
             runner.run()
 
-        assert captured_assets["stopwords"] == "/static/static/stopwords.txt"
-        _, kwargs = mock_session_cls.from_environment_spec.call_args
-        assert kwargs["static_assets"] == resolved_assets
+        # Verify materialize_static_assets_for_tests was called
+        workspace.materialize_static_assets_for_tests.assert_called_once()
 
-    def test_run_passes_host_asset_paths_for_local(
-        self,
-        mock_problem_config,
-        mock_checkpoint_config,
-        mock_environment,
-        tmp_path,
-    ):
-        """run() uses host paths for static assets in local runs."""
-        from unittest.mock import MagicMock, patch
-
-        submission_path = tmp_path / "submission"
-        submission_path.mkdir()
-
-        mock_environment.type = "local"
-
-        resolved_asset = Mock()
-        resolved_asset.absolute_path = Path("/host/stopwords.txt")
-        resolved_asset.save_path = Path("static/stopwords.txt")
-        resolved_assets = {"stopwords": resolved_asset}
-
-        captured_assets: dict[str, str] = {}
-
-        def _capture_assets(
-            _test_files: list[str],
-            static_assets: dict[str, str],
-            extra_args: list[str] | None = None,
-            timeout: float | None = None,
-        ) -> str:
-            captured_assets.update(static_assets)
-            return "pytest"
-
-        exec_result = Mock()
-        exec_result.exit_code = 0
-        exec_result.stdout = "collected 1 item"
-        exec_result.stderr = ""
-        exec_result.elapsed = 0.1
-
-        runtime = MagicMock()
-        runtime.execute.return_value = exec_result
-
-        session = MagicMock()
-        session.spawn.return_value = runtime
-
-        workspace = MagicMock()
-        workspace.working_dir = submission_path
-
-        runner = PytestRunner(
-            problem=mock_problem_config,
-            checkpoint=mock_checkpoint_config,
-            environment=mock_environment,
-            submission_path=submission_path,
+        # Verify env vars were passed to execute
+        execute_call = runtime.execute.call_args
+        env_passed = execute_call[0][1]  # Second positional arg is env dict
+        assert "SCBENCH_ASSETS_DIR" in env_passed
+        assert "SCBENCH_ASSET_STOPWORDS" in env_passed
+        assert env_passed["SCBENCH_ASSET_STOPWORDS"] == str(
+            materialized_assets["stopwords"]
         )
 
-        session.workspace = workspace
-
-        with (
-            patch(
-                "slop_code.evaluation.pytest_runner.Session"
-            ) as mock_session_cls,
-            patch(
-                "slop_code.evaluation.pytest_runner.resolve_static_assets"
-            ) as mock_resolve,
-            patch.object(runner, "_copy_tests_from_problem", return_value=None),
-            patch.object(runner, "_generate_pytest_ini", return_value=None),
-            patch.object(runner, "_parse_ctrf_report", return_value=([], None)),
-            patch.object(
-                runner, "_build_pytest_command", side_effect=_capture_assets
-            ),
-        ):
-            mock_session_cls.from_environment_spec.return_value = session
-            mock_resolve.return_value = resolved_assets
-
-            runner.run()
-
-        assert captured_assets["stopwords"] == "/host/stopwords.txt"
+        # Verify session was created with resolved assets
         _, kwargs = mock_session_cls.from_environment_spec.call_args
         assert kwargs["static_assets"] == resolved_assets
 
@@ -1121,6 +1012,126 @@ class TestCopyTestsFromProblem:
         # Should raise RuntimeError
         with pytest.raises(RuntimeError, match="No tests directory found"):
             runner._copy_tests_from_problem(workspace_path)
+
+    def test_copies_only_checkpoints_up_to_current(
+        self,
+        mock_problem_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """Only test files for checkpoints 0..N are copied."""
+        # Create problem directory with tests for all checkpoints
+        problem_path = tmp_path / "problem"
+        problem_path.mkdir()
+        problem_tests = problem_path / "tests"
+        problem_tests.mkdir()
+        (problem_tests / "conftest.py").write_text("# conftest")
+        (problem_tests / "test_checkpoint_1.py").write_text("# test 1")
+        (problem_tests / "test_checkpoint_2.py").write_text("# test 2")
+        (problem_tests / "test_checkpoint_3.py").write_text("# test 3")
+
+        # Create workspace without tests
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+
+        mock_problem_config.path = problem_path
+
+        # Checkpoint is checkpoint_2, so only checkpoint_1 and checkpoint_2 should be copied
+        checkpoint = Mock()
+        checkpoint.name = "checkpoint_2"
+        checkpoint.timeout = 30
+        checkpoint.env = {}
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=checkpoint,
+            environment=mock_environment,
+            submission_path=workspace_path,
+        )
+
+        runner._copy_tests_from_problem(workspace_path)
+
+        # Verify only checkpoints 1 and 2 were copied
+        assert (workspace_path / "tests").exists()
+        assert (workspace_path / "tests" / "conftest.py").exists()
+        assert (workspace_path / "tests" / "test_checkpoint_1.py").exists()
+        assert (workspace_path / "tests" / "test_checkpoint_2.py").exists()
+        # checkpoint_3 should NOT be copied
+        assert not (workspace_path / "tests" / "test_checkpoint_3.py").exists()
+
+    def test_copies_non_checkpoint_test_files(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """Non-checkpoint test files (helpers, utilities) are copied."""
+        problem_path = tmp_path / "problem"
+        problem_path.mkdir()
+        problem_tests = problem_path / "tests"
+        problem_tests.mkdir()
+        (problem_tests / "conftest.py").write_text("# conftest")
+        (problem_tests / "test_checkpoint_1.py").write_text("# test 1")
+        (problem_tests / "test_checkpoint_2.py").write_text("# test 2")
+        (problem_tests / "helpers.py").write_text("# helper module")
+        (problem_tests / "__init__.py").write_text("# init")
+
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+
+        mock_problem_config.path = problem_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=workspace_path,
+        )
+
+        runner._copy_tests_from_problem(workspace_path)
+
+        # Verify non-checkpoint files are copied
+        assert (workspace_path / "tests" / "helpers.py").exists()
+        assert (workspace_path / "tests" / "__init__.py").exists()
+
+    def test_copies_subdirectories(
+        self,
+        mock_problem_config,
+        mock_checkpoint_config,
+        mock_environment,
+        tmp_path,
+    ):
+        """Subdirectories in tests/ are fully copied."""
+        problem_path = tmp_path / "problem"
+        problem_path.mkdir()
+        problem_tests = problem_path / "tests"
+        problem_tests.mkdir()
+        (problem_tests / "test_checkpoint_1.py").write_text("# test 1")
+        (problem_tests / "test_checkpoint_2.py").write_text("# test 2")
+
+        # Create fixtures subdirectory
+        fixtures_dir = problem_tests / "fixtures"
+        fixtures_dir.mkdir()
+        (fixtures_dir / "data.json").write_text('{"key": "value"}')
+
+        workspace_path = tmp_path / "workspace"
+        workspace_path.mkdir()
+
+        mock_problem_config.path = problem_path
+
+        runner = PytestRunner(
+            problem=mock_problem_config,
+            checkpoint=mock_checkpoint_config,
+            environment=mock_environment,
+            submission_path=workspace_path,
+        )
+
+        runner._copy_tests_from_problem(workspace_path)
+
+        # Verify subdirectory was copied
+        assert (workspace_path / "tests" / "fixtures").exists()
+        assert (workspace_path / "tests" / "fixtures" / "data.json").exists()
 
 
 class TestSessionCreation:

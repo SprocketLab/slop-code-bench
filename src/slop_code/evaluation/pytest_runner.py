@@ -149,51 +149,18 @@ class PytestRunner:
             is_agent_run=False,  # Evaluation, not agent inference
         )
 
-    def _get_test_files_for_checkpoint(self) -> list[str]:
-        """Get list of test files to run for this checkpoint.
-
-        Returns test files for ALL checkpoints up to and including the current one.
-        This ensures regression testing: running checkpoint_2 also tests checkpoint_1.
-
-        The order matters:
-        - Tests from checkpoint_1 run first
-        - Tests from checkpoint_2 run second
-        - etc.
-
-        Returns:
-            List of test file paths relative to workspace
-            (e.g., ["tests/test_checkpoint_1.py", "tests/test_checkpoint_2.py"])
-
-        Example:
-            >>> # Evaluating checkpoint_2
-            >>> runner._get_test_files_for_checkpoint()
-            ['tests/test_checkpoint_1.py', 'tests/test_checkpoint_2.py']
-        """
-        test_files = []
-
-        # Iterate checkpoints in order
-        for checkpoint_name, _ in self.problem.iterate_checkpoint_items():
-            test_file = f"tests/test_{checkpoint_name}.py"
-            test_files.append(test_file)
-
-            # Stop after current checkpoint
-            if checkpoint_name == self.checkpoint.name:
-                break
-
-        logger.debug(
-            "Determined test files for checkpoint",
-            checkpoint=self.checkpoint.name,
-            test_files=test_files,
-        )
-
-        return test_files
-
     def _copy_tests_from_problem(self, workspace_path: Path) -> None:
         """Copy tests from problem directory to workspace if needed.
 
         If the workspace doesn't have a tests/ directory but the problem does,
-        copy the problem's tests to the workspace. This allows tests to be
-        defined at the problem level rather than duplicated in each solution.
+        selectively copy test files for checkpoints 0..N (current checkpoint).
+        This allows tests to be defined at the problem level while only running
+        relevant tests for the current checkpoint.
+
+        Files copied:
+        - conftest.py (shared fixtures)
+        - test_{checkpoint_name}.py for checkpoints up to current
+        - Any non-test files (helpers, utilities, __init__.py)
 
         Args:
             workspace_path: Path to the workspace root
@@ -218,12 +185,46 @@ class PytestRunner:
                 f"Expected tests/ directory with test files in one of these locations."
             )
 
+        # Get test files for checkpoints 0..N
+        checkpoint_files: set[str] = set()
+        for checkpoint_name, _ in self.problem.iterate_checkpoint_items():
+            checkpoint_files.add(f"test_{checkpoint_name}.py")
+            if checkpoint_name == self.checkpoint.name:
+                break
+
         logger.debug(
-            "Copying tests from problem directory to workspace",
+            "Selectively copying tests from problem directory",
             source=str(problem_tests),
             dest=str(workspace_tests),
+            checkpoint_files=list(checkpoint_files),
         )
-        shutil.copytree(problem_tests, workspace_tests)
+
+        # Create tests directory
+        workspace_tests.mkdir(parents=True, exist_ok=True)
+
+        # Copy files selectively
+        for item in problem_tests.iterdir():
+            if item.is_file():
+                # Check if this is a checkpoint test file
+                is_checkpoint_test = (
+                    item.name.startswith("test_")
+                    and item.name.endswith(".py")
+                    and item.name != "conftest.py"
+                )
+
+                if item.name == "conftest.py":
+                    # Always copy conftest.py
+                    shutil.copy2(item, workspace_tests / item.name)
+                elif is_checkpoint_test:
+                    # Only copy checkpoint test files for checkpoints 0..N
+                    if item.name in checkpoint_files:
+                        shutil.copy2(item, workspace_tests / item.name)
+                else:
+                    # Copy non-test files (helpers, __init__.py, etc.)
+                    shutil.copy2(item, workspace_tests / item.name)
+            elif item.is_dir():
+                # Copy subdirectories (e.g., fixtures, data)
+                shutil.copytree(item, workspace_tests / item.name)
 
     def _generate_pytest_ini(self, workspace_path: Path) -> None:
         """Generate pytest.ini in the workspace root.
@@ -275,8 +276,6 @@ markers =
 
     def _build_pytest_command(
         self,
-        test_files: list[str],
-        static_assets: dict[str, str],
         extra_args: list[str] | None = None,
         timeout: float | None = None,
     ) -> str:
@@ -284,21 +283,21 @@ markers =
 
         Constructs a pytest command that:
         1. Runs via uvx with ephemeral dependencies (uvx --with=... pytest ...)
-        2. Runs specific test files (tests/test_checkpoint_1.py ...)
+        2. Discovers tests via pytest.ini testpaths setting
         3. Passes entrypoint as --entrypoint CLI option
         4. Passes checkpoint name as --checkpoint CLI option
-        5. Passes static assets as JSON via --static-assets CLI option
-        6. Generates CTRF report via --ctrf option
-        7. Generates pytest JSON report via --json-report option
-        8. Uses verbose output (-v)
-        9. Applies session-level timeout via pytest-timeout if specified
+        5. Generates CTRF report via --ctrf option
+        6. Generates pytest JSON report via --json-report option
+        7. Uses verbose output (-vv)
+        8. Applies session-level timeout via pytest-timeout if specified
+
+        Static assets are passed via environment variables (SCBENCH_ASSET_{NAME})
+        rather than CLI options.
 
         Using uvx ensures tests run in an isolated environment that doesn't
         interfere with the solution's own pyproject.toml or virtualenv.
 
         Args:
-            test_files: List of test file paths to run
-            static_assets: Dict of asset name -> resolved path
             extra_args: Additional pytest args to append (e.g., ["-k", "name"])
             timeout: Session-level timeout in seconds (applied via pytest-timeout)
 
@@ -306,19 +305,12 @@ markers =
             Full pytest command string (properly shell-quoted)
 
         Example:
-            >>> runner._build_pytest_command(
-            ...     ["tests/test_checkpoint_1.py"],
-            ...     {"sde_dir": "/workspace/sde"}
-            ... )
-            'uvx --with=pytest --with=pytest-json-ctrf ... pytest tests/test_checkpoint_1.py ...'
+            >>> runner._build_pytest_command()
+            'uvx --with=pytest --with=pytest-json-ctrf ... pytest ...'
         """
         entrypoint = self._get_entrypoint_command()
 
-        # Serialize static assets to JSON
-        assets_json = json.dumps(static_assets)
-
         # Build command parts
-        quoted_test_files = [shlex.quote(test_file) for test_file in test_files]
         extra_args = extra_args or []
         quoted_extra_args = [shlex.quote(arg) for arg in extra_args]
 
@@ -335,10 +327,8 @@ markers =
             *with_flags,
             "pytest",
             *timeout_args,
-            *quoted_test_files,
             f"--entrypoint={shlex.quote(entrypoint)}",
             f"--checkpoint={shlex.quote(self.checkpoint.name)}",
-            f"--static-assets={shlex.quote(assets_json)}",
             "--ctrf=.scbench/ctrf-report.json",  # CTRF report output path
             "--json-report",
             "--json-report-file=.scbench/pytest-report.json",
@@ -772,25 +762,22 @@ markers =
 
     def run(
         self,
-        test_files: list[str] | None = None,
         pytest_args: list[str] | None = None,
     ) -> CorrectnessResults:
         """Execute pytest for this checkpoint and return results.
 
         This is the main orchestration method that:
         1. Creates workspace and session
-        2. Copies tests from problem directory if needed
-        3. Generates pytest.ini
-        4. Determines test files to run
-        5. Resolves static assets
-        6. Builds and executes pytest command (via uvx for isolation)
-        7. Parses CTRF + pytest JSON reports
-        8. Detects infrastructure failures
-        9. Converts CTRF tests to TestResults
-        10. Returns CorrectnessResults
+        2. Copies tests from problem directory (only checkpoints 0..N)
+        3. Materializes static assets into tests/assets/
+        4. Generates pytest.ini
+        5. Builds and executes pytest command (via uvx for isolation)
+        6. Parses CTRF + pytest JSON reports
+        7. Detects infrastructure failures
+        8. Converts CTRF tests to TestResults
+        9. Returns CorrectnessResults
 
         Args:
-            test_files: Override list of test files/nodeids to run
             pytest_args: Extra pytest args (e.g., ["-k", "pattern"])
 
         Returns:
@@ -837,55 +824,51 @@ markers =
             logger.debug("Copying tests from problem directory if needed")
             self._copy_tests_from_problem(workspace_path)
 
-            # STEP 2: Generate pytest.ini with markers
+            # STEP 2: Materialize static assets into tests/assets/
+            materialized_assets = session.workspace.materialize_static_assets_for_tests()
+
+            # Build environment variables for static assets
+            asset_env_vars: dict[str, str] = {}
+            if materialized_assets:
+                assets_dir = workspace_path / "tests" / "assets"
+                asset_env_vars["SCBENCH_ASSETS_DIR"] = str(assets_dir)
+                for name, path in materialized_assets.items():
+                    env_key = f"SCBENCH_ASSET_{name.upper()}"
+                    asset_env_vars[env_key] = str(path)
+                logger.info(
+                    "Static assets materialized",
+                    asset_count=len(materialized_assets),
+                    assets=list(materialized_assets.keys()),
+                )
+                logger.debug(
+                    "Static asset env vars",
+                    env_vars=asset_env_vars,
+                    verbose=True,
+                )
+
+            # STEP 3: Generate pytest.ini with markers
             logger.debug("Generating pytest.ini")
             self._generate_pytest_ini(workspace_path)
 
-            # STEP 3: Determine which test files to run
-            if test_files is None:
-                test_files = self._get_test_files_for_checkpoint()
-            elif len(test_files) == 0:
-                raise RuntimeError("test_files cannot be empty")
-            logger.info("Running test files", files=test_files)
-
-            # Convert to dict of name -> string path
-            if self.environment.type == "docker":
-                static_assets_dict = {
-                    name: (Path("/static") / asset.save_path).as_posix()
-                    for name, asset in resolved_assets.items()
-                }
-            else:
-                static_assets_dict = {
-                    name: str(asset.absolute_path)
-                    for name, asset in resolved_assets.items()
-                }
-            logger.info(
-                "Static assets resolved",
-                asset_count=len(static_assets_dict),
-                assets=list(static_assets_dict.keys()),
-            )
-            logger.debug(
-                "Static asset paths",
-                assets=static_assets_dict,
-                verbose=True,
-            )
-
             # STEP 4: Build pytest command
             pytest_cmd = self._build_pytest_command(
-                test_files,
-                static_assets_dict,
                 pytest_args,
                 timeout=self.checkpoint.timeout,
             )
             logger.debug("Pytest command", command=pytest_cmd)
 
-            # STEP 5: Execute pytest in Docker
+            # STEP 5: Execute pytest
             logger.info("Executing pytest")
             runtime = session.spawn()
             try:
+                # Merge asset env vars with checkpoint env
+                full_env = {
+                    **self.environment.get_full_env(self.checkpoint.env),
+                    **asset_env_vars,
+                }
                 exec_result = runtime.execute(
                     pytest_cmd,
-                    self.environment.get_full_env(self.checkpoint.env),
+                    full_env,
                     None,  # stdin
                     None,  # timeout handled by pytest-timeout
                 )
@@ -971,7 +954,7 @@ markers =
                 pytest_ctrf_report=ctrf_report,
             )
 
-            # STEP 9: Convert CTRF tests to TestResults and add to results
+            # STEP 9: Convert CTRF tests to TestResults
             for test_data in ctrf_tests:
                 test_result = self._convert_ctrf_test_to_result(test_data)
                 results.add_test_result(test_result)
@@ -1001,7 +984,6 @@ def run_checkpoint_pytest(
     problem: ProblemConfig,
     checkpoint: CheckpointConfig,
     env_spec: EnvironmentSpec,
-    test_files: list[str] | None = None,
     pytest_args: list[str] | None = None,
 ) -> CorrectnessResults:
     """Run pytest evaluation for a checkpoint.
@@ -1009,12 +991,14 @@ def run_checkpoint_pytest(
     This is the main entry point that replaces the old run_checkpoint() function
     from evaluation.runner. It creates a PytestRunner and executes tests.
 
+    Test files are automatically determined based on the checkpoint being evaluated.
+    Only test files for checkpoints 0..N (current) are copied and run.
+
     Args:
         submission_path: Path to the submission directory (contains code to test)
         problem: Problem configuration
         checkpoint: Checkpoint configuration to evaluate
         env_spec: Execution environment specification
-        test_files: Override list of test files/nodeids to run
         pytest_args: Extra pytest args (e.g., ["-k", "pattern"])
 
     Returns:
@@ -1044,4 +1028,4 @@ def run_checkpoint_pytest(
         environment=env_spec,
         submission_path=submission_path,
     )
-    return runner.run(test_files=test_files, pytest_args=pytest_args)
+    return runner.run(pytest_args=pytest_args)

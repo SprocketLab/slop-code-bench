@@ -11,7 +11,7 @@ Interactive tools and case runners.
 
 | Command | Description |
 |---------|-------------|
-| [`run-case`](#run-case) | Run test cases and output JSON |
+| [`run-case`](#run-case) | Run test cases and output pytest stdout |
 | [`snapshot-eval`](#snapshot-eval) | Launch Snapshot Evaluator UI |
 | [`report-viewer`](#report-viewer) | Launch Report Viewer UI |
 
@@ -19,7 +19,7 @@ Interactive tools and case runners.
 
 ## run-case
 
-Run a single test case (or filtered subset) and output JSON results.
+Run a single test case (or filtered subset) and output raw pytest stdout.
 
 ### Quick Start
 
@@ -45,26 +45,20 @@ slop-code tools run-case [OPTIONS]
 | `-p, --problem` | string | **required** | Name of the problem |
 | `-c, --checkpoint` | int | **required** | Checkpoint number |
 | `-e, --env-config` | path | **required** | Path to environment configuration |
-| `-g, --group` | string | - | Filter by group name (glob patterns) |
-| `--case` | string | - | Filter by case name (glob patterns) |
-| `--full` | flag | false | Enable full debug output |
+| `-t, --test` | string | - | Pytest test file or nodeid to run (repeatable) |
+| `--case` | string | - | Pytest -k expression to select tests |
+| `--pytest-arg` | string | - | Extra args to pass to pytest (repeatable) |
+| `--json` | flag | false | Output JSON report instead of raw pytest stdout |
+| `--full` | flag | false | Include full JSON report payload (implies `--json`) |
 
 ### Output
 
-**Default output** (per case):
-```json
-{
-  "id": "case_001",
-  "group": "core",
-  "score": 1.0,
-  "passed": true,
-  "results": {
-    "stdout": {"actual": "...", "expected": "...", "is_correct": true}
-  }
-}
-```
+**Default output**: Raw pytest stdout.
 
-**Full output** (`--full`): Complete report with all attributes and debug info.
+**JSON output** (`--json`): Per-test JSON summaries.
+
+**Full JSON output** (`--full`): Complete report with all attributes and debug
+info.
 
 ### Examples
 
@@ -76,14 +70,6 @@ slop-code tools run-case \
   -c 1 \
   -e configs/environments/docker-python3.12-uv.yaml
 
-# Filter to core group
-slop-code tools run-case \
-  -s outputs/snapshot \
-  -p file_backup \
-  -c 1 \
-  -e configs/environments/docker-python3.12-uv.yaml \
-  -g core
-
 # Run specific case
 slop-code tools run-case \
   -s outputs/snapshot \
@@ -92,7 +78,15 @@ slop-code tools run-case \
   -e configs/environments/docker-python3.12-uv.yaml \
   --case "test_*"
 
-# Full debug output
+# JSON output
+slop-code tools run-case \
+  -s outputs/snapshot \
+  -p file_backup \
+  -c 1 \
+  -e configs/environments/docker-python3.12-uv.yaml \
+  --json
+
+# Full JSON output
 slop-code tools run-case \
   -s outputs/snapshot \
   -p file_backup \

@@ -62,14 +62,6 @@ def run_case(
             file_okay=True,
         ),
     ],
-    tests: Annotated[
-        list[str] | None,
-        typer.Option(
-            "-t",
-            "--test",
-            help="Pytest test file or nodeid to run (repeatable).",
-        ),
-    ] = None,
     case: Annotated[
         str | None,
         typer.Option(
@@ -129,9 +121,6 @@ def run_case(
     environment = config_loader.resolve_environment(env_config)
     common.ensure_docker_ready(environment)
 
-    selected_tests = [test for test in (tests or []) if test.strip()]
-    test_files = selected_tests or None
-
     extra_pytest_args = [arg for arg in (pytest_args or []) if arg.strip()]
     if case is not None and case.strip():
         extra_pytest_args.extend(["-k", case.strip()])
@@ -143,7 +132,6 @@ def run_case(
         problem=problem,
         checkpoint=checkpoint,
         env_spec=environment,
-        test_files=test_files,
         pytest_args=extra_pytest_args,
     )
 

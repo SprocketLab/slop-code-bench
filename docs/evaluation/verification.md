@@ -848,7 +848,7 @@ slop-code tools run-case \
   -e configs/environments/docker-python3.12-uv.yaml
 
 # Check that scores are less than 1.0
-slop-code tools run-case ... | jq '[.[].score] | add / length'
+slop-code tools run-case ... --json | jq '[.[].score] | add / length'
 ```
 
 ### Unit Testing (Supplementary)

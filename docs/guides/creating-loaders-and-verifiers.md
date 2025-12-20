@@ -1140,7 +1140,7 @@ This outputs the complete `VerifierReport` including:
 
 1. **Start with your solution**: Copy your reference solution to a test directory
 2. **Run all cases**: `slop-code tools run-case -s solution -p my_problem -c 1 -e ...`
-3. **Identify failures**: Look for `"passed": false` in the output
+3. **Identify failures**: Re-run with `--json` and look for `"passed": false`
 4. **Debug specific case**: Re-run with `--case failing_case --full`
 5. **Fix loader/verifier**: Make changes based on the detailed diff
 6. **Re-run**: Repeat until all cases pass
@@ -1169,17 +1169,17 @@ slop-code tools run-case ... --case file_test --full | \
 
 ### JSON Output for Scripting
 
-The JSON output enables powerful scripting:
+The JSON output enables powerful scripting (use `--json`):
 
 ```bash
 # Count passing vs failing
-slop-code tools run-case ... | jq '[.[] | .passed] | group_by(.) | map({(.[0] | tostring): length}) | add'
+slop-code tools run-case ... --json | jq '[.[] | .passed] | group_by(.) | map({(.[0] | tostring): length}) | add'
 
 # Get all failing case names
-slop-code tools run-case ... | jq -r '.[] | select(.passed == false) | .id'
+slop-code tools run-case ... --json | jq -r '.[] | select(.passed == false) | .id'
 
 # Average score across cases
-slop-code tools run-case ... | jq '[.[].score] | add / length'
+slop-code tools run-case ... --json | jq '[.[].score] | add / length'
 ```
 
 ### Comparison with Unit Testing
