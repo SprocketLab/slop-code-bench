@@ -27,7 +27,6 @@ from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import model_validator
 
-from slop_code.evaluation.adapters import AdapterConfigType
 from slop_code.evaluation.adapters.models import DEFAULT_GROUP_TYPE
 from slop_code.evaluation.adapters.models import GroupType
 from slop_code.evaluation.utils import nested_priority_merge
@@ -584,126 +583,50 @@ def _process_checkpoint(
 class CheckpointConfig(BaseConfig):
     """Configuration for a checkpoint within a problem.
 
-    Attributes:
-        version: Version number for the checkpoint tests.
-        path: Checkpoint directory path (relative or absolute string).
-        groups: Dict mapping group name to group configuration.
-        adapter: Adapter configuration describing how to execute a case.
-        group_files: Files available to all groups within this checkpoint.
-        specification: Filename of the checkpoint specification document.
-        regressions: Regression groups sourced from prior checkpoints.
+    In the pytest-based harness, checkpoints are logical entities without
+    physical directories. All checkpoint metadata is stored inline in the
+    problem config.yaml, and test files live in tests/test_{checkpoint_name}.py.
 
-    Notes:
-        Static assets must now be defined on the :class:`ProblemConfig`. The
-        ``static_assets`` and ``submission_static_assets`` fields remain only to
-        provide descriptive validation errors and cannot contain any values.
+    Attributes:
+        name: Checkpoint identifier (e.g., "checkpoint_1", "checkpoint_2")
+        version: Version number for the checkpoint tests (incremented when tests change)
+        order: Ordering index when iterating checkpoints (1-indexed typically)
+        state: Development state of the checkpoint
+        spec_override: Optional in-memory specification override (used for testing)
+
+    Inherits from BaseConfig:
+        env: Environment variables for execution (dict[str, str])
+        timeout: Execution timeout in seconds (int)
+
+    Example:
+        >>> config = CheckpointConfig(
+        ...     name="checkpoint_1",
+        ...     version=1,
+        ...     order=1,
+        ...     state="Core Tests",
+        ...     timeout=30,
+        ... )
     """
 
     model_config = ConfigDict(extra="forbid", use_enum_values=True)
-    version: int = Field(description="Version number for checkpoint tests.")
+
+    # Core fields
+    name: str = Field(description="Checkpoint identifier (e.g., 'checkpoint_1')")
+    version: int = Field(
+        description="Version number for checkpoint tests (incremented when tests change)"
+    )
     order: int = Field(
-        description="Ordering index used when iterating checkpoints.",
+        description="Ordering index used when iterating checkpoints (typically 1-indexed)"
     )
-    path: Path = Field(
-        description="Filesystem path to the checkpoint directory."
-    )
-
-    groups: dict[str, GroupConfig] = Field(
-        description="Dict mapping group name to group configuration.",
-    )
-
-    constant_files: set[str] = Field(
-        default_factory=set,
-        description="Files made available to every case across all groups.",
-    )
-
-    specification: str = Field(
-        default="spec.md",
-        description="Filename of the checkpoint specification document.",
+    state: Literal["Draft", "Core Tests", "Full Tests", "Verified"] = Field(
+        default="Draft",
+        description="Development state of the checkpoint",
     )
     spec_override: str | None = Field(
         default=None,
-        description="Optional in-memory specification override.",
-        exclude=True,
+        description="Optional in-memory specification override (for testing)",
+        exclude=True,  # Don't serialize this field
     )
-
-    state: Literal["Draft", "Core Tests", "Full Tests", "Verified"] = Field(
-        default="Draft",
-        description="State of the problem.",
-    )
-    regressions: list[RegressionSpec] = Field(
-        default_factory=list,
-        description="Regression specifications for the checkpoint.",
-    )
-
-    @property
-    def name(self) -> str:
-        return self.path.name
-
-    @classmethod
-    def from_directory(
-        cls, path: Path, problem_config: ProblemConfig, *, order: int
-    ) -> CheckpointConfig:
-        """Load a checkpoint configuration and merge problem-level defaults.
-
-        The function mirrors :meth:`GroupConfig.from_directory` but additionally
-        records the resolved path and ensures inherited values come from the
-        problem scope rather than a checkpoint scope.
-
-        Args:
-            path: Directory containing the checkpoint's ``config.yaml``.
-            problem_config: Parent problem configuration providing default
-                execution knobs such as ``env`` and ``timeout``.
-
-        Returns:
-            Fully-initialized :class:`CheckpointConfig`.
-
-        Raises:
-            ConfigError: If the directory or config file is missing or invalid.
-        """
-        if not path.exists():
-            logger.error(
-                "Checkpoint path does not exist",
-                path=path,
-            )
-            raise ConfigError(f"Checkpoint path {path} does not exist")
-        if not path.is_dir():
-            logger.error(
-                "Checkpoint path is not a directory",
-                path=path,
-            )
-            raise ConfigError(f"Checkpoint path {path} is not a directory")
-
-        cfg_file = path / "config.yaml"
-        if not cfg_file.exists():
-            logger.error(
-                "Checkpoint config file does not exist",
-                path=path,
-            )
-            raise ConfigError(
-                f"Checkpoint config file {cfg_file} does not exist"
-            )
-
-        with cfg_file.open("r") as f:
-            config = yaml.safe_load(f)
-
-        config = nested_priority_merge(problem_config.get_base_config(), config)
-
-        config["path"] = str(path)
-
-        config["groups"] = {
-            name: GroupConfig(name=name, **group_config)
-            for name, group_config in config["groups"].items()
-        }
-
-        config["order"] = order
-        return cls(**config)
-
-    def get_spec_text(self) -> str:
-        """Return the checkpoint specification document as plain text."""
-        if self.spec_override is not None:
-            return self.spec_override
-        return (self.path / self.specification).read_text()
 
 
 class ProblemConfig(BaseConfig):
@@ -769,16 +692,12 @@ class ProblemConfig(BaseConfig):
             "Entry file required for executing checkpoints when not overridden."
         ),
     )
-    loader_script: str = Field(
-        default="loader.py",
-        description="Script file to load the cases.",
-    )
-    loader_entrypoint: str = Field(
-        default="Loader",
-        description="Entrypoint of the loader script.",
-    )
-    adapter: AdapterConfigType = Field(
-        description="Adapter configuration describing how to execute a case.",
+    markers: dict[str, str] = Field(
+        default_factory=lambda: {
+            "functionality": "non-core / nice-to-have tests",
+            "error": "error-handling / edge-case tests",
+        },
+        description="Custom pytest markers to register (marker_name -> description)",
     )
 
     @classmethod
@@ -811,15 +730,28 @@ class ProblemConfig(BaseConfig):
         defaults_payload = {**raw_cfg, "checkpoints": {}}
         problem_defaults = cls(**defaults_payload).get_base_config()
 
-        # Process each checkpoint
-        normalized_checkpoints: dict[str, dict[str, Any]] = {}
+        # Process each checkpoint (simplified for pytest-based harness)
+        normalized_checkpoints: dict[str, CheckpointConfig] = {}
         for checkpoint_name, checkpoint_cfg in checkpoints_cfg.items():
-            normalized_checkpoints[checkpoint_name] = _process_checkpoint(
-                checkpoint_name,
-                checkpoint_cfg,
-                path,
-                problem_defaults,
-                normalized_checkpoints,
+            if not isinstance(checkpoint_cfg, dict):
+                raise ConfigError(
+                    f"Checkpoint '{checkpoint_name}' configuration must be a dict, "
+                    f"got {type(checkpoint_cfg)}"
+                )
+
+            # Add checkpoint name to config
+            checkpoint_cfg["name"] = checkpoint_name
+
+            # Merge with problem defaults (env, timeout)
+            checkpoint_cfg = nested_priority_merge(problem_defaults, checkpoint_cfg)
+
+            # Set default order if not specified
+            if "order" not in checkpoint_cfg:
+                checkpoint_cfg["order"] = len(normalized_checkpoints) + 1
+
+            # Validate and create CheckpointConfig
+            normalized_checkpoints[checkpoint_name] = CheckpointConfig(
+                **checkpoint_cfg
             )
 
         raw_cfg["checkpoints"] = normalized_checkpoints
@@ -848,6 +780,44 @@ class ProblemConfig(BaseConfig):
         )
         for name, checkpoint in ordered:
             yield name, checkpoint
+
+    def get_checkpoint_spec(self, checkpoint_name: str) -> str:
+        """Get the specification text for a checkpoint.
+
+        Specs are located at the problem root as {checkpoint_name}.md (e.g., checkpoint_1.md).
+        If the checkpoint has a spec_override set (for testing), returns that instead.
+
+        Args:
+            checkpoint_name: Name of the checkpoint (e.g., "checkpoint_1")
+
+        Returns:
+            Specification text content
+
+        Raises:
+            KeyError: If checkpoint_name not in checkpoints
+            FileNotFoundError: If spec file doesn't exist
+
+        Example:
+            >>> problem = ProblemConfig.from_yaml(Path("problems/example"))
+            >>> spec = problem.get_checkpoint_spec("checkpoint_1")
+            >>> print(spec[:50])  # First 50 chars
+        """
+        checkpoint = self.checkpoints[checkpoint_name]
+
+        # Check for in-memory override first (used in testing)
+        if checkpoint.spec_override is not None:
+            return checkpoint.spec_override
+
+        # Read from {checkpoint_name}.md at problem root
+        spec_file = self.path / f"{checkpoint_name}.md"
+
+        if not spec_file.exists():
+            raise FileNotFoundError(
+                f"Checkpoint spec not found: {spec_file}\n"
+                f"Expected spec file at problem root: {checkpoint_name}.md"
+            )
+
+        return spec_file.read_text()
 
 
 def get_available_problems(problems_path: Path) -> dict[str, ProblemConfig]:

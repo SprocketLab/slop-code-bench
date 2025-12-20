@@ -1,8 +1,9 @@
 """Tests for evaluation configuration models."""
 
+import pytest
 
 from slop_code.evaluation.adapters.models import GroupType
-from slop_code.evaluation.config import GroupConfig
+from slop_code.evaluation.config import CheckpointConfig, GroupConfig
 
 
 def test_group_config_isolated_field_default():
@@ -71,3 +72,93 @@ def test_group_config_case_defaults_with_reset():
     assert group.case_defaults["reset"] is True
     assert group.case_defaults["timeout_s"] == 10.0
     assert group.isolated is False
+
+
+# ============================================================================
+# CheckpointConfig Tests (simplified pytest-based model)
+# ============================================================================
+
+
+class TestCheckpointConfig:
+    """Tests for the simplified CheckpointConfig model."""
+
+    def test_create_minimal(self):
+        """Can create CheckpointConfig with minimal required fields."""
+        config = CheckpointConfig(
+            name="checkpoint_1",
+            version=1,
+            order=1,
+            timeout=30,
+            env={},
+        )
+        assert config.name == "checkpoint_1"
+        assert config.version == 1
+        assert config.order == 1
+        assert config.state == "Draft"  # Default value
+        assert config.spec_override is None  # Default value
+
+    def test_create_with_all_fields(self):
+        """Can create CheckpointConfig with all fields."""
+        config = CheckpointConfig(
+            name="checkpoint_2",
+            version=2,
+            order=2,
+            state="Core Tests",
+            timeout=60,
+            env={"DEBUG": "1"},
+            spec_override="# Test Spec\nThis is a test.",
+        )
+        assert config.name == "checkpoint_2"
+        assert config.version == 2
+        assert config.order == 2
+        assert config.state == "Core Tests"
+        assert config.timeout == 60
+        assert config.env == {"DEBUG": "1"}
+        assert config.spec_override == "# Test Spec\nThis is a test."
+
+    def test_state_values(self):
+        """State field accepts valid literal values."""
+        for state in ["Draft", "Core Tests", "Full Tests", "Verified"]:
+            config = CheckpointConfig(
+                name="checkpoint_1",
+                version=1,
+                order=1,
+                state=state,
+            )
+            assert config.state == state
+
+    def test_spec_override_excluded_from_serialization(self):
+        """spec_override is excluded from model_dump output."""
+        config = CheckpointConfig(
+            name="checkpoint_1",
+            version=1,
+            order=1,
+            spec_override="Override content",
+        )
+        dumped = config.model_dump()
+        assert "spec_override" not in dumped
+
+    def test_inherits_base_config_fields(self):
+        """CheckpointConfig inherits env and timeout from BaseConfig."""
+        config = CheckpointConfig(
+            name="checkpoint_1",
+            version=1,
+            order=1,
+            env={"KEY": "value"},
+            timeout=120.5,
+        )
+        assert config.env == {"KEY": "value"}
+        assert config.timeout == 120.5
+
+    def test_get_base_config_returns_inheritable_fields(self):
+        """get_base_config() returns env and timeout."""
+        config = CheckpointConfig(
+            name="checkpoint_1",
+            version=1,
+            order=1,
+            env={"VAR": "val"},
+            timeout=45,
+        )
+        base = config.get_base_config()
+        assert base["env"] == {"VAR": "val"}
+        assert base["timeout"] == 45

@@ -6,26 +6,90 @@ helper methods for flattening data into analytics-friendly shapes (JSON,
 Parquet) while preserving enough context for downstream visualization.
 """
 
+from __future__ import annotations
+
 import json
-from collections import Counter
 from collections.abc import Mapping
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Literal
 
-import pyarrow as pa
-import pyarrow.parquet as pq
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 
-from slop_code.common import EVALUATION_FILENAME
-from slop_code.common import VERIFIER_REPORT_FILENAME
-from slop_code.evaluation.config import GroupType
-from slop_code.evaluation.verifiers import VerifierReport
 from slop_code.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+class GroupType(str, Enum):
+    """Test categorization types for SCBench evaluation.
+
+    Used to classify tests and determine pass policies:
+    - CORE: Must-pass tests for checkpoint success
+    - FUNCTIONALITY: Nice-to-have / optional features
+    - REGRESSION: Tests from prior checkpoints (prevent breakage)
+    - ERROR: Error-handling / edge-case tests
+
+    In pytest-based evaluation:
+    - Unmarked tests in current checkpoint → CORE
+    - @pytest.mark.functionality → FUNCTIONALITY
+    - @pytest.mark.error → ERROR
+    - Tests from prior checkpoints (no error marker) → REGRESSION
+    """
+
+    CORE = "Core"
+    FUNCTIONALITY = "Functionality"
+    REGRESSION = "Regression"
+    ERROR = "Error"
+
+
+class TestResult(BaseModel):
+    """Individual test result from pytest execution.
+
+    Represents a single test case with categorization metadata and outcome.
+    Replaces the old CaseReport/AttributeResult model from the Adapter system.
+
+    Attributes:
+        id: Pytest nodeid or unique test identifier (e.g., "test_basic_functionality")
+        checkpoint: Checkpoint this test belongs to (e.g., "checkpoint_1")
+        group_type: Categorization of this test (CORE, FUNCTIONALITY, REGRESSION, ERROR)
+        status: Test outcome from pytest ("passed", "failed", "skipped", "error")
+        duration_ms: Test execution time in milliseconds
+        file_path: Test file path relative to tests/ (e.g., "tests/test_checkpoint_1.py")
+        markers: Pytest markers applied to this test (e.g., ["functionality", "slow"])
+        failure_message: Optional failure message if test failed/errored
+
+    Example:
+        >>> result = TestResult(
+        ...     id="test_basic[case1]",
+        ...     checkpoint="checkpoint_1",
+        ...     group_type=GroupType.CORE,
+        ...     status="passed",
+        ...     duration_ms=123.45,
+        ...     file_path="tests/test_checkpoint_1.py",
+        ...     markers=[],
+        ... )
+    """
+
+    id: str = Field(description="Pytest nodeid or unique test identifier")
+    checkpoint: str = Field(
+        description="Checkpoint this test belongs to (e.g., 'checkpoint_1')"
+    )
+    group_type: GroupType = Field(description="Categorization of this test")
+    status: Literal["passed", "failed", "skipped", "error"] = Field(
+        description="Test outcome from pytest"
+    )
+    duration_ms: float = Field(description="Test execution time in milliseconds")
+    file_path: str = Field(description="Test file path relative to tests/")
+    markers: list[str] = Field(
+        default_factory=list, description="Pytest markers applied to this test"
+    )
+    failure_message: str | None = Field(
+        default=None, description="Failure message if test failed/errored"
+    )
+
 
 # Constants
 DEFAULT_STAGE = "step-1"
@@ -93,134 +157,155 @@ class GroupReport(BaseModel):
 
 
 class CorrectnessResults(BaseModel):
-    """Data aggregator and store for correctness evaluation results.
+    """Aggregated test results for a checkpoint evaluation.
 
-    This class serves as the primary container for accumulating case reports
-    across multiple groups within a correctness evaluation. It provides methods for:
+    Replaces the old Adapter-based report system with pytest-based aggregation.
+    Contains all individual test results plus aggregated statistics by GroupType.
 
-    - **Data accumulation**: Adding group results via
-      ``add_group_report()``
-    - **Data access**: Querying stored case reports and metadata
-    - **Aggregation**: Computing pass/fail statistics via
-      ``aggregate_case_reports()``
-    - **Persistence**: Saving results and evaluating policies via
-      ``save()``
+    Attributes:
+        problem_name: Name of the problem being evaluated
+        problem_version: Version number of the problem
+        checkpoint_name: Name of the checkpoint (e.g., "checkpoint_1")
+        checkpoint_version: Version number of the checkpoint
+        duration: Total evaluation duration in seconds
+        entrypoint: Command used to run the submission (e.g., "python main.py")
+        tests: List of all individual test results
+        pass_counts: Number of passed tests by GroupType
+        total_counts: Total number of tests by GroupType
+        pytest_exit_code: Exit code from pytest execution
+        pytest_collected: Number of tests collected by pytest
+        infrastructure_failure: Whether pytest execution itself failed
 
-    The class focuses on being a clean data store/aggregator, delegating
-    computation logic to helper functions for better testability and
-    reusability.
+    Example:
+        >>> results = CorrectnessResults(
+        ...     problem_name="example",
+        ...     problem_version=1,
+        ...     checkpoint_name="checkpoint_1",
+        ...     checkpoint_version=1,
+        ...     duration=5.2,
+        ...     entrypoint="python main.py",
+        ...     pytest_exit_code=0,
+        ...     pytest_collected=10,
+        ... )
     """
 
     model_config = ConfigDict(extra="forbid", use_enum_values=True)
-    problem_name: str
-    problem_version: int
-    name: str
-    version: int
-    timestamp: datetime = Field(default_factory=datetime.now)
-    duration: float = Field(default=0.0)
-    reports: list[VerifierReport] = Field(default_factory=list)
-    group_outcomes: dict[str, GroupReport] = Field(default_factory=dict)
-    pass_counts: dict[GroupType, int] = Field(default_factory=Counter)
-    total_counts: dict[GroupType, int] = Field(default_factory=Counter)
 
-    # ========================================================================
-    # Data Accumulation Methods
-    # ========================================================================
-    def add_group_report(
-        self,
-        group_name: str,
-        group_type: GroupType,
-        duration: float,
-        reports: list[VerifierReport],
-    ) -> None:
-        logger.debug(
-            "Adding Group Reports",
-            group_name=group_name,
-            num_reports=len(reports),
+    # Metadata
+    problem_name: str = Field(description="Name of the problem")
+    problem_version: int = Field(description="Version number of the problem")
+    checkpoint_name: str = Field(description="Name of the checkpoint")
+    checkpoint_version: int = Field(description="Version number of the checkpoint")
+    duration: float = Field(description="Total evaluation duration in seconds")
+    entrypoint: str = Field(description="Command used to run the submission")
+
+    # Test results
+    tests: list[TestResult] = Field(
+        default_factory=list, description="All individual test results"
+    )
+
+    # Aggregated counts by GroupType
+    pass_counts: dict[GroupType, int] = Field(
+        default_factory=dict, description="Number of passed tests by GroupType"
+    )
+    total_counts: dict[GroupType, int] = Field(
+        default_factory=dict, description="Total number of tests by GroupType"
+    )
+
+    # Pytest execution metadata
+    pytest_exit_code: int = Field(description="Exit code from pytest execution")
+    pytest_collected: int = Field(description="Number of tests collected by pytest")
+    infrastructure_failure: bool = Field(
+        default=False,
+        description="Whether pytest execution itself failed (not just test failures)",
+    )
+
+    def add_test_result(self, result: TestResult) -> None:
+        """Add a test result and update aggregated counts.
+
+        Args:
+            result: TestResult to add
+
+        Example:
+            >>> results.add_test_result(TestResult(...))
+        """
+        self.tests.append(result)
+
+        # Update total count for this GroupType
+        self.total_counts[result.group_type] = (
+            self.total_counts.get(result.group_type, 0) + 1
         )
-        scores = {}
-        num_passed = total = 0
-        for result in reports:
-            score = result.calculate_score()
-            passed = result.did_pass()
-            logger.info(
-                f"Case '{result.id}'-> {'PASSED' if passed else 'FAILED'}",
-                score=f"{score:0.2f}",
+
+        # Update pass count if test passed
+        if result.status == "passed":
+            self.pass_counts[result.group_type] = (
+                self.pass_counts.get(result.group_type, 0) + 1
             )
-            scores[result.id] = score
-            self.pass_counts[group_type] += passed
-            num_passed += passed
-            total += 1
-            self.total_counts[group_type] += 1
-            self.reports.append(result)
 
-        logger.info(f"'{group_name}' has {num_passed}/{total} passing cases.")
-        self.group_outcomes[group_name] = GroupReport(
-            duration=duration,
-            results=scores,
-            type=group_type,
-        )
+    def passes_policy(self, policy: str = "core-cases") -> bool:
+        """Check if results pass the given policy.
 
-    def save(
-        self,
-        save_dir: Path,
-    ):
-        out = self.model_dump(mode="json")
-        out.pop("reports")
-        reports = [
-            {
-                "problem": self.problem_name,
-                "checkpoint": self.name,
-                "version": self.version,
-                "problem_version": self.problem_version,
-                **report.to_parquet_row(),
-            }
-            for report in self.reports
-        ]
+        Policies:
+        - "core-cases": All CORE tests must pass (default for checkpoint success)
+        - "all-non-error-cases": All CORE, FUNCTIONALITY, and REGRESSION tests must pass
 
-        table = pa.Table.from_pylist(reports)
-        pq.write_table(
-            table,
-            save_dir / VERIFIER_REPORT_FILENAME,
-            compression="zstd",
-            compression_level=10,
-        )
+        Infrastructure failures always result in policy failure.
 
-        with (save_dir / EVALUATION_FILENAME).open("w") as f:
-            json.dump(out, f, indent=2, sort_keys=True)
+        Args:
+            policy: Name of the pass policy to evaluate
 
-    @classmethod
-    def from_dir(cls, dir: Path) -> "CorrectnessResults":
-        with (dir / EVALUATION_FILENAME).open("r") as f:
-            data = json.load(f)
+        Returns:
+            True if the policy passes, False otherwise
 
-        reports = pq.read_table(dir / VERIFIER_REPORT_FILENAME).to_pylist()
-        reports = [
-            VerifierReport.from_parquet_row(
-                {
-                    k: v
-                    for k, v in report.items()
-                    if k
-                    not in {
-                        "problem",
-                        "checkpoint",
-                        "version",
-                        "problem_version",
-                    }
-                }
-            )
-            for report in reports
-        ]
-        data["group_outcomes"] = {
-            k: GroupReport.model_validate(v)
-            for k, v in data["group_outcomes"].items()
-        }
-        data["pass_counts"] = {
-            GroupType(k): v for k, v in data["pass_counts"].items()
-        }
-        data["total_counts"] = {
-            GroupType(k): v for k, v in data["total_counts"].items()
-        }
-        data["reports"] = reports
-        data["timestamp"] = datetime.fromisoformat(data["timestamp"])
-        return cls.model_validate(data)
+        Raises:
+            ValueError: If policy name is not recognized
+
+        Example:
+            >>> results.passes_policy("core-cases")
+            True
+        """
+        # Infrastructure failures always fail
+        if self.infrastructure_failure:
+            return False
+
+        if policy == "core-cases":
+            # All CORE tests must pass
+            core_total = self.total_counts.get(GroupType.CORE, 0)
+            core_passed = self.pass_counts.get(GroupType.CORE, 0)
+
+            # Need at least one core test and all must pass
+            return core_total > 0 and core_passed == core_total
+
+        elif policy == "all-non-error-cases":
+            # All non-ERROR tests must pass
+            for group_type in [
+                GroupType.CORE,
+                GroupType.FUNCTIONALITY,
+                GroupType.REGRESSION,
+            ]:
+                total = self.total_counts.get(group_type, 0)
+                passed = self.pass_counts.get(group_type, 0)
+
+                # If there are tests of this type, they must all pass
+                if total > 0 and passed != total:
+                    return False
+
+            return True
+
+        else:
+            raise ValueError(f"Unknown policy: {policy}")
+
+    def save(self, save_dir: Path) -> None:
+        """Save results to evaluation.json in the specified directory.
+
+        Args:
+            save_dir: Directory to save results (creates if doesn't exist)
+
+        Example:
+            >>> results.save(Path("outputs/checkpoint_1"))
+        """
+        save_dir.mkdir(parents=True, exist_ok=True)
+        save_path = save_dir / "evaluation.json"
+
+        with save_path.open("w") as f:
+            json.dump(self.model_dump(mode="json"), f, indent=2)
