@@ -21,59 +21,27 @@ tags:
 - dependency-resolution
 - caching
 - task-scheduling
-checkpoints:
-  checkpoint_1:
-    order: 1
-    path: checkpoint_1
-    groups:
-      core:
-        type: Core
-        timeout: 60
-      hidden:
-        type: Functionality
-        timeout: 60
-      error:
-        type: Error
-    specification: spec.md
-    state: Core Tests
-    version: 1
-  checkpoint_2:
-    order: 2
-    path: checkpoint_2
-    groups:
-      core:
-        type: Core
-        timeout: 60
-      hidden:
-        type: Functionality
-    regressions:
-    - checkpoint: checkpoint_1
-      groups: [core, hidden]
-    specification: spec.md
-    state: Core Tests
-    version: 1
-  checkpoint_3:
-    order: 3
-    path: checkpoint_3
-    groups:
-      core:
-        type: Core
-        timeout: 60
-      hidden:
-        type: Functionality
-    regressions:
-    - checkpoint: checkpoint_1
-      groups: [core, hidden]
-    - checkpoint: checkpoint_2
-      groups: [core, hidden]
-    specification: spec.md
-    state: Core Tests
-    version: 1
-adapter:
-  type: cli
-  tracked_files: []
 entry_file: launch
 timeout: 60
-loader_script: loader.py
-loader_entrypoint: Loader
+
+checkpoints:
+  checkpoint_1:
+    version: 1
+    order: 1
+    state: Core Tests
+
+  checkpoint_2:
+    version: 1
+    order: 2
+    state: Core Tests
+
+  checkpoint_3:
+    version: 1
+    order: 3
+    state: Core Tests
+
+markers:
+  functionality: "non-core / nice-to-have tests"
+  error: "error-handling / edge-case tests"
+
 inspiration: https://github.com/spotify/luigi/tree/master

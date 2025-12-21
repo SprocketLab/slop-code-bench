@@ -45,7 +45,7 @@ def _validate_success_criterion(
     if criterion.is_block:
         program = _parse_program(source, context)
         if not _has_return(program.statements):
-            raise InvalidPipelineError(
+            raise PipelineSyntaxError(
                 f"{context}: block success criteria must include a return statement"
             )
     else:

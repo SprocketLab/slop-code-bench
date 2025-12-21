@@ -71,11 +71,11 @@ def main() -> None:
         clean_workspace(workspace)
 
     env_overrides = config.env
-    executor = TaskExecutor(
-        pipeline_def, workspace, output_dir, env_overrides, config.cache
-    )
 
     try:
+        executor = TaskExecutor(
+            pipeline_def, workspace, output_dir, env_overrides, config.cache
+        )
         outcome = executor.run_entry(config.entry)
     except PipelineSyntaxError as exc:
         _exit_with_error(str(exc), code=2, prefix="SYNTAX_ERROR")

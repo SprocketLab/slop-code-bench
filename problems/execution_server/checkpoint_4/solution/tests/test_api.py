@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-
 import pytest
 from api.routes import create_app
 from api.routes import reset_state_for_testing

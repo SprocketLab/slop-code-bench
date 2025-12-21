@@ -7,11 +7,11 @@ from unittest.mock import patch
 
 from rich.console import Console as RichConsole
 
+from slop_code.entrypoints.commands.eval_checkpoint import evaluate_snapshot
 from slop_code.evaluation.config import CheckpointConfig
 from slop_code.evaluation.report import CorrectnessResults
 from slop_code.evaluation.report import GroupType
 from slop_code.evaluation.report import TestResult as EvalTestResult
-from slop_code.entrypoints.commands.eval_checkpoint import evaluate_snapshot
 
 
 def test_eval_snapshot_renders_pytest_results(tmp_path: Path) -> None:

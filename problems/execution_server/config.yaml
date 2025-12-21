@@ -28,6 +28,7 @@ checkpoints:
     order: 6
     version: 1
     state: Core Tests
+    include_prior_tests: false
 description: |
   HTTP server that executes shell commands and returns results. Adds file tracking with globs,
   multi-format output support, command chains with hooks, caching, persistent environments with

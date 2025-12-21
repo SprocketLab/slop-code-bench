@@ -20,13 +20,13 @@ from rich.progress import TimeElapsedColumn
 from rich.progress import TimeRemainingColumn
 
 from slop_code import logging as slop_logging
-from slop_code.evaluation.pytest_runner import run_checkpoint_pytest
 from slop_code.common import SNAPSHOT_DIR_NAME
 from slop_code.entrypoints.evaluation.utils import gather_checkpoint_directories
 from slop_code.entrypoints.evaluation.utils import maybe_update_problem_report
 from slop_code.evaluation import CheckpointConfig
 from slop_code.evaluation import CorrectnessResults
 from slop_code.evaluation import ProblemConfig
+from slop_code.evaluation.pytest_runner import run_checkpoint_pytest
 from slop_code.execution import EnvironmentSpec
 from slop_code.logging import get_logger
 from slop_code.metrics import RUBRIC_GRADES_SAVENAME

@@ -1,7 +1,6 @@
 """Tests for checkpoint 1: basic word counting."""
 
 import subprocess
-import json
 
 
 def run_main(input_text: str, args: list[str] | None = None, entrypoint: str = "python main.py") -> str:

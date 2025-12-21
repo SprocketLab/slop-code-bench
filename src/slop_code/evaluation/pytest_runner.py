@@ -35,6 +35,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from slop_code.common import WORKSPACE_TEST_DIR
 from slop_code.evaluation.config import CheckpointConfig
 from slop_code.evaluation.config import ProblemConfig
 from slop_code.evaluation.report import CorrectnessResults
@@ -44,7 +45,6 @@ from slop_code.execution import EnvironmentSpec
 from slop_code.execution import Session
 from slop_code.execution.assets import resolve_static_assets
 from slop_code.logging import get_logger
-from slop_code.common import WORKSPACE_TEST_DIR
 
 logger = get_logger(__name__)
 
@@ -186,12 +186,17 @@ class PytestRunner:
                 f"Expected tests/ directory with test files in one of these locations."
             )
 
-        # Get test files for checkpoints 0..N
+        # Get test files based on include_prior_tests setting
         checkpoint_files: set[str] = set()
-        for checkpoint_name, _ in self.problem.iterate_checkpoint_items():
-            checkpoint_files.add(f"test_{checkpoint_name}.py")
-            if checkpoint_name == self.checkpoint.name:
-                break
+        if self.checkpoint.include_prior_tests:
+            # Include all checkpoints 0..N
+            for checkpoint_name, _ in self.problem.iterate_checkpoint_items():
+                checkpoint_files.add(f"test_{checkpoint_name}.py")
+                if checkpoint_name == self.checkpoint.name:
+                    break
+        else:
+            # Only include current checkpoint
+            checkpoint_files.add(f"test_{self.checkpoint.name}.py")
 
         logger.debug(
             "Selectively copying tests from problem directory",
@@ -249,15 +254,23 @@ class PytestRunner:
                 )
                 shutil.copytree(item, workspace_tests / item.name)
 
+    # Built-in markers that are always registered
+    BUILTIN_MARKERS = {
+        "error": "error-handling / edge-case tests",
+        "functionality": "non-core / nice-to-have tests",
+        "regression": "regression tests from prior checkpoints",
+    }
+
     def _generate_pytest_ini(self, workspace_path: Path) -> None:
         """Generate pytest.ini in the workspace root.
 
         Creates pytest.ini with:
         - testpaths = tests (tells pytest where to find tests)
-        - markers = custom markers from problem config
+        - markers = custom markers from problem config + built-in markers
 
         The markers are read from problem.markers dict
-        (e.g., {"functionality": "...", "error": "..."}).
+        (e.g., {"functionality": "...", "error": "..."}) plus built-in markers
+        (error, functionality, regression).
 
         Args:
             workspace_path: Path to workspace root
@@ -268,11 +281,17 @@ class PytestRunner:
             markers =
                 functionality: non-core / nice-to-have tests
                 error: error-handling / edge-case tests
+                regression: regression tests from prior checkpoints
         """
-        # Build markers section from problem.markers
+        # Build markers section from built-in + problem.markers
         markers_lines = []
-        for marker_name, marker_desc in self.problem.markers.items():
+        # Add built-in markers first
+        for marker_name, marker_desc in self.BUILTIN_MARKERS.items():
             markers_lines.append(f"    {marker_name}: {marker_desc}")
+        # Add problem-specific markers (may override built-in descriptions)
+        for marker_name, marker_desc in self.problem.markers.items():
+            if marker_name not in self.BUILTIN_MARKERS:
+                markers_lines.append(f"    {marker_name}: {marker_desc}")
 
         markers_section = "\n".join(markers_lines)
 
@@ -482,8 +501,8 @@ markers =
 
         Rules (in priority order):
         1. If "error" marker present -> ERROR (always, regardless of checkpoint)
-        2. If test is from prior checkpoint (not current):
-           -> REGRESSION (tests from earlier checkpoints prevent regressions)
+        2. If "regression" marker present OR test is from prior checkpoint:
+           -> REGRESSION (explicit regression tests or tests from earlier checkpoints)
         3. If test is from current checkpoint:
            - If "functionality" marker -> FUNCTIONALITY
            - If no marker -> CORE
@@ -509,6 +528,10 @@ markers =
             >>> runner._determine_group_type("checkpoint_1", [], "checkpoint_2")
             GroupType.REGRESSION
 
+            >>> # Explicit regression marker in current checkpoint
+            >>> runner._determine_group_type("checkpoint_2", ["regression"], "checkpoint_2")
+            GroupType.REGRESSION
+
             >>> # Error test in current checkpoint
             >>> runner._determine_group_type("checkpoint_1", ["error"], "checkpoint_1")
             GroupType.ERROR
@@ -523,8 +546,8 @@ markers =
         if "error" in markers:
             return GroupType.ERROR
 
-        # RULE 2: Prior checkpoint tests become regressions (except errors, handled above)
-        if not is_current:
+        # RULE 2: Explicit regression marker or prior checkpoint tests become regressions
+        if "regression" in markers or not is_current:
             return GroupType.REGRESSION
 
         # RULE 3: Current checkpoint tests
@@ -780,8 +803,10 @@ markers =
         # Extract markers from keywords
         # pytest-json-report stores markers in the keywords list
         keywords = test_data.get("keywords", []) or []
-        # Filter to only include our known markers
+        # Filter to only include our known markers (problem-defined + built-in)
         known_markers = set(self.problem.markers.keys()) if self.problem.markers else set()
+        # Add built-in markers that are always recognized
+        known_markers.update({"error", "functionality", "regression"})
         markers = [kw for kw in keywords if kw in known_markers]
 
         # Determine group type using categorization logic

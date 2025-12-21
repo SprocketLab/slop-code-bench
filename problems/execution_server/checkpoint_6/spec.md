@@ -359,7 +359,7 @@ T2 **423**
   "environment": {
     "name": "test-base",
     "snapshot_source": "base",
-    "committed": true
+    "committed": false
   }
 }
 ```
@@ -384,7 +384,7 @@ T2 **423**
   "environment": {
     "name": "test-base",
     "snapshot_source": "base",
-    "committed": true
+    "committed": false
   }
 }
 ```

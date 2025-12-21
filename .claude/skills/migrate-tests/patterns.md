@@ -2,6 +2,49 @@
 
 This document provides detailed patterns for migrating specific problem types.
 
+## Spec-Driven Test Design
+
+**Don't mechanically translate old tests.** Use the spec to write better, simpler tests.
+
+### Use the Spec to Simplify
+
+1. **Identify Required vs Optional Fields** - Only assert on required fields unless testing specific optional behavior
+2. **Extract Canonical Examples** - Specs often include examples that are perfect test cases
+3. **Understand Error Contracts** - Assert status codes and structure, not specific messages
+4. **Find Determinism Rules** - Specs specify ordering; test what must be ordered
+
+### Collapse Redundant Cases
+
+```python
+# BAD: 10 variations of the same thing
+def test_daily_trigger_monday(): ...
+def test_daily_trigger_tuesday(): ...
+
+# GOOD: Test the actual behavior
+def test_daily_job_triggers_at_specified_time():
+    """Daily jobs trigger when --now matches their at time."""
+```
+
+### Test Behaviors, Not Outputs
+
+```python
+# BAD: Verify entire response
+assert response.json() == {"id": "some-uuid", "stdout": "Hello\n", ...}
+
+# GOOD: Test the behavior the spec requires
+def test_execute_captures_stdout():
+    response = requests.post(f"{api}/v1/execute", json={"command": "echo hello"})
+    assert response.status_code == 201
+    assert "hello" in response.json()["stdout"]
+```
+
+### What NOT to Test
+
+- Field ordering (unless spec requires it)
+- Exact UUIDs (just validate format)
+- Exact durations (use tolerance)
+- Fields marked as "may vary"
+
 ## CLI Adapter Migrations
 
 ### Pattern: Simple CLI with Arguments

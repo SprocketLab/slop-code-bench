@@ -628,6 +628,10 @@ class CheckpointConfig(BaseConfig):
         description="Optional in-memory specification override (for testing)",
         exclude=True,  # Don't serialize this field
     )
+    include_prior_tests: bool = Field(
+        default=True,
+        description="If True (default), include test files from prior checkpoints during evaluation. If False, only run tests for this checkpoint.",
+    )
 
 
 class ProblemConfig(BaseConfig):

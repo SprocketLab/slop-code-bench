@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections import Counter
 from pathlib import Path
 from typing import Annotated
@@ -182,6 +183,11 @@ def evaluate_snapshot(
         help="LLM provider for rubric grading",
         case_sensitive=False,
     ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Output correctness results as JSON.",
+    ),
 ) -> None:
     # Validate rubric options
     common.validate_rubric_options(rubric_path, rubric_model)
@@ -242,5 +248,8 @@ def evaluate_snapshot(
         rubric_temperature=rubric_temperature,
         rubric_provider=rubric_provider,
     )
-    console = Console()
-    render_pytest_results(console, report.report, ctx.obj.verbosity)
+    if json_output:
+        typer.echo(json.dumps(report.report.model_dump(mode="json"), indent=2))
+    else:
+        console = Console()
+        render_pytest_results(console, report.report, ctx.obj.verbosity)

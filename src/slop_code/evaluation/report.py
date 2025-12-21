@@ -12,8 +12,7 @@ import json
 from collections.abc import Mapping
 from enum import Enum
 from pathlib import Path
-from typing import Any
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -305,7 +304,7 @@ class CorrectnessResults(BaseModel):
             # Need at least one core test and all must pass
             return core_total > 0 and core_passed == core_total
 
-        elif policy == "all-non-error-cases":
+        if policy == "all-non-error-cases":
             # All non-ERROR tests must pass
             for group_type in [
                 GroupType.CORE,
@@ -321,8 +320,7 @@ class CorrectnessResults(BaseModel):
 
             return True
 
-        else:
-            raise ValueError(f"Unknown policy: {policy}")
+        raise ValueError(f"Unknown policy: {policy}")
 
     def save(self, save_dir: Path) -> None:
         """Save results to evaluation.json in the specified directory.

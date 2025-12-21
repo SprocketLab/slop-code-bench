@@ -8,6 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from slop_code.common import WORKSPACE_TEST_DIR
 from slop_code.evaluation.config import CheckpointConfig
 from slop_code.evaluation.config import ProblemConfig
 from slop_code.evaluation.pytest_runner import EXIT_INTERNALERROR
@@ -22,7 +23,6 @@ from slop_code.evaluation.pytest_runner import PytestRunner
 from slop_code.evaluation.pytest_runner import run_checkpoint_pytest
 from slop_code.evaluation.report import GroupType
 from slop_code.execution import EnvironmentSpec
-from slop_code.common import WORKSPACE_TEST_DIR
 
 
 @pytest.fixture
@@ -58,6 +58,7 @@ def mock_checkpoint_config():
     checkpoint.version = 1
     checkpoint.timeout = 30
     checkpoint.env = {}
+    checkpoint.include_prior_tests = True
     return checkpoint
 
 
@@ -221,8 +222,17 @@ class TestPytestRunner:
         )
         assert group_type == GroupType.ERROR
 
+    def test_determine_group_type_explicit_regression_marker(self, pytest_runner):
+        """Explicit regression marker in current checkpoint becomes REGRESSION."""
+        group_type = pytest_runner._determine_group_type(
+            test_checkpoint="checkpoint_2",  # Current checkpoint
+            markers=["regression"],
+            current_checkpoint="checkpoint_2",
+        )
+        assert group_type == GroupType.REGRESSION
+
     def test_generate_pytest_ini(self, pytest_runner, tmp_path):
-        """_generate_pytest_ini creates valid pytest.ini."""
+        """_generate_pytest_ini creates valid pytest.ini with built-in markers."""
         pytest_runner._generate_pytest_ini(tmp_path)
 
         pytest_ini = tmp_path / "pytest.ini"
@@ -231,8 +241,10 @@ class TestPytestRunner:
         content = pytest_ini.read_text()
         assert "[pytest]" in content
         assert "testpaths = tests" in content
-        assert "functionality: optional tests" in content
-        assert "error: error handling tests" in content
+        # Check built-in markers are registered
+        assert "error:" in content
+        assert "functionality:" in content
+        assert "regression:" in content
 
     def test_build_pytest_command(self, pytest_runner):
         """_build_pytest_command builds correct command using uvx."""
@@ -937,7 +949,8 @@ class TestPytestRunnerRunMethod:
         tmp_path,
     ):
         """run() orchestrates all steps correctly with passing tests."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock
+        from unittest.mock import patch
 
         # Create a mock submission directory with tests/ subdirectory
         submission_path = tmp_path / "submission"
@@ -1048,7 +1061,8 @@ class TestPytestRunnerRunMethod:
         tmp_path,
     ):
         """run() materializes static assets and passes paths via env vars."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock
+        from unittest.mock import patch
 
         submission_path = tmp_path / "submission"
         submission_path.mkdir()
@@ -1133,7 +1147,8 @@ class TestPytestRunnerRunMethod:
         tmp_path,
     ):
         """run() correctly detects infrastructure failures."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock
+        from unittest.mock import patch
 
         # Create submission directory with tests
         submission_path = tmp_path / "submission"
@@ -1199,7 +1214,8 @@ class TestPytestRunnerRunMethod:
         tmp_path,
     ):
         """run() correctly handles test failures (not infrastructure failures)."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock
+        from unittest.mock import patch
 
         # Create submission directory
         submission_path = tmp_path / "submission"
@@ -1297,7 +1313,8 @@ class TestPytestRunnerRunMethod:
         tmp_path,
     ):
         """run() correctly handles CTRF with multiple parametrized test variants."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock
+        from unittest.mock import patch
 
         # Create submission directory
         submission_path = tmp_path / "submission"
@@ -1665,7 +1682,8 @@ class TestSessionCreation:
         tmp_path,
     ):
         """run() uses Session.from_environment_spec() factory method."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock
+        from unittest.mock import patch
 
         submission_path = tmp_path / "submission"
         submission_path.mkdir()
@@ -1827,7 +1845,8 @@ class TestSnapshotLocationRegression:
         tmp_path,
     ):
         """No snapshot archives should appear in submission_path after run()."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock
+        from unittest.mock import patch
 
         # Setup submission directory
         submission_path = tmp_path / "submission"
@@ -1910,7 +1929,8 @@ class TestSnapshotLocationRegression:
         tmp_path,
     ):
         """run() operations use workspace.working_dir, not submission_path."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock
+        from unittest.mock import patch
 
         submission_path = tmp_path / "submission"
         submission_path.mkdir()

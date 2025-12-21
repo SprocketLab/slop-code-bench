@@ -26,11 +26,11 @@ from slop_code.common.constants import QUALITY_DIR
 from slop_code.common.constants import QUALITY_METRIC_SAVENAME
 from slop_code.common.constants import RUBRIC_FILENAME
 from slop_code.common.constants import RUN_INFO_FILENAME
-from slop_code.common.constants import WORKSPACE_TEST_DIR
 from slop_code.common.constants import SNAPSHOT_DIR_NAME
 from slop_code.common.constants import SUMMARY_FILENAME
 from slop_code.common.constants import SYMBOLS_QUALITY_SAVENAME
 from slop_code.common.constants import VERIFIER_REPORT_FILENAME
+from slop_code.common.constants import WORKSPACE_TEST_DIR
 from slop_code.common.constants import get_save_spec_dump
 
 # Model catalog

@@ -9,8 +9,8 @@ from rich.console import Console
 from slop_code.common import PROBLEM_CONFIG_NAME
 from slop_code.common import SNAPSHOT_DIR_NAME
 from slop_code.entrypoints.commands import common
-from slop_code.entrypoints.config import loader as config_loader
 from slop_code.entrypoints.commands.eval_checkpoint import render_pytest_results
+from slop_code.entrypoints.config import loader as config_loader
 from slop_code.entrypoints.evaluation.driver import evaluate_checkpoint
 from slop_code.entrypoints.evaluation.utils import gather_checkpoint_directories
 from slop_code.entrypoints.evaluation.utils import maybe_update_problem_report

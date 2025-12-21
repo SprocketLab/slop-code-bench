@@ -20,11 +20,11 @@ from collections.abc import Callable
 from collections.abc import Sequence
 from pathlib import Path
 
+from slop_code.common import WORKSPACE_TEST_DIR
 from slop_code.execution.assets import ResolvedStaticAsset
 from slop_code.execution.models import ExecutionError
 from slop_code.execution.snapshot import Snapshot
 from slop_code.logging import get_logger
-from slop_code.common import WORKSPACE_TEST_DIR
 
 logger = get_logger(__name__)
 

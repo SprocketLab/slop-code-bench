@@ -86,25 +86,26 @@ def _normalize_select(
         )
 
     seen = set()
-    normalized_columns: list[str] = []
+    validated_columns: list[str] = []
     for col_index, column in enumerate(columns):
-        normalized_column = _require_string(
+        validated_column = _require_string(
             column,
             "select.columns entries must be strings",
             path_builder(index, "columns", col_index),
             empty_message="select.columns entries must be non-empty strings",
+            strip=False,  # Column names preserved exactly per spec example 4
         )
 
-        if normalized_column in seen:
+        if validated_column in seen:
             raise ETLError(
                 "SCHEMA_VALIDATION_FAILED",
                 "select.columns entries must be unique",
                 path,
             )
-        seen.add(normalized_column)
-        normalized_columns.append(normalized_column)
+        seen.add(validated_column)
+        validated_columns.append(validated_column)
 
-    return {"op": op, "columns": normalized_columns}
+    return {"op": op, "columns": validated_columns}
 
 
 def _normalize_filter(
@@ -193,7 +194,7 @@ def _normalize_rename(
                 mapping_path,
             )
 
-        normalized_mapping: dict[str, str] = {}
+        validated_mapping: dict[str, str] = {}
         for raw_key, raw_value in mapping_value.items():
             entry_path = (
                 f"{mapping_path}.{raw_key}"
@@ -201,25 +202,28 @@ def _normalize_rename(
                 else mapping_path
             )
 
+            # Column names preserved exactly (no trimming per spec example 4)
             key = _require_string(
                 raw_key,
                 "rename.mapping keys must be non-empty strings",
                 entry_path,
+                strip=False,
             )
             value = _require_string(
                 raw_value,
                 "rename.mapping values must be non-empty strings",
                 entry_path,
+                strip=False,
             )
 
-            if key in normalized_mapping:
+            if key in validated_mapping:
                 raise ETLError(
                     "SCHEMA_VALIDATION_FAILED",
                     "rename.mapping keys must be unique",
                     mapping_path,
                 )
-            normalized_mapping[key] = value
-        mapping = normalized_mapping
+            validated_mapping[key] = value
+        mapping = validated_mapping
     else:
         raise ETLError(
             "SCHEMA_VALIDATION_FAILED",
@@ -406,12 +410,13 @@ def _require_string(
     path: str,
     *,
     empty_message: str | None = None,
+    strip: bool = True,
 ) -> str:
     if not isinstance(value, str):
         raise ETLError("SCHEMA_VALIDATION_FAILED", message, path)
-    text = value.strip()
-    if not text:
+    if not value.strip():
         raise ETLError(
             "SCHEMA_VALIDATION_FAILED", empty_message or message, path
         )
-    return text
+    # Column names preserved exactly (no trimming per spec example 4)
+    return value.strip() if strip else value

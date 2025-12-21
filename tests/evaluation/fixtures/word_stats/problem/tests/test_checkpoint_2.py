@@ -1,7 +1,7 @@
 """Tests for checkpoint 2: extended word stats with lines and stopwords."""
 
 import subprocess
-import json
+
 import pytest
 
 

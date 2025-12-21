@@ -8,11 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from slop_code.evaluation.report import (
-    CorrectnessResults,
-    GroupType,
-    TestResult as EvalTestResult,
-)
+from slop_code.evaluation.report import CorrectnessResults
+from slop_code.evaluation.report import GroupType
+from slop_code.evaluation.report import TestResult as EvalTestResult
 
 
 class TestGroupType:

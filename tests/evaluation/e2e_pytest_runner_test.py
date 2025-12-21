@@ -16,7 +16,6 @@ from slop_code.evaluation.config import ProblemConfig
 from slop_code.evaluation.pytest_runner import run_checkpoint_pytest
 from slop_code.evaluation.report import GroupType
 
-
 # Path to fixtures
 FIXTURES_DIR = Path(__file__).parent / "fixtures" / "word_stats"
 PROBLEM_DIR = FIXTURES_DIR / "problem"

@@ -1,9 +1,9 @@
 """Tests for evaluation configuration models."""
 
-import pytest
 
+from slop_code.evaluation.config import CheckpointConfig
+from slop_code.evaluation.config import GroupConfig
 from slop_code.evaluation.report import GroupType
-from slop_code.evaluation.config import CheckpointConfig, GroupConfig
 
 
 def test_group_config_isolated_field_default():
@@ -169,7 +169,6 @@ class TestCheckpointConfig:
 # ============================================================================
 
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 from slop_code.evaluation.config import ProblemConfig
 
