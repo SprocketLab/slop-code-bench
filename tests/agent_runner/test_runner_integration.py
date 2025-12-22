@@ -13,8 +13,8 @@ from slop_code.agent_runner.models import AgentRunSpec
 from slop_code.agent_runner.state import AgentStateEnum
 from slop_code.common import AGENT_DIR_NAME
 from slop_code.common import PROMPT_FILENAME
+from slop_code.evaluation import GroupType
 from slop_code.evaluation import PassPolicy
-from slop_code.evaluation.adapters.models import GroupType
 
 
 class FakeDiff:
@@ -169,6 +169,13 @@ class StubProblem:
         self.version = 1
         self.entry_file = "main.py"
         self.checkpoints = checkpoints
+        self._specs = {
+            checkpoint: f"Spec for {checkpoint}"
+            for checkpoint in checkpoints
+        }
+
+    def get_checkpoint_spec(self, checkpoint: str) -> str:
+        return self._specs[checkpoint]
 
 
 def _make_run_spec(

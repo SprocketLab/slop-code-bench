@@ -1,3 +1,0 @@
-{"event":"file_updated","file":".hidden.json","rules_applied":["update_env","update_version"]}
-{"event":"file_updated","file":"app.json","rules_applied":["update_env","update_version"]}
-{"event":"file_updated","file":"settings.yaml","rules_applied":["update_env","update_version"]}

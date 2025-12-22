@@ -1,342 +1,222 @@
----
-version: 1.1
-last_updated: 2025-11-18
----
-
 # Problem Authoring Troubleshooting Guide
 
-This guide provides solutions to common issues encountered when creating and debugging evaluation problems.
+This guide provides solutions to common issues encountered when creating and debugging evaluation problems with pytest.
 
 ## Table of Contents
 
-- [Loader Issues](#loader-issues)
-- [Verifier Issues](#verifier-issues)
+- [Test Discovery Issues](#test-discovery-issues)
+- [Fixture Issues](#fixture-issues)
 - [Configuration Issues](#configuration-issues)
-- [Test Case Issues](#test-case-issues)
-- [Execution Issues](#execution-issues)
-- [API-Specific Issues](#api-specific-issues)
+- [Test Execution Issues](#test-execution-issues)
+- [Assertion Issues](#assertion-issues)
 - [Static Assets Issues](#static-assets-issues)
+- [Marker Issues](#marker-issues)
 - [Debugging Tools](#debugging-tools)
 
-## Loader Issues
+## Test Discovery Issues
 
-### Problem: "No test cases found"
+### Problem: "No tests collected"
 
 **Symptoms:**
-- Loader yields no cases
-- Empty test results
-- Message: "No cases for group X"
+```
+collected 0 items
+no tests ran in 0.12s
+```
 
 **Causes and fixes:**
 
-#### Cause 1: Wrong directory structure
+#### Cause 1: Test file naming
 
-**For CLI problems:**
 ```bash
 # Wrong:
-checkpoint_1/core/test_case.yaml     # File, not directory
+tests/checkpoint_1.py          # Missing 'test_' prefix
 
 # Right:
-checkpoint_1/core/test_case/         # Directory
-  ├── case.yaml
-  └── expected.txt
+tests/test_checkpoint_1.py     # Must start with 'test_'
 ```
 
-**For API problems:**
+#### Cause 2: Test function naming
+
+```python
+# Wrong:
+def core_passthrough(entrypoint_argv):  # Missing 'test_' prefix
+    ...
+
+# Right:
+def test_core_passthrough(entrypoint_argv):
+    ...
+```
+
+#### Cause 3: Wrong tests directory
+
+```
+# Wrong:
+problem/test/conftest.py       # 'test' not 'tests'
+
+# Right:
+problem/tests/conftest.py      # 'tests' directory
+```
+
+#### Cause 4: Missing conftest.py
+
+```
+tests/
+├── test_checkpoint_1.py       # Exists
+└── (no conftest.py!)          # Tests may not discover
+
+# Right:
+tests/
+├── conftest.py                # Required
+└── test_checkpoint_1.py
+```
+
+### Problem: "test not found" with parametrize
+
+**Symptoms:**
+```
+ERRORS
+E   fixture 'case' not found
+```
+
+**Causes and fixes:**
+
+#### Cause: Empty cases list
+
+```python
+CORE_CASES = load_cases(CASES_DIR / "core")  # Returns []
+
+@pytest.mark.parametrize("case", CORE_CASES, ids=[c["id"] for c in CORE_CASES])
+def test_core(case):  # No tests generated!
+    ...
+```
+
+**Fix**: Handle empty lists:
+```python
+CORE_CASES = load_cases(CASES_DIR / "core")
+
+if CORE_CASES:
+    @pytest.mark.parametrize("case", CORE_CASES, ids=[c["id"] for c in CORE_CASES])
+    def test_core(case):
+        ...
+```
+
+Or use `pytest.skip`:
+```python
+@pytest.mark.parametrize("case", CORE_CASES or [{"id": "skip"}], ids=...)
+def test_core(case):
+    if case.get("id") == "skip":
+        pytest.skip("No test cases found")
+    ...
+```
+
+## Fixture Issues
+
+### Problem: "fixture 'entrypoint_argv' not found"
+
+**Symptoms:**
+```
+E       fixture 'entrypoint_argv' not found
+>       available fixtures: ...
+```
+
+**Causes and fixes:**
+
+#### Cause 1: Missing conftest.py
+
+```python
+# tests/conftest.py - MUST EXIST
+import shlex
+import pytest
+
+def pytest_addoption(parser):
+    parser.addoption("--entrypoint", required=True)
+    parser.addoption("--checkpoint", required=True)
+
+@pytest.fixture(scope="session")
+def entrypoint_argv(request):
+    return shlex.split(request.config.getoption("--entrypoint"))
+
+@pytest.fixture(scope="session")
+def checkpoint_name(request):
+    return request.config.getoption("--checkpoint")
+```
+
+#### Cause 2: Typo in fixture name
+
+```python
+# Wrong:
+def test_basic(entrypoint_arg):  # Missing 'v'
+    ...
+
+# Right:
+def test_basic(entrypoint_argv):
+    ...
+```
+
+#### Cause 3: Missing CLI arguments
+
 ```bash
 # Wrong:
-checkpoint_1/core/test_case/         # Directory, not file
-  └── case.yaml
+pytest tests/
 
 # Right:
-checkpoint_1/core/test_case.yaml     # File
+pytest tests/ --entrypoint="python main.py" --checkpoint=checkpoint_1
 ```
 
-#### Cause 2: Missing `case_order` for API
-
-```yaml
-# Wrong:
-groups:
-  core:
-    type: Core
-    # Missing case_order!
-
-# Right:
-groups:
-  core:
-    type: Core
-    case_order:
-      - create_item
-      - get_item
-```
-
-#### Cause 3: Case names don't match files
-
-```yaml
-# config.yaml
-case_order:
-  - create_user              # Looking for create_user.yaml
-
-# But file is named:
-# checkpoint_1/core/create-user.yaml   ← Hyphen, not underscore!
-```
-
-**Fix**: Ensure filenames match `case_order` exactly.
-
-### Problem: "FileNotFoundError" when loading cases
+### Problem: "scope mismatch"
 
 **Symptoms:**
 ```
-FileNotFoundError: checkpoint_1/core/test_case.yaml
+ScopeMismatch: You tried to access a function scoped fixture from a session scoped one
 ```
 
 **Causes and fixes:**
 
-#### Cause 1: Case in `case_order` but file missing
-
-```yaml
-case_order:
-  - setup
-  - test_feature     # ← No test_feature.yaml file!
-  - cleanup
-```
-
-**Fix**: Create the missing file or remove from `case_order`.
-
-#### Cause 2: Wrong group directory
-
 ```python
-# Loader tries to find:
-checkpoint_1/functionality/test.yaml
+# Wrong: session fixture using function-scoped tmp_path
+@pytest.fixture(scope="session")
+def shared_data(tmp_path):  # tmp_path is function-scoped!
+    return tmp_path / "data"
 
-# But file is at:
-checkpoint_1/core/test.yaml
+# Right: Match scopes
+@pytest.fixture(scope="function")
+def test_data(tmp_path):  # Both function-scoped
+    return tmp_path / "data"
+
+# Or use tmp_path_factory for session scope
+@pytest.fixture(scope="session")
+def shared_data(tmp_path_factory):
+    return tmp_path_factory.mktemp("data")
 ```
 
-**Fix**: Move file to correct group or update config.
-
-#### Cause 3: Typo in filename
-
-```yaml
-case_order:
-  - create_user
-
-# But file is:
-checkpoint_1/core/creat_user.yaml    # Missing 'e'
-```
-
-**Fix**: Rename file or fix `case_order`.
-
-### Problem: "Invalid YAML" when parsing cases
+### Problem: "Error in setup of test"
 
 **Symptoms:**
 ```
-yaml.scanner.ScannerError: mapping values are not allowed here
+ERROR at setup of test_basic
+E   FileNotFoundError: [Errno 2] No such file or directory
 ```
 
 **Causes and fixes:**
 
-#### Cause 1: Indentation error
-
-```yaml
-# Wrong:
-case:
-  body:
-  scope:           # ← Should be indented
-    env: prod
-
-# Right:
-case:
-  body:
-    scope:
-      env: prod
-```
-
-#### Cause 2: Missing quotes
-
-```yaml
-# Wrong:
-path: /v1/users/{id}    # { } have special meaning
-
-# Right:
-path: "/v1/users/{id}"
-```
-
-#### Cause 3: Multiline string format
-
-```yaml
-# Wrong:
-content: |
-  line 1
-    line 2          # ← Inconsistent indentation
-
-# Right:
-content: |
-  line 1
-  line 2
-```
-
-**Debug**: Validate YAML with:
-```bash
-python -c "import yaml; yaml.safe_load(open('case.yaml'))"
-```
-
-## Verifier Issues
-
-### Problem: "All tests failing with score 0.0"
-
-**Symptoms:**
-- Every test fails
-- Score always 0.0
-- Diff shows everything is different
-
-**Causes and fixes:**
-
-#### Cause 1: Wrong output field
+#### Cause: Fixture fails during setup
 
 ```python
-# Verifier checks:
-actual.output         # This is the whole output string
-
-# But actual data is in:
-actual.files["output.json"]    # Tracked file
+@pytest.fixture
+def assets_dir():
+    path = Path(__file__).parent / "assets"
+    assert path.exists()  # Fails if directory missing!
+    return path
 ```
 
-**Fix**: Parse tracked files:
+**Fix**: Create missing directories or handle gracefully:
 ```python
-output_file = actual.files.get("output.json")
-if output_file:
-    actual_data = json.loads(output_file.content)
-```
-
-#### Cause 2: Not parsing output format
-
-```python
-# Wrong: Comparing string to dict
-actual.output              # "{'key': 'value'}"
-expected.output            # {'key': 'value'}
-
-# Right: Parse first
-actual_data = parsers.parse_json(actual.output)
-```
-
-#### Cause 3: Wrong expected output location
-
-```python
-# Loader puts expected in wrong field
-expected = CLIResult(
-    output="data"           # ← String
-)
-
-# But verifier expects:
-expected.output = {"parsed": "data"}   # ← Dict
-```
-
-**Fix**: Ensure loader parses expected output correctly.
-
-### Problem: "Tests pass but shouldn't"
-
-**Symptoms:**
-- Obviously wrong output scores 1.0
-- No diff shown
-- False positives
-
-**Causes and fixes:**
-
-#### Cause 1: Verifier returns wrong type
-
-```python
-# Wrong:
-def __call__(self, ...):
-    return 1.0          # ← Wrong type!
-
-# Right:
-def __call__(self, ...):
-    return {
-        "status_code": VerificationResult(...),
-        "output": VerificationResult(...)
-    }
-```
-
-#### Cause 2: Not actually comparing
-
-```python
-# Wrong:
-def verify_output(self, actual, expected):
-    return VerificationResult(score=1.0, ...)  # Always returns 1.0!
-
-# Right:
-def verify_output(self, actual, expected):
-    return verifiers.deepdiff_verify(actual, expected, weight=0.8)
-```
-
-#### Cause 3: Comparing wrong values
-
-```python
-# Wrong: Compares expected to itself
-verifiers.deepdiff_verify(expected, expected, ...)  # Always equal!
-
-# Right:
-verifiers.deepdiff_verify(actual, expected, ...)
-```
-
-### Problem: "Tests fail due to timestamps/IDs"
-
-**Symptoms:**
-- Diff shows only timestamp differences
-- UUIDs don't match
-- Auto-increment IDs differ
-
-**Causes and fixes:**
-
-#### Cause 1: Exact timestamp matching
-
-```yaml
-# Expected:
-created_at: "2025-11-06T15:30:00Z"
-
-# Actual:
-created_at: "2025-11-06T15:30:02Z"    # 2 seconds later
-
-# Fails because not exact match
-```
-
-**Fix 1**: Normalize timestamps in verifier:
-```python
-def _align_datetimes(self, expected, actual):
-    expected_dt = parse_datetime(expected)
-    actual_dt = parse_datetime(actual)
-    if abs(expected_dt - actual_dt) <= timedelta(seconds=5):
-        return actual, actual  # Treat as equal
-    return expected, actual
-```
-
-**Fix 2**: Use JSON Schema:
-```yaml
-expected:
-  output:
-    type: object
-    properties:
-      created_at: {type: string, format: date-time}
-```
-
-#### Cause 2: Generated IDs
-
-```yaml
-# Expected:
-id: "123e4567-e89b-12d3-a456-426614174000"
-
-# Actual:
-id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"  # Different UUID
-
-# Fails
-```
-
-**Fix**: Use dynamic placeholder or JSON Schema:
-```yaml
-expected:
-  output:
-    id: "{{dynamic}}"     # Any value accepted
+@pytest.fixture
+def assets_dir():
+    path = Path(__file__).parent / "assets"
+    if not path.exists():
+        pytest.skip("Assets directory not found")
+    return path
 ```
 
 ## Configuration Issues
@@ -374,146 +254,60 @@ Error: Checkpoint 'checkpoint_1' not found for problem 'my_problem'
 
 **Causes and fixes:**
 
-#### Cause 1: Missing directory
+#### Cause 1: Missing in config.yaml
 
 ```yaml
-# config.yaml lists:
+# config.yaml
 checkpoints:
-  - checkpoint_1
-  - checkpoint_2       # ← No checkpoint_2/ directory!
+  checkpoint_2:    # No checkpoint_1!
+    version: 1
+    order: 1
 ```
 
-**Fix**: Create missing checkpoint directory.
-
-#### Cause 2: Typo in checkpoint list
-
+**Fix**: Add all checkpoints:
 ```yaml
 checkpoints:
-  - checkpoint_1
-  - checkpont_2        # ← Missing 'i'
+  checkpoint_1:
+    version: 1
+    order: 1
+  checkpoint_2:
+    version: 1
+    order: 2
 ```
 
-**Fix**: Match directory name exactly.
+#### Cause 2: Missing test file
 
-### Problem: "Invalid adapter configuration"
+```
+tests/
+├── conftest.py
+└── test_checkpoint_2.py   # No test_checkpoint_1.py!
+```
+
+**Fix**: Create test file for each checkpoint.
+
+### Problem: "Invalid marker"
 
 **Symptoms:**
 ```
-ValidationError: adapter.type is required
+PytestUnknownMarkWarning: Unknown pytest.mark.custom_marker
 ```
 
 **Causes and fixes:**
 
-#### Cause 1: Missing required fields
-
 ```yaml
-# Wrong:
-adapter:
-  tracked_files: []     # Missing 'type'
-
-# Right:
-adapter:
-  type: cli
-  tracked_files: []
+# config.yaml - Register custom markers
+markers:
+  custom_marker:
+    group_type: FUNCTIONALITY
 ```
 
-#### Cause 2: Wrong adapter type
-
-```yaml
-adapter:
-  type: rest            # ← Should be 'api'
-```
-
-**Fix**: Use valid types: `cli`, `api`, or `playwright`
-
-## Test Case Issues
-
-### Problem: "Expected output doesn't match actual"
-
-**Symptoms:**
-- Diff shows differences
-- But actual output looks correct
-
-**Causes and fixes:**
-
-#### Cause 1: Whitespace differences
-
-```
-Expected: "Hello World"
-Actual:   "Hello World\n"    # Extra newline
-```
-
-**Fix**: Strip whitespace in verifier or expected:
+Or in conftest.py:
 ```python
-actual_clean = actual.output.strip()
+def pytest_configure(config):
+    config.addinivalue_line("markers", "custom_marker: description")
 ```
 
-#### Cause 2: Line ending differences
-
-```
-Expected: "line1\nline2"      # LF
-Actual:   "line1\r\nline2"    # CRLF
-```
-
-**Fix**: Normalize line endings:
-```python
-actual_normalized = actual.output.replace('\r\n', '\n')
-```
-
-#### Cause 3: Floating point precision
-
-```
-Expected: {"value": 1.23}
-Actual:   {"value": 1.2300000000000002}
-```
-
-**Fix**: Round or use approximate matching:
-```python
-import math
-if math.isclose(actual["value"], expected["value"], rel_tol=1e-9):
-    ...
-```
-
-### Problem: "Input files not found in workspace"
-
-**Symptoms:**
-```
-FileNotFoundError: schedule.yaml (from CLI execution)
-```
-
-**Causes and fixes:**
-
-#### Cause 1: Path in `case.yaml` doesn't match CLI argument
-
-```yaml
-# case.yaml
-arguments: --schedule config.yaml    # Looking for config.yaml
-input_files:
-  - path: schedule.yaml              # But creates schedule.yaml!
-```
-
-**Fix**: Match names:
-```yaml
-arguments: --schedule schedule.yaml
-input_files:
-  - path: schedule.yaml
-```
-
-#### Cause 2: Relative path in wrong location
-
-```yaml
-arguments: --schedule configs/schedule.yaml
-input_files:
-  - path: schedule.yaml    # Creates at root, not in configs/
-```
-
-**Fix**: Create nested structure:
-```yaml
-input_files:
-  - path: configs/schedule.yaml
-```
-
-## Execution Issues
+## Test Execution Issues
 
 ### Problem: "Timeout on every test"
 
@@ -528,31 +322,38 @@ input_files:
 ```python
 # Agent's code:
 while True:
-    # Never exits!
-    process_data()
+    process_data()  # Never exits!
 ```
 
-**Fix**: Lower timeout to fail fast, fix agent code.
+**Fix**: Add timeout to subprocess calls:
+```python
+result = subprocess.run(
+    entrypoint_argv,
+    timeout=30,  # 30 second timeout
+    capture_output=True
+)
+```
 
 #### Cause 2: Waiting for input
 
 ```python
 # Agent's code:
-name = input("Enter name: ")    # Hangs waiting for stdin
+name = input("Enter name: ")  # Hangs waiting for stdin
 ```
 
-**Fix**: Don't use `input()` in evaluated code.
+**Fix**: Provide stdin or use --no-input flag in spec.
 
-#### Cause 3: Timeout too short
+#### Cause 3: subprocess hangs
 
-```yaml
-# config.yaml
-timeout: 1    # Only 1 second!
-```
+```python
+# Wrong: No timeout
+result = subprocess.run(cmd, capture_output=True)
 
-**Fix**: Increase timeout to reasonable value:
-```yaml
-timeout: 30    # 30 seconds
+# Right: With timeout
+try:
+    result = subprocess.run(cmd, capture_output=True, timeout=30)
+except subprocess.TimeoutExpired:
+    pytest.fail("Command timed out")
 ```
 
 ### Problem: "ImportError" during execution
@@ -566,154 +367,149 @@ ImportError: No module named 'yaml'
 
 #### Cause: Missing dependencies
 
-```python
-# Agent's code:
-import yaml    # Not installed in environment
-```
-
-**Fix**: Specify dependencies:
-
-**Option 1**: Document in spec:
+**Fix 1**: Document in spec:
 ```markdown
 ## Requirements
 
-Your solution should include a `requirements.txt`:
+Create a `requirements.txt` or `pyproject.toml`:
 ```
-pyyaml==6.0
+pyyaml>=6.0
 ```
 
-**Option 2**: Pre-install in environment config:
+**Fix 2**: Add to test_dependencies in config.yaml:
 ```yaml
-# environment config
-setup:
-  eval_commands:  # Hidden from agents, evaluation only
-    - pip install pyyaml
+test_dependencies:
+  - pyyaml>=6.0
 ```
 
-**Note:** Use `eval_commands` for dependencies that should be transparently installed during evaluation. See the environment configuration section in your environment YAML files for details.
-
-## API-Specific Issues
-
-### Problem: "Health check fails"
+### Problem: "FileNotFoundError" in tests
 
 **Symptoms:**
 ```
-Error: Server health check failed after 10 seconds
+FileNotFoundError: [Errno 2] No such file or directory: 'input.yaml'
 ```
 
 **Causes and fixes:**
 
-#### Cause 1: Server crashes on startup
+#### Cause: Working directory issues
 
 ```python
-# Server code:
-app = Flask(__name__)
-# Crashes here due to missing config
+# Wrong: Assumes current directory
+(Path("input.yaml")).write_text(content)
+subprocess.run(cmd)  # May run in different directory
+
+# Right: Use tmp_path
+def test_example(entrypoint_argv, tmp_path):
+    (tmp_path / "input.yaml").write_text(content)
+    subprocess.run(cmd, cwd=tmp_path)  # Explicit cwd
 ```
 
-**Check logs**: Look at server stderr for crash details.
+## Assertion Issues
 
-#### Cause 2: Wrong health endpoint
-
-```yaml
-# config.yaml
-adapter:
-  health_path: /health    # Configured as /health
-
-# But server has:
-@app.get("/healthz")      # ← Different path!
-```
-
-**Fix**: Match paths:
-```yaml
-health_path: /healthz
-```
-
-#### Cause 3: Health endpoint not returning correct format
-
-```python
-# Wrong:
-@app.get("/healthz")
-def health():
-    return "OK"           # ← Should be JSON
-
-# Right:
-@app.get("/healthz")
-def health():
-    return {"ok": True}
-```
-
-### Problem: "Cases run in wrong order"
+### Problem: "AssertionError" with matching output
 
 **Symptoms:**
-- Later cases fail with 404
-- State seems wrong
-- Tests fail randomly
+```
+AssertionError: assert '{"key": "value"}' == {'key': 'value'}
+```
 
 **Causes and fixes:**
 
-#### Cause: Missing or wrong `case_order`
+#### Cause: Comparing string to dict
 
-```yaml
-# Wrong: No case_order (undefined order)
-groups:
-  core:
-    type: Core
+```python
+# Wrong: String vs dict
+actual = result.stdout  # '{"key": "value"}'
+expected = {"key": "value"}
+assert actual == expected  # Fails!
 
-# Right:
-groups:
-  core:
-    type: Core
-    case_order:
-      - create_item
-      - get_item
-      - update_item
+# Right: Parse JSON first
+import json
+actual = json.loads(result.stdout)
+assert actual == expected
 ```
 
-### Problem: "API returns 500 on every request"
+### Problem: "Whitespace differences"
 
 **Symptoms:**
-- All requests return 500
-- Server logs show errors
+```
+AssertionError:
+  Expected: 'Hello World'
+  Actual:   'Hello World\n'
+```
 
 **Causes and fixes:**
 
-#### Cause 1: Exception in handler
-
 ```python
-@app.post("/users")
-def create_user():
-    data = request.json
-    user = User(**data)    # Crashes if fields missing
-    return user.to_dict()
+# Fix: Strip whitespace
+actual = result.stdout.strip()
+expected = "Hello World"
+assert actual == expected
+
+# Or: Be explicit about expectations
+expected = "Hello World\n"
+assert result.stdout == expected
 ```
 
-**Fix**: Add error handling:
-```python
-@app.post("/users")
-def create_user():
-    try:
-        data = request.json
-        user = User(**data)
-        return user.to_dict(), 201
-    except Exception as e:
-        return {"error": {"code": "internal", "message": str(e)}}, 500
+### Problem: "Floating point differences"
+
+**Symptoms:**
+```
+AssertionError: assert 1.2300000000000002 == 1.23
 ```
 
-#### Cause 2: Database not initialized
+**Causes and fixes:**
 
 ```python
-# Server starts without DB
-@app.post("/users")
-def create_user():
-    db.insert(...)    # db is None!
+# Fix: Use pytest.approx
+import pytest
+assert result == pytest.approx(1.23, rel=1e-9)
+
+# Or: Use math.isclose
+import math
+assert math.isclose(result, 1.23, rel_tol=1e-9)
 ```
 
-**Fix**: Initialize in startup:
+### Problem: "Dict comparison fails on order"
+
+**Symptoms:**
+```
+AssertionError: assert {'b': 2, 'a': 1} == {'a': 1, 'b': 2}
+```
+
+This shouldn't happen in Python 3.7+ (dicts are ordered), but if comparing JSON output:
+
 ```python
-def main():
-    init_database()
-    app.run()
+# Fix: Parse and compare as dicts
+actual = json.loads(result.stdout)
+expected = {"a": 1, "b": 2}
+assert actual == expected  # Dict comparison ignores JSON key order
+```
+
+### Problem: "Timestamp/ID differences"
+
+**Symptoms:**
+```
+AssertionError:
+  Expected: {"id": "abc123", "created_at": "2025-01-01T00:00:00Z"}
+  Actual:   {"id": "xyz789", "created_at": "2025-01-01T00:00:05Z"}
+```
+
+**Causes and fixes:**
+
+```python
+# Fix: Strip dynamic fields before comparison
+def strip_dynamic(data):
+    data = data.copy()
+    data.pop("id", None)
+    data.pop("created_at", None)
+    return data
+
+assert strip_dynamic(actual) == strip_dynamic(expected)
+
+# Or: Validate field presence/types instead
+assert "id" in actual
+assert isinstance(actual["id"], str)
 ```
 
 ## Static Assets Issues
@@ -722,199 +518,206 @@ def main():
 
 **Symptoms:**
 ```
-FileNotFoundError: /workspace/files/data.csv
+FileNotFoundError: static_assets/files not found
 ```
 
 **Causes and fixes:**
 
-#### Cause 1: Wrong placeholder syntax
+#### Cause 1: Environment variable not set
 
-```yaml
-# Wrong:
-arguments: --files {static:files}      # Missing braces
-
-# Right:
-arguments: --files {{static:files}}
+```python
+# In conftest.py
+@pytest.fixture(scope="session")
+def files_dir():
+    env_path = os.environ.get("SCBENCH_ASSET_FILES")
+    if env_path:
+        return Path(env_path)
+    # Fallback for local testing
+    return Path(__file__).parent.parent / "static_assets" / "files"
 ```
+
+**Fix**: Set environment variable or use fallback path.
 
 #### Cause 2: Asset path doesn't exist
 
 ```yaml
 # config.yaml
 static_assets:
-  data:
+  files:
     path: datasets           # But no problems/my_problem/datasets/!
-
-# Fix: Create directory or fix path
-static_assets:
-  data:
-    path: data               # problems/my_problem/data/ exists
 ```
 
-#### Cause 3: Asset not defined
-
-```yaml
-# case.yaml references:
-arguments: --db {{static:database}}
-
-# But config.yaml doesn't define it:
-static_assets:
-  files:                     # No 'database' asset!
-    path: files
-```
-
-**Fix**: Add to config:
+**Fix**: Create directory or fix path:
 ```yaml
 static_assets:
   files:
-    path: files
-  database:
-    path: db
+    path: static_assets/files
 ```
 
-### Problem: "Static asset path is absolute in tests"
+#### Cause 3: Wrong placeholder syntax
+
+```yaml
+# Wrong:
+arguments: --files {static:files}      # Single braces
+
+# Right:
+arguments: --files {{static:files}}    # Double braces
+```
+
+## Marker Issues
+
+### Problem: "Tests not categorized correctly"
 
 **Symptoms:**
-```
-Expected: files/data.csv
-Actual:   /tmp/workspace/files/data.csv
-```
+- Error tests counted as Core
+- Functionality tests missing from report
 
 **Causes and fixes:**
 
-#### Cause: Not stripping mount prefix
+#### Cause: Missing markers
 
 ```python
-# Agent outputs absolute path:
-print(f"/tmp/workspace/files/data.csv")
+# Wrong: No marker = Core
+def test_invalid_input(entrypoint_argv):
+    ...  # This will be counted as CORE!
 
-# But expected uses relative:
-"files/data.csv"
+# Right: Mark as error
+@pytest.mark.error
+def test_invalid_input(entrypoint_argv):
+    ...
 ```
 
-**Fix Option 1**: Use relative paths in expected output
+### Problem: "Multiple markers conflict"
 
-**Fix Option 2**: Strip prefix in verifier:
+**Symptoms:**
+- Test appears in wrong category
+- Unexpected GroupType assignment
+
+**Causes and fixes:**
+
+Priority order (highest to lowest):
+1. `regression`
+2. `error`
+3. `functionality`
+4. (unmarked = Core)
+
 ```python
-def normalize_path(path):
-    return path.replace("/tmp/workspace/", "")
+# This will be REGRESSION (higher priority)
+@pytest.mark.error
+@pytest.mark.regression
+def test_legacy_error():
+    ...
+
+# To make it ERROR, remove regression marker
+@pytest.mark.error
+def test_legacy_error():
+    ...
 ```
 
 ## Debugging Tools
 
-### Tool 1: Test Loader Directly
-
-```python
-# test_loader.py
-from pathlib import Path
-# Ensure repository root is in PYTHONPATH
-import sys
-sys.path.append(".")
-
-from problems.my_problem.loader import Loader
-from slop_code.evaluation import ProblemConfig
-
-# Load configs
-problem_config = ProblemConfig.from_yaml(Path("problems/my_problem"))
-checkpoint_config = problem_config.load_checkpoint("checkpoint_1")
-
-# Create loader
-loader = Loader(problem_config, checkpoint_config)
-store = loader.initialize_store()
-
-# Load cases
-for group in checkpoint_config.groups.values():
-    print(f"\nGroup: {group.name}")
-    for case, expected in loader(group, store):
-        print(f"  - Case: {case.id}")
-        print(f"    Args: {case.arguments}")
-        print(f"    Expected status: {expected.status_code}")
-```
-
-### Tool 2: Test Verifier Directly
-
-```python
-# test_verifier.py
-from problems.my_problem.verifier import Verifier
-from slop_code.evaluation.adapters import CLIResult
-
-# Create verifier
-verifier = Verifier(checkpoint_config)
-
-# Create mock actual/expected
-actual = CLIResult(
-    id="test",
-    group="core",
-    status_code=0,
-    output='{"result": "value"}'
-)
-expected = CLIResult(
-    id="test",
-    group="core",
-    status_code=0,
-    output={"result": "value"}
-)
-
-# Verify
-results = verifier("core", "test", actual, expected)
-print("Results:", results)
-for key, result in results.items():
-    print(f"  {key}: score={result.score}, message={result.message}")
-```
-
-### Tool 3: Validate YAML Files
+### Tool 1: Run pytest directly
 
 ```bash
-# Check all test case YAML files
-find problems/my_problem -name "*.yaml" -exec \
-  python -c "import yaml; yaml.safe_load(open('{}'))" \;
+cd problems/my_problem
+
+# Run with verbose output
+pytest tests/ \
+  --entrypoint="python solution.py" \
+  --checkpoint=checkpoint_1 \
+  -v
+
+# Run single test
+pytest tests/test_checkpoint_1.py::test_basic \
+  --entrypoint="python solution.py" \
+  --checkpoint=checkpoint_1 \
+  -v
+
+# Show print statements
+pytest tests/ ... -s
+
+# Stop on first failure
+pytest tests/ ... -x
+
+# Show full assertion diffs
+pytest tests/ ... --tb=long
 ```
 
-### Tool 4: Run Single Test Case
+### Tool 2: Debug test case manually
 
 ```bash
 # Create test workspace
-mkdir -p /tmp/test_case
-cd /tmp/test_case
+mkdir -p /tmp/test_debug
+cd /tmp/test_debug
 
-# Extract input files from case.yaml and create them
-# Then run CLI command manually
-python -m my_solution --schedule schedule.yaml --now 2025-01-10T10:00:00Z
+# Copy solution
+cp -r /path/to/solution/* .
+
+# Create input files manually
+echo "key: value" > input.yaml
+
+# Run command
+python solution.py --input input.yaml
 
 # Compare output
-cat output.jsonl
 ```
 
-### Tool 5: Use Dashboard
-
-```bash
-# Run evaluation
-uv run python -m slop_code.entrypoints.cli eval \
-  outputs/agent_run_dir
-
-# Launch dashboard
-uv run python -m slop_code.visualization.app outputs/
-```
-
-Navigate to failed test to see:
-- Input provided
-- Expected output
-- Actual output
-- Detailed diff
-
-### Tool 6: Enable Debug Logging
+### Tool 3: Print debugging
 
 ```python
-# In loader.py or verifier.py
-import structlog
-logger = structlog.get_logger(__name__)
+def test_example(entrypoint_argv, tmp_path):
+    # Setup
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text("key: value")
 
-class Loader:
-    def __call__(self, group, store):
-        logger.info("Loading cases", group=group.name)
-        for case_dir in discover_cases():
-            logger.debug("Found case", case=case_dir.name)
-            yield self.load_case(case_dir)
+    # Debug: Print command
+    cmd = entrypoint_argv + ["--input", str(input_file)]
+    print(f"Running: {' '.join(cmd)}")
+
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=tmp_path)
+
+    # Debug: Print output
+    print(f"Return code: {result.returncode}")
+    print(f"Stdout: {result.stdout}")
+    print(f"Stderr: {result.stderr}")
+
+    assert result.returncode == 0
+```
+
+Run with `-s` to see print output:
+```bash
+pytest tests/ ... -s
+```
+
+### Tool 4: Validate case files
+
+```bash
+# Check all YAML files are valid
+find problems/my_problem/tests -name "*.yaml" -exec \
+  python -c "import yaml; yaml.safe_load(open('{}'))" \; -print
+```
+
+### Tool 5: Check test collection
+
+```bash
+# See what tests will be collected
+pytest tests/ --collect-only \
+  --entrypoint="python main.py" \
+  --checkpoint=checkpoint_1
+
+# Output shows all test IDs and markers
+```
+
+### Tool 6: Run with PDB
+
+```bash
+# Drop into debugger on failure
+pytest tests/ ... --pdb
+
+# Or set breakpoint in code
+def test_example():
+    import pdb; pdb.set_trace()
+    ...
 ```
 
 ## Checklist for Debugging
@@ -923,39 +726,36 @@ When a problem isn't working:
 
 **Configuration:**
 - [ ] `name` in config.yaml matches directory name
-- [ ] All checkpoints in list have corresponding directories
-- [ ] Adapter type is correct (cli/api/playwright)
-- [ ] Required adapter fields are present
+- [ ] All checkpoints defined in config.yaml
+- [ ] Each checkpoint has a test file
+- [ ] static_assets paths exist
 
-**Loader:**
-- [ ] Case files exist in correct locations
-- [ ] CLI uses directories, API uses files
-- [ ] API has `case_order` defined
-- [ ] Loader yields (case, expected) tuples
-- [ ] All YAML files are valid
+**conftest.py:**
+- [ ] Defines `pytest_addoption` with --entrypoint and --checkpoint
+- [ ] Defines `entrypoint_argv` fixture
+- [ ] Defines `checkpoint_name` fixture
+- [ ] All fixtures have correct scope
 
-**Verifier:**
-- [ ] Returns dict of VerificationResult objects
-- [ ] Uses framework helpers (deepdiff_verify, etc.)
-- [ ] Parses output format correctly
-- [ ] Handles timestamps/IDs appropriately
+**Test files:**
+- [ ] Named `test_checkpoint_N.py`
+- [ ] Functions named `test_*`
+- [ ] Correct markers applied (error, functionality, regression)
+- [ ] Fixtures requested in function signature
 
-**Test Cases:**
-- [ ] Expected output format matches actual
-- [ ] File paths are correct
-- [ ] Static asset placeholders use {{static:name}}
-- [ ] API case_order is complete and correct
+**Test execution:**
+- [ ] subprocess.run has timeout
+- [ ] Using tmp_path for file isolation
+- [ ] Parsing output correctly (JSON, JSONL, text)
+- [ ] Stripping whitespace where needed
 
-**Execution:**
-- [ ] Timeouts are reasonable
-- [ ] Dependencies are installed
-- [ ] API health endpoint works
-- [ ] No infinite loops or blocking input
+**Assertions:**
+- [ ] Comparing same types (both dicts, both strings)
+- [ ] Handling dynamic fields (IDs, timestamps)
+- [ ] Using pytest.approx for floats
 
 ## Next Steps
 
-- **[Test Cases Guide](test-cases.md)** - Write better test cases
-- **[Config Schema](config-schema.md)** - Verify configuration
-- **[Simple CLI Example](examples/simple-cli.md)** - See working example
-- **[Stateful API Example](examples/stateful-api.md)** - See API example
-- **[Structure Guide](structure.md)** - Check directory layout
+- **[Pytest Markers](pytest/markers.md)** - Marker reference
+- **[Conftest Patterns](pytest/conftest-patterns.md)** - Fixture patterns
+- **[CLI Testing](patterns/cli-testing.md)** - subprocess patterns
+- **[Examples](examples/)** - Working examples to reference

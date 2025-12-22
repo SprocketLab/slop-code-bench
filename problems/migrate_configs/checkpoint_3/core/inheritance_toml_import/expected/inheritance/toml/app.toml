@@ -1,4 +1,0 @@
-timeout = 30
-
-[server]
-port = 9000

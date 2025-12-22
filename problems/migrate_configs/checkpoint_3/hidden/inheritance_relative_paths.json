@@ -1,8 +1,0 @@
-{
-  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
-  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"inheritance/projects/services/app_relative.yaml\",\"rules_applied\":[]}\\n",
-  "rules": {},
-  "expected_files": {
-    "configs/inheritance/projects/services/app_relative.yaml": "service: payments\\nregion: eu-west-1\\ntimeout: 25\\n"
-  }
-}

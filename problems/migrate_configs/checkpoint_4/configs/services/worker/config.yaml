@@ -1,4 +1,0 @@
-service:
-  name: background-worker
-  port: 8081
-environment: development

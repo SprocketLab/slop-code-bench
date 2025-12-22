@@ -14,7 +14,6 @@ from slop_code.entrypoints.commands import problems
 from slop_code.entrypoints.commands import render_prompts
 from slop_code.entrypoints.commands import repopulate_diffs
 from slop_code.entrypoints.commands import run_agent
-from slop_code.entrypoints.commands import run_case
 from slop_code.entrypoints.commands import static
 from slop_code.entrypoints.commands import tools
 from slop_code.entrypoints.commands import variance

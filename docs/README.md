@@ -61,15 +61,15 @@ Understand best practices for creating high-quality benchmark problems, includin
 - [contributing-problems/checklist.md](contributing-problems/checklist.md) - Pre-submission validation checklist
 
 ### [evaluation/](evaluation/)
-**Test case execution, validation, and results reporting**
+**Pytest-based test execution and results reporting**
 
-Deep dive into how SlopCodeBench executes test cases, validates results, and reports correctness across different execution environments (CLI, API, Playwright).
+Deep dive into how SlopCodeBench executes pytest tests against submissions, categorizes results by type, and generates structured reports.
 
 **Key files:**
 - [evaluation/README.md](evaluation/README.md) - Quick start and overview
-- [evaluation/architecture.md](evaluation/architecture.md) - Evaluation flow and design patterns
-- [evaluation/adapters.md](evaluation/adapters.md) - Execution environments (CLI, API, Playwright)
-- [evaluation/verification.md](evaluation/verification.md) - Validation logic and VerifierProtocol
+- [evaluation/architecture.md](evaluation/architecture.md) - Pytest runner and execution flow
+- [evaluation/configuration.md](evaluation/configuration.md) - Problem and checkpoint configuration
+- [evaluation/reporting.md](evaluation/reporting.md) - Results, pass policies, and export formats
 
 ### [execution/](execution/)
 **Workspace management, runtime execution, and snapshots**
@@ -91,16 +91,6 @@ Learn about SlopCodeBench's 7-category metric system for measuring code quality,
 - [metrics/README.md](metrics/README.md) - Overview and metric categories
 - [metrics/interpreting-results.md](metrics/interpreting-results.md) - Explanation of each metric
 - [metrics/configuration.md](metrics/configuration.md) - Thresholds and AST-grep rules
-
-### [guides/](guides/)
-**Comprehensive deep-dive guides for complex workflows**
-
-End-to-end guides covering complex topics in depth, including problem authoring, custom loaders/verifiers, evaluation, and regression testing.
-
-**Key files:**
-- [guides/problem-authoring.md](guides/problem-authoring.md) - End-to-end problem authoring guide
-- [guides/creating-loaders-and-verifiers.md](guides/creating-loaders-and-verifiers.md) - Custom loader/verifier implementation
-- [guides/evaluator.md](guides/evaluator.md) - Comprehensive evaluation guide
 
 ## Support Files
 
@@ -131,7 +121,7 @@ Current limitations and known bugs organized by problem. Check this if you encou
 4. Interpret results using [metrics/interpreting-results.md](metrics/interpreting-results.md)
 
 ### Extending SlopCodeBench
-1. Create custom loaders/verifiers with [guides/creating-loaders-and-verifiers.md](guides/creating-loaders-and-verifiers.md)
+1. Write custom pytest tests following [problems/pytest/](problems/pytest/)
 2. Add new execution environments with [execution/extending.md](execution/extending.md)
 3. Implement custom agents following [agents/agent-class.md](agents/agent-class.md)
 
@@ -148,4 +138,4 @@ Current limitations and known bugs organized by problem. Check this if you encou
 1. Check [FAQ.md](FAQ.md) for common questions
 2. Review [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for current limitations
 3. Look for troubleshooting sections in relevant documentation groups
-4. Consult the detailed guides in [guides/](guides/) for complex topics
+4. Check [evaluation/troubleshooting.md](evaluation/troubleshooting.md) for pytest-related issues

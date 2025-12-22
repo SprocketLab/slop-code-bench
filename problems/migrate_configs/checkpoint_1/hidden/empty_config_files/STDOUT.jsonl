@@ -1,5 +1,0 @@
-{"event":"file_updated","file":"empty.ini","rules_applied":["add_initial_config"]}
-{"event":"file_updated","file":"empty.json","rules_applied":["add_initial_config"]}
-{"event":"file_updated","file":"empty.toml","rules_applied":["add_initial_config"]}
-{"event":"file_updated","file":"empty.yaml","rules_applied":["add_initial_config"]}
-{"event":"file_updated","file":"partial.json","rules_applied":["add_initial_config"]}

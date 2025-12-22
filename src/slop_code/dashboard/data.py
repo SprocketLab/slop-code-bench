@@ -5,10 +5,12 @@ Adapted from scripts/visualizations/make_graphs.py.
 
 from __future__ import annotations
 
+import colorsys
 import json
 import re
 from collections import defaultdict
 from dataclasses import dataclass
+from itertools import cycle
 from pathlib import Path
 from typing import Any
 
@@ -26,31 +28,12 @@ from slop_code.common import SUMMARY_FILENAME
 MODEL_TO_READABLE: dict[str, str] = {
     "opus-4.5": "Opus 4.5",
     "sonnet-4.5": "Sonnet 4.5",
-    "gpt-5.1-codex-max": "GPT 5.1 Codex",
+    "gpt-5.1-codex": "GPT 5.1 Codex",
+    "gpt-5.1-codex-max": "GPT 5.1 Codex Max",
+    "gpt-5.2-codex": "GPT 5.2 Codex",
     "gpt-5.2": "GPT 5.2",
     "kimi-k2-thinking": "Kimi K2",
     "moonshotai/kimi-k2-thinking": "Kimi K2",
-}
-
-# Provider detection patterns (case-insensitive)
-ANTHROPIC_PATTERNS = ("opus", "sonnet", "claude", "haiku")
-CODEX_PATTERNS = ("codex",)  # Check before GPT (gpt-5.1-codex contains both)
-GPT_PATTERNS = ("gpt",)
-OPENAI_PATTERNS = ("o1", "o3")  # Other OpenAI models
-KIMI_PATTERNS = ("kimi", "moonshot")
-ZHIPU_PATTERNS = ("z-ai", "glm", "zhipu")
-
-# Base colors for each provider (HSL for gradient generation)
-# Anthropic: #DE7356 (peach), GPT: #C4A35A (garlic gold), Codex/OpenAI: #41BB9C (teal),
-# Kimi: #01BFFF (cyan), Zhipu: #4E52BF (indigo/blue), Other: #871212 (dark red)
-PROVIDER_BASE_COLORS: dict[str, tuple[int, int, int]] = {
-    "anthropic": (13, 67, 60),  # HSL for #DE7356
-    "gpt": (41, 46, 56),  # HSL for #C4A35A (garlic gold)
-    "codex": (164, 49, 50),  # HSL for #41BB9C
-    "openai": (164, 49, 50),  # HSL for #41BB9C (fallback for o1/o3)
-    "kimi": (195, 100, 50),  # HSL for #01BFFF
-    "zhipu": (238, 48, 53),  # HSL for #4E52BF (Indigo/Blue-Violet)
-    "other": (0, 76, 30),  # HSL for #871212
 }
 
 DEFAULT_COLOR_PALETTE = plotly.colors.qualitative.Vivid
@@ -143,23 +126,49 @@ def _hsl_to_hex(h: int, s: int, l: int) -> str:
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
-def _detect_provider(name: str) -> str:
-    """Detect provider from run/model name."""
-    name_lower = name.lower()
-    if any(p in name_lower for p in ANTHROPIC_PATTERNS):
-        return "anthropic"
-    # Check codex BEFORE gpt (since "gpt-5.1-codex-max" contains both)
-    if any(p in name_lower for p in CODEX_PATTERNS):
-        return "codex"
-    if any(p in name_lower for p in GPT_PATTERNS):
-        return "gpt"
-    if any(p in name_lower for p in OPENAI_PATTERNS):
-        return "openai"
-    if any(p in name_lower for p in KIMI_PATTERNS):
-        return "kimi"
-    if any(p in name_lower for p in ZHIPU_PATTERNS):
-        return "zhipu"
-    return "other"
+def _parse_to_hsl_tuple(color: str) -> tuple[int, int, int]:
+    """Convert hex or rgb string to HSL tuple."""
+    # Handle rgb(r, g, b)
+    if color.startswith("rgb"):
+        parts = re.findall(r"\d+", color)
+        if len(parts) >= 3:
+            r, g, b = map(int, parts[:3])
+            h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+            return int(h * 360), int(s * 100), int(l * 100)
+
+    # Handle Hex
+    hex_color = color.lstrip("#")
+    if len(hex_color) == 3:
+        hex_color = "".join(c * 2 for c in hex_color)
+    try:
+        r, g, b = (
+            int(hex_color[0:2], 16),
+            int(hex_color[2:4], 16),
+            int(hex_color[4:6], 16),
+        )
+        h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+        return int(h * 360), int(s * 100), int(l * 100)
+    except ValueError:
+        return 0, 0, 50
+
+
+def _generate_variant_colors(base_color: str, count: int) -> list[str]:
+    """Generate light-to-dark gradient colors for a variant group."""
+    if count == 0:
+        return []
+    if count == 1:
+        # Ensure output is always hex
+        h, s, l = _parse_to_hsl_tuple(base_color)
+        return [_hsl_to_hex(h, s, l)]
+
+    h, s, _ = _parse_to_hsl_tuple(base_color)
+    # Generate lightness values from light (75) to dark (35)
+    light_start, light_end = 75, 35
+    step = (light_start - light_end) / (count - 1)
+
+    return [
+        _hsl_to_hex(h, s, int(light_start - i * step)) for i in range(count)
+    ]
 
 
 def _format_prompt_display(prompt_template: str) -> str:
@@ -178,25 +187,6 @@ def _is_thinking_enabled(row: pd.Series | dict[str, Any]) -> tuple[bool, str]:
         thinking and thinking not in ("none", "disabled", "unknown", "null")
     )
     return enabled, thinking.title() if enabled else ""
-
-
-def _generate_provider_gradient(
-    base_hsl: tuple[int, int, int], count: int
-) -> list[str]:
-    """Generate light-to-dark gradient colors for a provider."""
-    if count == 0:
-        return []
-    if count == 1:
-        return [_hsl_to_hex(*base_hsl)]
-
-    h, s, _ = base_hsl
-    # Generate lightness values from light (75) to dark (35)
-    light_start, light_end = 75, 35
-    step = (light_start - light_end) / (count - 1)
-
-    return [
-        _hsl_to_hex(h, s, int(light_start - i * step)) for i in range(count)
-    ]
 
 
 # ---------------------------------------------------------------------------
@@ -468,31 +458,41 @@ def get_available_runs(base_dir: Path) -> list[Path]:
     return sorted(runs, key=lambda p: p.name)
 
 
-def build_base_color_map(display_names: list[str]) -> dict[str, str]:
-    """Assign base provider color to each run (no gradient)."""
+def build_base_color_map(
+    display_names: list[str],
+    model_groups: dict[str, str],
+    group_colors: dict[str, str],
+) -> dict[str, str]:
+    """Assign base group color to each run (no gradient)."""
     color_map = {}
     for name in display_names:
-        provider = _detect_provider(name)
-        base_hsl = PROVIDER_BASE_COLORS.get(
-            provider, PROVIDER_BASE_COLORS["other"]
-        )
-        color_map[name] = _hsl_to_hex(*base_hsl)
+        group = model_groups.get(name, name)
+        base_color = group_colors.get(group, "#333333")
+        # Ensure consistency by converting to hex
+        h, s, l = _parse_to_hsl_tuple(base_color)
+        color_map[name] = _hsl_to_hex(h, s, l)
     return color_map
 
 
-def build_color_map(display_names: list[str]) -> dict[str, str]:
-    """Assign gradient colors based on provider (light-to-dark)."""
-    provider_groups: dict[str, list[str]] = defaultdict(list)
+def build_color_map(
+    display_names: list[str],
+    model_groups: dict[str, str],
+    group_colors: dict[str, str],
+) -> dict[str, str]:
+    """Assign gradient colors based on group (light-to-dark)."""
+    grouped_names: dict[str, list[str]] = defaultdict(list)
     for name in display_names:
-        provider = _detect_provider(name)
-        provider_groups[provider].append(name)
+        group = model_groups.get(name, name)
+        grouped_names[group].append(name)
+
+    # Sort names within groups for consistent gradient assignment
+    for group in grouped_names:
+        grouped_names[group].sort()
 
     color_map = {}
-    for provider, names in provider_groups.items():
-        base_hsl = PROVIDER_BASE_COLORS.get(
-            provider, PROVIDER_BASE_COLORS["other"]
-        )
-        colors = _generate_provider_gradient(base_hsl, len(names))
+    for group, names in grouped_names.items():
+        base_hex = group_colors.get(group, "#333333")
+        colors = _generate_variant_colors(base_hex, len(names))
         for name, color in zip(names, colors):
             color_map[name] = color
 
@@ -606,12 +606,33 @@ def build_chart_context(
     sortable_runs.sort()
     sorted_names = [run[4] for run in sortable_runs]
 
+    # Generate model groups and colors
+    model_groups = {}
+    if not checkpoints_df.empty:
+        model_groups.update(
+            dict(
+                zip(checkpoints_df["display_name"], checkpoints_df["model_name"])
+            )
+        )
+    if not run_summaries.empty:
+        model_groups.update(
+            dict(
+                zip(run_summaries["display_name"], run_summaries["model_name"])
+            )
+        )
+
+    unique_groups = sorted(list(set(model_groups.values())))
+    palette = cycle(DEFAULT_COLOR_PALETTE)
+    group_colors = {group: next(palette) for group in unique_groups}
+
     if use_generic_colors:
         color_map = build_generic_color_map(sorted_names)
         base_color_map = color_map.copy()
     else:
-        color_map = build_color_map(sorted_names)
-        base_color_map = build_base_color_map(sorted_names)
+        color_map = build_color_map(sorted_names, model_groups, group_colors)
+        base_color_map = build_base_color_map(
+            sorted_names, model_groups, group_colors
+        )
 
     return ChartContext(
         checkpoints=checkpoints_df,

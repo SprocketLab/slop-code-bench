@@ -1,5 +1,0 @@
-{
-    "yaml": "extends",
-    "json": "extends",
-    "toml": "import.base"
-}

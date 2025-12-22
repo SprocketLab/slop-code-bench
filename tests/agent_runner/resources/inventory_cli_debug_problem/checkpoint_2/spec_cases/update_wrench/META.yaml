@@ -1,8 +1,0 @@
-id: update_wrench
-arguments:
-  - update
-  - "1"
-  - --quantity
-  - "5"
-expected:
-  status_code: 0

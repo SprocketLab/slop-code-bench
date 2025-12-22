@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import colorsys
 import json
 import math
 import re
 from collections import defaultdict
 from dataclasses import dataclass
+from itertools import cycle
 from pathlib import Path
 from typing import Any
 
@@ -27,23 +29,6 @@ MODEL_TO_READABLE = {
     "gpt-5.2": "GPT 5.2",
     "kimi-k2-thinking": "Kimi K2",
     "moonshotai/kimi-k2-thinking": "Kimi K2",
-}
-
-OPUS_PATTERNS = ("opus",)
-SONNET_PATTERNS = ("sonnet",)
-CODEX_PATTERNS = ("codex",)
-GPT_PATTERNS = ("gpt",)
-OPENAI_PATTERNS = ("o1", "o3")
-KIMI_PATTERNS = ("kimi", "moonshot")
-
-PROVIDER_BASE_COLORS = {
-    "opus": (13, 67, 60),
-    "sonnet": (27, 65, 26),
-    "gpt": (41, 46, 56),
-    "codex": (164, 49, 50),
-    "openai": (164, 49, 50),
-    "kimi": (195, 100, 50),
-    "other": (0, 76, 30),
 }
 
 DEFAULT_COLOR_PALETTE = plotly.colors.qualitative.Vivid
@@ -123,21 +108,6 @@ def hsl_to_hex(h: int, s: int, l: int) -> str:
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
-def detect_provider(name: str) -> str:
-    name_lower = name.lower()
-    if any(p in name_lower for p in OPUS_PATTERNS):
-        return "opus"
-    if any(p in name_lower for p in CODEX_PATTERNS):
-        return "codex"
-    if any(p in name_lower for p in GPT_PATTERNS):
-        return "gpt"
-    if any(p in name_lower for p in OPENAI_PATTERNS):
-        return "openai"
-    if any(p in name_lower for p in KIMI_PATTERNS):
-        return "kimi"
-    return "other"
-
-
 def format_prompt_display(prompt_template: str) -> str:
     prompt_stem = Path(prompt_template).stem if prompt_template else ""
     if not prompt_stem:
@@ -201,14 +171,36 @@ def sorted_display_names(df: pd.DataFrame) -> list[str]:
     return [display_name for _, __, ___, display_name in rows]
 
 
-def generate_provider_gradient(
-    base_hsl: tuple[int, int, int], count: int
-) -> list[str]:
+def parse_to_hsl_tuple(color: str) -> tuple[int, int, int]:
+    # Handle rgb(r, g, b)
+    if color.startswith("rgb"):
+        parts = re.findall(r"\d+", color)
+        if len(parts) >= 3:
+            r, g, b = map(int, parts[:3])
+            h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+            return int(h * 360), int(s * 100), int(l * 100)
+
+    hex_color = color.lstrip("#")
+    if len(hex_color) == 3:
+        hex_color = "".join(c * 2 for c in hex_color)
+    r, g, b = (
+        int(hex_color[0:2], 16),
+        int(hex_color[2:4], 16),
+        int(hex_color[4:6], 16),
+    )
+    h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+    return int(h * 360), int(s * 100), int(l * 100)
+
+
+def generate_variant_colors(base_color: str, count: int) -> list[str]:
     if count == 0:
         return []
     if count == 1:
-        return [hsl_to_hex(*base_hsl)]
-    h, s, _ = base_hsl
+        # Ensure output is always hex
+        h, s, l = parse_to_hsl_tuple(base_color)
+        return [hsl_to_hex(h, s, l)]
+
+    h, s, _ = parse_to_hsl_tuple(base_color)
     light_start, light_end = 75, 35
     step = (light_start - light_end) / (count - 1)
     return [hsl_to_hex(h, s, int(light_start - i * step)) for i in range(count)]
@@ -228,10 +220,10 @@ def get_thinking_adjusted_color(
     base_hsl: tuple[int, int, int],
     thinking_level: str,
 ) -> str:
-    """Apply thinking-level lightness modifier to a provider color.
+    """Apply thinking-level lightness modifier to a base color.
 
     Args:
-        base_hsl: Provider's base color as (hue, saturation, lightness).
+        base_hsl: Base color as (hue, saturation, lightness).
         thinking_level: Normalized thinking level string.
 
     Returns:
@@ -427,30 +419,38 @@ def load_run(run_dir: Path) -> tuple[pd.DataFrame, dict[str, Any] | None]:
     return pd.DataFrame(checkpoints), summary_row
 
 
-def build_base_color_map(display_names: list[str]) -> dict[str, str]:
+def build_base_color_map(
+    display_names: list[str],
+    model_groups: dict[str, str],
+    group_colors: dict[str, str],
+) -> dict[str, str]:
     color_map = {}
     for name in display_names:
-        provider = detect_provider(name)
-        base_hsl = PROVIDER_BASE_COLORS.get(
-            provider, PROVIDER_BASE_COLORS["other"]
-        )
-        color_map[name] = hsl_to_hex(*base_hsl)
+        group = model_groups.get(name, name)
+        base_color = group_colors.get(group, "#333333")
+        # Ensure consistency by converting to hex
+        h, s, l = parse_to_hsl_tuple(base_color)
+        color_map[name] = hsl_to_hex(h, s, l)
     return color_map
 
 
-def build_color_map(display_names: list[str]) -> dict[str, str]:
-    provider_groups = defaultdict(list)
+def build_color_map(
+    display_names: list[str],
+    model_groups: dict[str, str],
+    group_colors: dict[str, str],
+) -> dict[str, str]:
+    grouped_names = defaultdict(list)
     for name in display_names:
-        provider = detect_provider(name)
-        provider_groups[provider].append(name)
-    for provider in provider_groups:
-        provider_groups[provider].sort()
+        group = model_groups.get(name, name)
+        grouped_names[group].append(name)
+
+    for group in grouped_names:
+        grouped_names[group].sort()
+
     color_map = {}
-    for provider, names in provider_groups.items():
-        base_hsl = PROVIDER_BASE_COLORS.get(
-            provider, PROVIDER_BASE_COLORS["other"]
-        )
-        colors = generate_provider_gradient(base_hsl, len(names))
+    for group, names in grouped_names.items():
+        base_hex = group_colors.get(group, "#333333")
+        colors = generate_variant_colors(base_hex, len(names))
         for name, color in zip(names, colors):
             color_map[name] = color
     return color_map
@@ -479,11 +479,30 @@ def build_chart_context(runs: list[Path], layout: LayoutConfig) -> ChartContext:
             get_display_annotation, axis=1
         )
     display_names = []
+    model_groups = {}
+
     if not checkpoints_df.empty:
         display_names.extend(checkpoints_df["display_name"].unique().tolist())
+        model_groups.update(
+            dict(zip(checkpoints_df["display_name"], checkpoints_df["model_name"]))
+        )
+
+    if not run_summaries.empty:
+        summary_names = run_summaries["display_name"].unique().tolist()
+        display_names.extend([n for n in summary_names if n not in display_names])
+        model_groups.update(
+            dict(zip(run_summaries["display_name"], run_summaries["model_name"]))
+        )
+
     sorted_names = sorted(set(filter(None, display_names)))
-    color_map = build_color_map(sorted_names)
-    base_color_map = build_base_color_map(sorted_names)
+
+    unique_groups = sorted(list(set(model_groups.values())))
+    palette = cycle(DEFAULT_COLOR_PALETTE)
+    group_colors = {group: next(palette) for group in unique_groups}
+
+    color_map = build_color_map(sorted_names, model_groups, group_colors)
+    base_color_map = build_base_color_map(sorted_names, model_groups, group_colors)
+
     return ChartContext(
         checkpoints=checkpoints_df,
         run_summaries=run_summaries,
@@ -576,10 +595,12 @@ class LegendGroupTracker:
     def __init__(
         self,
         color_map: dict[str, str],
+        base_color_map: dict[str, str],
         variation_info: dict[str, ModelVariationInfo] | None = None,
     ):
         self._seen = set()
         self._color_map = color_map
+        self._base_color_map = base_color_map
         self._variation_info = variation_info or {}
 
     def get_info(
@@ -588,18 +609,15 @@ class LegendGroupTracker:
         model_name = row["model_name"]
         model_variation = self._variation_info.get(model_name)
         variant = get_dynamic_variant_annotation(row, model_variation)
-        # Use thinking-adjusted color: provider hue/sat with thinking lightness
-        provider = detect_provider(model_name)
-        base_hsl = PROVIDER_BASE_COLORS.get(
-            provider, PROVIDER_BASE_COLORS["other"]
-        )
-        thinking_level = normalize_thinking_level(row.get("thinking"))
-        color = get_thinking_adjusted_color(base_hsl, thinking_level)
-        model_base_color = hsl_to_hex(*base_hsl)
+
+        color = self._color_map.get(display_name, "#333333")
+        model_base_color = self._base_color_map.get(display_name, color)
+
         group_title = None
         if model_name not in self._seen:
             self._seen.add(model_name)
             group_title = f"<b>{model_name}</b>"
+
         return LegendGroupInfo(
             model_name=model_name,
             variant=variant,
@@ -645,15 +663,6 @@ DARK_THEME = {
     "axis_color": "#8b949e",
     "title_color": "#f0f6fc",
     "legend_bg": "rgba(22,27,34,0.9)",
-    # Enhanced saturation colors for dark theme
-    "provider_colors": {
-        "anthropic": (13, 85, 65),  # More saturated peach
-        "gpt": (220, 70, 55),  # Brighter blue
-        "codex": (164, 75, 55),  # More saturated coral
-        "openai": (164, 75, 55),
-        "kimi": (195, 100, 55),  # Brighter cyan
-        "other": (120, 70, 45),  # Brighter green
-    },
 }
 
 # Light theme - subtle off-white, professional
@@ -665,15 +674,6 @@ LIGHT_THEME = {
     "axis_color": "#57606a",
     "title_color": "#1f2328",
     "legend_bg": "rgba(255,255,255,0.95)",
-    # Enhanced saturation colors for light theme
-    "provider_colors": {
-        "anthropic": (13, 75, 50),
-        "gpt": (220, 60, 45),
-        "codex": (164, 65, 45),
-        "openai": (164, 65, 45),
-        "kimi": (195, 90, 45),
-        "other": (120, 60, 35),
-    },
 }
 
 # Erosion severity colors
@@ -777,16 +777,6 @@ def get_theme_layout(
         "hovermode": "closest",
         "modebar": {"remove": ["zoom", "lasso2d", "select2d"]},
     }
-
-
-def get_theme_provider_color(theme: str, provider: str) -> str:
-    """Get provider color for a specific theme with enhanced saturation."""
-    t = get_theme(theme)
-    provider_colors = t.get("provider_colors", PROVIDER_BASE_COLORS)
-    hsl = provider_colors.get(
-        provider, provider_colors.get("other", (0, 50, 50))
-    )
-    return hsl_to_hex(*hsl)
 
 
 # -----------------------------------------------------------------------------

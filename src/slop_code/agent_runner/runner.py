@@ -117,7 +117,8 @@ def get_checkpoints(
 
 
 def get_task_for_checkpoint(
-    checkpoint: CheckpointConfig,
+    checkpoint_name: str,
+    spec_text: str,
     template: str,
     entry_file: str,
     environment: EnvironmentSpec,
@@ -130,7 +131,8 @@ def get_task_for_checkpoint(
     Renders checkpoint spec into a prompt using the template and saves it.
 
     Args:
-        checkpoint: Checkpoint configuration
+        checkpoint_name: Name of the checkpoint
+        spec_text: Specification text for the checkpoint
         template: Prompt template string
         entry_file: Entry file path for the task
         environment: Environment specification for command generation
@@ -142,11 +144,11 @@ def get_task_for_checkpoint(
     """
     logger.debug(
         "Generating task prompt",
-        checkpoint=checkpoint.name,
+        checkpoint=checkpoint_name,
         is_first=is_first_checkpoint,
     )
     prompt = common.render_prompt(
-        spec_text=checkpoint.get_spec_text(),
+        spec_text=spec_text,
         context={"is_continuation": not is_first_checkpoint},
         prompt_template=template,
         entry_file=environment.format_entry_file(entry_file),
@@ -331,7 +333,8 @@ def run_checkpoint(
     compress_artifacts: bool = False,
 ) -> tuple[Path, CheckpointInferenceResult | None, SnapshotDiff]:
     task = get_task_for_checkpoint(
-        checkpoint=checkpoint,
+        checkpoint_name=checkpoint.name,
+        spec_text=problem.get_checkpoint_spec(checkpoint.name),
         template=template,
         entry_file=problem.entry_file,
         environment=environment,
@@ -625,12 +628,18 @@ class AgentRunner:
             compress_artifacts=compress,
         )
         reporting.save_agent_checkpoint_info(
-            checkpoint_save_dir, diff, result, self.agent, compress_artifacts=compress
+            checkpoint_save_dir,
+            diff,
+            result,
+            self.agent,
+            compress_artifacts=compress,
         )
         artifacts_path = get_artifacts_path(
             checkpoint_save_dir, compress=compress
         )
-        if result is None or result.had_error:
+        had_error = result is None or result.had_error
+        rate_limited = False
+        if had_error:
             if result is None:
                 error = AgentRunnerError(
                     f"Agent produced no result for checkpoint '{checkpoint.name}'"
@@ -651,6 +660,7 @@ class AgentRunner:
                 checkpoint=checkpoint.name,
             )
             self.metrics_tracker.state = AgentStateEnum.HIT_RATE_LIMITED
+            rate_limited = True
         if self.run_spec.skip_evaluation or result is None:
             return AgentCheckpointSummary.from_results(
                 checkpoint_name=checkpoint.name,
@@ -658,13 +668,14 @@ class AgentRunner:
                 snapshot_dir=snapshot_dir,
                 artifacts=artifacts_path,
                 usage=self.agent.usage,
-                had_error=result is None or result.had_error,
+                had_error=had_error,
                 pass_policy=self.run_spec.pass_policy,
                 evaluation_result=None,
             )
 
         # Transition to EVALUATING state before starting evaluation
-        self.metrics_tracker.state = AgentStateEnum.EVALUATING
+        if not (had_error or rate_limited):
+            self.metrics_tracker.state = AgentStateEnum.EVALUATING
         logger.info(
             "Starting checkpoint evaluation",
             checkpoint=checkpoint.name,

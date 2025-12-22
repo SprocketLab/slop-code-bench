@@ -1,2 +1,0 @@
-{"event":"file_updated","file":"i18n.json","rules_applied":["merge_special_chars","rename_unicode","replace_in_unicode_key","replace_unicode_value"]}
-{"event":"file_updated","file":"unicode.yaml","rules_applied":["merge_special_chars","rename_unicode","replace_in_unicode_key","replace_unicode_value"]}

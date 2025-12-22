@@ -1,0 +1,67 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json users.parquet events.csv
+  input_files:
+  - content:
+    - id: 1
+      name: Alice
+      age: 30
+    - id: 2
+      name: Bob
+      age: 25
+    file_type: parquet
+    path: users.parquet
+  - content: 'id,event,timestamp
+
+      1,login,2024-01-01T10:00:00Z
+
+      2,logout,2024-01-01T11:00:00Z
+
+      '
+    file_type: text
+    path: events.csv
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: name
+        type: string
+      - name: age
+        type: int
+      - name: event
+        type: string
+      - name: timestamp
+        type: timestamp
+      - name: scores
+        type:
+          array:
+            element: int
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      name: Alice
+      age: 30
+      event: null
+      timestamp: null
+      scores: null
+    - id: 1
+      name: null
+      age: null
+      event: login
+      timestamp: '2024-01-01T10:00:00Z'
+      scores: null
+    - id: 2
+      name: Bob
+      age: 25
+      event: null
+      timestamp: null
+      scores: null
+    - id: 2
+      name: null
+      age: null
+      event: logout
+      timestamp: '2024-01-01T11:00:00Z'
+      scores: null
+  status_code: 0

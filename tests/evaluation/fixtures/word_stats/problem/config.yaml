@@ -1,0 +1,26 @@
+name: word_stats
+version: 1
+description: Count words and lines in text input
+tags:
+  - e2e-test
+  - cli
+timeout: 30
+entry_file: main
+
+static_assets:
+  stopwords:
+    type: file
+    path: static/stopwords.txt
+
+checkpoints:
+  checkpoint_1:
+    version: 1
+    order: 1
+    state: Full Tests
+    timeout: 30
+
+  checkpoint_2:
+    version: 1
+    order: 2
+    state: Full Tests
+    timeout: 30

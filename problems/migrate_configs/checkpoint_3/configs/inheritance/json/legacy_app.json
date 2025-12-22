@@ -1,5 +1,0 @@
-{
-  "extends": "base.json",
-  "name": "legacy-app",
-  "old_key": "value"
-}

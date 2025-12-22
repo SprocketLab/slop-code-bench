@@ -1,9 +1,0 @@
-environment: production
-metadata:
-  owner: platform-team
-  tier: core
-description: Base service description
-details:
-  note: runs core workloads
-  build:
-    version: 3

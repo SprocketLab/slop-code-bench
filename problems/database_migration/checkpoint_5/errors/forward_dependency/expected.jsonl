@@ -1,4 +1,0 @@
-{"event": "validation_started", "migration_file": "migration_v2.json"}
-{"event": "dependency_check", "version": 2, "depends_on": [5], "status": "error", "message": "migration version 2 cannot depend on future version 5"}
-{"event": "validation_complete", "version": 2, "status": "invalid"}
-

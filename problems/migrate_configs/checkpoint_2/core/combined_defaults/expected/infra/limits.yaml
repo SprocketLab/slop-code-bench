@@ -1,5 +1,0 @@
-limits:
-  enabled: true
-  retries: 3
-environment: production
-timeout: 30

@@ -1,24 +1,165 @@
 from __future__ import annotations
 
 import json
-import math
+import re
+from collections import Counter
 from collections import defaultdict
 from pathlib import Path
 from typing import Annotated
 
 import typer
 from rich.console import Console
-from rich.json import JSON
 from rich.table import Table
 
 from slop_code.entrypoints import utils
 from slop_code.entrypoints.commands import common
 from slop_code.entrypoints.config import loader as config_loader
 from slop_code.entrypoints.evaluation.driver import evaluate_checkpoint
+from slop_code.evaluation import GroupType
 from slop_code.logging import get_logger
 from slop_code.metrics import RubricProvider
 
 logger = get_logger(__name__)
+
+EXIT_CODE_MEANINGS = {
+    0: "all tests passed",
+    1: "tests failed",
+    2: "pytest interrupted",
+    3: "pytest internal error",
+    4: "pytest usage error",
+    5: "no tests collected",
+}
+
+
+def parse_test_id(test_id: str) -> tuple[str, str | None]:
+    """Extract base name and param from test_id like 'test_foo[bar]'."""
+    name = test_id.split("::")[-1] if "::" in test_id else test_id
+    match = re.match(r"^(.+?)\[(.+)\]$", name)
+    if match:
+        return match.group(1), match.group(2)
+    return name, None
+
+
+def _status_icon(status: str) -> str:
+    """Return colored status icon for test status."""
+    if status == "passed":
+        return "[green]✓[/green]"
+    if status == "skipped":
+        return "[yellow]○[/yellow]"
+    return "[red]✗[/red]"
+
+
+def _render_tests_tree(
+    console: Console, tests: list, indent: str = "  "
+) -> None:
+    """Render tests in tree-style hierarchy, grouping parametrized tests."""
+    # Group tests by base name, preserving order
+    grouped: dict[str, list[tuple[str | None, object]]] = defaultdict(list)
+    order: list[str] = []
+    for test in tests:
+        base, param = parse_test_id(test.id)
+        if base not in grouped:
+            order.append(base)
+        grouped[base].append((param, test))
+
+    for base_name in order:
+        items = grouped[base_name]
+        # Get group type from first test
+        group_type = items[0][1].group_type.value
+
+        if len(items) == 1 and items[0][0] is None:
+            # Single non-parametrized test
+            _, test = items[0]
+            icon = _status_icon(test.status)
+            console.print(f"{indent}{base_name} ({group_type}) {icon}")
+        else:
+            # Parametrized tests - render as tree
+            console.print(f"{indent}{base_name} ({group_type})")
+            for i, (param, test) in enumerate(items):
+                is_last = i == len(items) - 1
+                connector = "└──" if is_last else "├──"
+                icon = _status_icon(test.status)
+                param_display = param if param else "(no param)"
+                console.print(f"{indent}{connector} {param_display} {icon}")
+
+
+def render_pytest_results(
+    console: Console,
+    results,
+    verbosity: int,
+) -> None:
+    # Compact header
+    status_counts = Counter(test.status for test in results.tests)
+    passed = status_counts.get("passed", 0)
+    failed = status_counts.get("failed", 0) + status_counts.get("error", 0)
+    skipped = status_counts.get("skipped", 0)
+    total = len(results.tests)
+
+    # One-line status
+    status_parts = []
+    if passed:
+        status_parts.append(f"[green]{passed} passed[/green]")
+    if failed:
+        status_parts.append(f"[red]{failed} failed[/red]")
+    if skipped:
+        status_parts.append(f"[yellow]{skipped} skipped[/yellow]")
+
+    console.print("\n[bold]Execution Summary[/bold]")
+    console.print(
+        f"{results.problem_name} / {results.checkpoint_name} "
+        f"({results.duration:.1f}s)"
+    )
+    console.print("[bold]Status Summary[/bold]")
+    if status_parts:
+        console.print(", ".join(status_parts))
+    else:
+        console.print("[dim]No tests executed[/dim]")
+
+    if results.infrastructure_failure:
+        console.print("[red bold]⚠ Infrastructure failure detected[/red bold]")
+
+    # Group summary table (compact)
+    group_table = Table(show_header=True, box=None, padding=(0, 2))
+    group_table.add_column("Group", style="dim")
+    group_table.add_column("Result", justify="right")
+
+    total_passed = 0
+    total_tests = 0
+    for group_type in GroupType:
+        group_passed = results.pass_counts.get(group_type, 0)
+        group_total = results.total_counts.get(group_type, 0)
+        if group_total == 0:
+            continue
+        total_passed += group_passed
+        total_tests += group_total
+        if group_passed == group_total:
+            result_str = f"[green]{group_passed}/{group_total}[/green]"
+        else:
+            result_str = f"[red]{group_passed}/{group_total}[/red]"
+        group_table.add_row(group_type.value, result_str)
+
+    if total_tests > 0:
+        console.print("\n[bold]Group Summary[/bold]")
+        console.print(group_table)
+
+    # Show failed tests only (unless verbose)
+    failed_tests = [
+        test for test in results.tests if test.status in {"failed", "error"}
+    ]
+
+    if verbosity <= 1 and failed_tests:
+        console.print("\n[bold]Test Results[/bold]")
+        console.print(
+            f"[red bold]Failed Tests ({len(failed_tests)}):[/red bold]"
+        )
+        _render_tests_tree(console, failed_tests)
+    elif verbosity > 1:
+        console.print("\n[bold]Test Results[/bold]")
+        console.print(f"[bold]All Tests ({total}):[/bold]")
+        sorted_tests = sorted(
+            results.tests, key=lambda x: (x.group_type.value, x.status, x.id)
+        )
+        _render_tests_tree(console, sorted_tests)
 
 
 def register(app: typer.Typer, name: str) -> None:
@@ -94,7 +235,15 @@ def evaluate_snapshot(
         help="LLM provider for rubric grading",
         case_sensitive=False,
     ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Output correctness results as JSON.",
+    ),
 ) -> None:
+    if isinstance(json_output, typer.models.OptionInfo):
+        json_output = bool(json_output.default)
+
     # Validate rubric options
     common.validate_rubric_options(rubric_path, rubric_model)
 
@@ -127,10 +276,12 @@ def evaluate_snapshot(
     checkpoint_name, checkpoint = ordered_checkpoints[checkpoint_num - 1]
 
     save_dir = utils.ensure_dir_exists(save_dir, create=True)
+    quiet = getattr(ctx.obj, "quiet", False)
     logger = common.setup_command_logging(
         log_dir=save_dir,
         verbosity=ctx.obj.verbosity,
         log_file_name="evaluation.log",
+        quiet=quiet,
     )
     logger.info(
         "Evaluating a single snapshot",
@@ -154,91 +305,8 @@ def evaluate_snapshot(
         rubric_temperature=rubric_temperature,
         rubric_provider=rubric_provider,
     )
-    group_scores = defaultdict(list)
-    rows = []
-    overview_rows = []
-    for case_report in report.report.reports:
-        group_name = case_report.group
-        group_scores[group_name].append(case_report.calculate_score())
-
-        diff = {}
-        stderr = case_report.results.get("stderr", None)
-        if stderr is not None:
-            stderr = stderr.actual
-        for attr_result in case_report.get_verified_attributes():
-            pretty_actual = attr_result.actual
-            if not isinstance(pretty_actual, str):
-                pretty_actual = str(pretty_actual)
-
-            pretty_expected = attr_result.expected
-
-            if not isinstance(pretty_expected, str):
-                pretty_expected = str(pretty_expected)
-            diff_str = attr_result.diff
-
-            if not isinstance(diff_str, str):
-                diff_str = str(diff_str)
-
-            diff[attr_result.attribute] = {
-                "correct": attr_result.is_correct,
-                "actual": pretty_actual[:256],
-                "expected": pretty_expected[:256],
-                "diff": diff_str,
-                "weight": attr_result.weight,
-            }
-        if "stderr" not in diff:
-            diff["stderr"] = str(stderr)[:256]
-
-        case_name = f"{case_report.group}/{case_report.id}"
-        overview_rows.append(
-            (
-                case_name,
-                f"{case_report.calculate_score():.2f}",
-                JSON(json.dumps(diff)),
-            )
-        )
-
-    console = Console()
-    table = Table(title="Case Results", show_lines=True, show_header=True)
-
-    table.add_column("Case", width=32)
-    table.add_column("Score", width=8)
-    table.add_column("diff", overflow="fold", no_wrap=False)
-    for row in sorted(overview_rows, key=lambda x: (x[0], x[2])):
-        table.add_row(*row)
-    console.print(table)
-
-    key_types = defaultdict(set)
-    for row in rows:
-        for k, v in row.items():
-            if k in ["results"]:
-                for sub_v in v:
-                    for kk, vv in sub_v.items():
-                        key_types[f"{k}-{kk}"].add(type(vv).__name__)
-            else:
-                key_types[k].add(type(v).__name__)
-
-    table = Table(title="Group Scores")
-    table.add_column("Group")
-    table.add_column("Num Passed")
-    table.add_column("Num Cases")
-    table.add_column("Score")
-    total_score = []
-    for group, score in group_scores.items():
-        mean_score = sum(score) / len(score)
-        total_score.extend(score)
-        num_passed = sum(1 for score in score if math.isclose(score, 1.0))
-        table.add_row(
-            group,
-            f"{num_passed}",
-            f"{len(score)}",
-            f"{mean_score:.2%}",
-        )
-    table.add_section()
-    table.add_row(
-        "Total",
-        f"{sum(1 for score in total_score if math.isclose(score, 1.0))}",
-        f"{len(total_score)}",
-        f"{sum(total_score) / len(total_score):.2%}",
-    )
-    console.print(table)
+    if json_output:
+        typer.echo(json.dumps(report.report.model_dump(mode="json"), indent=2))
+    else:
+        console = Console()
+        render_pytest_results(console, report.report, ctx.obj.verbosity)

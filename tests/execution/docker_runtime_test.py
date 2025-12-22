@@ -25,24 +25,7 @@ from slop_code.execution.models import SetupConfig
 from slop_code.execution.runtime import LaunchSpec
 from slop_code.execution.runtime import SolutionRuntimeError
 
-INTEGRATION_IMAGE = "python:3.12-slim"
-
-
-def _docker_image_available(image: str) -> bool:
-    """Check if Docker is available and the specified image exists."""
-    docker_bin = shutil.which("docker")
-    if not docker_bin:
-        return False
-    result = subprocess.run(
-        [docker_bin, "image", "inspect", image],
-        capture_output=True,
-        check=False,
-    )
-    return result.returncode == 0
-
-
-# Match the image used by other Docker integration tests for consistency.
-STREAM_TEST_IMAGE = "python:3.12-slim"
+INTEGRATION_IMAGE = "slop-code:python3.12"
 
 
 def _docker_image_available(image: str) -> bool:
@@ -82,6 +65,9 @@ def runtime(tmp_path: Path) -> DockerRuntime:
     runtime._image = "sample"
     runtime._disable_setup = False
     runtime._network_mode = "bridge"
+    runtime._single_shot_mode = False
+    runtime._single_shot_command = None
+    runtime._single_shot_process = None
     return runtime
 
 

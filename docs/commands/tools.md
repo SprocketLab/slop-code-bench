@@ -1,25 +1,23 @@
 ---
 version: 1.0
-last_updated: 2025-12-17
+last_updated: 2025-12-22
 ---
 
 # tools
 
-Interactive tools and case runners.
+Test case runner for debugging and development.
 
 ## Subcommands
 
 | Command | Description |
 |---------|-------------|
-| [`run-case`](#run-case) | Run test cases and output JSON |
-| [`snapshot-eval`](#snapshot-eval) | Launch Snapshot Evaluator UI |
-| [`report-viewer`](#report-viewer) | Launch Report Viewer UI |
+| [`run-case`](#run-case) | Run test cases and output pytest stdout |
 
 ---
 
 ## run-case
 
-Run a single test case (or filtered subset) and output JSON results.
+Run pytest tests for a snapshot and output raw stdout.
 
 ### Quick Start
 
@@ -45,116 +43,62 @@ slop-code tools run-case [OPTIONS]
 | `-p, --problem` | string | **required** | Name of the problem |
 | `-c, --checkpoint` | int | **required** | Checkpoint number |
 | `-e, --env-config` | path | **required** | Path to environment configuration |
-| `-g, --group` | string | - | Filter by group name (glob patterns) |
-| `--case` | string | - | Filter by case name (glob patterns) |
-| `--full` | flag | false | Enable full debug output |
+| `--case` | string | - | Pytest -k expression to select tests |
+| `--pytest-arg` | string | - | Extra args to pass to pytest (repeatable) |
+| `--json` | flag | false | Output JSON report instead of raw pytest stdout |
+| `--full` | flag | false | Include full JSON report payload (implies `--json`) |
 
 ### Output
 
-**Default output** (per case):
-```json
-{
-  "id": "case_001",
-  "group": "core",
-  "score": 1.0,
-  "passed": true,
-  "results": {
-    "stdout": {"actual": "...", "expected": "...", "is_correct": true}
-  }
-}
-```
+**Default output**: Raw pytest stdout.
 
-**Full output** (`--full`): Complete report with all attributes and debug info.
+**JSON output** (`--json`): Per-test JSON summaries.
+
+**Full JSON output** (`--full`): Complete report with all attributes and debug
+info.
 
 ### Examples
 
 ```bash
-# Run all cases
+# Run all tests
 slop-code tools run-case \
   -s outputs/snapshot \
   -p file_backup \
   -c 1 \
   -e configs/environments/docker-python3.12-uv.yaml
 
-# Filter to core group
+# Run specific tests with -k filter
 slop-code tools run-case \
   -s outputs/snapshot \
   -p file_backup \
   -c 1 \
   -e configs/environments/docker-python3.12-uv.yaml \
-  -g core
+  --case "test_backup"
 
-# Run specific case
+# JSON output
 slop-code tools run-case \
   -s outputs/snapshot \
   -p file_backup \
   -c 1 \
   -e configs/environments/docker-python3.12-uv.yaml \
-  --case "test_*"
+  --json
 
-# Full debug output
+# Full JSON output with debug info
 slop-code tools run-case \
   -s outputs/snapshot \
   -p file_backup \
   -c 1 \
   -e configs/environments/docker-python3.12-uv.yaml \
   --full
-```
 
----
-
-## snapshot-eval
-
-Launch the Snapshot Evaluator Streamlit application.
-
-### Usage
-
-```bash
-slop-code tools snapshot-eval
-```
-
-### Behavior
-
-Opens an interactive web UI for:
-- Selecting problem and checkpoint
-- Browsing snapshot code
-- Running evaluations
-- Viewing detailed results
-
----
-
-## report-viewer
-
-Launch the Verifier Report Viewer Streamlit application.
-
-### Usage
-
-```bash
-slop-code tools report-viewer DIRECTORY
-```
-
-### Arguments
-
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `DIRECTORY` | Yes | Path to run directory or snapshots directory |
-
-### Behavior
-
-Opens an interactive web UI for:
-- Browsing evaluation reports
-- Viewing case-by-case results
-- Comparing expected vs actual outputs
-- Analyzing failure patterns
-
-### Examples
-
-```bash
-# View reports for a run
-slop-code tools report-viewer outputs/my_run
-
-# View specific problem's reports
-slop-code tools report-viewer outputs/my_run/file_backup
+# Pass extra pytest args
+slop-code tools run-case \
+  -s outputs/snapshot \
+  -p file_backup \
+  -c 1 \
+  -e configs/environments/docker-python3.12-uv.yaml \
+  --pytest-arg "-v" \
+  --pytest-arg "--tb=short"
 ```
 
 ## See Also

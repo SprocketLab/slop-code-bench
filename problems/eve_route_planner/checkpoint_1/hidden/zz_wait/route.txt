@@ -1,3 +1,0 @@
-START: Turnur
-GO: Turnur (0.4) -> Zarzakh (-1.0) -> Alsavoinon (0.3)
-DONE: 08:03

@@ -6,6 +6,7 @@ import traceback
 from collections import defaultdict
 from collections.abc import Generator
 from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -19,7 +20,6 @@ from rich.progress import TextColumn
 from rich.progress import TimeElapsedColumn
 from rich.progress import TimeRemainingColumn
 
-from slop_code import evaluation
 from slop_code import logging as slop_logging
 from slop_code.common import SNAPSHOT_DIR_NAME
 from slop_code.entrypoints.evaluation.utils import gather_checkpoint_directories
@@ -27,6 +27,7 @@ from slop_code.entrypoints.evaluation.utils import maybe_update_problem_report
 from slop_code.evaluation import CheckpointConfig
 from slop_code.evaluation import CorrectnessResults
 from slop_code.evaluation import ProblemConfig
+from slop_code.evaluation.pytest_runner import run_checkpoint_pytest
 from slop_code.execution import EnvironmentSpec
 from slop_code.logging import get_logger
 from slop_code.metrics import RUBRIC_GRADES_SAVENAME
@@ -102,7 +103,7 @@ def evaluate_checkpoint(
         problem=problem.name,
     )
 
-    result = evaluation.run_checkpoint(
+    result = run_checkpoint_pytest(
         submission_path=snapshot,
         problem=problem,
         checkpoint=checkpoint,
@@ -394,9 +395,11 @@ def evaluate(
             enabled=live_progress,
             console=console,
         ) as bar:
-            for i, future in enumerate(futures, start=1):
+            completed = 0
+            for future in as_completed(futures):
                 eval_result = future.result()
-                bar.update(i)
+                completed += 1
+                bar.update(completed)
 
                 if not eval_result.success:
                     logger.error(

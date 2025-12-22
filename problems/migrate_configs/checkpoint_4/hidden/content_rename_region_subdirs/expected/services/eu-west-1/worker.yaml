@@ -1,5 +1,0 @@
-service:
-  name: worker
-aws:
-  region: eu-west-1
-environment: production

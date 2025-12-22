@@ -83,6 +83,7 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "pytest>=8.4.1",
+    "pytest-json-ctrf>=0.1.0",
     "watchdog>=6.0.0",
     "isort",
     "ruff>=0.12.7",
@@ -103,9 +104,12 @@ packages = ["src/slop_code"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--ignore=src --ignore=data --ignore=scratch "
+addopts = "--ignore=src --ignore=data --ignore=scratch --ignore=tests/evaluation/fixtures --ignore=tests/agent_runner/resources/"
 testpaths = [
     "tests"
+]
+norecursedirs = [
+    "tests/agent_runner/resources/*/tests",
 ]
 
 [tool.ruff]

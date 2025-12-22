@@ -1,2 +1,0 @@
-{"event": "file_updated", "file": "services/hosts.json", "rules_applied": ["normalize_service_hosts"]}
-{"event": "file_updated", "file": "services/ports.yaml", "rules_applied": ["normalize_service_hosts"]}

@@ -1,6 +1,0 @@
-{"event": "operation_applied", "type": "drop_foreign_key", "table": "posts", "name": "fk_posts_user_id", "version": 2}
-{"event": "operation_applied", "type": "drop_column", "table": "posts", "column": "user_id", "version": 2}
-{"event": "operation_applied", "type": "add_column", "table": "posts", "column": "author_id", "version": 2}
-{"event": "operation_applied", "type": "migrate_column_data", "table": "posts", "from_column": "id", "to_column": "author_id", "version": 2}
-{"event": "operation_applied", "type": "add_foreign_key", "table": "posts", "name": "fk_posts_author", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 5}

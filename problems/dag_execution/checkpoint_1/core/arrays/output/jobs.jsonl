@@ -1,3 +1,0 @@
-{"job_id": 2, "task": "CreateFileENV", "params": {}, "stdout": "", "stderr": "", "timed_out": false, "success": {"exists": true}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.017206237000209512}
-{"job_id": 3, "task": "PrintInt", "params": {"num": 5}, "stdout": "5\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.01714709599946218}
-{"job_id": 1, "task": "main_but_not", "params": {"arr": [1, 2, 3, 4, 5]}, "stdout": "Finished.\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": null, "duration": 0.051712022999709006}

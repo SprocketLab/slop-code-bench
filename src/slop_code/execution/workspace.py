@@ -20,6 +20,7 @@ from collections.abc import Callable
 from collections.abc import Sequence
 from pathlib import Path
 
+from slop_code.common import WORKSPACE_TEST_DIR
 from slop_code.execution.assets import ResolvedStaticAsset
 from slop_code.execution.models import ExecutionError
 from slop_code.execution.snapshot import Snapshot
@@ -203,6 +204,61 @@ class Workspace:
             count=asset_count,
             verbose=True,
         )
+
+    def materialize_static_assets_for_tests(self) -> dict[str, Path]:
+        """Materialize static assets into tests/assets/ directory for test access.
+
+        Copies static assets to tests/assets/{asset_name}/ so tests can access
+        them via simple relative paths or environment variables.
+
+        Returns:
+            Dict mapping asset names to their materialized paths within workspace.
+            Empty dict if no static assets configured.
+
+        Raises:
+            WorkspaceError: If workspace not prepared
+        """
+        if self._temp_dir is None:
+            raise WorkspaceError("Workspace not prepared")
+
+        if not self._static_assets:
+            logger.debug("No static assets to materialize for tests")
+            return {}
+
+        assets_dir = self.working_dir / WORKSPACE_TEST_DIR / "assets"
+        assets_dir.mkdir(parents=True, exist_ok=True)
+
+        materialized: dict[str, Path] = {}
+        for name, asset in self._static_assets.items():
+            target_path = assets_dir / name
+
+            if asset.absolute_path.is_dir():
+                logger.debug(
+                    "Copying directory asset for tests",
+                    name=name,
+                    source=str(asset.absolute_path),
+                    target=str(target_path),
+                    verbose=True,
+                )
+                shutil.copytree(asset.absolute_path, target_path)
+            else:
+                logger.debug(
+                    "Copying file asset for tests",
+                    name=name,
+                    source=str(asset.absolute_path),
+                    target=str(target_path),
+                    verbose=True,
+                )
+                shutil.copy(asset.absolute_path, target_path)
+
+            materialized[name] = target_path
+
+        logger.info(
+            "Materialized static assets for tests",
+            count=len(materialized),
+            assets=list(materialized.keys()),
+        )
+        return materialized
 
     def _prepare_initial_snapshot(self) -> None:
         """Prepare the workspace from the initial snapshot."""

@@ -1,6 +1,6 @@
 ---
 version: 1.0
-last_updated: 2025-12-17
+last_updated: 2025-12-22
 ---
 
 # utils
@@ -28,12 +28,44 @@ Regenerate `diff.json` files for checkpoint snapshots.
 ### Usage
 
 ```bash
-slop-code utils repopulate-diffs [OPTIONS]
+slop-code utils repopulate-diffs [OPTIONS] RUN_DIR
 ```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `RUN_DIR` | Yes | Path to the run directory |
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-p, --problem-name` | string | - | Filter to a specific problem name |
 
 ### Behavior
 
-Scans run directories and regenerates diff files that track changes between checkpoints.
+For each checkpoint, generates a diff comparing to the previous checkpoint's
+snapshot directory. The first checkpoint is compared against an empty snapshot
+(all files marked as created).
+
+### Output
+
+Displays a summary table with:
+- Problem name
+- Checkpoint name
+- Files created/modified/deleted
+- Lines added/removed
+
+### Examples
+
+```bash
+# Regenerate diffs for all problems in a run
+slop-code utils repopulate-diffs outputs/my_run
+
+# Regenerate diffs for a specific problem
+slop-code utils repopulate-diffs outputs/my_run -p file_backup
+```
 
 ---
 
@@ -97,12 +129,43 @@ Backfill category information into existing `rubric.jsonl` files.
 ### Usage
 
 ```bash
-slop-code utils backfill-categories [OPTIONS]
+slop-code utils backfill-categories [OPTIONS] RESULTS_DIR
 ```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `RESULTS_DIR` | Yes | Path to run directory or collection directory |
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-r, --rubric` | path | **required** | Path to rubric JSONL file with category definitions |
+| `-t, --type` | enum | `run` | Path type: `run` or `collection` |
 
 ### Behavior
 
-Updates rubric files with category and subcategory metadata from rule definitions.
+Reads rubric definitions from the specified JSONL file and adds the `category`
+field to each grade in `rubric.jsonl` files based on matching the `criteria`
+field to the rubric item `name`. Grades that already have a `category` field
+are not modified.
+
+### Examples
+
+```bash
+# Backfill categories for a single run
+slop-code utils backfill-categories \
+  --rubric configs/rubrics/llm_judge.jsonl \
+  outputs/my_run
+
+# Backfill categories for a collection of runs
+slop-code utils backfill-categories \
+  --rubric configs/rubrics/llm_judge.jsonl \
+  --type collection \
+  outputs/
+```
 
 ---
 
@@ -113,12 +176,40 @@ Compress agent artifact directories into tar.gz files.
 ### Usage
 
 ```bash
-slop-code utils compress-artifacts [OPTIONS]
+slop-code utils compress-artifacts [OPTIONS] RESULTS_DIR
 ```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `RESULTS_DIR` | Yes | Path to results directory or collection directory |
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-t, --type` | enum | `run` | Path type: `run` or `collection` |
+| `-n, --dry-run` | flag | false | Show what would be compressed without doing it |
 
 ### Behavior
 
-Finds agent artifact directories and compresses them to save disk space while preserving data.
+Finds all uncompressed agent directories (named `agent`) within checkpoint
+directories, compresses them into `agent.tar.gz`, and removes the original
+directories.
+
+### Examples
+
+```bash
+# Compress artifacts in a single run
+slop-code utils compress-artifacts outputs/my_run
+
+# Compress artifacts across all runs in a collection
+slop-code utils compress-artifacts outputs --type collection
+
+# Preview what would be compressed
+slop-code utils compress-artifacts outputs/my_run --dry-run
+```
 
 ---
 
@@ -185,12 +276,52 @@ Inject canary strings into problem files for training data detection.
 ### Usage
 
 ```bash
-slop-code utils inject-canary [OPTIONS]
+slop-code utils inject-canary [OPTIONS] CANARY GUID
 ```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `CANARY` | Yes | The canary string to inject |
+| `GUID` | Yes | Unique identifier for this canary |
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-n, --dry-run` | flag | false | Preview changes without modifying files |
+| `-p, --problem` | string | - | Specific problem name(s) to process (repeatable) |
 
 ### Behavior
 
-Injects unique identifiable strings into problem specifications to detect if they appear in model training data.
+Injects tracking canary strings into eligible files within the problems
+directory. Useful for detecting if problem content appears in training data.
+
+**File types and injection format:**
+- Python (`.py`): Triple-quoted docstring after `__future__` imports
+- YAML (`.yaml`): Comment as first line
+- Markdown (`.md`): HTML comment as first line
+- Shell (`.sh`): Comment after shebang
+- `requirements.txt`: Comment as first line
+
+**Exclusions:**
+- Test case directories (`core/`, `hidden/`, `error/`, etc.)
+- Data files (`case.yaml`, `expected.yaml`, `META.yaml`)
+- Static asset directories
+
+### Examples
+
+```bash
+# Preview what would be modified
+slop-code utils inject-canary "CANARY_STRING_123" "abc-123-guid" --dry-run
+
+# Inject canary into all problems
+slop-code utils inject-canary "CANARY_STRING_123" "abc-123-guid"
+
+# Inject into specific problems only
+slop-code utils inject-canary "CANARY_STRING_123" "abc-123-guid" -p file_backup -p etl_pipeline
+```
 
 ---
 
@@ -204,9 +335,46 @@ Render prompt templates for problems to an output directory.
 slop-code utils render-prompts [OPTIONS]
 ```
 
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-p, --prompt` | string | **required** | Prompt template name or path |
+| `-e, --environment` | string | **required** | Environment config name or path |
+| `-o, --output-dir` | path | **required** | Output directory for rendered prompts |
+| `--problem` | string | - | Problem name(s) to render (repeatable) |
+
 ### Behavior
 
-Takes Jinja2 prompt templates and renders them with problem-specific variables, useful for reviewing what agents actually see.
+For each problem, iterates through all checkpoints and renders the prompt
+template with the checkpoint's spec text and appropriate context.
+
+**Output structure:**
+```
+output_dir/
+    problem_name/
+        part_1.md
+        part_2.md
+        ...
+```
+
+### Examples
+
+```bash
+# Render prompts for all problems
+slop-code utils render-prompts \
+  -p just-solve \
+  -e docker-python3.12-uv \
+  -o outputs/rendered_prompts
+
+# Render for specific problems
+slop-code utils render-prompts \
+  -p just-solve \
+  -e docker-python3.12-uv \
+  -o outputs/rendered_prompts \
+  --problem file_backup \
+  --problem etl_pipeline
+```
 
 ## See Also
 

@@ -1,0 +1,1098 @@
+{
+  "shared_configs": {
+    "README.txt": "Shared configuration fixture for migrate_configs checkpoint tests.\n",
+    "app.json": "{\n  \"name\": \"migrate-demo\",\n  \"environment\": \"development\",\n  \"region\": \"us-east-1\",\n  \"db\": {\n    \"hostname\": \"localhost\",\n    \"port\": 5432\n  },\n  \"metadata\": {\n    \"owner\": \"core-team\",\n    \"region\": \"us-east-1\",\n    \"tier\": \"beta\"\n  },\n  \"features\": {\n    \"beta\": false\n  }\n}\n",
+    "features/rollout.yaml": "features:\n  flags:\n    rollout: 0.25\n    experimental: false\n  beta:\n    enabled: false\n    percentage: 0\nlogging:\n  level: warn\n  handlers:\n    - console\ncache:\n  enabled: false\n  ttl: 120\n",
+    "infra/config.toml": "[server]\ntimeout = 30\nworkers = 4\nmode = \"development\"\n",
+    "infra/settings.ini": "[server]\ntimeout = 30\nworkers = 4\nmode = development\n",
+    "logging/config.yaml": "app: migrate-configs\nlogging:\n  level: debug\n  format: json\ncache:\n  ttl: 300\n",
+    "services/api.yaml": "service: api\nregion: us-east-1\nmetadata:\n  endpoint: https://api.dev.internal\n  hostname: api-dev.internal\nlogging:\n  level: debug\n  format: json\n  handlers:\n    - console\n    - file\n",
+    "services/cache.yaml": "service: cache\nmetadata:\n  hostname: cache.dev.internal\n  port: 6379\nurls:\n  default: https://cache.dev.internal\n  metrics: https://cache.dev.internal/metrics\n"
+  },
+  "cases": {
+    "core": {
+      "basic_replace_and_rename": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "prod_env": {
+              "type": "replace_value",
+              "key": "environment",
+              "value": "production"
+            },
+            "rename_db_key": {
+              "type": "rename_key",
+              "old_key": "db.hostname",
+              "new_key": "db.host"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.json",
+              "rules_applied": [
+                "prod_env",
+                "rename_db_key"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.json": "{\n  \"name\": \"migrate-demo\",\n  \"environment\": \"production\",\n  \"region\": \"us-east-1\",\n  \"db\": {\n    \"host\": \"localhost\",\n    \"port\": 5432\n  },\n  \"metadata\": {\n    \"owner\": \"core-team\",\n    \"region\": \"us-east-1\",\n    \"tier\": \"beta\"\n  },\n  \"features\": {\n    \"beta\": false\n  }\n}\n"
+        }
+      },
+      "deep_merge_yaml": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "add_logging_config": {
+              "type": "merge_data",
+              "glob": "**/*",
+              "data": {
+                "logging": {
+                  "level": "info",
+                  "handlers": [
+                    "console",
+                    "file"
+                  ]
+                },
+                "cache": {
+                  "enabled": true
+                }
+              }
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.json",
+              "rules_applied": [
+                "add_logging_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "features/rollout.yaml",
+              "rules_applied": [
+                "add_logging_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/config.toml",
+              "rules_applied": [
+                "add_logging_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/settings.ini",
+              "rules_applied": [
+                "add_logging_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "logging/config.yaml",
+              "rules_applied": [
+                "add_logging_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/api.yaml",
+              "rules_applied": [
+                "add_logging_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/cache.yaml",
+              "rules_applied": [
+                "add_logging_config"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.json": "{\n  \"name\": \"migrate-demo\",\n  \"environment\": \"development\",\n  \"region\": \"us-east-1\",\n  \"db\": {\n    \"hostname\": \"localhost\",\n    \"port\": 5432\n  },\n  \"metadata\": {\n    \"owner\": \"core-team\",\n    \"region\": \"us-east-1\",\n    \"tier\": \"beta\"\n  },\n  \"features\": {\n    \"beta\": false\n  },\n  \"logging\": {\n    \"level\": \"info\",\n    \"handlers\": [\n      \"console\",\n      \"file\"\n    ]\n  },\n  \"cache\": {\n    \"enabled\": true\n  }\n}\n",
+          "features/rollout.yaml": "features:\n  flags:\n    rollout: 0.25\n    experimental: false\n  beta:\n    enabled: false\n    percentage: 0\nlogging:\n  level: info\n  handlers:\n  - console\n  - file\ncache:\n  enabled: true\n  ttl: 120\n",
+          "infra/config.toml": "[server]\ntimeout = 30\nworkers = 4\nmode = \"development\"\n\n[logging]\nlevel = \"info\"\nhandlers = [\n    \"console\",\n    \"file\",\n]\n\n[cache]\nenabled = true\n",
+          "infra/settings.ini": "[server]\ntimeout = 30\nworkers = 4\nmode = development\n\n[logging]\nlevel = info\nhandlers = ['console', 'file']\n\n[cache]\nenabled = true\n\n",
+          "logging/config.yaml": "app: migrate-configs\nlogging:\n  level: info\n  format: json\n  handlers:\n  - console\n  - file\ncache:\n  ttl: 300\n  enabled: true\n",
+          "services/api.yaml": "service: api\nregion: us-east-1\nmetadata:\n  endpoint: https://api.dev.internal\n  hostname: api-dev.internal\nlogging:\n  level: info\n  format: json\n  handlers:\n  - console\n  - file\ncache:\n  enabled: true\n",
+          "services/cache.yaml": "service: cache\nmetadata:\n  hostname: cache.dev.internal\n  port: 6379\nurls:\n  default: https://cache.dev.internal\n  metrics: https://cache.dev.internal/metrics\nlogging:\n  level: info\n  handlers:\n  - console\n  - file\ncache:\n  enabled: true\n"
+        }
+      },
+      "multi_format_timeout": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "increase_timeout": {
+              "type": "replace_value",
+              "key": "server.timeout",
+              "value": 60
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "infra/config.toml",
+              "rules_applied": [
+                "increase_timeout"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/settings.ini",
+              "rules_applied": [
+                "increase_timeout"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "infra/config.toml": "[server]\ntimeout = 60\nworkers = 4\nmode = \"development\"\n",
+          "infra/settings.ini": "[server]\ntimeout = 60\nworkers = 4\nmode = development\n\n"
+        }
+      },
+      "recursive_multi_file": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "update_region": {
+              "type": "replace_value",
+              "key": "region",
+              "value": "us-west-2"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.json",
+              "rules_applied": [
+                "update_region"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/api.yaml",
+              "rules_applied": [
+                "update_region"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.json": "{\n  \"name\": \"migrate-demo\",\n  \"environment\": \"development\",\n  \"region\": \"us-west-2\",\n  \"db\": {\n    \"hostname\": \"localhost\",\n    \"port\": 5432\n  },\n  \"metadata\": {\n    \"owner\": \"core-team\",\n    \"region\": \"us-east-1\",\n    \"tier\": \"beta\"\n  },\n  \"features\": {\n    \"beta\": false\n  }\n}\n",
+          "services/api.yaml": "service: api\nregion: us-west-2\nmetadata:\n  endpoint: https://api.dev.internal\n  hostname: api-dev.internal\nlogging:\n  level: debug\n  format: json\n  handlers:\n  - console\n  - file\n"
+        }
+      }
+    },
+    "hidden": {
+      "array_merge_behavior": {
+        "data": {
+          "rules": {
+            "merge_arrays_and_objects": {
+              "type": "merge_data",
+              "glob": "**/*",
+              "data": {
+                "services": [
+                  "api",
+                  "worker",
+                  "scheduler"
+                ],
+                "features": {
+                  "flags": [
+                    "new_ui",
+                    "analytics"
+                  ],
+                  "enabled": true
+                },
+                "ports": [
+                  8080,
+                  9090
+                ],
+                "metadata": {
+                  "tags": [
+                    "production",
+                    "critical"
+                  ],
+                  "owners": [
+                    "team-a",
+                    "team-b"
+                  ]
+                }
+              }
+            }
+          },
+          "arguments": "rules.json configs",
+          "files": {
+            "configs/app.yaml": "services:\n  - web\n  - db\nfeatures:\n  flags:\n    - beta\n  experimental: true\nports:\n  - 3000\nmetadata:\n  tags:\n    - staging\n  version: 1.0.0"
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.yaml",
+              "rules_applied": [
+                "merge_arrays_and_objects"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.yaml": "services:\n- api\n- worker\n- scheduler\nfeatures:\n  flags:\n  - new_ui\n  - analytics\n  experimental: true\n  enabled: true\nports:\n- 8080\n- 9090\nmetadata:\n  tags:\n  - production\n  - critical\n  version: 1.0.0\n  owners:\n  - team-a\n  - team-b\n"
+        }
+      },
+      "deep_merge_nested": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "expand_features": {
+              "type": "merge_data",
+              "glob": "**/*",
+              "data": {
+                "features": {
+                  "flags": {
+                    "rollout": 0.75,
+                    "experimental": true,
+                    "canary": true
+                  },
+                  "beta": {
+                    "enabled": true,
+                    "percentage": 50
+                  }
+                },
+                "logging": {
+                  "level": "info",
+                  "handlers": [
+                    "console",
+                    "metrics"
+                  ]
+                },
+                "cache": {
+                  "enabled": true,
+                  "ttl": 240
+                }
+              }
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.json",
+              "rules_applied": [
+                "expand_features"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "features/rollout.yaml",
+              "rules_applied": [
+                "expand_features"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/config.toml",
+              "rules_applied": [
+                "expand_features"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/settings.ini",
+              "rules_applied": [
+                "expand_features"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "logging/config.yaml",
+              "rules_applied": [
+                "expand_features"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/api.yaml",
+              "rules_applied": [
+                "expand_features"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/cache.yaml",
+              "rules_applied": [
+                "expand_features"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.json": "{\n  \"name\": \"migrate-demo\",\n  \"environment\": \"development\",\n  \"region\": \"us-east-1\",\n  \"db\": {\n    \"hostname\": \"localhost\",\n    \"port\": 5432\n  },\n  \"metadata\": {\n    \"owner\": \"core-team\",\n    \"region\": \"us-east-1\",\n    \"tier\": \"beta\"\n  },\n  \"features\": {\n    \"beta\": {\n      \"enabled\": true,\n      \"percentage\": 50\n    },\n    \"flags\": {\n      \"rollout\": 0.75,\n      \"experimental\": true,\n      \"canary\": true\n    }\n  },\n  \"logging\": {\n    \"level\": \"info\",\n    \"handlers\": [\n      \"console\",\n      \"metrics\"\n    ]\n  },\n  \"cache\": {\n    \"enabled\": true,\n    \"ttl\": 240\n  }\n}\n",
+          "features/rollout.yaml": "cache:\n  enabled: true\n  ttl: 240\nfeatures:\n  beta:\n    enabled: true\n    percentage: 50\n  flags:\n    experimental: true\n    rollout: 0.75\n    canary: true\nlogging:\n  handlers:\n  - console\n  - metrics\n  level: info\n",
+          "infra/config.toml": "[server]\ntimeout = 30\nworkers = 4\nmode = \"development\"\n\n[features]\n[features.flags]\nrollout = 0.75\nexperimental = true\ncanary = true\n\n[features.beta]\nenabled = true\npercentage = 50\n\n[logging]\nlevel = \"info\"\nhandlers = [\"console\", \"metrics\"]\n\n[cache]\nenabled = true\nttl = 240\n",
+          "infra/settings.ini": "[server]\ntimeout = 30\nworkers = 4\nmode = development\n\n[features]\nflags = {'rollout': 0.75, 'experimental': True, 'canary': True}\nbeta = {'enabled': True, 'percentage': 50}\n\n[logging]\nlevel = info\nhandlers = ['console', 'metrics']\n\n[cache]\nenabled = true\nttl = 240\n\n",
+          "logging/config.yaml": "app: migrate-configs\ncache:\n  ttl: 240\n  enabled: true\nlogging:\n  format: json\n  level: info\n  handlers:\n  - console\n  - metrics\nfeatures:\n  flags:\n    rollout: 0.75\n    experimental: true\n    canary: true\n  beta:\n    enabled: true\n    percentage: 50\n",
+          "services/api.yaml": "logging:\n  format: json\n  handlers:\n  - console\n  - metrics\n  level: info\nmetadata:\n  endpoint: https://api.dev.internal\n  hostname: api-dev.internal\nregion: us-east-1\nservice: api\nfeatures:\n  flags:\n    rollout: 0.75\n    experimental: true\n    canary: true\n  beta:\n    enabled: true\n    percentage: 50\ncache:\n  enabled: true\n  ttl: 240\n",
+          "services/cache.yaml": "metadata:\n  hostname: cache.dev.internal\n  port: 6379\nservice: cache\nurls:\n  default: https://cache.dev.internal\n  metrics: https://cache.dev.internal/metrics\nfeatures:\n  flags:\n    rollout: 0.75\n    experimental: true\n    canary: true\n  beta:\n    enabled: true\n    percentage: 50\nlogging:\n  level: info\n  handlers:\n  - console\n  - metrics\ncache:\n  enabled: true\n  ttl: 240\n"
+        }
+      },
+      "deep_rename_key": {
+        "data": {
+          "rules": {
+            "rename_deep_connection": {
+              "type": "rename_key",
+              "old_key": "database.connection.pool.max_size",
+              "new_key": "database.connection.pool.maximum"
+            },
+            "rename_nested_timeout": {
+              "type": "rename_key",
+              "old_key": "services.api.settings.timeout_ms",
+              "new_key": "services.api.settings.timeout_milliseconds"
+            },
+            "rename_deeply_nested": {
+              "type": "rename_key",
+              "old_key": "app.features.beta.users.allowed_list",
+              "new_key": "app.features.beta.users.whitelist"
+            }
+          },
+          "files": {
+            "configs/database.json": "{\"database\": {\"connection\": {\"host\": \"localhost\", \"pool\": {\"max_size\": 100, \"min_size\": 10}}}}",
+            "configs/services.toml": "[services.api.settings]\ntimeout_ms = 5000\nretry_count = 3\n\n[services.worker.settings]\ntimeout_ms = 10000",
+            "configs/features.yaml": "app:\n  features:\n    beta:\n      enabled: true\n      users:\n        allowed_list:\n          - user1\n          - user2\n        max_count: 100"
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "database.json",
+              "rules_applied": [
+                "rename_deep_connection"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "features.yaml",
+              "rules_applied": [
+                "rename_deeply_nested"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services.toml",
+              "rules_applied": [
+                "rename_nested_timeout"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "database.json": "{\n  \"database\": {\n    \"connection\": {\n      \"host\": \"localhost\",\n      \"pool\": {\n        \"maximum\": 100,\n        \"min_size\": 10\n      }\n    }\n  }\n}\n",
+          "features.yaml": "app:\n  features:\n    beta:\n      enabled: true\n      users:\n        whitelist:\n        - user1\n        - user2\n        max_count: 100\n",
+          "services.toml": "[services.api.settings]\ntimeout_milliseconds = 5000\nretry_count = 3\n\n[services.worker.settings]\ntimeout_ms = 10000\n"
+        }
+      },
+      "empty_config_files": {
+        "data": {
+          "rules": {
+            "add_initial_config": {
+              "type": "merge_data",
+              "glob": "**/*",
+              "data": {
+                "app": {
+                  "name": "myapp",
+                  "version": "1.0.0"
+                },
+                "server": {
+                  "port": 8080,
+                  "host": "0.0.0.0"
+                }
+              }
+            },
+            "replace_nonexistent": {
+              "type": "replace_value",
+              "key": "missing.key",
+              "value": "should_not_appear"
+            }
+          },
+          "files": {
+            "configs/empty.json": "{}",
+            "configs/empty.yaml": "---",
+            "configs/empty.toml": "",
+            "configs/empty.ini": "",
+            "configs/partial.json": "{\"existing\": \"value\"}"
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "empty.ini",
+              "rules_applied": [
+                "add_initial_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "empty.json",
+              "rules_applied": [
+                "add_initial_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "empty.toml",
+              "rules_applied": [
+                "add_initial_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "empty.yaml",
+              "rules_applied": [
+                "add_initial_config"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "partial.json",
+              "rules_applied": [
+                "add_initial_config"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "empty.ini": "[app]\nname = myapp\nversion = 1.0.0\n\n[server]\nport = 8080\nhost = 0.0.0.0\n\n",
+          "empty.json": "{\n  \"app\": {\n    \"name\": \"myapp\",\n    \"version\": \"1.0.0\"\n  },\n  \"server\": {\n    \"port\": 8080,\n    \"host\": \"0.0.0.0\"\n  }\n}\n",
+          "empty.toml": "[app]\nname = \"myapp\"\nversion = \"1.0.0\"\n\n[server]\nport = 8080\nhost = \"0.0.0.0\"\n",
+          "empty.yaml": "app:\n  name: myapp\n  version: 1.0.0\nserver:\n  port: 8080\n  host: 0.0.0.0\n",
+          "partial.json": "{\n  \"existing\": \"value\",\n  \"app\": {\n    \"name\": \"myapp\",\n    \"version\": \"1.0.0\"\n  },\n  \"server\": {\n    \"port\": 8080,\n    \"host\": \"0.0.0.0\"\n  }\n}\n"
+        }
+      },
+      "ignore_unsupported_extensions": {
+        "data": {
+          "rules": {
+            "update_env": {
+              "type": "replace_value",
+              "key": "environment",
+              "value": "production"
+            },
+            "update_version": {
+              "type": "replace_value",
+              "key": "version",
+              "value": "2.0.0"
+            }
+          },
+          "files": {
+            "configs/app.json": "{\"environment\": \"development\", \"version\": \"1.0.0\"}",
+            "configs/settings.yaml": "environment: staging\nversion: 1.5.0",
+            "configs/readme.md": "# Configuration Files\n\nThis directory contains config files.",
+            "configs/script.py": "#!/usr/bin/env python\nprint('Hello World')",
+            "configs/data.txt": "Some plain text data\nenvironment: fake\nversion: 0.0.0",
+            "configs/backup.json.bak": "{\"environment\": \"backup\", \"version\": \"0.9.0\"}",
+            "configs/.hidden.json": "{\"environment\": \"hidden\", \"version\": \"0.1.0\"}"
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": ".hidden.json",
+              "rules_applied": [
+                "update_env",
+                "update_version"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "app.json",
+              "rules_applied": [
+                "update_env",
+                "update_version"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "settings.yaml",
+              "rules_applied": [
+                "update_env",
+                "update_version"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          ".hidden.json": "{\n  \"environment\": \"production\",\n  \"version\": \"2.0.0\"\n}\n",
+          "app.json": "{\n  \"environment\": \"production\",\n  \"version\": \"2.0.0\"\n}\n",
+          "settings.yaml": "environment: production\nversion: 2.0.0\n"
+        }
+      },
+      "scoped_merge_glob": {
+        "data": {
+          "rules": {
+            "add_maintenance": {
+              "type": "merge_data",
+              "glob": "services/**/*.yaml",
+              "data": {
+                "maintenance": {
+                  "window": "sun-0200",
+                  "owner": "ops"
+                }
+              }
+            }
+          },
+          "arguments": "rules.json configs",
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "services/api.yaml",
+              "rules_applied": [
+                "add_maintenance"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/cache.yaml",
+              "rules_applied": [
+                "add_maintenance"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "services/api.yaml": "service: api\nregion: us-east-1\nmetadata:\n  endpoint: https://api.dev.internal\n  hostname: api-dev.internal\nlogging:\n  level: debug\n  format: json\n  handlers:\n  - console\n  - file\nmaintenance:\n  window: sun-0200\n  owner: ops\n",
+          "services/cache.yaml": "service: cache\nmetadata:\n  hostname: cache.dev.internal\n  port: 6379\nurls:\n  default: https://cache.dev.internal\n  metrics: https://cache.dev.internal/metrics\nmaintenance:\n  window: sun-0200\n  owner: ops\n"
+        }
+      },
+      "skip_missing_rule_in_file": {
+        "data": {
+          "rules": {
+            "a_update_region": {
+              "type": "replace_value",
+              "key": "region",
+              "value": "us-central-1"
+            },
+            "b_missing_rename": {
+              "type": "rename_key",
+              "old_key": "metadata.missing",
+              "new_key": "metadata.still_missing"
+            }
+          },
+          "arguments": "rules.json configs",
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.json",
+              "rules_applied": [
+                "a_update_region"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/api.yaml",
+              "rules_applied": [
+                "a_update_region"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.json": "{\n  \"name\": \"migrate-demo\",\n  \"environment\": \"development\",\n  \"region\": \"us-central-1\",\n  \"db\": {\n    \"hostname\": \"localhost\",\n    \"port\": 5432\n  },\n  \"metadata\": {\n    \"owner\": \"core-team\",\n    \"region\": \"us-east-1\",\n    \"tier\": \"beta\"\n  },\n  \"features\": {\n    \"beta\": false\n  }\n}\n",
+          "services/api.yaml": "service: api\nregion: us-central-1\nmetadata:\n  endpoint: https://api.dev.internal\n  hostname: api-dev.internal\nlogging:\n  level: debug\n  format: json\n  handlers:\n  - console\n  - file\n"
+        }
+      },
+      "mixed_formats_and_unsupported": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "add_app_tier": {
+              "type": "replace_value",
+              "key": "metadata.tier",
+              "value": "gold"
+            },
+            "increase_workers": {
+              "type": "replace_value",
+              "key": "server.workers",
+              "value": 8
+            },
+            "update_api_endpoint": {
+              "type": "replace_value",
+              "key": "metadata.endpoint",
+              "value": "https://api.prod.internal"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.json",
+              "rules_applied": [
+                "add_app_tier"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/config.toml",
+              "rules_applied": [
+                "increase_workers"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/settings.ini",
+              "rules_applied": [
+                "increase_workers"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/api.yaml",
+              "rules_applied": [
+                "update_api_endpoint"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.json": "{\n  \"name\": \"migrate-demo\",\n  \"environment\": \"development\",\n  \"region\": \"us-east-1\",\n  \"db\": {\n    \"hostname\": \"localhost\",\n    \"port\": 5432\n  },\n  \"metadata\": {\n    \"owner\": \"core-team\",\n    \"region\": \"us-east-1\",\n    \"tier\": \"gold\"\n  },\n  \"features\": {\n    \"beta\": false\n  }\n}\n",
+          "infra/config.toml": "[server]\ntimeout = 30\nworkers = 8\nmode = \"development\"\n",
+          "infra/settings.ini": "[server]\ntimeout = 30\nworkers = 8\nmode = development\n\n",
+          "services/api.yaml": "service: api\nregion: us-east-1\nmetadata:\n  endpoint: https://api.prod.internal\n  hostname: api-dev.internal\nlogging:\n  level: debug\n  format: json\n  handlers:\n  - console\n  - file\n"
+        }
+      },
+      "multiple_rules_same_key": {
+        "data": {
+          "rules": {
+            "a_rename_first": {
+              "type": "rename_key",
+              "old_key": "config.timeout",
+              "new_key": "config.timeout_seconds"
+            },
+            "b_replace_renamed": {
+              "type": "replace_value",
+              "key": "config.timeout_seconds",
+              "value": 30
+            },
+            "c_merge_config": {
+              "type": "merge_data",
+              "glob": "**/*",
+              "data": {
+                "config": {
+                  "timeout_seconds": 60,
+                  "retry_count": 5
+                }
+              }
+            },
+            "d_replace_again": {
+              "type": "replace_value",
+              "key": "config.timeout_seconds",
+              "value": 120
+            },
+            "e_rename_chain": {
+              "type": "rename_key",
+              "old_key": "config.timeout_seconds",
+              "new_key": "config.max_timeout"
+            },
+            "f_final_replace": {
+              "type": "replace_value",
+              "key": "config.max_timeout",
+              "value": 180
+            }
+          },
+          "files": {
+            "configs/app.json": "{\"config\": {\"timeout\": 10, \"enabled\": true}}"
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.json",
+              "rules_applied": [
+                "a_rename_first",
+                "b_replace_renamed",
+                "c_merge_config",
+                "d_replace_again",
+                "e_rename_chain",
+                "f_final_replace"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.json": "{\n  \"config\": {\n    \"max_timeout\": 180,\n    \"enabled\": true,\n    \"retry_count\": 5\n  }\n}\n"
+        }
+      },
+      "no_change_silence": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "nonexistent_replace": {
+              "type": "replace_value",
+              "key": "security.tls.enabled",
+              "value": true
+            },
+            "nonexistent_rename": {
+              "type": "rename_key",
+              "old_key": "does.not.exist",
+              "new_key": "still.missing"
+            }
+          }
+        },
+        "expected_files": {}
+      },
+      "relative_subdirs": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "adjust_logging_handlers": {
+              "type": "rename_key",
+              "old_key": "logging.handlers",
+              "new_key": "logging.outputs"
+            },
+            "increase_rollout": {
+              "type": "replace_value",
+              "key": "features.flags.rollout",
+              "value": 0.4
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "features/rollout.yaml",
+              "rules_applied": [
+                "adjust_logging_handlers",
+                "increase_rollout"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/api.yaml",
+              "rules_applied": [
+                "adjust_logging_handlers"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "features/rollout.yaml": "features:\n  flags:\n    rollout: 0.4\n    experimental: false\n  beta:\n    enabled: false\n    percentage: 0\nlogging:\n  level: warn\n  outputs:\n  - console\ncache:\n  enabled: false\n  ttl: 120\n",
+          "services/api.yaml": "service: api\nregion: us-east-1\nmetadata:\n  endpoint: https://api.dev.internal\n  hostname: api-dev.internal\nlogging:\n  level: debug\n  format: json\n  outputs:\n  - console\n  - file\n"
+        }
+      },
+      "rule_order_dependency": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "b_update_host_value": {
+              "type": "replace_value",
+              "key": "metadata.host",
+              "value": "cache.prod.internal"
+            },
+            "a_rename_hostname": {
+              "type": "rename_key",
+              "old_key": "metadata.hostname",
+              "new_key": "metadata.host"
+            },
+            "c_update_metrics": {
+              "type": "replace_value",
+              "key": "urls.metrics",
+              "value": "https://cache.prod.internal/metrics"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "services/api.yaml",
+              "rules_applied": [
+                "a_rename_hostname",
+                "b_update_host_value"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/cache.yaml",
+              "rules_applied": [
+                "a_rename_hostname",
+                "b_update_host_value",
+                "c_update_metrics"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "services/api.yaml": "logging:\n  format: json\n  handlers:\n  - console\n  - file\n  level: debug\nmetadata:\n  endpoint: https://api.dev.internal\n  host: cache.prod.internal\nregion: us-east-1\nservice: api\n",
+          "services/cache.yaml": "metadata:\n  port: 6379\n  host: cache.prod.internal\nservice: cache\nurls:\n  default: https://cache.dev.internal\n  metrics: https://cache.prod.internal/metrics\n"
+        }
+      },
+      "type_conversion_replace": {
+        "data": {
+          "rules": {
+            "convert_string_to_number": {
+              "type": "replace_value",
+              "key": "settings.max_retries",
+              "value": 5
+            },
+            "convert_number_to_boolean": {
+              "type": "replace_value",
+              "key": "features.enabled",
+              "value": true
+            },
+            "convert_string_to_array": {
+              "type": "replace_value",
+              "key": "allowed_origins",
+              "value": [
+                "http://localhost",
+                "https://example.com"
+              ]
+            },
+            "convert_to_object": {
+              "type": "replace_value",
+              "key": "database",
+              "value": {
+                "host": "db.example.com",
+                "port": 5432,
+                "ssl": true
+              }
+            },
+            "convert_to_null": {
+              "type": "replace_value",
+              "key": "deprecated_feature",
+              "value": null
+            },
+            "convert_boolean_to_string": {
+              "type": "replace_value",
+              "key": "log_level",
+              "value": "debug"
+            }
+          },
+          "files": {
+            "configs/app.json": "{\"settings\": {\"max_retries\": \"3\"}, \"features\": {\"enabled\": 1}, \"allowed_origins\": \"*\", \"database\": \"localhost\", \"deprecated_feature\": {\"old\": true}, \"log_level\": false}",
+            "configs/service.yaml": "settings:\n  max_retries: \"3\"\nfeatures:\n  enabled: 0\nallowed_origins: \"*\"\ndatabase: localhost:5432\ndeprecated_feature:\n  legacy: true\nlog_level: false"
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.json",
+              "rules_applied": [
+                "convert_boolean_to_string",
+                "convert_number_to_boolean",
+                "convert_string_to_array",
+                "convert_string_to_number",
+                "convert_to_null",
+                "convert_to_object"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "service.yaml",
+              "rules_applied": [
+                "convert_boolean_to_string",
+                "convert_number_to_boolean",
+                "convert_string_to_array",
+                "convert_string_to_number",
+                "convert_to_null",
+                "convert_to_object"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.json": "{\n  \"settings\": {\n    \"max_retries\": 5\n  },\n  \"features\": {\n    \"enabled\": true\n  },\n  \"allowed_origins\": [\n    \"http://localhost\",\n    \"https://example.com\"\n  ],\n  \"database\": {\n    \"host\": \"db.example.com\",\n    \"port\": 5432,\n    \"ssl\": true\n  },\n  \"deprecated_feature\": null,\n  \"log_level\": \"debug\"\n}\n",
+          "service.yaml": "settings:\n  max_retries: 5\nfeatures:\n  enabled: true\nallowed_origins:\n- http://localhost\n- https://example.com\ndatabase:\n  host: db.example.com\n  port: 5432\n  ssl: true\ndeprecated_feature: null\nlog_level: debug\n"
+        }
+      },
+      "unicode_special_chars": {
+        "data": {
+          "rules": {
+            "replace_unicode_value": {
+              "type": "replace_value",
+              "key": "greeting",
+              "value": "Hello \u4e16\u754c! \ud83c\udf0d"
+            },
+            "replace_in_unicode_key": {
+              "type": "replace_value",
+              "key": "localization.\u65e5\u672c\u8a9e",
+              "value": "\u3053\u3093\u306b\u3061\u306f"
+            },
+            "rename_unicode": {
+              "type": "rename_key",
+              "old_key": "messages.welcome_text",
+              "new_key": "messages.\u6b61\u8fce\u8a0a\u606f"
+            },
+            "merge_special_chars": {
+              "type": "merge_data",
+              "glob": "**/*",
+              "data": {
+                "symbols": {
+                  "currency": "\u20ac",
+                  "math": "\u2211\u220f\u222b",
+                  "emoji": "\ud83d\ude00\ud83c\udf89\ud83d\ude80"
+                },
+                "languages": {
+                  "\u4e2d\u6587": "Chinese",
+                  "\u0420\u0443\u0441\u0441\u043a\u0438\u0439": "Russian",
+                  "\u0627\u0644\u0639\u0631\u0628\u064a\u0629": "Arabic"
+                }
+              }
+            }
+          },
+          "files": {
+            "configs/i18n.json": "{\"greeting\": \"Hello\", \"localization\": {\"\u65e5\u672c\u8a9e\": \"Japanese\", \"English\": \"English\"}, \"messages\": {\"welcome_text\": \"Welcome\"}}",
+            "configs/unicode.yaml": "greeting: Hello\nlocalization:\n  \u65e5\u672c\u8a9e: Japanese\n  English: English\nmessages:\n  welcome_text: Welcome"
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "i18n.json",
+              "rules_applied": [
+                "merge_special_chars",
+                "rename_unicode",
+                "replace_in_unicode_key",
+                "replace_unicode_value"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "unicode.yaml",
+              "rules_applied": [
+                "merge_special_chars",
+                "rename_unicode",
+                "replace_in_unicode_key",
+                "replace_unicode_value"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "i18n.json": "{\n  \"greeting\": \"Hello \\u4e16\\u754c! \\ud83c\\udf0d\",\n  \"localization\": {\n    \"\\u65e5\\u672c\\u8a9e\": \"\\u3053\\u3093\\u306b\\u3061\\u306f\",\n    \"English\": \"English\"\n  },\n  \"messages\": {\n    \"\\u6b61\\u8fce\\u8a0a\\u606f\": \"Welcome\"\n  },\n  \"symbols\": {\n    \"currency\": \"\\u20ac\",\n    \"math\": \"\\u2211\\u220f\\u222b\",\n    \"emoji\": \"\\ud83d\\ude00\\ud83c\\udf89\\ud83d\\ude80\"\n  },\n  \"languages\": {\n    \"\\u4e2d\\u6587\": \"Chinese\",\n    \"\\u0420\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439\": \"Russian\",\n    \"\\u0627\\u0644\\u0639\\u0631\\u0628\\u064a\\u0629\": \"Arabic\"\n  }\n}\n",
+          "unicode.yaml": "greeting: Hello \u4e16\u754c! \ud83c\udf0d\nlocalization:\n  \u65e5\u672c\u8a9e: \u3053\u3093\u306b\u3061\u306f\n  English: English\nmessages:\n  \u6b61\u8fce\u8a0a\u606f: Welcome\nsymbols:\n  currency: \u20ac\n  math: \u2211\u220f\u222b\n  emoji: \ud83d\ude00\ud83c\udf89\ud83d\ude80\nlanguages:\n  \u4e2d\u6587: Chinese\n  \u0420\u0443\u0441\u0441\u043a\u0438\u0439: Russian\n  \u0627\u0644\u0639\u0631\u0628\u064a\u0629: Arabic\n"
+        }
+      },
+      "very_deep_nesting": {
+        "data": {
+          "rules": {
+            "replace_deep_value": {
+              "type": "replace_value",
+              "key": "level1.level2.level3.level4.level5.level6.value",
+              "value": "updated_deep_value"
+            },
+            "rename_deep_key": {
+              "type": "rename_key",
+              "old_key": "system.services.api.handlers.auth.middleware.logging.enabled",
+              "new_key": "system.services.api.handlers.auth.middleware.logging.active"
+            },
+            "merge_deep_structure": {
+              "type": "merge_data",
+              "glob": "**/*",
+              "data": {
+                "app": {
+                  "modules": {
+                    "core": {
+                      "components": {
+                        "database": {
+                          "connections": {
+                            "primary": {
+                              "pool": {
+                                "size": 50
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "files": {
+            "configs/deep.json": "{\"level1\": {\"level2\": {\"level3\": {\"level4\": {\"level5\": {\"level6\": {\"value\": \"original\", \"other\": \"data\"}}}}}, \"system\": {\"services\": {\"api\": {\"handlers\": {\"auth\": {\"middleware\": {\"logging\": {\"enabled\": true, \"level\": \"debug\"}}}}}}}}}",
+            "configs/nested.yaml": "level1:\n  level2:\n    level3:\n      level4:\n        level5:\n          level6:\n            value: original\n            other: data\nsystem:\n  services:\n    api:\n      handlers:\n        auth:\n          middleware:\n            logging:\n              enabled: true\n              level: debug\napp:\n  modules:\n    core:\n      components:\n        database:\n          connections:\n            primary:\n              host: localhost"
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "deep.json",
+              "rules_applied": [
+                "merge_deep_structure",
+                "replace_deep_value"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "nested.yaml",
+              "rules_applied": [
+                "merge_deep_structure",
+                "rename_deep_key",
+                "replace_deep_value"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "deep.json": "{\n  \"level1\": {\n    \"level2\": {\n      \"level3\": {\n        \"level4\": {\n          \"level5\": {\n            \"level6\": {\n              \"value\": \"updated_deep_value\",\n              \"other\": \"data\"\n            }\n          }\n        }\n      }\n    },\n    \"system\": {\n      \"services\": {\n        \"api\": {\n          \"handlers\": {\n            \"auth\": {\n              \"middleware\": {\n                \"logging\": {\n                  \"enabled\": true,\n                  \"level\": \"debug\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"app\": {\n    \"modules\": {\n      \"core\": {\n        \"components\": {\n          \"database\": {\n            \"connections\": {\n              \"primary\": {\n                \"pool\": {\n                  \"size\": 50\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+          "nested.yaml": "level1:\n  level2:\n    level3:\n      level4:\n        level5:\n          level6:\n            value: updated_deep_value\n            other: data\nsystem:\n  services:\n    api:\n      handlers:\n        auth:\n          middleware:\n            logging:\n              active: true\n              level: debug\napp:\n  modules:\n    core:\n      components:\n        database:\n          connections:\n            primary:\n              host: localhost\n              pool:\n                size: 50\n"
+        }
+      }
+    },
+    "errors": {
+      "bad_config_parse": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "prod_env": {
+              "type": "replace_value",
+              "key": "environment",
+              "value": "production"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/logging/config.yaml",
+              "content": "logging:\n  level: [unterminated\n"
+            }
+          ],
+          "status_code": 1,
+          "expected_stderr": "^Error: failed to parse logging/config\\.yaml"
+        },
+        "expected_files": {}
+      },
+      "invalid_rules_json": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules_text": "{\"broken\": true",
+          "status_code": 1,
+          "expected_stderr": ".*"
+        },
+        "expected_files": {}
+      },
+      "missing_rules_file": {
+        "data": {
+          "arguments": "missing_rules.json configs",
+          "expected_stdout": "",
+          "status_code": 1,
+          "expected_stderr": "^Error: rules file not found: .*missing_rules\\.json"
+        },
+        "expected_files": {}
+      },
+      "missing_target_dir": {
+        "data": {
+          "arguments": "rules.json configs/missing",
+          "expected_stdout": "",
+          "rules": {
+            "noop": {
+              "type": "merge_data",
+              "glob": "**/*",
+              "data": {
+                "metadata": {
+                  "owner": "ops"
+                }
+              }
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: target directory not found: .*configs/missing.*"
+        },
+        "expected_files": {}
+      }
+    }
+  }
+}

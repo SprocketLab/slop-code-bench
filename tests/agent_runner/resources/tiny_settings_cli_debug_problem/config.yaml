@@ -1,17 +1,12 @@
-adapter:
-  tracked_files:
-  - settings_state.json
-  type: cli
 category: diagnostics
 checkpoints:
-- checkpoint_1
+  checkpoint_1:
+    version: 1
+    order: 1
+    state: Core Tests
 description: Minimal settings CLI used to debug agent runner behaviour.
 difficulty: Easy
 entry_file: tiny_settings_cli.py
-loader:
-  entrypoint: load_checkpoint
-  path: loader.py
-  type: script
 name: tiny_settings_cli_debug_problem
 static_assets:
   assets_bundle:

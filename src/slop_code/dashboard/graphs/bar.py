@@ -19,7 +19,9 @@ def _prepare_bar_data(context: ChartContext):
         return None, None, None, None
 
     variation_info = analyze_model_variations(df)
-    tracker = LegendGroupTracker(context.color_map, variation_info)
+    tracker = LegendGroupTracker(
+        context.color_map, context.base_color_map, variation_info
+    )
 
     # Sort runs according to the new logic
     sorted_unique_runs = (

@@ -1,0 +1,600 @@
+{
+  "05_canon_with_all_null_candidates": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.route AS r FROM a GLOSS { route := a.path | a.route }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1},
+            {"id": 2, "other": "value"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"r": null},
+        {"r": null}
+      ],
+      "status_code": 0
+    }
+  },
+  "06_canon_default_with_all_null": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.route AS r FROM a GLOSS { route := a.path | a.route DEFAULT \"/unknown\" }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1},
+            {"id": 2}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"r": "/unknown"},
+        {"r": "/unknown"}
+      ],
+      "status_code": 0
+    }
+  },
+  "07_canon_default_not_used_when_value_exists": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.val AS v FROM a GLOSS { val := a.x | a.y DEFAULT 99 }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"x": null, "y": 10},
+            {"x": 5, "y": null},
+            {}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"v": 10},
+        {"v": 5},
+        {"v": 99}
+      ],
+      "status_code": 0
+    }
+  },
+  "08_canon_first_non_null_order": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.ip AS ip FROM a GLOSS { ip := a.primary_ip | a.secondary_ip | a.fallback_ip }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"primary_ip": "1.1.1.1", "secondary_ip": "2.2.2.2"},
+            {"primary_ip": null, "secondary_ip": "3.3.3.3", "fallback_ip": "4.4.4.4"},
+            {"primary_ip": null, "secondary_ip": null, "fallback_ip": "5.5.5.5"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"ip": "1.1.1.1"},
+        {"ip": "3.3.3.3"},
+        {"ip": "5.5.5.5"}
+      ],
+      "status_code": 0
+    }
+  },
+  "09_canon_in_group_by": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.route AS r, COUNT(*) AS n FROM a GLOSS { route := a.path | a.route } GROUP BY CANON.route'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"path": "/a"},
+            {"route": "/b"},
+            {"path": "/a"},
+            {"route": "/b"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"r": "/a", "n": 2},
+        {"r": "/b", "n": 2}
+      ],
+      "status_code": 0
+    }
+  },
+  "10_canon_in_where_anchor_only": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT a.id FROM a WHERE CANON.status = 200 GLOSS { status := a.http_status | a.status }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "http_status": 200},
+            {"id": 2, "status": 200},
+            {"id": 3, "http_status": 404}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1},
+        {"a.id": 2}
+      ],
+      "status_code": 0
+    }
+  },
+  "11_canon_with_conflate": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT CANON.ip AS ip, b.rid FROM a GLOSS { ip := a.client.ip | a.ip } CONFLATE INTERSECTING b UPON CANON.ip = b.client_ip'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"client": {"ip": "1.1.1.1"}},
+            {"ip": "2.2.2.2"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"rid": "r1", "client_ip": "1.1.1.1"},
+            {"rid": "r2", "client_ip": "2.2.2.2"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"ip": "1.1.1.1", "b.rid": "r1"},
+        {"ip": "2.2.2.2", "b.rid": "r2"}
+      ],
+      "status_code": 0
+    }
+  },
+  "12_canon_with_aggregate": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT SUM(CANON.bytes) AS total FROM a GLOSS { bytes := a.size | a.bytes }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"size": 100},
+            {"bytes": 200},
+            {"size": 50, "bytes": 999}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [{"total": 350}],
+      "status_code": 0
+    }
+  },
+  "13_canon_default_with_number": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.score AS s FROM a GLOSS { score := a.rating | a.score DEFAULT 0 }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"rating": 5},
+            {},
+            {"score": 3}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"s": 5},
+        {"s": 0},
+        {"s": 3}
+      ],
+      "status_code": 0
+    }
+  },
+  "14_canon_default_with_boolean": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.active AS a FROM a GLOSS { active := a.enabled | a.active DEFAULT false }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"enabled": true},
+            {},
+            {"active": true}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a": true},
+        {"a": false},
+        {"a": true}
+      ],
+      "status_code": 0
+    }
+  },
+  "15_canon_default_with_null": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.val AS v FROM a GLOSS { val := a.x | a.y DEFAULT null }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"x": 10},
+            {}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"v": 10},
+        {"v": null}
+      ],
+      "status_code": 0
+    }
+  },
+  "16_multiple_canons": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.ip AS ip, CANON.route AS r FROM a GLOSS { ip := a.client_ip | a.ip, route := a.path | a.route }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"client_ip": "1.1.1.1", "path": "/a"},
+            {"ip": "2.2.2.2", "route": "/b"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"ip": "1.1.1.1", "r": "/a"},
+        {"ip": "2.2.2.2", "r": "/b"}
+      ],
+      "status_code": 0
+    }
+  },
+  "17_canon_with_dotted_paths": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.status AS s FROM a GLOSS { status := a.http.status | a.response.code }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"http": {"status": 200}},
+            {"response": {"code": 404}},
+            {"http": null, "response": {"code": 500}}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"s": 200},
+        {"s": 404},
+        {"s": 500}
+      ],
+      "status_code": 0
+    }
+  },
+  "18_canon_without_as_shows_canon_prefix": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.route FROM a GLOSS { route := a.path | a.route }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"path": "/a"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"CANON.route": "/a"}
+      ],
+      "status_code": 0
+    }
+  },
+  "19_canon_in_unique": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT UNIQUE(CANON.ip) AS ips FROM a GLOSS { ip := a.client_ip | a.server_ip }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"client_ip": "1.1.1.1"},
+            {"server_ip": "2.2.2.2"},
+            {"client_ip": "1.1.1.1"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [{"ips": ["1.1.1.1", "2.2.2.2"]}],
+      "status_code": 0
+    }
+  },
+  "20_canon_resolves_to_array": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.tags AS t FROM a GLOSS { tags := a.labels | a.tags }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"labels": ["x", "y"]},
+            {"tags": ["a", "b"]}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"t": ["x", "y"]},
+        {"t": ["a", "b"]}
+      ],
+      "status_code": 0
+    }
+  },
+  "21_canon_resolves_to_object": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.meta AS m FROM a GLOSS { meta := a.metadata | a.meta }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"metadata": {"k": "v"}},
+            {"meta": {"x": "y"}}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"m": {"k": "v"}},
+        {"m": {"x": "y"}}
+      ],
+      "status_code": 0
+    }
+  },
+  "22_canon_in_min_max": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT MIN(CANON.latency) AS min_lat, MAX(CANON.latency) AS max_lat FROM a GLOSS { latency := a.latency_ms | a.duration }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"latency_ms": 10},
+            {"duration": 5},
+            {"latency_ms": 20}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [{"min_lat": 5, "max_lat": 20}],
+      "status_code": 0
+    }
+  },
+  "23_canon_with_count": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT COUNT(CANON.user) AS n FROM a GLOSS { user := a.uid | a.user_id }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"uid": "u1"},
+            {"user_id": "u2"},
+            {},
+            {"uid": null, "user_id": "u3"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [{"n": 3}],
+      "status_code": 0
+    }
+  },
+  "24_canon_group_by_with_null": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.service AS svc, COUNT(*) AS n FROM a GLOSS { service := a.svc | a.service } GROUP BY CANON.service'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"svc": "api"},
+            {"service": "web"},
+            {"svc": "api"},
+            {}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"svc": "api", "n": 2},
+        {"svc": "web", "n": 1},
+        {"svc": null, "n": 1}
+      ],
+      "status_code": 0
+    }
+  },
+  "25_canon_with_complex_where": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT a.id FROM a WHERE CANON.status >= 400 AND CANON.status < 500 GLOSS { status := a.http_status | a.status }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "http_status": 200},
+            {"id": 2, "status": 404},
+            {"id": 3, "http_status": 500},
+            {"id": 4, "status": 400}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 2},
+        {"a.id": 4}
+      ],
+      "status_code": 0
+    }
+  },
+  "26_canon_default_string": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.env AS e FROM a GLOSS { env := a.environment | a.env DEFAULT \"production\" }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"environment": "dev"},
+            {},
+            {"env": "staging"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"e": "dev"},
+        {"e": "production"},
+        {"e": "staging"}
+      ],
+      "status_code": 0
+    }
+  },
+  "27_canon_with_aggregates_and_group": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.env AS e, AVG(CANON.latency) AS avg_lat FROM a GLOSS { env := a.environment | a.env, latency := a.lat | a.latency } GROUP BY CANON.env'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"environment": "prod", "lat": 10},
+            {"env": "prod", "latency": 20},
+            {"environment": "dev", "lat": 5}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"e": "prod", "avg_lat": 15},
+        {"e": "dev", "avg_lat": 5}
+      ],
+      "status_code": 0
+    }
+  },
+  "28_canon_zero_vs_null": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.val AS v FROM a GLOSS { val := a.x | a.y DEFAULT 99 }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"x": 0},
+            {"x": null, "y": 0},
+            {"x": null, "y": null}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"v": 0},
+        {"v": 0},
+        {"v": 99}
+      ],
+      "status_code": 0
+    }
+  },
+  "29_canon_empty_string_vs_null": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.str AS s FROM a GLOSS { str := a.x | a.y DEFAULT \"default\" }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"x": ""},
+            {"x": null, "y": ""},
+            {"x": null, "y": null}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"s": ""},
+        {"s": ""},
+        {"s": "default"}
+      ],
+      "status_code": 0
+    }
+  },
+  "30_canon_false_vs_null": {
+    "case": {
+      "arguments": "--source a=a.ndjson --query 'SELECT CANON.flag AS f FROM a GLOSS { flag := a.x | a.y DEFAULT true }'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"x": false},
+            {"x": null, "y": false},
+            {"x": null, "y": null}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"f": false},
+        {"f": false},
+        {"f": true}
+      ],
+      "status_code": 0
+    }
+  }
+}

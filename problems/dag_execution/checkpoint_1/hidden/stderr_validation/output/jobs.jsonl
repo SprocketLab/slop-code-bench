@@ -1,3 +1,0 @@
-{"job_id": 2, "task": "GenerateError", "params": {"error_msg": "Warning: Test warning"}, "stdout": "Normal output\n", "stderr": "Warning: Test warning\n", "timed_out": false, "success": {"check_stderr": true, "check_stdout": true, "stderr_equals": true}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.017837798999607912}
-{"job_id": 3, "task": "ExitCodeTest", "params": {"code": 0}, "stdout": "", "stderr": "", "timed_out": false, "success": {"check_exit": true}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.019278507999842986}
-{"job_id": 1, "task": "main", "params": {}, "stdout": "Testing stderr and exit codes\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": null, "duration": 0.05349149799985753}

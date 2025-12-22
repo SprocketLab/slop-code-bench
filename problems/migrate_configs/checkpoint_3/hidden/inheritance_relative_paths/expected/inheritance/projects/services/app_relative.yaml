@@ -1,3 +1,0 @@
-service: payments
-region: eu-west-1
-timeout: 25

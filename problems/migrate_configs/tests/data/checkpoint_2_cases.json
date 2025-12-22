@@ -1,0 +1,882 @@
+{
+  "shared_configs": {
+    "infra/limits.yaml": "limits:\n  retries: 3\n  enabled: true\n",
+    "infra/network.toml": "[server]\nhost = \"localhost\"\nport = 8080\nmode = \"development\"\n",
+    "infra/profiles.yaml": "profiles:\n  dev:\n    server:\n      host: dev.internal\n      mode: development\n  prod:\n    server:\n      host: prod.internal\n      mode: production\n  canary:\n    server:\n      host: canary.internal\n      mode: canary\n",
+    "runtime/app.json": "{\n  \"description\": \"My service\",\n  \"services\": {\n    \"api\": {\n      \"port\": 8080\n    },\n    \"worker\": {\n      \"port\": 8081\n    }\n  }\n}\n",
+    "runtime/descriptions.yaml": "environment: production\nmetadata:\n  owner: platform-team\n  tier: core\ndescription: Base service description\ndetails:\n  note: runs core workloads\n  build:\n    version: 3\n",
+    "runtime/env.yaml": "environment: staging\naws:\n  region: us-west-2\ns3:\n  bucket: old-bucket\n",
+    "runtime/listeners.json": "{\n  \"listeners\": [\n    {\n      \"host\": \"0.0.0.0\",\n      \"port\": 8080\n    },\n    {\n      \"host\": \"127.0.0.1\",\n      \"port\": 9090\n    }\n  ]\n}\n",
+    "services/clusters.yaml": "clusters:\n  blue:\n    services:\n      api:\n        host: old-api.blue.dev\n        port: 8443\n      worker:\n        host: old-worker.blue.dev\n        port: 8444\n  green:\n    services:\n      api:\n        host: old-api.green.dev\n        port: 9443\n      cache:\n        host: old-cache.green.dev\n        metadata:\n          endpoint: https://cache.green.dev\n",
+    "services/hosts.json": "{\n  \"services\": {\n    \"api\": {\n      \"host\": \"localhost\",\n      \"port\": 8080\n    },\n    \"database\": {\n      \"host\": \"localhost\",\n      \"port\": 5432\n    },\n    \"worker\": {\n      \"host\": \"localhost\",\n      \"port\": 9090\n    }\n  }\n}\n",
+    "services/ports.yaml": "services:\n  payments:\n    host: payments.dev.internal\n    port: 7000\n  worker:\n    port: 7100\n    metadata:\n      host: worker.dev.internal\n      region: us-east-1\n  archive:\n    metadata:\n      host: archive.dev.internal\n      port: 7200\n"
+  },
+  "cases": {
+    "core": {
+      "combined_defaults": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "add_defaults": {
+              "type": "merge_data",
+              "data": {
+                "environment": "production",
+                "timeout": 30
+              }
+            },
+            "set_description": {
+              "type": "template_string",
+              "key": "description",
+              "variables": {
+                "env": "environment"
+              },
+              "template": "${env} service"
+            },
+            "update_ports": {
+              "type": "pattern_replace",
+              "key_pattern": "services.*.port",
+              "value": 9000
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "infra/limits.yaml",
+              "rules_applied": [
+                "add_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/network.toml",
+              "rules_applied": [
+                "add_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/profiles.yaml",
+              "rules_applied": [
+                "add_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "runtime/app.json",
+              "rules_applied": [
+                "add_defaults",
+                "set_description",
+                "update_ports"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "runtime/descriptions.yaml",
+              "rules_applied": [
+                "add_defaults",
+                "set_description"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "runtime/env.yaml",
+              "rules_applied": [
+                "add_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "runtime/listeners.json",
+              "rules_applied": [
+                "add_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/clusters.yaml",
+              "rules_applied": [
+                "add_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/hosts.json",
+              "rules_applied": [
+                "add_defaults",
+                "update_ports"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/ports.yaml",
+              "rules_applied": [
+                "add_defaults",
+                "update_ports"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "infra/limits.yaml": "limits:\n  enabled: true\n  retries: 3\nenvironment: production\ntimeout: 30\n",
+          "infra/network.toml": "environment = \"production\"\ntimeout = 30\n[server]\nhost = \"localhost\"\nport = 8080\nmode = \"development\"\n",
+          "infra/profiles.yaml": "profiles:\n  canary:\n    server:\n      host: canary.internal\n      mode: canary\n  dev:\n    server:\n      host: dev.internal\n      mode: development\n  prod:\n    server:\n      host: prod.internal\n      mode: production\nenvironment: production\ntimeout: 30\n",
+          "runtime/app.json": "{\n  \"description\": \"production service\",\n  \"environment\": \"production\",\n  \"services\": {\n    \"api\": {\n      \"port\": 9000\n    },\n    \"worker\": {\n      \"port\": 9000\n    }\n  },\n  \"timeout\": 30\n}",
+          "runtime/descriptions.yaml": "description: production service\ndetails:\n  build:\n    version: 3\n  note: runs core workloads\nenvironment: production\nmetadata:\n  owner: platform-team\n  tier: core\ntimeout: 30\n",
+          "runtime/env.yaml": "aws:\n  region: us-west-2\nenvironment: production\ns3:\n  bucket: old-bucket\ntimeout: 30\n",
+          "runtime/listeners.json": "{\n  \"listeners\": [\n    {\n      \"host\": \"0.0.0.0\",\n      \"port\": 8080\n    },\n    {\n      \"host\": \"127.0.0.1\",\n      \"port\": 9090\n    }\n  ],\n  \"environment\": \"production\",\n  \"timeout\": 30\n}\n",
+          "services/clusters.yaml": "clusters:\n  blue:\n    services:\n      api:\n        host: old-api.blue.dev\n        port: 8443\n      worker:\n        host: old-worker.blue.dev\n        port: 8444\n  green:\n    services:\n      api:\n        host: old-api.green.dev\n        port: 9443\n      cache:\n        host: old-cache.green.dev\n        metadata:\n          endpoint: https://cache.green.dev\nenvironment: production\ntimeout: 30\n",
+          "services/hosts.json": "{\n  \"services\": {\n    \"api\": {\n      \"host\": \"localhost\",\n      \"port\": 9000\n    },\n    \"database\": {\n      \"host\": \"localhost\",\n      \"port\": 9000\n    },\n    \"worker\": {\n      \"host\": \"localhost\",\n      \"port\": 9000\n    }\n  },\n  \"environment\": \"production\",\n  \"timeout\": 30\n}\n",
+          "services/ports.yaml": "services:\n  archive:\n    metadata:\n      host: archive.dev.internal\n      port: 7200\n  payments:\n    host: payments.dev.internal\n    port: 9000\n  worker:\n    metadata:\n      host: worker.dev.internal\n      region: us-east-1\n    port: 9000\nenvironment: production\ntimeout: 30\n"
+        }
+      },
+      "normalize_service_hosts": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "normalize_service_hosts": {
+              "type": "pattern_replace",
+              "key_pattern": "services.$name.host",
+              "value": "${name}.internal.example.com"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "services/hosts.json",
+              "rules_applied": [
+                "normalize_service_hosts"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/ports.yaml",
+              "rules_applied": [
+                "normalize_service_hosts"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "services/hosts.json": "{\n  \"services\": {\n    \"api\": {\n      \"host\": \"api.internal.example.com\",\n      \"port\": 8080\n    },\n    \"database\": {\n      \"host\": \"database.internal.example.com\",\n      \"port\": 5432\n    },\n    \"worker\": {\n      \"host\": \"worker.internal.example.com\",\n      \"port\": 9090\n    }\n  }\n}\n",
+          "services/ports.yaml": "services:\n  archive:\n    metadata:\n      host: archive.dev.internal\n      port: 7200\n  payments:\n    host: payments.internal.example.com\n    port: 7000\n  worker:\n    metadata:\n      host: worker.dev.internal\n      region: us-east-1\n    port: 7100\n"
+        }
+      },
+      "template_bucket_name": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "set_bucket_name": {
+              "type": "template_string",
+              "key": "s3.bucket",
+              "variables": {
+                "env": "environment",
+                "region": "aws.region"
+              },
+              "template": "data-${env}-${region}"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "runtime/env.yaml",
+              "rules_applied": [
+                "set_bucket_name"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "runtime/env.yaml": "environment: staging\naws:\n  region: us-west-2\ns3:\n  bucket: data-staging-us-west-2\n"
+        }
+      }
+    },
+    "hidden": {
+      "conditional_equals_non_string": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "bump_retry_limit": {
+              "type": "conditional_replace",
+              "key": "limits.retries",
+              "value": 5,
+              "condition": {
+                "current_value_equals": 3
+              }
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "infra/limits.yaml",
+              "rules_applied": [
+                "bump_retry_limit"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "infra/limits.yaml": "limits:\n  retries: 5\n  enabled: true\n"
+        }
+      },
+      "conditional_missing_key_noop": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "normalize_missing_region": {
+              "type": "conditional_replace",
+              "key": "metadata.region",
+              "value": "us-east-1",
+              "condition": {
+                "current_value_equals": "unknown"
+              }
+            }
+          }
+        },
+        "expected_files": {}
+      },
+      "conditional_not_equals_profile": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "normalize_canary_mode": {
+              "type": "conditional_replace",
+              "key": "profiles.canary.server.mode",
+              "value": "staging",
+              "condition": {
+                "current_value_not_equals": "production"
+              }
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "infra/profiles.yaml",
+              "rules_applied": [
+                "normalize_canary_mode"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "infra/profiles.yaml": "profiles:\n  dev:\n    server:\n      host: dev.internal\n      mode: development\n  prod:\n    server:\n      host: prod.internal\n      mode: production\n  canary:\n    server:\n      host: canary.internal\n      mode: staging\n"
+        }
+      },
+      "conditional_regex_partial": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "normalize_note": {
+              "type": "conditional_replace",
+              "key": "details.note",
+              "value": "core workloads",
+              "condition": {
+                "current_value_matches": "^runs.*"
+              }
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "runtime/descriptions.yaml",
+              "rules_applied": [
+                "normalize_note"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "runtime/descriptions.yaml": "environment: production\nmetadata:\n  owner: platform-team\n  tier: core\ndescription: Base service description\ndetails:\n  note: core workloads\n  build:\n    version: 3\n"
+        }
+      },
+      "conditional_regex_numeric": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "upgrade_build_version": {
+              "type": "conditional_replace",
+              "key": "details.build.version",
+              "value": 4,
+              "condition": {
+                "current_value_matches": "^3$"
+              }
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "runtime/descriptions.yaml",
+              "rules_applied": [
+                "upgrade_build_version"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "runtime/descriptions.yaml": "environment: production\nmetadata:\n  owner: platform-team\n  tier: core\ndescription: Base service description\ndetails:\n  note: runs core workloads\n  build:\n    version: 4\n"
+        }
+      },
+      "legacy_rule_regression_combo": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "a_legacy_replace_env": {
+              "type": "replace_value",
+              "key": "services.worker.port",
+              "value": 9200
+            },
+            "b_legacy_rename_host": {
+              "type": "rename_key",
+              "old_key": "services.worker.host",
+              "new_key": "services.worker.hostname"
+            },
+            "pattern_default_hosts": {
+              "type": "pattern_replace",
+              "key_pattern": "services.$name.host",
+              "value": "${name}.svc.internal"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "runtime/app.json",
+              "rules_applied": [
+                "a_legacy_replace_env"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/hosts.json",
+              "rules_applied": [
+                "a_legacy_replace_env",
+                "b_legacy_rename_host",
+                "pattern_default_hosts"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/ports.yaml",
+              "rules_applied": [
+                "a_legacy_replace_env",
+                "pattern_default_hosts"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "runtime/app.json": "{\n  \"description\": \"My service\",\n  \"services\": {\n    \"api\": {\n      \"port\": 8080\n    },\n    \"worker\": {\n      \"port\": 9200\n    }\n  }\n}\n",
+          "services/hosts.json": "{\n  \"services\": {\n    \"api\": {\n      \"host\": \"api.svc.internal\",\n      \"port\": 8080\n    },\n    \"database\": {\n      \"host\": \"database.svc.internal\",\n      \"port\": 5432\n    },\n    \"worker\": {\n      \"hostname\": \"localhost\",\n      \"port\": 9200\n    }\n  }\n}\n",
+          "services/ports.yaml": "services:\n  archive:\n    metadata:\n      host: archive.dev.internal\n      port: 7200\n  payments:\n    host: payments.svc.internal\n    port: 7000\n  worker:\n    metadata:\n      host: worker.dev.internal\n      region: us-east-1\n    port: 9200\n"
+        }
+      },
+      "lexicographic_rule_order": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "beta_template_description": {
+              "type": "template_string",
+              "key": "description",
+              "variables": {
+                "env": "environment"
+              },
+              "template": "${env} service"
+            },
+            "alpha_merge_defaults": {
+              "type": "merge_data",
+              "data": {
+                "environment": "qa"
+              }
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "infra/limits.yaml",
+              "rules_applied": [
+                "alpha_merge_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/network.toml",
+              "rules_applied": [
+                "alpha_merge_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "infra/profiles.yaml",
+              "rules_applied": [
+                "alpha_merge_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "runtime/app.json",
+              "rules_applied": [
+                "alpha_merge_defaults",
+                "beta_template_description"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "runtime/descriptions.yaml",
+              "rules_applied": [
+                "alpha_merge_defaults",
+                "beta_template_description"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "runtime/env.yaml",
+              "rules_applied": [
+                "alpha_merge_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "runtime/listeners.json",
+              "rules_applied": [
+                "alpha_merge_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/clusters.yaml",
+              "rules_applied": [
+                "alpha_merge_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/hosts.json",
+              "rules_applied": [
+                "alpha_merge_defaults"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/ports.yaml",
+              "rules_applied": [
+                "alpha_merge_defaults"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "infra/limits.yaml": "limits:\n  enabled: true\n  retries: 3\nenvironment: qa\n",
+          "infra/network.toml": "environment = \"qa\"\n[server]\nhost = \"localhost\"\nport = 8080\nmode = \"development\"\n",
+          "infra/profiles.yaml": "profiles:\n  canary:\n    server:\n      host: canary.internal\n      mode: canary\n  dev:\n    server:\n      host: dev.internal\n      mode: development\n  prod:\n    server:\n      host: prod.internal\n      mode: production\nenvironment: qa\n",
+          "runtime/app.json": "{\n  \"description\": \"qa service\",\n  \"services\": {\n    \"api\": {\n      \"port\": 8080\n    },\n    \"worker\": {\n      \"port\": 8081\n    }\n  },\n  \"environment\": \"qa\"\n}\n",
+          "runtime/descriptions.yaml": "environment: qa\nmetadata:\n  owner: platform-team\n  tier: core\ndescription: qa service\ndetails:\n  note: runs core workloads\n  build:\n    version: 3\n",
+          "runtime/env.yaml": "aws:\n  region: us-west-2\nenvironment: qa\ns3:\n  bucket: old-bucket\n",
+          "runtime/listeners.json": "{\n  \"listeners\": [\n    {\n      \"host\": \"0.0.0.0\",\n      \"port\": 8080\n    },\n    {\n      \"host\": \"127.0.0.1\",\n      \"port\": 9090\n    }\n  ],\n  \"environment\": \"qa\"\n}\n",
+          "services/clusters.yaml": "clusters:\n  blue:\n    services:\n      api:\n        host: old-api.blue.dev\n        port: 8443\n      worker:\n        host: old-worker.blue.dev\n        port: 8444\n  green:\n    services:\n      api:\n        host: old-api.green.dev\n        port: 9443\n      cache:\n        host: old-cache.green.dev\n        metadata:\n          endpoint: https://cache.green.dev\nenvironment: qa\n",
+          "services/hosts.json": "{\n  \"services\": {\n    \"api\": {\n      \"host\": \"localhost\",\n      \"port\": 8080\n    },\n    \"database\": {\n      \"host\": \"localhost\",\n      \"port\": 5432\n    },\n    \"worker\": {\n      \"host\": \"localhost\",\n      \"port\": 9090\n    }\n  },\n  \"environment\": \"qa\"\n}\n",
+          "services/ports.yaml": "services:\n  archive:\n    metadata:\n      host: archive.dev.internal\n      port: 7200\n  payments:\n    host: payments.dev.internal\n    port: 7000\n  worker:\n    metadata:\n      host: worker.dev.internal\n      region: us-east-1\n    port: 7100\nenvironment: qa\n"
+        }
+      },
+      "pattern_depth_and_literals": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "assign_metadata_hosts": {
+              "type": "pattern_replace",
+              "key_pattern": "services.$name.metadata.host",
+              "value": "${name}.prod.internal"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "services/ports.yaml",
+              "rules_applied": [
+                "assign_metadata_hosts"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "services/ports.yaml": "services:\n  payments:\n    host: payments.dev.internal\n    port: 7000\n  worker:\n    port: 7100\n    metadata:\n      host: worker.prod.internal\n      region: us-east-1\n  archive:\n    metadata:\n      host: archive.prod.internal\n      port: 7200\n"
+        }
+      },
+      "pattern_multi_variable_clusters": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "normalize_cluster_hosts": {
+              "type": "pattern_replace",
+              "key_pattern": "clusters.$cluster.services.$service.host",
+              "value": "${service}-${cluster}.internal"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "services/clusters.yaml",
+              "rules_applied": [
+                "normalize_cluster_hosts"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "services/clusters.yaml": "clusters:\n  blue:\n    services:\n      api:\n        host: api-blue.internal\n        port: 8443\n      worker:\n        host: worker-blue.internal\n        port: 8444\n  green:\n    services:\n      api:\n        host: api-green.internal\n        port: 9443\n      cache:\n        host: cache-green.internal\n        metadata:\n          endpoint: https://cache.green.dev\n"
+        }
+      },
+      "pattern_numeric_indices": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "normalize_listener_ports": {
+              "type": "pattern_replace",
+              "key_pattern": "listeners.$slot.port",
+              "value": 7000
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "runtime/listeners.json",
+              "rules_applied": [
+                "normalize_listener_ports"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "runtime/listeners.json": "{\n  \"listeners\": [\n    {\n      \"host\": \"0.0.0.0\",\n      \"port\": 7000\n    },\n    {\n      \"host\": \"127.0.0.1\",\n      \"port\": 7000\n    }\n  ]\n}\n"
+        }
+      },
+      "pattern_array_wildcard_hosts": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "normalize_listener_hosts": {
+              "type": "pattern_replace",
+              "key_pattern": "listeners.*.host",
+              "value": "localhost"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "runtime/listeners.json",
+              "rules_applied": [
+                "normalize_listener_hosts"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "runtime/listeners.json": "{\n  \"listeners\": [\n    {\n      \"host\": \"localhost\",\n      \"port\": 8080\n    },\n    {\n      \"host\": \"localhost\",\n      \"port\": 9090\n    }\n  ]\n}\n"
+        }
+      },
+      "pattern_overlap_priority": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "alpha_api_port": {
+              "type": "pattern_replace",
+              "key_pattern": "services.api.port",
+              "value": 8800
+            },
+            "beta_all_ports": {
+              "type": "pattern_replace",
+              "key_pattern": "services.*.port",
+              "value": 8500
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "runtime/app.json",
+              "rules_applied": [
+                "alpha_api_port",
+                "beta_all_ports"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/hosts.json",
+              "rules_applied": [
+                "alpha_api_port",
+                "beta_all_ports"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/ports.yaml",
+              "rules_applied": [
+                "beta_all_ports"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "runtime/app.json": "{\n  \"description\": \"My service\",\n  \"services\": {\n    \"api\": {\n      \"port\": 8500\n    },\n    \"worker\": {\n      \"port\": 8500\n    }\n  }\n}\n",
+          "services/hosts.json": "{\n  \"services\": {\n    \"api\": {\n      \"host\": \"localhost\",\n      \"port\": 8500\n    },\n    \"database\": {\n      \"host\": \"localhost\",\n      \"port\": 8500\n    },\n    \"worker\": {\n      \"host\": \"localhost\",\n      \"port\": 8500\n    }\n  }\n}\n",
+          "services/ports.yaml": "services:\n  archive:\n    metadata:\n      host: archive.dev.internal\n      port: 7200\n  payments:\n    host: payments.dev.internal\n    port: 8500\n  worker:\n    metadata:\n      host: worker.dev.internal\n      region: us-east-1\n    port: 8500\n"
+        }
+      },
+      "pattern_wildcard_multi_files": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "set_all_ports": {
+              "type": "pattern_replace",
+              "key_pattern": "services.*.port",
+              "value": 6500
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "runtime/app.json",
+              "rules_applied": [
+                "set_all_ports"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/hosts.json",
+              "rules_applied": [
+                "set_all_ports"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/ports.yaml",
+              "rules_applied": [
+                "set_all_ports"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "runtime/app.json": "{\n  \"description\": \"My service\",\n  \"services\": {\n    \"api\": {\n      \"port\": 6500\n    },\n    \"worker\": {\n      \"port\": 6500\n    }\n  }\n}\n",
+          "services/hosts.json": "{\n  \"services\": {\n    \"api\": {\n      \"host\": \"localhost\",\n      \"port\": 6500\n    },\n    \"database\": {\n      \"host\": \"localhost\",\n      \"port\": 6500\n    },\n    \"worker\": {\n      \"host\": \"localhost\",\n      \"port\": 6500\n    }\n  }\n}\n",
+          "services/ports.yaml": "services:\n  payments:\n    host: payments.dev.internal\n    port: 6500\n  worker:\n    port: 6500\n    metadata:\n      host: worker.dev.internal\n      region: us-east-1\n  archive:\n    metadata:\n      host: archive.dev.internal\n      port: 7200\n"
+        }
+      },
+      "template_missing_target_key": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "describe_env_summary": {
+              "type": "template_string",
+              "key": "summary",
+              "variables": {
+                "env": "environment",
+                "owner": "metadata.owner"
+              },
+              "template": "${env}-${owner}"
+            }
+          }
+        },
+        "expected_files": {}
+      },
+      "template_missing_variable_noop": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "describe_with_region": {
+              "type": "template_string",
+              "key": "description",
+              "variables": {
+                "env": "environment",
+                "region": "metadata.region"
+              },
+              "template": "${env}-${region} summary"
+            }
+          }
+        },
+        "expected_files": {}
+      },
+      "template_non_string_target": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "format_build_version": {
+              "type": "template_string",
+              "key": "details.build.version",
+              "variables": {
+                "owner": "metadata.owner"
+              },
+              "template": "${owner}-v1"
+            }
+          }
+        },
+        "expected_files": {}
+      },
+      "template_string_after_type_conversion": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "alpha_stringify_version": {
+              "type": "replace_value",
+              "key": "details.build.version",
+              "value": "3"
+            },
+            "beta_template_version": {
+              "type": "template_string",
+              "key": "details.build.version",
+              "variables": {
+                "owner": "metadata.owner"
+              },
+              "template": "${owner}-build"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "runtime/descriptions.yaml",
+              "rules_applied": [
+                "alpha_stringify_version",
+                "beta_template_version"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "runtime/descriptions.yaml": "environment: production\nmetadata:\n  owner: platform-team\n  tier: core\ndescription: Base service description\ndetails:\n  note: runs core workloads\n  build:\n    version: platform-team-build\n"
+        }
+      }
+    },
+    "errors": {
+      "bad_config_parse": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "noop": {
+              "type": "replace_value",
+              "key": "services.api.port",
+              "value": 80
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/services/hosts.json",
+              "file_type": "json",
+              "content": "{\n  \"services\": [\n"
+            }
+          ],
+          "status_code": 1,
+          "expected_stderr": "^Error: failed to parse services/hosts\\.json"
+        },
+        "expected_files": {}
+      },
+      "condition_invalid_regex": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "bad_regex": {
+              "type": "conditional_replace",
+              "key": "details.note",
+              "value": "noop",
+              "condition": {
+                "current_value_matches": "["
+              }
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid regex for rule \\\"bad_regex\\\":.*"
+        },
+        "expected_files": {}
+      },
+      "conditional_missing_condition": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "replace_without_condition": {
+              "type": "conditional_replace",
+              "key": "details.note",
+              "value": "noop"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: conditional_replace rule \\\"replace_without_condition\\\" requires a condition block"
+        },
+        "expected_files": {}
+      },
+      "invalid_rules_json": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules_text": "{\"broken\": true",
+          "status_code": 1,
+          "expected_stderr": "^Error: failed to parse rules file:.*"
+        },
+        "expected_files": {}
+      },
+      "missing_rules_file": {
+        "data": {
+          "arguments": "missing_rules.json configs",
+          "expected_stdout": "",
+          "status_code": 1,
+          "expected_stderr": "^Error: rules file not found: .*missing_rules\\.json"
+        },
+        "expected_files": {}
+      },
+      "pattern_missing_key_pattern": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "missing_pattern": {
+              "type": "pattern_replace",
+              "value": "noop"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: pattern_replace rule \\\"missing_pattern\\\" requires key_pattern"
+        },
+        "expected_files": {}
+      },
+      "template_invalid_template_type": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "bad_template": {
+              "type": "template_string",
+              "key": "description",
+              "variables": {
+                "env": "environment"
+              },
+              "template": 123
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: template_string rule \\\"bad_template\\\" requires a string template"
+        },
+        "expected_files": {}
+      },
+      "template_invalid_variable_path": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "bad_variable": {
+              "type": "template_string",
+              "key": "description",
+              "variables": {
+                "env": 123
+              },
+              "template": "${env}"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: template_string rule \\\"bad_variable\\\" variables must map to string key paths"
+        },
+        "expected_files": {}
+      }
+    }
+  }
+}

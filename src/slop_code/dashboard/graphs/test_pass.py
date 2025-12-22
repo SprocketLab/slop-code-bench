@@ -32,7 +32,9 @@ def build_test_pass_rate_bars(context: ChartContext) -> go.Figure:
 
     test_types = ["core", "functionality", "regression", "error"]
     variation_info = analyze_model_variations(df)
-    tracker = LegendGroupTracker(context.color_map, variation_info)
+    tracker = LegendGroupTracker(
+        context.color_map, context.base_color_map, variation_info
+    )
 
     # Sort runs according to the new logic
     sorted_unique_runs = (
@@ -89,8 +91,8 @@ def build_test_pass_rate_bars(context: ChartContext) -> go.Figure:
 
         for test_type in test_types:
             r, c = layout_map[test_type]
-            passed_col = f"tests.{test_type}.passed"
-            total_col = f"tests.{test_type}.total"
+            passed_col = f"{test_type}_passed"
+            total_col = f"{test_type}_total"
 
             if passed_col in run_df.columns and total_col in run_df.columns:
                 passed = run_df[passed_col].fillna(0)

@@ -1,0 +1,45 @@
+case:
+  arguments: --output out.csv --key id --infer loose data.parquet events.jsonl
+  input_files:
+  - content:
+    - id: 1
+      name: Alice
+      count: 10
+    - id: 2
+      name: Bob
+      count: 20
+    file_type: parquet
+    path: data.parquet
+  - content:
+    - id: 1
+      status: active
+      extra: '{"nested":"value"}'
+    - id: 2
+      status: inactive
+      extra: '{"nested":"data"}'
+    file_type: jsonl
+    path: events.jsonl
+expected:
+  files:
+    out.csv:
+    - id: 1
+      name: Alice
+      count: 10
+      status: null
+      extra: null
+    - id: 1
+      name: null
+      count: null
+      status: active
+      extra: '{"nested":"value"}'
+    - id: 2
+      name: Bob
+      count: 20
+      status: null
+      extra: null
+    - id: 2
+      name: null
+      count: null
+      status: inactive
+      extra: '{"nested":"data"}'
+  status_code: 0

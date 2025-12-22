@@ -5,10 +5,7 @@ from typing import Any
 
 import pandas as pd
 
-from slop_code.dashboard.data import PROVIDER_BASE_COLORS
 from slop_code.dashboard.data import ModelVariationInfo
-from slop_code.dashboard.data import _detect_provider
-from slop_code.dashboard.data import _hsl_to_hex
 from slop_code.dashboard.data import get_dynamic_variant_annotation
 
 # Grouped vertical legend configuration (shared by multiplot charts)
@@ -93,10 +90,12 @@ class LegendGroupTracker:
     def __init__(
         self,
         color_map: dict[str, str],
+        base_color_map: dict[str, str],
         variation_info: dict[str, ModelVariationInfo] | None = None,
     ):
         self._seen: set[str] = set()
         self._color_map = color_map
+        self._base_color_map = base_color_map
         self._variation_info = variation_info or {}
 
     def get_info(
@@ -111,11 +110,8 @@ class LegendGroupTracker:
         )
         color = self._color_map.get(display_name, "#888")
 
-        provider = _detect_provider(model_name)
-        base_hsl = PROVIDER_BASE_COLORS.get(
-            provider, PROVIDER_BASE_COLORS["other"]
-        )
-        model_base_color = _hsl_to_hex(*base_hsl)
+        # Fallback to color if not in base_color_map (should ideally be there)
+        model_base_color = self._base_color_map.get(display_name, color)
 
         group_title = None
         if model_name not in self._seen:

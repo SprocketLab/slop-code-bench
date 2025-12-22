@@ -1,7 +1,0 @@
-{
-  "arguments": "rules.json configs --inheritance configs/inheritance/bad_format.json",
-  "expected_stdout": "",
-  "rules": {},
-  "status_code": 1,
-  "expected_stderr": "^Error: invalid inheritance config: .*bad_format\\.json$"
-}

@@ -1,4 +1,0 @@
-{"event": "operation_applied", "type": "add_foreign_key", "table": "orders", "name": "fk_orders_customer", "version": 2}
-{"event": "operation_applied", "type": "create_index", "name": "idx_orders_customer", "table": "orders", "version": 2}
-{"event": "operation_applied", "type": "add_check_constraint", "table": "orders", "name": "chk_orders_total", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 3}

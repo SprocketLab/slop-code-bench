@@ -1,8 +1,3 @@
----
-version: 1.0
-last_updated: 2025-11-06
----
-
 # Checkpoint Design Guide
 
 This guide explains when and how to split problems into multiple checkpoints, with patterns for designing effective milestone progression.
@@ -22,14 +17,14 @@ This guide explains when and how to split problems into multiple checkpoints, wi
 A **checkpoint** is a milestone in problem progression. Each checkpoint has:
 
 - **Specification (`spec.md`)**: What to build at this stage
-- **Test cases**: Validation for this milestone
+- **Test file (`test_checkpoint_N.py`)**: Pytest tests for this milestone
 - **Independent evaluation**: Pass/fail determined separately
 
 **Key concept**: Checkpoints are **cumulative** by default—each builds on the previous one. Agent workspace state persists across checkpoints unless the problem is configured otherwise.
 
 ## When to Use Multiple Checkpoints
 
-### ✅ Use Multiple Checkpoints When:
+### Use Multiple Checkpoints When:
 
 #### 1. Features Build on Each Other
 
@@ -90,7 +85,7 @@ checkpoint_4: Data export (formatting)
 
 Tests different competencies independently.
 
-### ❌ Don't Use Multiple Checkpoints When:
+### Don't Use Multiple Checkpoints When:
 
 #### 1. Problem is Simple
 
@@ -116,14 +111,14 @@ checkpoint_1: Addition and subtraction
 checkpoint_2: Multiplication and division
 checkpoint_3: Trigonometry
 
-# Better (one checkpoint with groups):
+# Better (one checkpoint with markers):
 checkpoint_1:
-  core: Basic operations
-  functionality: Trigonometry
-  errors: Invalid inputs
+  core tests: Basic operations
+  functionality tests: Trigonometry
+  error tests: Invalid inputs
 ```
 
-Use groups instead of checkpoints for independent features.
+Use markers instead of checkpoints for independent features.
 
 #### 3. No Clear Progression
 
@@ -203,11 +198,6 @@ checkpoint_4: Combined queries (all features together)
 - Final checkpoint integrates everything
 - Testing each feature separately helps debugging
 
-**Benefits**:
-- Clear feature boundaries
-- Parallel development possible
-- Easy to identify which feature is broken
-
 ### Pattern 3: Expanding Scope
 
 Each checkpoint handles more cases of the same problem.
@@ -236,11 +226,6 @@ checkpoint_4: + Conflict resolution (deep merge, type checking)
 - Complexity increases gradually
 - Want to test partial solutions
 
-**Benefits**:
-- Incremental difficulty
-- Early checkpoints are achievable
-- Clear scope boundaries
-
 ### Pattern 4: Different Modes
 
 Each checkpoint is a different mode of operation.
@@ -265,11 +250,6 @@ checkpoint_4: Aggregate logs (read + compute + write)
 - Tool has distinct operational modes
 - Each mode has unique requirements
 - Modes share common infrastructure
-
-**Benefits**:
-- Tests different use cases
-- Covers various workflows
-- Realistic usage scenarios
 
 ### Pattern 5: Increasing Constraints
 
@@ -298,11 +278,6 @@ checkpoint_4: Find optimal solution with < 1GB memory
 - Testing optimization algorithms
 - Performance matters
 - Want to reward better solutions
-
-**Benefits**:
-- Rewards efficiency
-- Tests algorithm quality
-- Realistic production constraints
 
 ## Progression Strategies
 
@@ -444,18 +419,52 @@ Agent State:
 
 This cumulative behavior is the standard approach for most problems. Agents build upon their previous work, extending functionality across checkpoints.
 
-### Workspace Isolation Within Checkpoints
+### Test Isolation Within Checkpoints
 
-While checkpoints are cumulative (workspace persists), you can control **test case isolation** within each checkpoint using the `isolated` field on groups:
+While checkpoints are cumulative (workspace persists), each **test case** runs in isolation using pytest's `tmp_path` fixture:
 
-```yaml
-groups:
-  core:
-    type: Core
-    isolated: true   # Each test case starts with clean workspace state
+```python
+def test_case_1(entrypoint_argv, tmp_path):
+    """Each test gets a fresh tmp_path directory."""
+    # Write input files to tmp_path
+    (tmp_path / "input.yaml").write_text("key: value")
+
+    # Run command in tmp_path
+    result = subprocess.run(
+        entrypoint_argv + ["--input", str(tmp_path / "input.yaml")],
+        cwd=tmp_path,
+        capture_output=True
+    )
 ```
 
-When `isolated: true` (the default), each test case within a group starts with a fresh workspace. This prevents state pollution between tests while still allowing code to accumulate across checkpoints.
+This prevents state pollution between tests while allowing code to accumulate across checkpoints.
+
+### Regression Testing
+
+Prior checkpoint tests automatically run as regression tests (unless disabled):
+
+```yaml
+checkpoints:
+  checkpoint_2:
+    version: 1
+    order: 2
+    include_prior_tests: true  # Default: checkpoint_1 tests run as regression
+```
+
+Use the `checkpoint_name` fixture to handle cases where behavior differs:
+
+```python
+def test_output_format(entrypoint_argv, checkpoint_name):
+    result = run_command(entrypoint_argv, {"data": "test"})
+    output = json.loads(result.stdout)
+
+    # Basic assertion works for all checkpoints
+    assert output["status"] == "success"
+
+    # New field added in checkpoint_2
+    if checkpoint_name in {"checkpoint_2", "checkpoint_3"}:
+        assert "version" in output
+```
 
 ### Spec Design for Continuation
 
@@ -493,7 +502,7 @@ Extend your existing `backup_scheduler.py` to:
 
 ## Common Mistakes
 
-### ❌ Mistake 1: Too Many Checkpoints
+### Mistake 1: Too Many Checkpoints
 
 **Bad:**
 ```
@@ -518,7 +527,7 @@ checkpoint_2: Apply exclusions and emit events
 
 **Rule of thumb**: 3-5 checkpoints is ideal, rarely more than 6.
 
-### ❌ Mistake 2: Uneven Difficulty
+### Mistake 2: Uneven Difficulty
 
 **Bad:**
 ```
@@ -540,7 +549,7 @@ checkpoint_4: Add consensus (log agreement) (4 hours)
 checkpoint_5: Add monitoring and recovery (3 hours)
 ```
 
-### ❌ Mistake 3: Unclear Dependencies
+### Mistake 3: Unclear Dependencies
 
 **Bad:**
 ```
@@ -558,7 +567,7 @@ checkpoint_2 spec: "Extend your parser from checkpoint_1 to add execution."
 
 **Always explicitly state** when extending previous checkpoint.
 
-### ❌ Mistake 4: Backwards Incompatibility
+### Mistake 4: Backwards Incompatibility
 
 **Bad:**
 ```
@@ -573,7 +582,7 @@ checkpoint_2: CLI arguments: --file <file> (breaks checkpoint_1!)
 checkpoint_2: CLI arguments: --input <file> OR --file <file>
 ```
 
-### ❌ Mistake 5: No Clear Theme
+### Mistake 5: No Clear Theme
 
 **Bad:**
 ```
@@ -599,88 +608,62 @@ checkpoint_4: Data export (builds on data management)
 
 ```
 checkpoint_1: Parse YAML schedule, determine due jobs, emit JSONL events
-  - 13 test cases
+  - ~13 test cases (core + error)
   - Focus: Parsing and scheduling logic
-  - Time: ~2 hours
 
 checkpoint_2: Actually backup files (full/pack/verify modes)
-  - 3 test cases
+  - ~5 test cases
   - Focus: File operations
-  - Time: ~2 hours
 
 checkpoint_3: Verify existing backups
-  - 4 test cases
+  - ~4 test cases
   - Focus: Checksum validation
-  - Time: ~1 hour
 
 checkpoint_4: Incremental backups
-  - 4 test cases
+  - ~4 test cases
   - Focus: State tracking
-  - Time: ~2 hours
 ```
 
 **Pattern**: Each checkpoint adds a major feature.
 
 **Progression**: Simulation → Execution → Verification → Optimization
 
-### Example 2: `eve_industry` (Expanding Scope)
+### Example 2: `etl_pipeline` (Stream Processing)
 
 ```
-checkpoint_1: Load item database, lookup recipes
-  - 6 test cases
-  - Focus: Data loading
-  - Time: ~3 hours
+checkpoint_1: Basic passthrough and field operations
+  - Core: passthrough, nested objects, arrays, empty
+  - Functionality: filter, exclude, add fields
+  - Error: invalid JSON, empty input
 
-checkpoint_2: Calculate material requirements recursively
-  - 6 test cases
-  - Focus: Tree traversal
-  - Time: ~3 hours
-
-checkpoint_3: Add invention mechanics
-  - 6 test cases
-  - Focus: Probability calculations
-  - Time: ~4 hours
-
-checkpoint_4: Parse build plans from YAML
-  - 4 test cases
-  - Focus: Complex input parsing
-  - Time: ~3 hours
-
-checkpoint_5: Optimize material purchasing
-  - 3 test cases (+ hidden)
-  - Focus: Optimization
-  - Time: ~4 hours
+checkpoint_2: Advanced transformations
+  - Core: type conversion, nested field access
+  - Functionality: conditional transforms
 ```
 
-**Pattern**: Each checkpoint adds complexity to the same domain.
+**Pattern**: Simple operations first, complex operations later.
 
-**Progression**: Load → Calculate → Extend → Plan → Optimize
+**Progression**: Basic → Advanced
 
-### Example 3: `dynamic_config_service_api` (Layered Complexity)
+### Example 3: `layered_config_synthesizer` (Expanding Scope)
 
 ```
-checkpoint_1: Basic CRUD, versioning, scoping
-  - 42 test cases
-  - Focus: Core API
-  - Time: ~8 hours
+checkpoint_1: Basic config merging
+  - Core: merge two configs
+  - Error: invalid YAML, missing files
 
-checkpoint_2: Include resolution, deep merge
-  - Additional cases
-  - Focus: Config inheritance
-  - Time: ~4 hours
+checkpoint_2: Includes and references
+  - Core: resolve includes
+  - Functionality: variable references
 
-checkpoint_3: Conflict detection, cycle prevention
-  - Additional cases
-  - Focus: Advanced validation
-  - Time: ~4 hours
-
-checkpoint_4: Performance, rate limiting, scaling
-  - Additional cases
-  - Focus: Production features
-  - Time: ~4 hours
+checkpoint_3: Conflict resolution
+  - Core: deep merge strategies
+  - Functionality: type checking
 ```
 
-**Pattern**: Foundation → Extensions → Safety → Production
+**Pattern**: Each checkpoint handles more cases.
+
+**Progression**: Simple → Complex merging rules
 
 ## Checkpoint Planning Worksheet
 
@@ -697,21 +680,17 @@ Checkpoint 1:
   - Theme: ___________________
   - Features: [list]
   - Dependencies: None
-  - Time: _____ hours
-  - Test cases: _____ cases
+  - Tests: Core: _____, Functionality: _____, Error: _____
 
 Checkpoint 2:
   - Theme: ___________________
   - Features: [list]
   - Dependencies: checkpoint_1 (or None)
-  - Time: _____ hours
-  - Test cases: _____ cases
+  - Tests: Core: _____, Functionality: _____, Error: _____
 
 [... repeat for each checkpoint ...]
 
 Progression Pattern: [Linear | Parallel | Expanding | Modes | Constraints]
-
-Continuation: [Cumulative | Reset]
 
 Rationale: Why these divisions?
 ```
@@ -753,7 +732,7 @@ Rationale: Why these divisions?
 
 ## Next Steps
 
-- **[Test Cases Guide](test-cases.md)** - Write tests for each checkpoint
-- **[Groups Guide](groups.md)** - Organize tests within checkpoints
+- **[Pytest Markers](pytest/markers.md)** - Categorize tests within checkpoints
+- **[Regression Testing](patterns/regression-testing.md)** - Handle include_prior_tests
 - **[Problem Structure](structure.md)** - See checkpoint structure
 - **[Examples](examples/)** - Study real checkpoint progressions

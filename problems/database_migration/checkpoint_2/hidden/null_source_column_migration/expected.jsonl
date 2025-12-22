@@ -1,3 +1,0 @@
-{"event": "operation_applied", "type": "add_column", "table": "users", "column": "email", "version": 2}
-{"event": "operation_applied", "type": "migrate_column_data", "table": "users", "from_column": "temp_email", "to_column": "email", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 2}

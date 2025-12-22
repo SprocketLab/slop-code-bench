@@ -1,4 +1,0 @@
-# Test excluding parameters from cache key
-# Debug and verbose flags shouldn't affect caching
-
-entry = "collect_reports"

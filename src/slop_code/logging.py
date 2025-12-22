@@ -163,9 +163,6 @@ class StdlibLoggerAdapter:
                     value = value.model_dump(mode="json")
                 except Exception:
                     value = repr(value)
-            elif isinstance(value, (dict, list)) and len(str(value)) > 100:
-                # Truncate long collections
-                value = f"{str(value)[:100]}..."
             else:
                 value = repr(value)
             formatted_pairs.append(f"{key}={value}")
@@ -683,6 +680,7 @@ def setup_logging(
     add_multiproc_info: bool = False,
     enable_colors: bool = True,
     ensure_log_dir: bool = True,
+    suppress_console: bool = False,
 ) -> BoundLogger | None:
     """Configure structlog + stdlib logging for the current process.
 
@@ -709,6 +707,9 @@ def setup_logging(
         add_multiproc_info: Whether to add process ID and thread name to all
             log events. Useful for debugging multiprocessing/multithreading
             issues.
+        suppress_console: When True, skip console handler (logs only go to file).
+            Useful for quiet/JSON output modes where only the final result
+            should be printed.
 
     Returns:
         A structlog ``BoundLogger`` instance bound to this module when using
@@ -725,7 +726,9 @@ def setup_logging(
         add_multiproc_info=add_multiproc_info,
     )
 
-    handlers: list[logging.Handler] = [_create_console_handler(config)]
+    handlers: list[logging.Handler] = (
+        [] if suppress_console else [_create_console_handler(config)]
+    )
 
     if log_dir is not None:
         handlers.append(

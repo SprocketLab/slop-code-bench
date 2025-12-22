@@ -1,332 +1,202 @@
-"""CLI commands for inspecting problems and checkpoints."""
-
 from __future__ import annotations
 
-import json
-import sys
-from collections import Counter
+import re
 from pathlib import Path
 from typing import Annotated
 
 import typer
+import yaml
 from rich.console import Console
 from rich.table import Table
 
-from slop_code.evaluation import CheckpointConfig
-from slop_code.evaluation import GroupType
-from slop_code.evaluation import ProblemConfig
 from slop_code.evaluation import get_available_problems
-from slop_code.evaluation import initialize_loader
-from slop_code.evaluation.loaders import NoOpStore
-from slop_code.logging import get_logger
 
-logger = get_logger(__name__)
-app = typer.Typer(help="Commands for inspecting problems and checkpoints")
+app = typer.Typer(
+    help="Commands for managing and inspecting problems.",
+)
 
-
-def _count_cases_by_type(
-    problem: ProblemConfig, checkpoint: CheckpointConfig
-) -> dict[str, int]:
-    loader = initialize_loader(problem, checkpoint, use_placeholders=True)
-    store = loader.initialize_store()
-    counts: Counter[str] = Counter(
-        {group_type.value: 0 for group_type in GroupType}
-    )
-
-    for group_config in checkpoint.groups.values():
-        group_type = (
-            group_config.type.value
-            if isinstance(group_config.type, GroupType)
-            else str(group_config.type)
-        )
-        for case, _ in loader(group_config, store):
-            counts[group_type] += 1
-    return dict(counts)
+console = Console()
 
 
-def _build_checkpoint_entry(
-    problem: ProblemConfig,
-    checkpoint_name: str,
-    checkpoint: CheckpointConfig,
-) -> dict[str, object]:
-    return {
-        "checkpoint_name": checkpoint_name,
-        "spec": checkpoint.get_spec_text(),
-        "version": checkpoint.version,
-        "state": checkpoint.state,
-        "tests_by_type": _count_cases_by_type(problem, checkpoint),
-    }
-
-
-def _build_problem_entry(problem: ProblemConfig) -> dict[str, object]:
-    checkpoints = [
-        _build_checkpoint_entry(problem, name, checkpoint)
-        for name, checkpoint in problem.iterate_checkpoint_items()
-    ]
-    return {
-        "problem_name": problem.name,
-        "tags": problem.tags,
-        "version": problem.version,
-        "author": problem.author,
-        "category": problem.category,
-        "entry_point": problem.entry_file,
-        "adapter_type": problem.adapter.type,
-        "difficulty": problem.difficulty,
-        "description": problem.description,
-        "checkpoints": checkpoints,
-    }
-
-
-def _has_non_draft_checkpoint(problem: ProblemConfig) -> bool:
-    return any(cp.state != "Draft" for cp in problem.iterate_checkpoints())
-
-
-@app.command("make-registry")
-def make_registry(
-    ctx: typer.Context,
-    output: Annotated[
-        Path | None,
-        typer.Option(
-            "--output",
-            "-o",
-            exists=False,
-            file_okay=True,
-            dir_okay=False,
-            resolve_path=True,
-            help="Path to write the registry JSONL (default: problems/registry.jsonl)",
-        ),
-    ] = None,
-) -> None:
-    """Generate a registry.jsonl file describing all non-draft problems."""
-    output_path = output or ctx.obj.problem_path / "registry.jsonl"
-    problems = get_available_problems(ctx.obj.problem_path)
-
-    registry_rows = []
-    skipped_draft = 0
-    for problem_name in sorted(problems.keys()):
-        problem = problems[problem_name]
-        if not _has_non_draft_checkpoint(problem):
-            skipped_draft += 1
-            continue
-        registry_rows.append(_build_problem_entry(problem))
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8") as f:
-        for row in registry_rows:
-            f.write(json.dumps(row))
-            f.write("\n")
-
-    typer.echo(
-        f"Wrote registry with {len(registry_rows)} "
-        f"problem{'s' if len(registry_rows) != 1 else ''} to {output_path}"
-        + (f" (skipped {skipped_draft} draft)" if skipped_draft else "")
-    )
-
-
-@app.command("ls")
-def list_problems(
-    ctx: typer.Context,
-    include_draft: bool = typer.Option(
-        False,
-        "--include-draft",
-        help="Include problems with only draft checkpoints",
-    ),
-) -> None:
-    """List all problems with their metadata.
-
-    Displays a table with problem name, version, adapter type, category,
-    and checkpoint count. By default, excludes problems that only have
-    draft checkpoints.
-    """
+@app.command("ls", help="List all available problems.")
+def list_problems(ctx: typer.Context) -> None:
+    """List all problems with metadata in a table format."""
     problems = get_available_problems(ctx.obj.problem_path)
 
     table = Table(title="Available Problems")
-    table.add_column("Problem", style="cyan")
-    table.add_column("Version", justify="center")
-    table.add_column("Adapter Type", justify="center")
-    table.add_column("Category", style="green")
-    table.add_column("# Checkpoints", justify="right")
+    table.add_column("Name", style="cyan", no_wrap=True)
+    table.add_column("Checkpoints", justify="center")
+    table.add_column("Difficulty", style="magenta")
+    table.add_column("Description")
 
-    problem_rows = []
-    for problem_name in sorted(problems.keys()):
-        problem = problems[problem_name]
+    for name in sorted(problems.keys()):
+        problem = problems[name]
+        num_checkpoints = len(problem.checkpoints)
+        difficulty = problem.difficulty
+        description = problem.description.strip().replace("\n", " ")
+        if len(description) > 60:
+            description = description[:57] + "..."
 
-        # Get all checkpoints and filter by draft status
-        all_checkpoints = list(problem.iterate_checkpoints())
-        non_draft_checkpoints = [
-            cp for cp in all_checkpoints if cp.state != "Draft"
-        ]
+        table.add_row(name, str(num_checkpoints), difficulty, description)
 
-        # Skip problems with only draft checkpoints unless flag is set
-        if not include_draft and not non_draft_checkpoints:
-            continue
-
-        # Get adapter type
-        adapter_type = problem.adapter.type
-
-        problem_rows.append(
-            (
-                problem.name,
-                str(problem.version),
-                adapter_type,
-                problem.category,
-                str(len(all_checkpoints)),
-            )
-        )
-
-    # Add rows to table
-    for row in problem_rows:
-        table.add_row(*row)
-
-    console = Console()
     console.print(table)
-    console.print(
-        f"\n[dim]Total: {len(problem_rows)} "
-        f"problem{'s' if len(problem_rows) != 1 else ''}[/dim]"
+
+
+@app.command("status", help="Check if a problem has been converted to the new format.")
+def problem_status(
+    ctx: typer.Context,
+    problem_name: Annotated[str, typer.Argument(help="Problem name to check")],
+) -> None:
+    """Check problem conversion status and show test coverage per checkpoint."""
+    problem_path = ctx.obj.problem_path / problem_name
+
+    if not problem_path.exists():
+        console.print(f"[red]Problem '{problem_name}' not found at {problem_path}[/red]")
+        raise typer.Exit(1)
+
+    config_path = problem_path / "config.yaml"
+    if not config_path.exists():
+        console.print(f"[red]No config.yaml found at {config_path}[/red]")
+        raise typer.Exit(1)
+
+    # Load raw YAML to get basic info (works for both old and new format)
+    with config_path.open() as f:
+        raw_config = yaml.safe_load(f)
+
+    problem_name_from_config = raw_config.get("name", problem_name)
+    description = raw_config.get("description", "No description")
+    checkpoint_names = list(raw_config.get("checkpoints", {}).keys())
+
+    console.print(f"\n[bold]Problem: {problem_name_from_config}[/bold]")
+    console.print(f"Description: {description.strip()[:100]}...")
+    console.print(f"Checkpoints: {len(checkpoint_names)}")
+    console.print()
+
+    # Check overall structure
+    structure_checks = _check_structure_raw(problem_path, checkpoint_names)
+    _print_structure_status(structure_checks)
+
+    if not structure_checks["is_converted"]:
+        console.print("\n[yellow]Problem is NOT fully converted to new format.[/yellow]")
+        return
+
+    console.print("\n[green]Problem is fully converted to new format.[/green]\n")
+
+    # Show test counts per checkpoint
+    _print_test_counts_raw(problem_path, checkpoint_names)
+
+
+def _check_structure_raw(problem_path: Path, checkpoint_names: list[str]) -> dict:
+    """Check if problem has the expected new format structure."""
+    tests_dir = problem_path / "tests"
+    solutions_dir = problem_path / "solutions"
+
+    checks = {
+        "tests_dir": tests_dir.exists(),
+        "conftest": (tests_dir / "conftest.py").exists(),
+        "no_loader": not (problem_path / "loader.py").exists(),
+        "no_verifier": not (problem_path / "verifier.py").exists(),
+        "checkpoints": {},
+    }
+
+    for cp_name in checkpoint_names:
+        cp_checks = {
+            "test_file": (tests_dir / f"test_{cp_name}.py").exists(),
+            "solution_dir": (solutions_dir / cp_name).exists(),
+            "spec_file": (problem_path / f"{cp_name}.md").exists(),
+        }
+        checks["checkpoints"][cp_name] = cp_checks
+
+    # Determine if fully converted
+    checks["is_converted"] = (
+        checks["tests_dir"]
+        and checks["conftest"]
+        and checks["no_loader"]
+        and checks["no_verifier"]
+        and all(
+            all(cp.values()) for cp in checks["checkpoints"].values()
+        )
     )
 
+    return checks
 
-@app.command("chkpt")
-def checkpoint_details(
-    ctx: typer.Context,
-    problem_name: Annotated[
-        str,
-        typer.Argument(help="Name of the problem"),
-    ],
-    checkpoint_num: Annotated[
-        int,
-        typer.Argument(help="Checkpoint number (1-based)"),
-    ],
-    jsonl: bool = typer.Option(
-        False,
-        "--jsonl",
-        help="Output in JSONL format instead of rich table",
-    ),
-    regressions: bool = typer.Option(
-        False,
-        "--regressions",
-        help="Show regression information (original checkpoint and group)",
-    ),
-) -> None:
-    """List groups, cases, and types for a checkpoint of a problem.
 
-    Displays information about all groups in the specified checkpoint,
-    including group type and number of test cases. Can optionally show
-    regression information and output in JSONL format.
-    """
-    # Load the problem
-    try:
-        problem = ProblemConfig.from_yaml(ctx.obj.problem_path / problem_name)
-    except FileNotFoundError:
-        console = Console()
-        console.print(
-            f"[red]Error:[/red] Problem '{problem_name}' not found "
-            f"at {ctx.obj.problem_path / problem_name}"
-        )
-        sys.exit(1)
-    except Exception as e:
-        console = Console()
-        console.print(f"[red]Error loading problem:[/red] {e}")
-        sys.exit(1)
+def _print_structure_status(checks: dict) -> None:
+    """Print structure check results."""
+    def status(ok: bool) -> str:
+        return "[green]OK[/green]" if ok else "[red]MISSING[/red]"
 
-    # Get the requested checkpoint
-    checkpoints = list(problem.iterate_checkpoint_items())
-    if checkpoint_num < 1 or checkpoint_num > len(checkpoints):
-        console = Console()
-        console.print(
-            f"[red]Error:[/red] Invalid checkpoint number. "
-            f"Must be between 1 and {len(checkpoints)}"
-        )
-        sys.exit(1)
+    console.print("[bold]Structure Checks:[/bold]")
+    console.print(f"  tests/ directory: {status(checks['tests_dir'])}")
+    console.print(f"  tests/conftest.py: {status(checks['conftest'])}")
+    console.print(f"  No loader.py (old format): {status(checks['no_loader'])}")
+    console.print(f"  No verifier.py (old format): {status(checks['no_verifier'])}")
 
-    checkpoint_name, checkpoint = checkpoints[checkpoint_num - 1]
+    if checks["checkpoints"]:
+        console.print("\n[bold]Checkpoint Files:[/bold]")
+        for cp_name, cp_checks in checks["checkpoints"].items():
+            console.print(f"  {cp_name}:")
+            console.print(f"    test file: {status(cp_checks['test_file'])}")
+            console.print(f"    solution dir: {status(cp_checks['solution_dir'])}")
+            console.print(f"    spec file: {status(cp_checks['spec_file'])}")
 
-    # Initialize loader to discover cases
-    loader = initialize_loader(problem, checkpoint, use_placeholders=True)
-    store = NoOpStore()
 
-    # Collect data for each group
-    rows = []
-    for group_name, group_config in checkpoint.groups.items():
-        # Count cases by iterating through loader
-        case_count = 0
-        for case, expected in loader(group_config, store):
-            case_count += 1
+def _print_test_counts_raw(problem_path: Path, checkpoint_names: list[str]) -> None:
+    """Print test counts per checkpoint."""
+    tests_dir = problem_path / "tests"
 
-        # Handle type as either enum or string
-        group_type = (
-            group_config.type.value
-            if isinstance(group_config.type, GroupType)
-            else group_config.type
+    table = Table(title="Test Counts by Checkpoint")
+    table.add_column("Checkpoint", style="cyan")
+    table.add_column("Core", justify="right")
+    table.add_column("Functionality", justify="right")
+    table.add_column("Error", justify="right")
+    table.add_column("Total", justify="right", style="bold")
+
+    for cp_name in sorted(checkpoint_names):
+        test_file = tests_dir / f"test_{cp_name}.py"
+        if not test_file.exists():
+            table.add_row(cp_name, "-", "-", "-", "-")
+            continue
+
+        counts = _count_tests_in_file(test_file)
+        table.add_row(
+            cp_name,
+            str(counts["core"]),
+            str(counts["functionality"]),
+            str(counts["error"]),
+            str(counts["total"]),
         )
 
-        row_data = {
-            "group": group_name,
-            "type": group_type,
-            "cases": case_count,
-        }
+    console.print(table)
 
-        # Add regression info if requested
-        if regressions:
-            is_regression = (
-                group_config.type == GroupType.REGRESSION
-                if isinstance(group_config.type, GroupType)
-                else group_config.type == "Regression"
-            )
-            if is_regression:
-                row_data["original_checkpoint"] = (
-                    group_config.original_checkpoint or ""
-                )
-                row_data["original_group"] = group_config.original_group or ""
-            else:
-                row_data["original_checkpoint"] = ""
-                row_data["original_group"] = ""
 
-        rows.append(row_data)
+def _count_tests_in_file(test_file: Path) -> dict:
+    """Count tests by type in a test file using regex."""
+    content = test_file.read_text()
 
-    # Output results
-    if jsonl:
-        # Output as JSONL
-        for row in rows:
-            print(json.dumps(row))
-    else:
-        # Output as rich table
-        console = Console()
-        table = Table(
-            title=f"{problem.name} - {checkpoint_name}",
-            show_header=True,
-        )
-        table.add_column("Group", style="cyan")
-        table.add_column("Type", style="yellow")
-        table.add_column("# Cases", justify="right")
+    # Find all test function definitions
+    test_pattern = re.compile(r"^def (test_\w+)\s*\(", re.MULTILINE)
+    all_tests = test_pattern.findall(content)
+    total = len(all_tests)
 
-        if regressions:
-            table.add_column("Original Checkpoint", style="dim")
-            table.add_column("Original Group", style="dim")
+    # Count marked tests by looking for marker + function pattern
+    # Look for @pytest.mark.X followed by def test_
+    functionality_pattern = re.compile(
+        r"@pytest\.mark\.functionality\s*\n(?:@[\w\.]+\([^)]*\)\s*\n)*def test_\w+",
+        re.MULTILINE,
+    )
+    error_pattern = re.compile(
+        r"@pytest\.mark\.error\s*\n(?:@[\w\.]+\([^)]*\)\s*\n)*def test_\w+",
+        re.MULTILINE,
+    )
 
-        # Add rows to table
-        for row in rows:
-            if regressions:
-                table.add_row(
-                    row["group"],
-                    row["type"],
-                    str(row["cases"]),
-                    row["original_checkpoint"],
-                    row["original_group"],
-                )
-            else:
-                table.add_row(
-                    row["group"],
-                    row["type"],
-                    str(row["cases"]),
-                )
+    functionality_count = len(functionality_pattern.findall(content))
+    error_count = len(error_pattern.findall(content))
+    core_count = total - functionality_count - error_count
 
-        console.print(table)
-
-        # Print summary
-        total_cases = sum(r["cases"] for r in rows)
-        console.print(
-            f"\n[dim]Total: {len(rows)} group"
-            f"{'s' if len(rows) != 1 else ''}, "
-            f"{total_cases} case{'s' if total_cases != 1 else ''}[/dim]"
-        )
+    return {
+        "total": total,
+        "core": core_count,
+        "functionality": functionality_count,
+        "error": error_count,
+    }

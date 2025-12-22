@@ -1,2 +1,0 @@
-{"event":"file_updated","file":"app.json","rules_applied":["convert_boolean_to_string","convert_number_to_boolean","convert_string_to_array","convert_string_to_number","convert_to_null","convert_to_object"]}
-{"event":"file_updated","file":"service.yaml","rules_applied":["convert_boolean_to_string","convert_number_to_boolean","convert_string_to_array","convert_string_to_number","convert_to_null","convert_to_object"]}

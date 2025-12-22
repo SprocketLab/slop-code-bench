@@ -1,5 +1,0 @@
-{"job_id": 3, "task": "A", "params": {}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": "B/A", "exit_code": 0, "parent": 2, "duration": 0.017700128999422304}
-{"job_id": 2, "task": "B", "params": {}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": "B", "exit_code": 0, "parent": 1, "duration": 0.03868638199946872}
-{"job_id": 5, "task": "A", "params": {}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": "C/A", "exit_code": 0, "parent": 4, "duration": 0.015571150000141643}
-{"job_id": 4, "task": "C", "params": {}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": "C", "exit_code": 0, "parent": 1, "duration": 0.03064941299999191}
-{"job_id": 1, "task": "main", "params": {}, "stdout": "ls\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": null, "duration": 0.08529614999952173}

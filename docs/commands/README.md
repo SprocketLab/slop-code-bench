@@ -1,6 +1,6 @@
 ---
 version: 1.0
-last_updated: 2025-12-17
+last_updated: 2025-12-22
 ---
 
 # CLI Commands Reference
@@ -100,24 +100,15 @@ slop-code docker build-agent configs/agents/claude_code-2.0.51.yaml configs/envi
 # List all problems
 slop-code problems ls
 
-# Show checkpoint details
-slop-code problems chkpt file_backup 1
-
-# Generate problem registry
-slop-code problems make-registry
+# Check problem conversion status
+slop-code problems status file_backup
 ```
 
-### Interactive Tools
+### Test Case Runner
 
 ```bash
-# Run a single test case
+# Run pytest tests for a snapshot
 slop-code tools run-case -s outputs/snapshot -p file_backup -c 1 -e configs/environments/docker-python3.12-uv.yaml
-
-# Launch snapshot evaluator UI
-slop-code tools snapshot-eval
-
-# Launch report viewer UI
-slop-code tools report-viewer outputs/my_run
 ```
 
 ## Documentation Index

@@ -1,6 +1,0 @@
-id: get_item_1_after_update
-arguments:
-  - get
-  - "1"
-expected:
-  status_code: 0

@@ -1,4 +1,0 @@
-app: metadata-app
-timeout: 30
-retry: 3
-region: us-west-2

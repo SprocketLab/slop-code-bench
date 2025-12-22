@@ -1,9 +1,0 @@
-{"event": "TASK_STARTED", "job_id": 1, "task": "main_but_not", "parent": null}
-{"event": "TASK_STARTED", "job_id": 2, "task": "CreateFileENV", "parent": 1}
-{"event": "TASK_RUNNING", "job_id": 2, "task": "CreateFileENV", "parent": 1}
-{"event": "TASK_COMPLETED", "job_id": 2, "task": "CreateFileENV", "parent": 1}
-{"event": "TASK_STARTED", "job_id": 3, "task": "PrintInt", "parent": 1}
-{"event": "TASK_RUNNING", "job_id": 3, "task": "PrintInt", "parent": 1}
-{"event": "TASK_COMPLETED", "job_id": 3, "task": "PrintInt", "parent": 1}
-{"event": "TASK_RUNNING", "job_id": 1, "task": "main_but_not", "parent": null}
-{"event": "TASK_COMPLETED", "job_id": 1, "task": "main_but_not", "parent": null}

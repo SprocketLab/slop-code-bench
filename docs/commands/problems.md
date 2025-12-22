@@ -1,19 +1,18 @@
 ---
 version: 1.0
-last_updated: 2025-12-17
+last_updated: 2025-12-22
 ---
 
 # problems
 
-Commands for inspecting problems and checkpoints.
+Commands for inspecting problems and checking conversion status.
 
 ## Subcommands
 
 | Command | Description |
 |---------|-------------|
 | [`ls`](#ls) | List all problems |
-| [`chkpt`](#chkpt) | Show checkpoint details |
-| [`make-registry`](#make-registry) | Generate problem registry |
+| [`status`](#status) | Check problem conversion status |
 
 ---
 
@@ -24,144 +23,100 @@ List all problems with their metadata.
 ### Usage
 
 ```bash
-slop-code problems ls [OPTIONS]
+slop-code problems ls
 ```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--include-draft` | flag | false | Include problems with only draft checkpoints |
 
 ### Output
 
 Displays a table with:
 - Problem name
-- Version
-- Adapter type
-- Category
 - Checkpoint count
+- Difficulty
+- Description (truncated)
 
 ### Examples
 
 ```bash
-# List all non-draft problems
+# List all problems
 slop-code problems ls
-
-# Include draft problems
-slop-code problems ls --include-draft
 ```
 
 ---
 
-## chkpt
+## status
 
-List groups, cases, and types for a checkpoint of a problem.
+Check if a problem has been converted to the new pytest-based format.
 
 ### Usage
 
 ```bash
-slop-code problems chkpt [OPTIONS] PROBLEM_NAME CHECKPOINT_NUM
+slop-code problems status PROBLEM_NAME
 ```
 
 ### Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `PROBLEM_NAME` | Yes | Name of the problem |
-| `CHECKPOINT_NUM` | Yes | Checkpoint number (1-based) |
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--jsonl` | flag | false | Output in JSONL format |
-| `--regressions` | flag | false | Show regression information |
+| `PROBLEM_NAME` | Yes | Name of the problem to check |
 
 ### Output
 
-Displays information about all groups:
-- Group name
-- Group type (Core, Hidden, Regression, etc.)
-- Number of test cases
+**Structure Checks:**
+- `tests/` directory exists
+- `tests/conftest.py` exists
+- No `loader.py` (old format)
+- No `verifier.py` (old format)
 
-With `--regressions`, also shows:
-- Original checkpoint
-- Original group
+**Checkpoint Files** (for each checkpoint):
+- Test file exists (`tests/test_checkpoint_N.py`)
+- Solution directory exists (`solutions/checkpoint_N/`)
+- Spec file exists (`checkpoint_N.md`)
 
-### Examples
-
-```bash
-# Show checkpoint 1 details
-slop-code problems chkpt file_backup 1
-
-# JSON output for scripting
-slop-code problems chkpt file_backup 1 --jsonl
-
-# Show regression info
-slop-code problems chkpt file_backup 3 --regressions
-```
-
----
-
-## make-registry
-
-Generate a `registry.jsonl` file describing all non-draft problems.
-
-### Usage
-
-```bash
-slop-code problems make-registry [OPTIONS]
-```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `-o, --output` | path | `problems/registry.jsonl` | Output path |
-
-### Output Format
-
-Each line is a JSON object containing:
-
-```json
-{
-  "problem_name": "file_backup",
-  "tags": ["filesystem", "backup"],
-  "version": "1.0",
-  "author": "...",
-  "category": "cli",
-  "entry_point": "backup.py",
-  "adapter_type": "cli",
-  "difficulty": "medium",
-  "description": "...",
-  "checkpoints": [
-    {
-      "checkpoint_name": "checkpoint_1",
-      "spec": "...",
-      "version": "1.0",
-      "state": "Ready",
-      "tests_by_type": {
-        "Core": 5,
-        "Hidden": 3
-      }
-    }
-  ]
-}
-```
+**Test Counts** (if fully converted):
+A table showing test counts by type (Core, Functionality, Error) for each checkpoint.
 
 ### Examples
 
 ```bash
-# Generate default registry
-slop-code problems make-registry
+# Check if file_backup is converted
+slop-code problems status file_backup
 
-# Custom output path
-slop-code problems make-registry -o outputs/problem_registry.jsonl
+# Check conversion status of etl_pipeline
+slop-code problems status etl_pipeline
+```
+
+### Example Output
+
+```
+Problem: file_backup
+Description: Implement a file backup utility...
+Checkpoints: 5
+
+Structure Checks:
+  tests/ directory: OK
+  tests/conftest.py: OK
+  No loader.py (old format): OK
+  No verifier.py (old format): OK
+
+Checkpoint Files:
+  checkpoint_1:
+    test file: OK
+    solution dir: OK
+    spec file: OK
+  ...
+
+Problem is fully converted to new format.
+
+┏━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━┓
+┃ Checkpoint   ┃ Core ┃ Functionality ┃ Error ┃ Total ┃
+┡━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━┩
+│ checkpoint_1 │    5 │             3 │     2 │    10 │
+│ checkpoint_2 │    8 │             4 │     3 │    15 │
+└──────────────┴──────┴───────────────┴───────┴───────┘
 ```
 
 ## See Also
 
-- [Problem Authoring Guide](../guides/problem-authoring.md)
+- [Problem Tutorial](../problems/tutorial.md)
 - [Problem Configuration](../problems/config-schema.md)
-- [Checkpoints](../problems/checkpoints.md)
+- [Pytest Test Patterns](../problems/pytest/README.md)

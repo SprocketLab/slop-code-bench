@@ -1,0 +1,78 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json data.parquet events.jsonl
+  input_files:
+  - content:
+    - id: 2
+      name: Bob
+      score: 85
+    - id: 1
+      name: Alice
+      score: 90
+    - id: 3
+      name: Charlie
+      score: 75
+    file_type: parquet
+    path: data.parquet
+  - content:
+    - id: 1
+      metadata:
+        timestamp: "2024-01-01T10:00:00Z"
+        tags: ["a", "b"]
+    - id: 2
+      metadata:
+        timestamp: "2024-01-02T11:00:00Z"
+        tags: ["c"]
+    - id: 3
+      metadata:
+        timestamp: "2024-01-03T12:00:00Z"
+        tags: []
+    file_type: jsonl
+    path: events.jsonl
+  - content:
+      columns:
+      - name: id
+        type: int
+      - name: name
+        type: string
+      - name: score
+        type: int
+      - name: metadata
+        type:
+          struct:
+            fields:
+            - name: timestamp
+              type: timestamp
+            - name: tags
+              type:
+                array:
+                  element: string
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - id: 1
+      name: Alice
+      score: 90
+      metadata: null
+    - id: 1
+      name: null
+      score: null
+      metadata: '{"timestamp":"2024-01-01T10:00:00Z","tags":["a","b"]}'
+    - id: 2
+      name: Bob
+      score: 85
+      metadata: null
+    - id: 2
+      name: null
+      score: null
+      metadata: '{"timestamp":"2024-01-02T11:00:00Z","tags":["c"]}'
+    - id: 3
+      name: Charlie
+      score: 75
+      metadata: null
+    - id: 3
+      name: null
+      score: null
+      metadata: '{"timestamp":"2024-01-03T12:00:00Z","tags":[]}'
+  status_code: 0

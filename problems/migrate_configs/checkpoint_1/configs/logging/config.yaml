@@ -1,6 +1,0 @@
-app: migrate-configs
-logging:
-  level: debug
-  format: json
-cache:
-  ttl: 300

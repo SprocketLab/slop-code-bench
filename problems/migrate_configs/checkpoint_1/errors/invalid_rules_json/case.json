@@ -1,7 +1,0 @@
-{
-  "arguments": "rules.json configs",
-  "expected_stdout": "",
-  "rules_text": "{\"broken\": true",
-  "status_code": 1,
-  "expected_stderr": ".*"
-}

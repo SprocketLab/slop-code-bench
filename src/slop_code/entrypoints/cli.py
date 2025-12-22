@@ -47,8 +47,8 @@ commands.variance.register(metrics_app, "variance")
 app.add_typer(metrics_app, name="metrics")
 app.add_typer(utils_app, name="utils")
 app.add_typer(commands.docker.app, name="docker")
-app.add_typer(commands.problems.app, name="problems")
 app.add_typer(commands.tools.app, name="tools")
+app.add_typer(commands.problems.app, name="problems")
 
 
 @app.callback()
@@ -60,6 +60,12 @@ def main(
         "--verbose",
         count=True,
         help="Increase verbosity (repeatable)",
+    ),
+    quiet: bool = typer.Option(
+        False,
+        "-q",
+        "--quiet",
+        help="Suppress console logging. Logs still written to file.",
     ),
     seed: int = typer.Option(42, "--seed", help="Random seed"),
     problem_path: Annotated[
@@ -90,6 +96,16 @@ def main(
     ),
 ) -> None:
     """Common setup executed before any command."""
+    if quiet and verbose > 0:
+        typer.echo(
+            typer.style(
+                "Error: --quiet and --verbose are mutually exclusive.",
+                fg=typer.colors.RED,
+                bold=True,
+            )
+        )
+        raise typer.Exit(1)
+
     ctx.obj = utils.CLIContext(
         verbosity=verbose,
         seed=seed,
@@ -97,16 +113,19 @@ def main(
         overwrite=overwrite,
         debug=debug,
         snapshot_dir_name=snapshot_dir_name,
+        quiet=quiet,
     )
-    typer.echo(
-        typer.style("Starting Slop Code CLI", fg=typer.colors.GREEN, bold=True)
-    )
-    typer.echo(f"\tProblem path: {problem_path}")
-    typer.echo(f"\tSeed: {seed}")
-    typer.echo(f"\tVerbose: {verbose}")
 
-    typer.echo("--------------------------------")
-    setup_logging(verbosity=verbose)
+    if not quiet:
+        typer.echo(
+            typer.style("Starting Slop Code CLI", fg=typer.colors.GREEN, bold=True)
+        )
+        typer.echo(f"\tProblem path: {problem_path}")
+        typer.echo(f"\tSeed: {seed}")
+        typer.echo(f"\tVerbose: {verbose}")
+        typer.echo("--------------------------------")
+
+    setup_logging(verbosity=verbose, suppress_console=quiet)
 
 
 if __name__ == "__main__":

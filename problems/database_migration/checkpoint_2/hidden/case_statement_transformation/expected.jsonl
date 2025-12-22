@@ -1,3 +1,0 @@
-{"event": "operation_applied", "type": "add_column", "table": "orders", "column": "size_category", "version": 2}
-{"event": "operation_applied", "type": "transform_data", "table": "orders", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 2}

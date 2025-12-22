@@ -1,5 +1,0 @@
-id: get_stats
-arguments:
-  - stats
-expected:
-  status_code: 0

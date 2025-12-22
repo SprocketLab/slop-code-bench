@@ -36,6 +36,7 @@ class CLIContext(BaseModel):
     overwrite: bool
     debug: bool
     snapshot_dir_name: str
+    quiet: bool = False
 
 
 class CLIError(Exception):

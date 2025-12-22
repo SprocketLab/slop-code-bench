@@ -1,4 +1,0 @@
-{"event": "operation_applied", "type": "add_column", "table": "mixed_data", "column": "computed", "version": 2}
-{"event": "operation_applied", "type": "add_column", "table": "mixed_data", "column": "text_upper", "version": 2}
-{"event": "operation_applied", "type": "transform_data", "table": "mixed_data", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 3}

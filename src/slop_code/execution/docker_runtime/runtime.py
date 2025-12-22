@@ -102,6 +102,9 @@ class DockerRuntime(SubmissionRuntime):
         self._disable_setup = disable_setup
         self._network_mode = self.spec.effective_network_mode()
         self._active_exec_process: subprocess.Popen[bytes] | None = None
+        self._single_shot_mode: bool = False
+        self._single_shot_command: str | None = None
+        self._single_shot_process: subprocess.Popen[bytes] | None = None
 
     @property
     def client(self) -> docker.DockerClient:
@@ -415,6 +418,62 @@ class DockerRuntime(SubmissionRuntime):
         )
         return args
 
+    def _build_docker_run_command(
+        self,
+        command: str,
+        env: dict[str, str],
+    ) -> list[str]:
+        """Build docker run command for single-shot execution.
+
+        Args:
+            command: The prepared command to run (e.g., "bash -l HANDLE_ENTRY.sh")
+            env: Environment variables for the command
+
+        Returns:
+            List of command arguments for docker run
+        """
+        full_env = self.spec.get_full_env(self._merge_env(env))
+        args: list[str] = [self.spec.docker.binary, "run", "--rm"]
+
+        # Add volumes
+        for host_path, container_spec in self._build_volumes().items():
+            bind = container_spec["bind"]
+            mode = container_spec.get("mode", "rw")
+            args.extend(["-v", f"{host_path}:{bind}:{mode}"])
+
+        # Add user
+        if self.user:
+            args.extend(["--user", self.user])
+
+        # Add network mode
+        args.extend(["--network", self._network_mode])
+
+        # Add working directory
+        args.extend(["--workdir", self._container_workdir()])
+
+        # Add environment variables
+        for key, value in full_env.items():
+            args.extend(["-e", f"{key}={value}"])
+
+        # Add ports (only for bridge networking)
+        resolved_ports = self._resolve_ports(None)
+        if resolved_ports:
+            for host_port, container_port in resolved_ports.items():
+                args.extend(["-p", f"{host_port}:{container_port}"])
+
+        # Add image
+        args.append(self._image)
+
+        # Add shell command
+        args.extend(["/bin/sh", "-c", command])
+
+        logger.debug(
+            "Built docker run command",
+            args=args,
+            verbose=True,
+        )
+        return args
+
     def _start_exec_process(
         self,
         command: str,
@@ -537,6 +596,112 @@ class DockerRuntime(SubmissionRuntime):
             proc.wait(timeout=5)
         self._active_exec_process = None
 
+    def _execute_single_shot(
+        self,
+        command: str,
+        env: dict[str, str],
+        stdin: str | list[str] | None,
+        timeout: float | None,
+    ) -> RuntimeResult:
+        """Execute command using docker run (single-shot, blocking).
+
+        Args:
+            command: Command to execute
+            env: Environment variables
+            stdin: Optional stdin input
+            timeout: Optional timeout in seconds
+
+        Returns:
+            RuntimeResult with execution details
+        """
+        # Write entry script with setup commands + actual command
+        self._write_entry_script(command)
+        prepared_command = f"bash -l {HANDLE_ENTRY_NAME}"
+
+        # Build docker run command
+        run_args = self._build_docker_run_command(prepared_command, env)
+
+        logger.debug(
+            "Executing single-shot docker run",
+            command=command[:200],
+            timeout=timeout,
+            has_stdin=stdin is not None,
+            verbose=True,
+        )
+
+        start_time = time.time()
+        timed_out = False
+
+        try:
+            proc = subprocess.Popen(
+                run_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE if stdin is not None else None,
+            )
+            self._single_shot_process = proc
+        except OSError as exc:
+            raise SolutionRuntimeError("Failed to launch docker run") from exc
+
+        try:
+            # Handle stdin if provided
+            if stdin is not None:
+                self._write_exec_stdin(proc, stdin)
+            elif proc.stdin is not None:
+                proc.stdin.close()
+
+            # Wait for completion
+            try:
+                stdout_bytes, stderr_bytes = proc.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                proc.kill()
+                stdout_bytes, stderr_bytes = proc.communicate()
+        finally:
+            self._single_shot_process = None
+            if proc.stdin:
+                with contextlib.suppress(Exception):
+                    proc.stdin.close()
+
+        elapsed = time.time() - start_time
+        exit_code = proc.returncode if proc.returncode is not None else -1
+
+        # Parse output (split setup from command output)
+        stdout = stdout_bytes.decode("utf-8", errors="replace")
+        stderr = stderr_bytes.decode("utf-8", errors="replace")
+
+        try:
+            *setup_stdout_parts, stdout = stdout.split(SPLIT_STRING)
+            setup_stdout = "\n".join(setup_stdout_parts)
+        except ValueError:
+            setup_stdout = ""
+
+        try:
+            *setup_stderr_parts, stderr = stderr.split(SPLIT_STRING)
+            setup_stderr = "\n".join(setup_stderr_parts)
+        except ValueError:
+            setup_stderr = ""
+
+        self._exit_code = exit_code
+
+        logger.debug(
+            "Single-shot docker run completed",
+            exit_code=exit_code,
+            elapsed=elapsed,
+            timed_out=timed_out,
+            verbose=True,
+        )
+
+        return RuntimeResult(
+            exit_code=exit_code,
+            stdout=stdout,
+            stderr=stderr,
+            setup_stdout=setup_stdout,
+            setup_stderr=setup_stderr,
+            elapsed=elapsed,
+            timed_out=timed_out,
+        )
+
     # --- Implementation of SubmissionRuntime methods ---
 
     def stream(
@@ -557,6 +722,10 @@ class DockerRuntime(SubmissionRuntime):
         Yields:
             RuntimeEvent objects for stdout, stderr, and completion
         """
+        if self._single_shot_mode:
+            raise SolutionRuntimeError(
+                "Streaming not supported in single-shot mode"
+            )
         if stdin is not None:
             raise ValueError("stdin is not supported for stream()")
 
@@ -625,6 +794,19 @@ class DockerRuntime(SubmissionRuntime):
         Returns:
             RuntimeResult with execution details
         """
+        # In single-shot mode, use docker run instead of docker exec
+        if self._single_shot_mode:
+            if self._single_shot_command is None:
+                raise SolutionRuntimeError(
+                    "Single-shot mode enabled but no command provided"
+                )
+            return self._execute_single_shot(
+                command=self._single_shot_command,
+                env=env,
+                stdin=stdin,
+                timeout=timeout,
+            )
+
         proc = self._start_exec_process(
             command,
             env,
@@ -681,6 +863,19 @@ class DockerRuntime(SubmissionRuntime):
         Returns:
             Exit code if container has finished, None if still running
         """
+        # In single-shot mode, execution is synchronous and already complete
+        if self._single_shot_mode:
+            return self._exit_code
+
+        # Check single-shot process if running (shouldn't happen, but defensive)
+        single_proc = self._single_shot_process
+        if single_proc is not None:
+            exit_code = single_proc.poll()
+            if exit_code is not None:
+                self._single_shot_process = None
+                self._exit_code = exit_code
+            return exit_code
+
         proc = self._active_exec_process
         if proc is None:
             return self._exit_code
@@ -695,6 +890,20 @@ class DockerRuntime(SubmissionRuntime):
     def kill(self) -> None:
         """Kill the running container."""
         self._stop_active_exec_process()
+
+        # Kill single-shot process if running
+        proc = self._single_shot_process
+        if proc is not None:
+            with contextlib.suppress(Exception):
+                proc.kill()
+            with contextlib.suppress(Exception):
+                proc.wait(timeout=5)
+            self._single_shot_process = None
+
+        # In single-shot mode, container is --rm and already gone
+        if self._single_shot_mode:
+            return
+
         container = self._container
         if container is None:
             return
@@ -730,11 +939,23 @@ class DockerRuntime(SubmissionRuntime):
         *,
         is_evaluation: bool = False,
         disable_setup: bool = False,
+        command: str | None = None,
     ) -> DockerRuntime:
         """Spawn a new Docker runtime instance.
 
         Args:
-            spec: Launch specification containing environment and settings
+            environment: Environment specification
+            working_dir: Working directory path
+            static_assets: Optional static assets to mount
+            ports: Optional port mappings
+            mounts: Optional volume mounts
+            env_vars: Optional environment variables
+            setup_command: Optional setup command
+            image: Optional image name override
+            user: Optional user to run as
+            is_evaluation: Whether this is an evaluation context
+            disable_setup: Whether to disable setup commands
+            command: Optional command for single-shot execution (uses docker run)
 
         Returns:
             New DockerRuntime instance
@@ -744,7 +965,8 @@ class DockerRuntime(SubmissionRuntime):
         """
         if not isinstance(environment, DockerEnvironmentSpec):
             raise ValueError("Invalid environment spec for docker runtime")
-        return cls(
+
+        runtime = cls(
             working_dir=working_dir,
             spec=environment,
             static_assets=static_assets or {},
@@ -757,3 +979,10 @@ class DockerRuntime(SubmissionRuntime):
             disable_setup=disable_setup,
             user=user,
         )
+
+        # If command provided, mark as single-shot mode for execute()
+        if command is not None:
+            runtime._single_shot_mode = True
+            runtime._single_shot_command = command
+
+        return runtime

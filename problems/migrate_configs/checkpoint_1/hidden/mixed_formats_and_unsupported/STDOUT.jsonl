@@ -1,4 +1,0 @@
-{"event":"file_updated","file":"app.json","rules_applied":["add_app_tier"]}
-{"event":"file_updated","file":"infra/config.toml","rules_applied":["increase_workers"]}
-{"event":"file_updated","file":"infra/settings.ini","rules_applied":["increase_workers"]}
-{"event":"file_updated","file":"services/api.yaml","rules_applied":["update_api_endpoint"]}

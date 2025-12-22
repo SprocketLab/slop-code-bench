@@ -1,4 +1,0 @@
-{"event": "operation_applied", "type": "add_column", "table": "products", "column": "price", "version": 2}
-{"event": "operation_applied", "type": "migrate_column_data", "table": "products", "from_column": "old_price", "to_column": "price", "version": 2}
-{"event": "operation_applied", "type": "transform_data", "table": "products", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 3}

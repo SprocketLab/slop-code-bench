@@ -1,0 +1,895 @@
+{
+  "shared_configs": {
+    "app.yaml": "environment: production\ntimeout: 60\ndatabase:\n  host: prod.db.internal\n  port: 5432\nservices:\n  - name: api\n    port: 8080\n  - name: worker\n    port: 8081\napp:\n  name: coreapp\n",
+    "inheritance/app.yaml": "extends: base.yaml\nenvironment: staging\n",
+    "inheritance/base.yaml": "timeout: 30\nregion: us-west-2\n",
+    "inheritance.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  }\n}\n",
+    "services.yaml": "services:\n  - name: api\n    port: 8080\n  - name: worker\n    port: 8081\n",
+    "worker.yaml": "environment: development\ntimeout: 45\ndatabase:\n  host: dev.db.internal\n  port: 5433\nservices:\n  - name: batch\n    port: 7000\n  - name: jobs\n    port: 7001\napp:\n  name: workerapp\n"
+  },
+  "cases": {
+    "core": {
+      "array_type_validation": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "validate_endpoint_types": {
+              "type": "validate_type",
+              "scope": "validation",
+              "key": "services[*].port",
+              "expected_type": "number"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "services:\n  - name: api\n    port: 8080\n  - name: worker\n    port: \\\"8081\\\"\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "validate_endpoint_types",
+              "error": "expected type number at key 'services[1].port', got string"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "inheritance_validation_pass": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance.json",
+          "rules": {
+            "require_timeout": {
+              "type": "require_keys",
+              "scope": "validation",
+              "keys": [
+                "timeout"
+              ]
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/inheritance/app.yaml",
+              "file_type": "text",
+              "content": "extends: base.yaml\nenvironment: staging\n"
+            },
+            {
+              "path": "configs/inheritance/base.yaml",
+              "file_type": "text",
+              "content": "timeout: 30\nregion: us-west-2\n"
+            },
+            {
+              "path": "configs/inheritance.json",
+              "file_type": "text",
+              "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  }\n}\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/app.yaml",
+              "rules_applied": []
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/app.yaml": "environment: staging\ntimeout: 30\nregion: us-west-2\n\n"
+        }
+      },
+      "multi_file_validation_failures": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "require_environment": {
+              "type": "require_keys",
+              "scope": "validation",
+              "keys": [
+                "environment"
+              ]
+            },
+            "validate_env_values": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "environment",
+              "constraint": {
+                "enum": [
+                  "development",
+                  "production"
+                ]
+              }
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "timeout: 30\n"
+            },
+            {
+              "path": "configs/worker.yaml",
+              "file_type": "text",
+              "content": "environment: testing\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "require_environment",
+              "error": "missing required key: environment"
+            },
+            {
+              "event": "validation_failed",
+              "file": "worker.yaml",
+              "rule": "validate_env_values",
+              "error": "value 'testing' at key 'environment' not in allowed values: [development, production]"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "require_keys_missing": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "require_database": {
+              "type": "require_keys",
+              "scope": "validation",
+              "keys": [
+                "database.host",
+                "database.port"
+              ]
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "environment: production\ntimeout: 60\ndatabase:\n  host: prod.db.internal\nservices:\n  - name: api\n    port: 8080\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "require_database",
+              "error": "missing required key: database.port"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "unique_service_names": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "unique_service_names": {
+              "type": "unique_array_values",
+              "scope": "validation",
+              "array_path": "services",
+              "field": "name"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "services:\n  - name: api\n    port: 8080\n  - name: worker\n    port: 8081\n  - name: api\n    port: 8082\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "unique_service_names",
+              "error": "duplicate values for field 'name' in array at 'services': api"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "validate_enum_environment": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "validate_environment": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "environment",
+              "constraint": {
+                "enum": [
+                  "development",
+                  "staging",
+                  "production"
+                ]
+              }
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "environment: testing\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "validate_environment",
+              "error": "value 'testing' at key 'environment' not in allowed values: [development, staging, production]"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "validate_name_length": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "validate_name_length": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "app.name",
+              "constraint": {
+                "length_min": 3,
+                "length_max": 20
+              }
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "app:\n  name: ab\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "validate_name_length",
+              "error": "value at key 'app.name' length 2 is less than min length: 3"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "validate_service_name_pattern": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "validate_service_name": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "service.name",
+              "constraint": {
+                "pattern": "^[a-z][a-z0-9-]*$"
+              }
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "service:\n  name: MyService123\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "validate_service_name",
+              "error": "value 'MyService123' at key 'service.name' does not match pattern: ^[a-z][a-z0-9-]*$"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "validate_timeout_range": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "validate_timeout": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "timeout",
+              "constraint": {
+                "min": 10,
+                "max": 300
+              }
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "timeout: 500\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "validate_timeout",
+              "error": "value 500 at key 'timeout' exceeds max: 300"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "validate_type_timeout": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "check_timeout_type": {
+              "type": "validate_type",
+              "scope": "validation",
+              "key": "timeout",
+              "expected_type": "number"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "timeout: \\\"60\\\"\nregion: us-west-2\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "check_timeout_type",
+              "error": "expected type number at key 'timeout', got string"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "validation_blocks_transform": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "validate_port": {
+              "type": "validate_type",
+              "scope": "validation",
+              "key": "port",
+              "expected_type": "number"
+            },
+            "set_environment": {
+              "type": "replace_value",
+              "key": "environment",
+              "value": "production"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "port: \\\"8080\\\"\nenvironment: development\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "validate_port",
+              "error": "expected type number at key 'port', got string"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "validation_then_transform": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "require_environment": {
+              "type": "require_keys",
+              "scope": "validation",
+              "keys": [
+                "environment"
+              ]
+            },
+            "set_region": {
+              "type": "replace_value",
+              "key": "region",
+              "value": "us-west-2"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "environment: production\nregion: us-east-1\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.yaml",
+              "rules_applied": [
+                "set_region"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.yaml": "environment: production\nregion: us-west-2\n\n"
+        }
+      }
+    },
+    "hidden": {
+      "inheritance_validation_failure": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance.json",
+          "status_code": 1,
+          "rules": {
+            "require_timeout": {
+              "type": "require_keys",
+              "scope": "validation",
+              "keys": [
+                "timeout"
+              ]
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/inheritance/app.yaml",
+              "file_type": "text",
+              "content": "extends: base.yaml\nenvironment: staging\n"
+            },
+            {
+              "path": "configs/inheritance/base.yaml",
+              "file_type": "text",
+              "content": "region: us-west-2\n"
+            },
+            {
+              "path": "configs/inheritance.json",
+              "file_type": "text",
+              "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  }\n}\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "inheritance/app.yaml",
+              "rule": "require_timeout",
+              "error": "missing required key: timeout"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "multi_rule_same_file": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "a_require_database": {
+              "type": "require_keys",
+              "scope": "validation",
+              "keys": [
+                "database.host",
+                "database.port"
+              ]
+            },
+            "b_check_timeout_type": {
+              "type": "validate_type",
+              "scope": "validation",
+              "key": "timeout",
+              "expected_type": "number"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "timeout: \\\"90\\\"\ndatabase:\n  host: prod.db.internal\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "a_require_database",
+              "error": "missing required key: database.port"
+            },
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "b_check_timeout_type",
+              "error": "expected type number at key 'timeout', got string"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "optional_validation_skipped": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "check_description_pattern": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "metadata.description",
+              "constraint": {
+                "pattern": "^[a-z\\-]+$"
+              }
+            },
+            "add_description": {
+              "type": "merge_data",
+              "data": {
+                "metadata": {
+                  "description": "stable-service"
+                }
+              }
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "environment: production\nmetadata: {}\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.yaml",
+              "rules_applied": [
+                "add_description"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.yaml": "environment: production\nmetadata:\n  description: stable-service\n"
+        }
+      },
+      "validate_type_missing_key_skipped": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "check_timeout_type": {
+              "type": "validate_type",
+              "scope": "validation",
+              "key": "timeout",
+              "expected_type": "number"
+            },
+            "set_region": {
+              "type": "replace_value",
+              "key": "region",
+              "value": "us-west-2"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "environment: production\nregion: us-east-1\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.yaml",
+              "rules_applied": [
+                "set_region"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.yaml": "environment: production\nregion: us-west-2\n"
+        }
+      },
+      "unique_array_values_empty_array_skipped": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "unique_service_names": {
+              "type": "unique_array_values",
+              "scope": "validation",
+              "array_path": "services",
+              "field": "name"
+            },
+            "add_region": {
+              "type": "merge_data",
+              "data": {
+                "region": "us-west-2"
+              }
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "services: []\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.yaml",
+              "rules_applied": [
+                "add_region"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.yaml": "services: []\nregion: us-west-2\n"
+        }
+      },
+      "validate_value_pattern_number_coerced": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "validate_service_id": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "service_id",
+              "constraint": {
+                "pattern": "^[0-9]{3}$"
+              }
+            },
+            "set_region": {
+              "type": "replace_value",
+              "key": "region",
+              "value": "us-west-2"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "service_id: 123\nregion: us-east-1\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.yaml",
+              "rules_applied": [
+                "set_region"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "app.yaml": "service_id: 123\nregion: us-west-2\n"
+        }
+      },
+      "array_pattern_validate_value_index": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "validate_service_names": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "services[*].name",
+              "constraint": {
+                "pattern": "^[a-z]+$"
+              }
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "services:\n  - name: api\n  - name: BadName\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "validate_service_names",
+              "error": "value 'BadName' at key 'services[1].name' does not match pattern: ^[a-z]+$"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "unique_array_nested_field": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "unique_service_ids": {
+              "type": "unique_array_values",
+              "scope": "validation",
+              "array_path": "services",
+              "field": "metadata.name"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/services.yaml",
+              "file_type": "text",
+              "content": "services:\n  - metadata:\n      name: api\n    port: 80\n  - metadata:\n      name: worker\n    port: 81\n  - metadata:\n      name: api\n    port: 443\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "services.yaml",
+              "rule": "unique_service_ids",
+              "error": "duplicate values for field 'metadata.name' in array at 'services': api"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "validate_name_length_max": {
+        "data": {
+          "arguments": "rules.json configs",
+          "status_code": 1,
+          "rules": {
+            "validate_name_length": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "app.name",
+              "constraint": {
+                "length_max": 20
+              }
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/app.yaml",
+              "file_type": "text",
+              "content": "app:\n  name: this-name-is-way-too-long\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "validation_failed",
+              "file": "app.yaml",
+              "rule": "validate_name_length",
+              "error": "value at key 'app.name' length 25 is greater than max length: 20"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "validation_then_relocate": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "require_environment": {
+              "type": "require_keys",
+              "scope": "validation",
+              "keys": [
+                "environment"
+              ]
+            },
+            "move_worker": {
+              "type": "path_rename",
+              "scope": "file",
+              "path_pattern": "worker.yaml",
+              "new_path": "validated/worker.yaml"
+            }
+          },
+          "input_files": [
+            {
+              "path": "configs/worker.yaml",
+              "file_type": "text",
+              "content": "environment: development\ntimeout: 45\ndatabase:\n  host: dev.db.internal\n  port: 5433\nservices:\n  - name: batch\n    port: 7000\n  - name: jobs\n    port: 7001\napp:\n  name: workerapp\n"
+            }
+          ],
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "worker.yaml",
+              "to": "validated/worker.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "validated/worker.yaml": "environment: development\ntimeout: 45\ndatabase:\n  host: dev.db.internal\n  port: 5433\nservices:\n  - name: batch\n    port: 7000\n  - name: jobs\n    port: 7001\napp:\n  name: workerapp\n"
+        }
+      }
+    },
+    "errors": {
+      "require_keys_missing_keys": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "require_env": {
+              "type": "require_keys",
+              "scope": "validation",
+              "keys": []
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid require_keys rule 'require_env': keys must be a non-empty list$"
+        },
+        "expected_files": {}
+      },
+      "unique_array_missing_field": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "unique_services": {
+              "type": "unique_array_values",
+              "scope": "validation",
+              "array_path": "services"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid unique_array_values rule 'unique_services': field must be provided$"
+        },
+        "expected_files": {}
+      },
+      "validate_type_invalid_expected_type": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "check_timeout": {
+              "type": "validate_type",
+              "scope": "validation",
+              "key": "timeout",
+              "expected_type": "numberish"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid validate_type rule 'check_timeout': unsupported expected_type 'numberish'$"
+        },
+        "expected_files": {}
+      },
+      "validate_value_missing_constraint": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "bad_constraint": {
+              "type": "validate_value",
+              "scope": "validation",
+              "key": "environment"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid validate_value rule 'bad_constraint': constraint must be provided$"
+        },
+        "expected_files": {}
+      },
+      "validation_rule_missing_scope": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "require_env": {
+              "type": "require_keys",
+              "keys": [
+                "environment"
+              ]
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid validation rule 'require_env': scope must be \\\"validation\\\"$"
+        },
+        "expected_files": {}
+      }
+    }
+  }
+}

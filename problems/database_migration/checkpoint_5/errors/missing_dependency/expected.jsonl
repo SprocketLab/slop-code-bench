@@ -1,4 +1,0 @@
-{"event": "validation_started", "migration_file": "migration_v5.json"}
-{"event": "dependency_check", "version": 5, "depends_on": [1, 10], "status": "error", "message": "dependency version 10 not found"}
-{"event": "validation_complete", "version": 5, "status": "invalid"}
-

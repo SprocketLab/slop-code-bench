@@ -1,3 +1,0 @@
-{"job_id": 2, "task": "ConditionalTask", "params": {"should_create": false, "verbose": true}, "stdout": "Verbose mode enabled\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.003954390002036234}
-{"job_id": 3, "task": "ConditionalTask", "params": {"should_create": true, "verbose": false}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.00455843900272157}
-{"job_id": 1, "task": "main", "params": {}, "stdout": "created.flag\n", "stderr": "", "timed_out": false, "success": {"flag_exists": true}, "output": null, "exit_code": 0, "parent": null, "duration": 0.014073430000280496}

@@ -1,7 +1,0 @@
-id: get_filtered_tools
-arguments:
-  - list
-  - --category
-  - tools
-expected:
-  status_code: 0

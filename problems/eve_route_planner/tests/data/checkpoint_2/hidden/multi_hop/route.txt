@@ -1,0 +1,23 @@
+START: Jita IV - Moon 4 - Caldari Navy Assembly Plant
+UNDOCK
+GO: Jita (0.9) -> Ikuchi (1.0)
+DOCK: Ikuchi VI - Moon 6 - Ytiri Storage
+LOAD: 20,000.00 m3
+UNDOCK
+GO: Ikuchi (1.0) -> Jita (0.9)
+DOCK: Jita IV - Moon 6 - Ytiri Storage
+LOAD: 20,000.00 m3
+UNDOCK
+DOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant
+UNLOAD: 40,000.00 m3
+[--- TRIP 2 ---]
+UNDOCK
+GO: Jita (0.9) -> Ikuchi (1.0)
+DOCK: Ikuchi VI - Moon 15 - Ytiri Storage
+LOAD: 20,000.00 m3
+UNDOCK
+GO: Ikuchi (1.0) -> Jita (0.9)
+DOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant
+UNLOAD: 20,000.00 m3
+DONE: 00:06
+MOVED: 60,000.00 m3

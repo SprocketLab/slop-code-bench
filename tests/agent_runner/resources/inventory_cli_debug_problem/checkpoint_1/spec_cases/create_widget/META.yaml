@@ -1,9 +1,0 @@
-id: create_widget
-arguments:
-  - create
-  - --name
-  - widget
-  - --quantity
-  - "3"
-expected:
-  status_code: 0

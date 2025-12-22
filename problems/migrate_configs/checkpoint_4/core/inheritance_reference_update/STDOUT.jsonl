@@ -1,4 +1,0 @@
-{"event":"file_relocated","from":"base.yaml","to":"common/base.yaml"}
-{"event":"file_updated","file":"app.yaml","rules_applied":[],"reason":"inheritance_reference_update"}
-{"event":"file_updated","file":"apps/service_refs/api.yaml","rules_applied":[],"reason":"inheritance_reference_update"}
-{"event":"file_updated","file":"apps/service_refs/worker.yaml","rules_applied":[],"reason":"inheritance_reference_update"}
