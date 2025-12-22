@@ -163,9 +163,6 @@ class StdlibLoggerAdapter:
                     value = value.model_dump(mode="json")
                 except Exception:
                     value = repr(value)
-            elif isinstance(value, (dict, list)) and len(str(value)) > 100:
-                # Truncate long collections
-                value = f"{str(value)[:100]}..."
             else:
                 value = repr(value)
             formatted_pairs.append(f"{key}={value}")

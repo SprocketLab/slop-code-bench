@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Annotated
 
@@ -19,6 +20,8 @@ TEST_DIRECTORIES = frozenset(
         "hidden",
         "error",
         "errors",
+        "functionality",
+        "spec_cases",
         "spec_correct",
         "spec_error",
         "spec_errors",
@@ -41,6 +44,14 @@ EXCLUDED_DIRECTORIES = frozenset(
         "__pycache__",
         ".venv",
         ".git",
+    }
+)
+
+# Test data directories to exclude from canary injection
+TEST_DATA_DIRECTORIES = frozenset(
+    {
+        "data",
+        "assets",
     }
 )
 
@@ -109,6 +120,46 @@ def _is_excluded_path(
     return False
 
 
+def _is_excluded_test_path(file_path: Path, tests_dir: Path) -> bool:
+    """Check if a test file should be excluded from canary injection.
+
+    Args:
+        file_path: Path to the file.
+        tests_dir: Path to the tests directory.
+
+    Returns:
+        True if the file should be excluded.
+    """
+    try:
+        relative = file_path.relative_to(tests_dir)
+    except ValueError:
+        return True
+
+    for part in relative.parts:
+        if part in EXCLUDED_DIRECTORIES:
+            return True
+        if part in TEST_DATA_DIRECTORIES:
+            return True
+
+    return False
+
+
+def _python_has_canary(content: str, canary: str) -> bool:
+    """Return True if the canary string already exists in Python content."""
+    if canary in content:
+        return True
+
+    lines = [line for line in canary.splitlines(False)]
+    if not lines:
+        return False
+
+    line_patterns = [
+        rf"[ \t]*#\s*{re.escape(line)}\s*" for line in lines
+    ]
+    pattern = r"\n".join(line_patterns)
+    return re.search(pattern, content) is not None
+
+
 def _inject_canary_python(content: str, canary: str) -> str:
     """Inject canary into Python file content.
 
@@ -124,8 +175,8 @@ def _inject_canary_python(content: str, canary: str) -> str:
     """
     canary_line = f'"""\n{canary}\n"""' + "\n"
 
-    # Check if already has canary
-    if canary_line in content:
+    # Check if already has canary (triple-quoted or line comment styles)
+    if _python_has_canary(content, canary) or canary_line in content:
         return content
 
     lines = content.split("\n")
@@ -274,7 +325,7 @@ def _discover_eligible_files(
         # Get static asset directories for this problem
         static_asset_dirs = _get_static_asset_dirs(problem_dir)
 
-        # Problem-level files
+        # Problem-level Python helpers
         for py_file in ["loader.py", "verifier.py"]:
             path = problem_dir / py_file
             if path.exists():
@@ -284,23 +335,40 @@ def _discover_eligible_files(
         if config_path.exists():
             eligible["yaml"].append(config_path)
 
+        # Checkpoint specs at problem root (pytest-style problems)
+        for spec_path in sorted(problem_dir.glob("checkpoint_*.md")):
+            if not _is_excluded_path(
+                spec_path, problem_dir, static_asset_dirs
+            ):
+                eligible["markdown"].append(spec_path)
+
         # Shell scripts at problem level
         for sh_file in problem_dir.glob("*.sh"):
             if not _is_excluded_path(sh_file, problem_dir, static_asset_dirs):
                 eligible["shell"].append(sh_file)
 
-        # Problem-level solution directory
-        solution_dir = problem_dir / "solution"
-        if solution_dir.exists():
-            _collect_solution_files(
-                eligible, solution_dir, problem_dir, static_asset_dirs
-            )
+        # Problem-level solution directories
+        for solution_dir in [
+            problem_dir / "solution",
+            problem_dir / "solutions",
+        ]:
+            if solution_dir.exists():
+                _collect_solution_files(
+                    eligible, solution_dir, problem_dir, static_asset_dirs
+                )
 
         # Helper directories (like eve_market_tools/helper/)
         helper_dir = problem_dir / "helper"
         if helper_dir.exists():
             _collect_solution_files(
                 eligible, helper_dir, problem_dir, static_asset_dirs
+            )
+
+        # Pytest-style tests directory
+        tests_dir = problem_dir / "tests"
+        if tests_dir.exists():
+            _collect_test_files(
+                eligible, tests_dir, problem_dir, static_asset_dirs
             )
 
         # Checkpoint directories
@@ -351,6 +419,28 @@ def _collect_solution_files(
     for req_file in solution_dir.rglob("requirements.txt"):
         if not _is_excluded_path(req_file, problem_dir, static_asset_dirs):
             eligible["requirements"].append(req_file)
+
+
+def _collect_test_files(
+    eligible: dict[str, list[Path]],
+    tests_dir: Path,
+    problem_dir: Path,
+    static_asset_dirs: set[str],
+) -> None:
+    """Collect eligible Python files from a pytest tests directory.
+
+    Args:
+        eligible: Dictionary to add files to.
+        tests_dir: Path to the tests directory.
+        problem_dir: Path to the problem directory.
+        static_asset_dirs: Set of static asset directory names.
+    """
+    for py_file in tests_dir.rglob("*.py"):
+        if _is_excluded_test_path(py_file, tests_dir):
+            continue
+        if _is_excluded_path(py_file, problem_dir, static_asset_dirs):
+            continue
+        eligible["python"].append(py_file)
 
 
 def _process_file(
@@ -427,6 +517,8 @@ def inject_canary(
 
     Injects tracking canary strings into eligible files within the problems
     directory. Useful for detecting if problem content appears in training data.
+    Covers pytest-style specs (checkpoint_*.md), tests, and solutions, while
+    skipping test data directories.
 
     File types and injection format:
     - Python (.py): # {canary} after __future__ imports

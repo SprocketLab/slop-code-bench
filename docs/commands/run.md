@@ -545,4 +545,4 @@ class ModelConfig(BaseModel):
 ### Other Topics
 - [Environment Configuration](../evaluation/configuration.md) - Detailed environment setup
 - [Problem Configuration](../problems/config-schema.md) - Problem and checkpoint config
-- [Adapters Guide](../evaluation/adapters.md) - CLI, API, and Playwright adapters
+- [Pytest Patterns](../problems/pytest/README.md) - Test structure and patterns

@@ -14,7 +14,7 @@ Analyze a checkpoint's spec and existing tests to identify and add missing edge 
 1. **Read the spec** - Understand all requirements, constraints, error conditions
 2. **Read existing tests** - See what's already covered
 3. **Identify gaps** - Find missing edge cases
-4. **Add skeleton tests** - Append to test file with TODOs
+4. **Implement edge-case tests** - Add fully implemented tests with real assertions
 
 ---
 
@@ -41,6 +41,7 @@ problems/{problem}/tests/test_checkpoint_N.py
 5. What happens with unexpected types?
 6. Are there race conditions or state edge cases?
 7. Are there format edge cases (unicode, special chars)?
+   - Use `\uXXXX` escapes to keep source files ASCII when needed.
 
 **Cross-reference with existing tests:**
 
@@ -48,6 +49,10 @@ problems/{problem}/tests/test_checkpoint_N.py
 - Which error conditions are tested?
 - Which boundary conditions are tested?
 - What did the spec mention that tests don't cover?
+
+See [references/edge-case-categories.md](references/edge-case-categories.md) for
+the category checklist and [references/patterns.md](references/patterns.md) for
+problem-type patterns.
 
 ---
 
@@ -69,42 +74,22 @@ Ask yourself: "Can I point to the spec line that defines this behavior?"
 
 ---
 
-## Step 3: Generate Skeleton Tests
+## Step 3: Implement Edge Case Tests
 
-Append to `test_checkpoint_N.py`:
+Append to `test_checkpoint_N.py` with fully implemented tests. Do not add
+TODOs, `pytest.fail`, or placeholder assertions. If you cannot implement an
+edge case from the spec, skip it or ask for clarification instead of adding
+incomplete tests.
 
-```python
-# === EDGE CASES (review and implement) ===
+Keep tests readable with tiny helper functions for recurring patterns (CLI
+runs, input setup, HTTP JSON requests). Prefer local helpers in the test module
+unless the helper is shared across multiple test files. See
+[references/helper-patterns.md](references/helper-patterns.md) for helper ideas
+and [references/example-patterns.md](references/example-patterns.md) for
+CLI/HTTP layouts.
 
-@pytest.mark.functionality
-def test_empty_input(entrypoint_argv):
-    """Edge case: Empty input should return appropriate error.
-
-    Spec says: [quote relevant spec section]
-    """
-    # TODO: Implement - call with empty input, verify error handling
-    pytest.fail("Not implemented")
-
-
-@pytest.mark.functionality
-def test_negative_value(entrypoint_argv):
-    """Edge case: Negative values should be rejected.
-
-    Spec says: [quote relevant spec section]
-    """
-    # TODO: Implement - test with negative input
-    pytest.fail("Not implemented")
-
-
-@pytest.mark.functionality
-def test_unicode_input(entrypoint_argv):
-    """Edge case: Unicode characters in input.
-
-    Spec says: [quote relevant spec section]
-    """
-    # TODO: Implement - test with unicode characters
-    pytest.fail("Not implemented")
-```
+Do not leave placeholder docstrings. Either quote the spec line or remove the
+docstring entirely.
 
 ---
 
@@ -116,77 +101,24 @@ Edge cases are additional coverage beyond the core tests - they should not block
 
 ---
 
-## Common Edge Case Categories
+## After Adding Tests
 
-See [patterns.md](patterns.md) for detailed patterns by problem type:
-
-**Always check:**
-- Empty/null inputs
-- Boundary values (0, -1, MAX_INT, empty string)
-- Malformed data (invalid JSON, wrong types)
-- Missing required fields
-- Duplicate handling
-- Unicode and special characters
-- Very large inputs
-- Concurrent operations (if applicable)
-
----
-
-## After Adding Skeletons
-
-1. Review each TODO and implement the test
-2. Run eval-snapshot to verify:
+1. Run eval-snapshot to verify:
    ```bash
-   slop-code -v eval-snapshot problems/{problem}/checkpoint_N/solution \
+   slop-code --quiet eval-snapshot problems/{problem}/checkpoint_N/solution \
        -p {problem} -o /tmp/eval -c N \
        -e configs/environments/docker-python3.12-uv.yaml --json
    ```
-3. Remove `pytest.fail("Not implemented")` as you implement each test
-
----
-
-## Example Output
-
-For `execution_server checkpoint_1`, might generate:
-
-```python
-# === EDGE CASES (review and implement) ===
-
-@pytest.mark.functionality
-def test_execute_empty_command(client):
-    """Edge case: Empty command string.
-
-    Spec says: [quote relevant section about command validation]
-    """
-    response = client.post("/v1/execute", json={"command": ""})
-    # TODO: Verify appropriate error response
-    pytest.fail("Not implemented")
-
-
-@pytest.mark.functionality
-def test_execute_missing_command(client):
-    """Edge case: Request body missing 'command' field.
-
-    Spec says: [quote relevant section about required fields]
-    """
-    response = client.post("/v1/execute", json={})
-    # TODO: Verify 400/422 response
-    pytest.fail("Not implemented")
-
-
-@pytest.mark.functionality
-def test_execute_unicode_output(client):
-    """Edge case: Command that outputs unicode characters.
-
-    Spec says: [quote relevant section about output handling]
-    """
-    response = client.post("/v1/execute", json={"command": "echo '日本語'"})
-    # TODO: Verify unicode is preserved in response
-    pytest.fail("Not implemented")
-```
 
 ---
 
 ## Reference
 
-- [patterns.md](patterns.md) - Edge case patterns by problem type
+- [references/edge-case-categories.md](references/edge-case-categories.md)
+  - Common edge-case categories to scan for gaps
+- [references/helper-patterns.md](references/helper-patterns.md)
+  - Reusable helpers for normalizing outputs and errors
+- [references/example-patterns.md](references/example-patterns.md)
+  - CLI and HTTP test layouts
+- [references/patterns.md](references/patterns.md)
+  - Edge case patterns by problem type

@@ -1034,7 +1034,7 @@ markers =
             runtime = session.spawn(command=pytest_cmd)
             try:
                 exec_result = runtime.execute(
-                    "",  # command already set via spawn()
+                    pytest_cmd,
                     full_env,
                     None,  # stdin
                     None,  # timeout handled by pytest-timeout

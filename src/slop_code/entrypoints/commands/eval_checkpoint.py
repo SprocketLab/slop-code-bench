@@ -104,10 +104,16 @@ def render_pytest_results(
     if skipped:
         status_parts.append(f"[yellow]{skipped} skipped[/yellow]")
 
+    console.print("\n[bold]Execution Summary[/bold]")
     console.print(
-        f"\n[bold]{results.problem_name}[/bold] / {results.checkpoint_name} "
-        f"— {', '.join(status_parts)} ({results.duration:.1f}s)"
+        f"{results.problem_name} / {results.checkpoint_name} "
+        f"({results.duration:.1f}s)"
     )
+    console.print("[bold]Status Summary[/bold]")
+    if status_parts:
+        console.print(", ".join(status_parts))
+    else:
+        console.print("[dim]No tests executed[/dim]")
 
     if results.infrastructure_failure:
         console.print("[red bold]⚠ Infrastructure failure detected[/red bold]")
@@ -133,6 +139,7 @@ def render_pytest_results(
         group_table.add_row(group_type.value, result_str)
 
     if total_tests > 0:
+        console.print("\n[bold]Group Summary[/bold]")
         console.print(group_table)
 
     # Show failed tests only (unless verbose)
@@ -141,12 +148,14 @@ def render_pytest_results(
     ]
 
     if verbosity <= 1 and failed_tests:
+        console.print("\n[bold]Test Results[/bold]")
         console.print(
-            f"\n[red bold]Failed Tests ({len(failed_tests)}):[/red bold]"
+            f"[red bold]Failed Tests ({len(failed_tests)}):[/red bold]"
         )
         _render_tests_tree(console, failed_tests)
     elif verbosity > 1:
-        console.print(f"\n[bold]All Tests ({total}):[/bold]")
+        console.print("\n[bold]Test Results[/bold]")
+        console.print(f"[bold]All Tests ({total}):[/bold]")
         sorted_tests = sorted(
             results.tests, key=lambda x: (x.group_type.value, x.status, x.id)
         )
@@ -232,6 +241,9 @@ def evaluate_snapshot(
         help="Output correctness results as JSON.",
     ),
 ) -> None:
+    if isinstance(json_output, typer.models.OptionInfo):
+        json_output = bool(json_output.default)
+
     # Validate rubric options
     common.validate_rubric_options(rubric_path, rubric_model)
 
@@ -264,11 +276,12 @@ def evaluate_snapshot(
     checkpoint_name, checkpoint = ordered_checkpoints[checkpoint_num - 1]
 
     save_dir = utils.ensure_dir_exists(save_dir, create=True)
+    quiet = getattr(ctx.obj, "quiet", False)
     logger = common.setup_command_logging(
         log_dir=save_dir,
         verbosity=ctx.obj.verbosity,
         log_file_name="evaluation.log",
-        quiet=ctx.obj.quiet,
+        quiet=quiet,
     )
     logger.info(
         "Evaluating a single snapshot",

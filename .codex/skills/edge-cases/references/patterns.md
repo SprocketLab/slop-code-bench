@@ -2,6 +2,35 @@
 
 Reference for common edge cases by problem type.
 
+## Table of Contents
+
+- CLI Tools
+  - Input Edge Cases
+  - File Input Edge Cases
+  - Output Edge Cases
+- API Servers
+  - Request Edge Cases
+  - Response Edge Cases
+  - State Edge Cases
+- Data Processing
+  - Input Data Edge Cases
+  - Numeric Edge Cases
+  - String Edge Cases
+- File Operations
+  - Path Edge Cases
+  - Operation Edge Cases
+- Database / Storage
+  - Query Edge Cases
+  - Transaction Edge Cases
+- Time / Date
+  - Temporal Edge Cases
+- Authentication / Authorization
+  - Auth Edge Cases
+- Checklist Template
+- Problem-Specific Patterns
+  - eve_jump_planner (Route Finding)
+  - execution_server (Code Execution)
+
 ---
 
 ## CLI Tools

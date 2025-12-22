@@ -637,7 +637,9 @@ class AgentRunner:
         artifacts_path = get_artifacts_path(
             checkpoint_save_dir, compress=compress
         )
-        if result is None or result.had_error:
+        had_error = result is None or result.had_error
+        rate_limited = False
+        if had_error:
             if result is None:
                 error = AgentRunnerError(
                     f"Agent produced no result for checkpoint '{checkpoint.name}'"
@@ -658,6 +660,7 @@ class AgentRunner:
                 checkpoint=checkpoint.name,
             )
             self.metrics_tracker.state = AgentStateEnum.HIT_RATE_LIMITED
+            rate_limited = True
         if self.run_spec.skip_evaluation or result is None:
             return AgentCheckpointSummary.from_results(
                 checkpoint_name=checkpoint.name,
@@ -665,13 +668,14 @@ class AgentRunner:
                 snapshot_dir=snapshot_dir,
                 artifacts=artifacts_path,
                 usage=self.agent.usage,
-                had_error=result is None or result.had_error,
+                had_error=had_error,
                 pass_policy=self.run_spec.pass_policy,
                 evaluation_result=None,
             )
 
         # Transition to EVALUATING state before starting evaluation
-        self.metrics_tracker.state = AgentStateEnum.EVALUATING
+        if not (had_error or rate_limited):
+            self.metrics_tracker.state = AgentStateEnum.EVALUATING
         logger.info(
             "Starting checkpoint evaluation",
             checkpoint=checkpoint.name,

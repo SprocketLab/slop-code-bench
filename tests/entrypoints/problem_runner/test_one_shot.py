@@ -23,13 +23,13 @@ def test_apply_one_shot_mode_combines_specs():
     assert len(checkpoints) == 1
     checkpoint_name, checkpoint = checkpoints[0]
 
-    spec1 = (problem_path / "checkpoint_1/spec.md").read_text()
-    spec2 = (problem_path / "checkpoint_2/spec.md").read_text()
+    spec1 = (problem_path / "checkpoint_1.md").read_text()
+    spec2 = (problem_path / "checkpoint_2.md").read_text()
 
     assert checkpoint_name == "checkpoint_2"
     assert checkpoint.order == 1
     assert (
-        problem_config.get_checkpoint_spec(checkpoint_name)
+        combined.get_checkpoint_spec(checkpoint_name)
         == f"{spec1}PREFIX\n{spec2}"
     )
 
@@ -46,11 +46,14 @@ def test_apply_one_shot_prefix_template_renders_idx():
         one_shot=OneShotConfig(enabled=True, prefix="--- {{ idx }} ---"),
     )
 
-    spec1 = (problem_path / "checkpoint_1/spec.md").read_text()
-    spec2 = (problem_path / "checkpoint_2/spec.md").read_text()
+    spec1 = (problem_path / "checkpoint_1.md").read_text()
+    spec2 = (problem_path / "checkpoint_2.md").read_text()
 
     checkpoint = next(combined.iterate_checkpoints())
-    assert checkpoint.get_spec_text() == f"{spec1}--- 2 ---\n{spec2}"
+    assert (
+        combined.get_checkpoint_spec(checkpoint.name)
+        == f"{spec1}--- 2 ---\n{spec2}"
+    )
 
 
 def test_apply_one_shot_prefix_on_first_checkpoint():
@@ -69,8 +72,11 @@ def test_apply_one_shot_prefix_on_first_checkpoint():
         ),
     )
 
-    spec1 = (problem_path / "checkpoint_1/spec.md").read_text()
-    spec2 = (problem_path / "checkpoint_2/spec.md").read_text()
+    spec1 = (problem_path / "checkpoint_1.md").read_text()
+    spec2 = (problem_path / "checkpoint_2.md").read_text()
 
     checkpoint = next(combined.iterate_checkpoints())
-    assert checkpoint.get_spec_text() == f"::: 1 :::\n{spec1}::: 2 :::\n{spec2}"
+    assert (
+        combined.get_checkpoint_spec(checkpoint.name)
+        == f"::: 1 :::\n{spec1}::: 2 :::\n{spec2}"
+    )

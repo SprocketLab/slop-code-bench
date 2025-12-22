@@ -62,7 +62,12 @@ class TestStdlibLoggerAdapter:
         adapter = StdlibLoggerAdapter(logger)
 
         with caplog.at_level(logging.INFO):
-            adapter.info("Connection established", host="localhost", port=8080, secure=True)
+            adapter.info(
+                "Connection established",
+                host="localhost",
+                port=8080,
+                secure=True,
+            )
 
         # Check that all kwargs are in the message (sorted order)
         assert "Connection established" in caplog.text
@@ -94,7 +99,9 @@ class TestStdlibLoggerAdapter:
             raise ValueError("Test error")
         except ValueError:
             with caplog.at_level(logging.ERROR):
-                adapter.error("Request failed", url="/api/test", status=500, exc_info=True)
+                adapter.error(
+                    "Request failed", url="/api/test", status=500, exc_info=True
+                )
 
         assert "Request failed" in caplog.text
         assert "status=500" in caplog.text
@@ -146,20 +153,6 @@ class TestStdlibLoggerAdapter:
 
         assert "items=[1, 2, 3]" in caplog.text
 
-    def test_long_value_truncation(self, caplog):
-        """Test that very long values are truncated."""
-        logger = logging.getLogger("test")
-        adapter = StdlibLoggerAdapter(logger)
-
-        long_dict = {f"key_{i}": f"value_{i}" for i in range(50)}
-
-        with caplog.at_level(logging.INFO):
-            adapter.info("Long data", data=long_dict)
-
-        # Should be truncated
-        assert "..." in caplog.text
-        assert len(caplog.text) < 1000  # Should not be too long
-
     def test_pydantic_model_formatting(self, caplog):
         """Test formatting of objects with model_dump method."""
         logger = logging.getLogger("test")
@@ -167,7 +160,9 @@ class TestStdlibLoggerAdapter:
 
         # Mock a pydantic-like model
         mock_model = MagicMock()
-        mock_model.model_dump = MagicMock(return_value={"field": "value", "number": 123})
+        mock_model.model_dump = MagicMock(
+            return_value={"field": "value", "number": 123}
+        )
 
         with caplog.at_level(logging.INFO):
             adapter.info("Model data", model=mock_model)
@@ -245,8 +240,8 @@ class TestGetLogger:
 
         logger = get_logger("test")
         # Should be a structlog logger (might be BoundLoggerLazyProxy or BoundLogger)
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'debug')
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "debug")
         # Verify it's NOT our StdlibLoggerAdapter
         assert not isinstance(logger, StdlibLoggerAdapter)
 
@@ -332,7 +327,9 @@ class TestRealWorldUsage:
             raise RuntimeError("Something went wrong")
         except RuntimeError:
             with caplog.at_level(logging.ERROR):
-                logger.error("Verifier error", error="RuntimeError", exc_info=True)
+                logger.error(
+                    "Verifier error", error="RuntimeError", exc_info=True
+                )
 
         assert "Verifier error" in caplog.text
         assert "error='RuntimeError'" in caplog.text
@@ -346,7 +343,9 @@ class TestRealWorldUsage:
 
         # Mock a result object with model_dump
         result = MagicMock()
-        result.model_dump = MagicMock(return_value={"status": "failed", "code": 1})
+        result.model_dump = MagicMock(
+            return_value={"status": "failed", "code": 1}
+        )
 
         with caplog.at_level(logging.ERROR):
             logger.error("Result", result=result)
@@ -433,7 +432,9 @@ class TestBackwardCompatibility:
 
         with caplog.at_level(logging.INFO):
             # These special kwargs should not appear in the message
-            logger.info("Test message", exc_info=None, stack_info=False, stacklevel=2)
+            logger.info(
+                "Test message", exc_info=None, stack_info=False, stacklevel=2
+            )
 
         assert "Test message" in caplog.text
         assert "exc_info=" not in caplog.text

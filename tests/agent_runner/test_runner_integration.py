@@ -169,6 +169,13 @@ class StubProblem:
         self.version = 1
         self.entry_file = "main.py"
         self.checkpoints = checkpoints
+        self._specs = {
+            checkpoint: f"Spec for {checkpoint}"
+            for checkpoint in checkpoints
+        }
+
+    def get_checkpoint_spec(self, checkpoint: str) -> str:
+        return self._specs[checkpoint]
 
 
 def _make_run_spec(

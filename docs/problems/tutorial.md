@@ -1,861 +1,417 @@
----
-version: 1.0
-last_updated: 2025-11-06
----
-
 # Tutorial: Create Your First Problem
 
-This tutorial walks you through creating a complete evaluation problem from scratch. Follow along and you'll have a working problem in 30 minutes.
+This tutorial walks you through creating a complete pytest-based evaluation problem from scratch in 20 minutes.
 
 ## What We're Building
 
-**Problem**: A CLI tool that counts words in text files
+**Problem**: A CLI tool that normalizes JSON data
 
 **Features:**
-- Read text file
-- Count words (space-separated)
-- Output JSON with counts
-- Handle errors (file not found)
+- Read JSON from stdin
+- Normalize keys (lowercase, trim)
+- Output normalized JSON to stdout
+- Handle invalid JSON gracefully
 
-**Why this problem**: Simple enough to complete quickly, but demonstrates all key concepts.
+**Why this problem**: Simple enough to complete quickly, demonstrates all key pytest patterns.
 
 ## Prerequisites
 
-- Slop Code repository cloned
+- SCBench repository cloned
 - Python environment set up (`uv sync`)
-- Basic understanding of Python and CLI tools
+- Basic understanding of Python and pytest
 
 ## Step 1: Create Directory Structure (2 minutes)
 
-### Create Problem Directory
-
 ```bash
 # From repository root
-mkdir -p problems/word_counter/checkpoint_1/core
-mkdir -p problems/word_counter/checkpoint_1/errors
+mkdir -p problems/json_normalizer/tests
 ```
 
 **What we created:**
 ```
-problems/word_counter/               # Problem root
-└── checkpoint_1/                    # First milestone
-    ├── core/                        # Success test cases
-    └── errors/                      # Error test cases
+problems/json_normalizer/     # Problem root
+└── tests/                    # Pytest tests directory
 ```
 
-### Verify Structure
+## Step 2: Write config.yaml (2 minutes)
 
-```bash
-ls -R problems/word_counter/
-```
+Create `problems/json_normalizer/config.yaml`:
 
-You should see:
-```
-problems/word_counter/:
-checkpoint_1
-
-problems/word_counter/checkpoint_1:
-core  errors
-```
-
-## Step 2: Write Root Configuration (3 minutes)
-
-Create `problems/word_counter/config.yaml`:
-
-```bash
-cat > problems/word_counter/config.yaml << 'EOF'
-name: word_counter
-description: CLI tool that counts words in text files
-category: text-processing
-difficulty: Easy
+```yaml
 version: 1
-
-adapter:
-  type: cli
-  tracked_files:
-    - output.json
-
-entry_file: word_counter
-loader_script: loader.py
-loader_entrypoint: Loader
-
-checkpoints:
-  checkpoint_1:
-    order: 1
-    path: checkpoint_1
-    groups:
-      core:
-        type: Core
-        timeout: 10
-      errors:
-        type: Error
-        timeout: 10
-    specification: spec.md
-    state: Core Tests
-    timeout: 10
-    version: 1
+name: json_normalizer
+description: CLI tool that normalizes JSON keys (lowercase, trimmed)
+category: data-transformation
+difficulty: Easy
+author: Your Name
+entry_file: normalizer.py
+timeout: 10
 
 tags:
   - cli
-  - text-processing
+  - json
+  - data-transformation
 
-timeout: 10
-EOF
+checkpoints:
+  checkpoint_1:
+    version: 1
+    order: 1
+    state: Core Tests
 ```
 
-**What each field means:**
+**Key fields:**
+- `name`: Must match directory name
+- `entry_file`: The file agents will create
+- `checkpoints`: Defines evaluation milestones
 
-- `name: word_counter` - Must match directory name
-- `adapter.type: cli` - We're testing a CLI tool
-- `tracked_files: [output.json]` - Capture this output file
-- `entry_file: word_counter` - Agent creates `word_counter.py`
-- `checkpoints.checkpoint_1` - Inline checkpoint entry (order, path, groups, spec)
+## Step 3: Write Specification (3 minutes)
 
-**Verify it's valid:**
+Create `problems/json_normalizer/checkpoint_1.md`:
 
-```bash
-python -c "import yaml; yaml.safe_load(open('problems/word_counter/config.yaml'))"
-# No output = valid YAML
+```markdown
+# Checkpoint 1: JSON Key Normalizer
+
+Build a CLI tool that normalizes JSON keys.
+
+## Interface
+
+The tool reads JSON from stdin and writes normalized JSON to stdout.
+
+## Normalization Rules
+
+1. Convert all keys to lowercase
+2. Trim whitespace from keys
+3. Preserve values unchanged
+4. Handle nested objects recursively
+
+## Exit Codes
+
+- `0`: Success
+- `1`: Invalid JSON input
+
+## Examples
+
+Input:
+```json
+{"  Name  ": "Alice", "AGE": 30}
 ```
 
-## Step 3: Review the Checkpoint Entry (1 minute)
-
-The `checkpoints.checkpoint_1` block inside `config.yaml` replaces the old
-`checkpoint_1/config.yaml` file. It already declares:
-
-- Two groups: `core` (success) and `errors` (failures)
-- 10 second timeout per test
-- Spec filename `spec.md`
-
-Make sure the directory referenced by `path` exists (created in Step 1):
-
-```bash
-ls problems/word_counter/checkpoint_1
+Output:
+```json
+{"name": "Alice", "age": 30}
 ```
 
-You should see the directories you scaffold next for specs and cases.
-
-## Step 4: Write Specification (5 minutes)
-
-Create `problems/word_counter/checkpoint_1/spec.md`:
-
-```bash
-cat > problems/word_counter/checkpoint_1/spec.md << 'EOF'
-# Checkpoint 1: Word Counter
-
-Build a CLI tool that counts words in a text file.
-
-## Deliverables
-
-Create a `%%%ENTRYPOINT:entry_file%%%` that:
-
-1. Accepts a text file path as input
-2. Counts the number of words (space-separated)
-3. Outputs the count as JSON
-
-## Command-Line Interface
-Invoked via: `%%%ENTRYPOINT:entry_command%%%`
-
-**Arguments:**
-- `--input`: Path to input text file
-- `--output`: Path to output JSON file
-
-## Output Format
-
-Write a JSON file with this structure:
-
-`{  "word_count": 42, "file": "input.txt"}`
-
-## Error Handling
-
-**Exit codes:**
-- `0` - Success
-- `1` - File not found
-
-**Error output:**
-- Print error message to stderr
-- Exit with code 1
-
-## Notes
-
-- Words are separated by spaces
-- Empty files have 0 words
-- Only count non-empty words
-EOF
+Error case (exit code 1):
 ```
-**What we specified:**
-
-- Clear CLI interface (`--input`, `--output`)
-- Output format (JSON structure)
-- Error handling (exit codes, stderr)
-- Examples (always helpful!)
-
-## Step 5: Create Test Cases (8 minutes)
-
-### Test Case 1: Simple Word Count
-
-```bash
-mkdir -p problems/word_counter/checkpoint_1/core/simple_count
-
-cat > problems/word_counter/checkpoint_1/core/simple_count/case.yaml << 'EOF'
-arguments: --input hello.txt --output output.json
-
-input_files:
-  - path: hello.txt
-    file_type: txt
-    content: |
-      Hello world
-EOF
-
-cat > problems/word_counter/checkpoint_1/core/simple_count/expected.json << 'EOF'
-{
-  "word_count": 2,
-  "file": "hello.txt"
-}
-EOF
+not valid json
+```
 ```
 
-**What we created:**
-- CLI arguments: `--input hello.txt --output output.json`
-- Input file with "Hello world" (2 words)
-- Expected output: `word_count: 2`
+## Step 4: Create conftest.py (2 minutes)
 
-### Test Case 2: Multiple Words
+Create `problems/json_normalizer/tests/conftest.py`:
 
-```bash
-mkdir -p problems/word_counter/checkpoint_1/core/multiple_words
+```python
+"""Pytest configuration for json_normalizer evaluation."""
 
-cat > problems/word_counter/checkpoint_1/core/multiple_words/case.yaml << 'EOF'
-arguments: --input text.txt --output output.json
+import shlex
 
-input_files:
-  - path: text.txt
-    file_type: txt
-    content: |
-      The quick brown fox jumps over the lazy dog
-EOF
+import pytest
 
-cat > problems/word_counter/checkpoint_1/core/multiple_words/expected.json << 'EOF'
-{
-  "word_count": 9,
-  "file": "text.txt"
-}
-EOF
+
+def pytest_addoption(parser):
+    """Register required CLI options for SCBench evaluation."""
+    parser.addoption("--entrypoint", required=True)
+    parser.addoption("--checkpoint", required=True)
+
+
+@pytest.fixture(scope="session")
+def entrypoint_argv(request):
+    """Get submission entrypoint as argv list."""
+    return shlex.split(request.config.getoption("--entrypoint"))
+
+
+@pytest.fixture(scope="session")
+def checkpoint_name(request):
+    """Get current checkpoint name."""
+    return request.config.getoption("--checkpoint")
 ```
 
-### Test Case 3: Empty File
+**These fixtures are required:**
+- `entrypoint_argv`: Command to run the submission
+- `checkpoint_name`: Current checkpoint being evaluated
 
-```bash
-mkdir -p problems/word_counter/checkpoint_1/core/empty_file
+## Step 5: Write Test File (5 minutes)
 
-cat > problems/word_counter/checkpoint_1/core/empty_file/case.yaml << 'EOF'
-arguments: --input empty.txt --output output.json
+Create `problems/json_normalizer/tests/test_checkpoint_1.py`:
 
-input_files:
-  - path: empty.txt
-    file_type: txt
-    content: ""
-EOF
+```python
+"""Tests for checkpoint_1: JSON Key Normalizer."""
 
-cat > problems/word_counter/checkpoint_1/core/empty_file/expected.json << 'EOF'
-{
-  "word_count": 0,
-  "file": "empty.txt"
-}
-EOF
-```
-
-### Test Case 4: Error - File Not Found
-
-```bash
-mkdir -p problems/word_counter/checkpoint_1/errors/file_not_found
-
-cat > problems/word_counter/checkpoint_1/errors/file_not_found/case.yaml << 'EOF'
-arguments: --input missing.txt --output output.json
-
-input_files: []
-EOF
-
-cat > problems/word_counter/checkpoint_1/errors/file_not_found/expected.yaml << 'EOF'
-status_code: 1
-stderr: ".*not found.*"
-EOF
-```
-
-**Note**: Error cases use `expected.yaml` (not JSON) to specify status code and stderr pattern.
-
-### Verify Test Cases
-
-```bash
-find problems/word_counter/checkpoint_1 -name "case.yaml" -o -name "expected.*"
-```
-
-You should see 4 case files and 4 expected files.
-
-## Step 6: Write Loader (5 minutes)
-
-Create `problems/word_counter/loader.py`:
-
-```bash
-cat > problems/word_counter/loader.py << 'EOF'
-"""Loader for word_counter problem."""
-
-from pathlib import Path
-import yaml
 import json
+import subprocess
 
-from slop_code.evaluation import GroupConfig
-from slop_code.evaluation.adapters import CLICase, CLIResult
-from slop_code.evaluation.loaders import BaseLoader, CaseStore, helpers
-from slop_code.execution.file_ops import InputFile
+import pytest
 
 
-class Loader(BaseLoader):
-    """Load test cases for word_counter problem."""
+def run_normalizer(entrypoint_argv, input_data):
+    """Run normalizer with JSON input via stdin."""
+    if isinstance(input_data, dict):
+        input_str = json.dumps(input_data)
+    else:
+        input_str = input_data
 
-    def __call__(self, group: GroupConfig, store: CaseStore):
-        """Load all test cases in a group."""
-        group_dir = helpers.get_group_path(group, self.problem, self.checkpoint)
-
-        # Find all case directories
-        for case_dir in helpers.discover_dir_cases(group, group_dir):
-            case, expected = self.load_case(case_dir, group)
-            yield case, expected
-
-    def load_case(self, case_dir: Path, group: GroupConfig):
-        """Load a single test case."""
-        # Read case.yaml
-        case_yaml = yaml.safe_load((case_dir / "case.yaml").read_text())
-
-        # Create CLICase
-        case = CLICase(
-            id=case_dir.name,
-            group=group.name,
-            group_type=group.type,
-            checkpoint=self.checkpoint.name,
-            arguments=case_yaml["arguments"].split(),
-            input_files=[
-                InputFile.model_validate(f)
-                for f in case_yaml.get("input_files", [])
-            ],
-        )
-
-        # Load expected output
-        if (case_dir / "expected.json").exists():
-            # Success case: JSON output
-            expected_output = json.loads((case_dir / "expected.json").read_text())
-            status_code = 0
-            stderr = ""
-        else:
-            # Error case: YAML with status_code and stderr
-            expected_yaml = yaml.safe_load((case_dir / "expected.yaml").read_text())
-            expected_output = {}
-            status_code = expected_yaml.get("status_code", 0)
-            stderr = expected_yaml.get("stderr", "")
-
-        expected = CLIResult(
-            id=case_dir.name,
-            group=group.name,
-            group_type=group.type,
-            status_code=status_code,
-            output=expected_output,
-            stderr=stderr,
-        )
-
-        return case, expected
-EOF
-```
-
-**What the loader does:**
-
-1. Finds all case directories in the group
-2. Reads `case.yaml` for arguments and input files
-3. Reads `expected.json` (success) or `expected.yaml` (error)
-4. Returns `(CLICase, CLIResult)` tuples
-
-**Test the loader:**
-
-```bash
-# Ensure repository root is in PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:.
-python -c "
-from pathlib import Path
-from problems.word_counter.loader import Loader
-from slop_code.evaluation import ProblemConfig
-
-problem = ProblemConfig.from_yaml(Path('problems/word_counter'))
-checkpoint = problem.load_checkpoint('checkpoint_1')
-
-loader = Loader(problem, checkpoint)
-store = loader.initialize_store()
-
-for group in checkpoint.groups.values():
-    print(f'Group: {group.name}')
-    for case, expected in loader(group, store):
-        print(f'  - {case.id}')
-"
-```
-
-You should see:
-```
-Group: core
-  - empty_file
-  - multiple_words
-  - simple_count
-Group: errors
-  - file_not_found
-```
-
-## Step 7: Write Verifier (4 minutes)
-
-Create `problems/word_counter/verifier.py`:
-
-```bash
-cat > problems/word_counter/verifier.py << 'EOF'
-"""Verifier for word_counter problem."""
-
-from slop_code.evaluation import CheckpointConfig
-from slop_code.evaluation.adapters import CLIResult
-from slop_code.evaluation.verifiers import verifiers, parsers
+    return subprocess.run(
+        entrypoint_argv,
+        input=input_str,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
 
 
-class Verifier:
-    """Verify word_counter outputs."""
+# =============================================================================
+# Core Tests (unmarked - must pass)
+# =============================================================================
 
-    def __init__(self, checkpoint_config: CheckpointConfig):
-        self.checkpoint_config = checkpoint_config
 
-    def __call__(
-        self,
-        group_name: str,
-        case_name: str,
-        actual: CLIResult,
-        expected: CLIResult,
-    ):
-        """Verify a test case."""
-        # Always check status code
-        results = {
-            "status_code": verifiers.matches_status_code(
-                actual.status_code,
-                expected.status_code,
-                weight=0.2
-            )
+def test_lowercase_keys(entrypoint_argv):
+    """Core: Convert uppercase keys to lowercase."""
+    result = run_normalizer(entrypoint_argv, {"NAME": "Alice", "AGE": 30})
+    assert result.returncode == 0, f"Failed: {result.stderr}"
+
+    output = json.loads(result.stdout)
+    assert output == {"name": "Alice", "age": 30}
+
+
+def test_trim_whitespace(entrypoint_argv):
+    """Core: Trim whitespace from keys."""
+    result = run_normalizer(entrypoint_argv, {"  name  ": "Bob"})
+    assert result.returncode == 0, f"Failed: {result.stderr}"
+
+    output = json.loads(result.stdout)
+    assert output == {"name": "Bob"}
+
+
+def test_nested_objects(entrypoint_argv):
+    """Core: Handle nested objects recursively."""
+    input_data = {
+        "USER": {
+            "  NAME  ": "Charlie",
+            "ADDRESS": {"CITY": "NYC"}
         }
+    }
+    result = run_normalizer(entrypoint_argv, input_data)
+    assert result.returncode == 0, f"Failed: {result.stderr}"
 
-        # For error cases, check stderr
-        if expected.status_code != 0:
-            results["stderr"] = verifiers.matches_regex(
-                actual.stderr,
-                expected.stderr,
-                lstrip=True,
-                weight=0.8
-            )
-            return results
+    output = json.loads(result.stdout)
+    assert output == {
+        "user": {
+            "name": "Charlie",
+            "address": {"city": "NYC"}
+        }
+    }
 
-        # For success cases, check output.json
-        output_file = actual.files.get("output.json")
-        if not output_file:
-            results["output"] = verifiers.VerificationResult(
-                score=0.0,
-                weight=0.8,
-                message="output.json not found"
-            )
-            return results
 
-        # Parse actual output
-        actual_output = parsers.parse_json(output_file.content)
+def test_empty_object(entrypoint_argv):
+    """Core: Handle empty object."""
+    result = run_normalizer(entrypoint_argv, {})
+    assert result.returncode == 0, f"Failed: {result.stderr}"
 
-        # Compare with expected
-        results["output"] = verifiers.deepdiff_verify(
-            actual_output,
-            expected.output,
-            weight=0.8
-        )
+    output = json.loads(result.stdout)
+    assert output == {}
 
-        return results
-EOF
+
+# =============================================================================
+# Functionality Tests (nice to have)
+# =============================================================================
+
+
+@pytest.mark.functionality
+def test_array_values(entrypoint_argv):
+    """Functionality: Preserve array values."""
+    input_data = {"TAGS": ["Python", "CLI"]}
+    result = run_normalizer(entrypoint_argv, input_data)
+    assert result.returncode == 0
+
+    output = json.loads(result.stdout)
+    assert output == {"tags": ["Python", "CLI"]}
+
+
+@pytest.mark.functionality
+def test_mixed_case_keys(entrypoint_argv):
+    """Functionality: Handle camelCase keys."""
+    input_data = {"firstName": "Dana", "lastName": "Smith"}
+    result = run_normalizer(entrypoint_argv, input_data)
+    assert result.returncode == 0
+
+    output = json.loads(result.stdout)
+    assert output == {"firstname": "Dana", "lastname": "Smith"}
+
+
+# =============================================================================
+# Error Tests (error handling)
+# =============================================================================
+
+
+@pytest.mark.error
+def test_invalid_json(entrypoint_argv):
+    """Error: Invalid JSON returns exit code 1."""
+    result = run_normalizer(entrypoint_argv, "not valid json")
+    assert result.returncode == 1, "Expected exit code 1 for invalid JSON"
+
+
+@pytest.mark.error
+def test_empty_input(entrypoint_argv):
+    """Error: Empty input returns exit code 1."""
+    result = run_normalizer(entrypoint_argv, "")
+    assert result.returncode == 1, "Expected exit code 1 for empty input"
 ```
 
-**What the verifier does:**
+**Test organization:**
+- **Core tests** (unmarked): Must pass - essential functionality
+- **Functionality tests** (`@pytest.mark.functionality`): Nice to have
+- **Error tests** (`@pytest.mark.error`): Error handling cases
 
-1. Checks status code (20% weight)
-2. For errors: Checks stderr matches pattern (80% weight)
-3. For success: Parses `output.json` and compares with expected (80% weight)
-
-**Test the verifier:**
+## Step 6: Verify Structure (1 minute)
 
 ```bash
-# Ensure repository root is in PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:.
-python -c "
-from pathlib import Path
-from problems.word_counter.verifier import Verifier
-from slop_code.evaluation import ProblemConfig
-from slop_code.evaluation.adapters import CLIResult, FileContent
-
-problem = ProblemConfig.from_yaml(Path('problems/word_counter'))
-checkpoint = problem.load_checkpoint('checkpoint_1')
-
-verifier = Verifier(checkpoint)
-
-# Test success case
-actual = CLIResult(
-    id='test',
-    group='core',
-    status_code=0,
-    files={'output.json': FileContent(
-        path='output.json',
-        content='{\"word_count\": 2, \"file\": \"hello.txt\"}'
-    )}
-)
-expected = CLIResult(
-    id='test',
-    group='core',
-    status_code=0,
-    output={'word_count': 2, 'file': 'hello.txt'}
-)
-
-results = verifier('core', 'test', actual, expected)
-print('Success case results:')
-for key, result in results.items():
-    print(f'  {key}: {result.score}')
-"
+tree problems/json_normalizer
 ```
 
-You should see:
+Expected:
 ```
-Success case results:
-  status_code: 1.0
-  output: 1.0
+problems/json_normalizer/
+├── config.yaml
+├── checkpoint_1.md
+└── tests/
+    ├── conftest.py
+    └── test_checkpoint_1.py
 ```
 
-## Step 8: Create Reference Solution (Optional but Recommended)
+## Step 7: Run Tests Locally (Optional)
 
-Create `problems/word_counter/solution/word_counter.py`:
+Create a reference solution to test locally:
 
 ```bash
-mkdir -p problems/word_counter/solution
+mkdir -p problems/json_normalizer/solution
 
-cat > problems/word_counter/solution/word_counter.py << 'EOF'
+cat > problems/json_normalizer/solution/normalizer.py << 'EOF'
 #!/usr/bin/env python3
-"""Word counter CLI tool."""
+"""JSON key normalizer."""
 
-import argparse
 import json
 import sys
-from pathlib import Path
 
 
-def count_words(file_path: Path) -> int:
-    """Count words in a file."""
-    text = file_path.read_text()
-    words = text.split()
-    return len(words)
+def normalize_keys(obj):
+    """Recursively normalize object keys."""
+    if isinstance(obj, dict):
+        return {k.strip().lower(): normalize_keys(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [normalize_keys(item) for item in obj]
+    return obj
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Count words in a file")
-    parser.add_argument("--input", required=True, help="Input file path")
-    parser.add_argument("--output", required=True, help="Output JSON path")
-    args = parser.parse_args()
-
-    input_path = Path(args.input)
-
-    # Check if file exists
-    if not input_path.exists():
-        print(f"Error: File {args.input} not found", file=sys.stderr)
+    try:
+        data = json.load(sys.stdin)
+    except json.JSONDecodeError:
         sys.exit(1)
 
-    # Count words
-    word_count = count_words(input_path)
-
-    # Write output
-    output = {
-        "word_count": word_count,
-        "file": args.input
-    }
-
-    output_path = Path(args.output)
-    output_path.write_text(json.dumps(output, indent=2))
+    normalized = normalize_keys(data)
+    print(json.dumps(normalized))
 
 
 if __name__ == "__main__":
     main()
 EOF
-
-chmod +x problems/word_counter/solution/word_counter.py
 ```
 
-**Why create a reference solution:**
-- Verify your test cases are correct
-- Test the loader and verifier
-- Provide example for debugging
-
-**Test the solution manually:**
+Run tests:
 
 ```bash
-cd problems/word_counter/solution
-
-# Create test file
-echo "Hello world from the tutorial" > test.txt
-
-# Run solution
-python word_counter.py --input test.txt --output output.json
-
-# Check output
-cat output.json
-# Should show: {"word_count": 5, "file": "test.txt"}
-
-cd ../../..
+cd problems/json_normalizer/solution
+pytest ../tests/ \
+  --entrypoint="python normalizer.py" \
+  --checkpoint=checkpoint_1 \
+  -v
 ```
 
-## Step 9: Validate Your Problem (3 minutes)
+Expected output:
+```
+tests/test_checkpoint_1.py::test_lowercase_keys PASSED
+tests/test_checkpoint_1.py::test_trim_whitespace PASSED
+tests/test_checkpoint_1.py::test_nested_objects PASSED
+tests/test_checkpoint_1.py::test_empty_object PASSED
+tests/test_checkpoint_1.py::test_array_values PASSED
+tests/test_checkpoint_1.py::test_mixed_case_keys PASSED
+tests/test_checkpoint_1.py::test_invalid_json PASSED
+tests/test_checkpoint_1.py::test_empty_input PASSED
+```
 
-### Check Directory Structure
+## Step 8: Run with SCBench
 
 ```bash
-tree problems/word_counter -I '__pycache__|*.pyc'
-```
-
-Expected structure:
-```
-problems/word_counter
-├── config.yaml
-├── loader.py
-├── verifier.py
-├── checkpoint_1
-│   ├── spec.md
-│   ├── core
-│   │   ├── empty_file
-│   │   │   ├── case.yaml
-│   │   │   └── expected.json
-│   │   ├── multiple_words
-│   │   │   ├── case.yaml
-│   │   │   └── expected.json
-│   │   └── simple_count
-│   │       ├── case.yaml
-│   │       └── expected.json
-│   └── errors
-│       └── file_not_found
-│           ├── case.yaml
-│           └── expected.yaml
-└── solution
-    └── word_counter.py
-```
-
-### Validate YAML Files
-
-```bash
-find problems/word_counter -name "*.yaml" | while read f; do
-    echo "Checking $f..."
-    python -c "import yaml; yaml.safe_load(open('$f'))" || echo "FAILED: $f"
-done
-```
-
-All files should pass.
-
-### Test Loader Loads All Cases
-
-```bash
-# Ensure repository root is in PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:.
-python -c "
-from pathlib import Path
-from problems.word_counter.loader import Loader
-from slop_code.evaluation import ProblemConfig
-
-problem = ProblemConfig.from_yaml(Path('problems/word_counter'))
-checkpoint = problem.load_checkpoint('checkpoint_1')
-
-loader = Loader(problem, checkpoint)
-store = loader.initialize_store()
-
-total_cases = 0
-for group in checkpoint.groups.values():
-    for case, expected in loader(group, store):
-        total_cases += 1
-
-print(f'Loaded {total_cases} test cases')
-assert total_cases == 4, f'Expected 4 cases, got {total_cases}'
-print('✓ All test cases loaded successfully')
-"
-```
-
-## Step 10: Test with Reference Solution (5 minutes)
-
-### Run Evaluation on Your Solution
-
-```bash
-# Create output directory
-mkdir -p outputs/word_counter_test
-
-# Evaluate your solution against a snapshot
-uv run python -m slop_code.entrypoints.cli eval-snapshot \
-  --problem-name word_counter \
-  --checkpoint-num 1 \
-  --env-config configs/environments/local.yaml \
-  --save-dir outputs/word_counter_test \
-  problems/word_counter/solution
-```
-
-**Expected output:**
-```
-Checkpoint 1: 4/4 tests passed (100%)
-  core: 3/3 passed
-  errors: 1/1 passed
-```
-
-If you see this, **congratulations!** Your problem works correctly.
-
-### Debug Failures
-
-If tests fail:
-
-**Check which test failed:**
-```bash
-# The output shows which tests failed
-# Example: "core/simple_count: FAILED"
-```
-
-**Debug the specific test:**
-```bash
-# Run just that test manually
-cd /tmp/test_workspace
-echo "Hello world" > hello.txt
-
-# Run your solution
-python -m word_counter --input hello.txt --output output.json
-
-# Check output
-cat output.json
-```
-
-**Common issues:**
-- Wrong output format (verify JSON structure)
-- Wrong file path (check `tracked_files` in config)
-- Wrong status code (check error cases exit with 1)
-
-## Step 11: Run an Agent on Your Problem (Optional)
-
-Now test if an agent can solve it:
-
-```bash
+# Run an agent on your problem
 slop-code run \
-  --agent configs/agents/haiku-4.5-claude-code.yaml \
+  --agent claude_code \
+  --model anthropic/opus-4.5 \
   --environment configs/environments/docker-python3.12-uv.yaml \
-  --prompt configs/prompts/simple.jinja \
-  --problem word_counter \
-  --num-workers 1
+  --prompt configs/prompts/just-solve.jinja \
+  --problem json_normalizer
+
+# Evaluate results
+slop-code eval outputs/<run-directory>/
 ```
-
-This will:
-1. Give the agent your `spec.md`
-2. Let it write `word_counter.py`
-3. Run your test cases against its solution
-4. Show results
-
-**Evaluate agent's solution:**
-```bash
-uv run python -m slop_code.entrypoints.cli eval \
-  outputs/[run-directory]
-```
-
-Replace `[run-directory]` with the actual agent run directory path.
 
 ## Success Checklist
 
 Your problem is complete when:
 
-- [ ] **Structure**: All directories and files exist
-- [ ] **Config**: Root and checkpoint configs are valid YAML
-- [ ] **Spec**: Clear requirements and examples
-- [ ] **Test Cases**: At least 3 success cases, 1 error case
-- [ ] **Loader**: Loads all test cases without errors
-- [ ] **Verifier**: Returns scores for all cases
-- [ ] **Reference Solution**: Passes all tests (100%)
-- [ ] **Agent Test**: (Optional) Agent can solve it
+- [ ] `config.yaml` exists with correct fields
+- [ ] `checkpoint_1.md` has clear specification
+- [ ] `tests/conftest.py` has required fixtures
+- [ ] `tests/test_checkpoint_1.py` has core, functionality, and error tests
+- [ ] Local tests pass with reference solution
+- [ ] Agent can attempt the problem
 
 ## What You Learned
 
-Congratulations! You've created a complete evaluation problem. You now understand:
+1. **Directory structure** - config.yaml, checkpoint_N.md, tests/
+2. **Configuration** - Minimal config.yaml with checkpoints inline
+3. **Pytest fixtures** - entrypoint_argv, checkpoint_name
+4. **Test markers** - Core (unmarked), functionality, error
+5. **Testing pattern** - subprocess.run with stdin/stdout
 
-1. **Problem structure** - Directories, configs, test cases
-2. **Configuration** - Root config, checkpoint config, adapter settings
-3. **Specification** - How to write clear requirements for agents
-4. **Test cases** - Success cases (core) and error cases (errors)
-5. **Loader** - How to discover and parse test cases
-6. **Verifier** - How to compare actual vs expected outputs
-7. **Validation** - How to test your problem works correctly
+## Adding a Second Checkpoint
+
+To extend the problem:
+
+1. Update `config.yaml`:
+```yaml
+checkpoints:
+  checkpoint_1:
+    version: 1
+    order: 1
+    state: Core Tests
+
+  checkpoint_2:
+    version: 1
+    order: 2
+    state: Core Tests
+    include_prior_tests: true  # Run checkpoint_1 tests too
+```
+
+2. Create `checkpoint_2.md` with new requirements
+
+3. Create `tests/test_checkpoint_2.py` with new tests
+
+Prior checkpoint tests automatically run as regression tests.
 
 ## Next Steps
 
-### Add More Test Cases
-
-```bash
-# Add edge cases
-mkdir -p problems/word_counter/checkpoint_1/core/multiple_spaces
-mkdir -p problems/word_counter/checkpoint_1/core/long_text
-
-# Add more error cases
-mkdir -p problems/word_counter/checkpoint_1/errors/invalid_argument
-```
-
-### Add a Second Checkpoint
-
-```bash
-# Create checkpoint_2
-mkdir -p problems/word_counter/checkpoint_2/core
-
-# Update root config
-# Add "- checkpoint_2" to checkpoints list
-
-# Write checkpoint_2/spec.md
-# Extend the tool with character counting
-```
-
-### Improve Your Problem
-
-- Add more realistic test cases
-- Test with different text formats
-- Add optional features (--verbose flag)
-- Create hidden test cases
-- Add performance tests
-
-## Common Issues and Solutions
-
-### "No module named 'word_counter'"
-
-**Fix**: Ensure you're running from the correct directory with the right Python path.
-
-### "File output.json not found"
-
-**Fix**: Check `tracked_files` in root config matches what your solution outputs.
-
-### "All tests fail with score 0.0"
-
-**Fix**: Check verifier is reading the correct file:
-```python
-output_file = actual.files.get("output.json")  # Must match tracked_files
-```
-
-### "Loader yields no cases"
-
-**Fix**: Ensure case directories exist and contain `case.yaml`.
-
-## Further Reading
-
-- **[Quick Reference](quick-reference.md)** - Templates and commands
-- **[Config Schema](config-schema.md)** - Complete field reference
-- **[Test Cases Guide](test-cases.md)** - Best practices
-- **[Simple CLI Example](examples/simple-cli.md)** - More complex CLI example
-- **[Troubleshooting](troubleshooting.md)** - Debug common issues
-
-## Feedback
-
-If you found this tutorial helpful or have suggestions for improvement, please let us know!
-
----
-
-**You did it!** 🎉
-
-You've created your first evaluation problem. Now you can create problems to test any CLI tool, API, or web application you can imagine.
+- [Quick Reference](quick-reference.md) - Templates and commands
+- [Structure Guide](structure.md) - Directory layout details
+- [Markers](pytest/markers.md) - Test categorization
+- [Examples](examples/) - Real problem walkthroughs

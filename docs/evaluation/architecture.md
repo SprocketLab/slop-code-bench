@@ -1,46 +1,25 @@
 ---
-version: 1.3
-last_updated: 2025-12-10
+version: 2.0
+last_updated: 2025-12-22
 ---
 
 # Evaluation System Architecture
 
-This guide provides a detailed overview of the evaluation system's architecture, including its hierarchical structure, execution flow, and key design patterns.
+This guide provides a detailed overview of the pytest-based evaluation system architecture.
 
-## Hierarchical Structure
+## System Overview
 
-The evaluation system uses a four-level hierarchy:
+The evaluation system uses `PytestRunner` to execute standard pytest tests against agent submissions. Tests run in isolated environments via `uvx`, ensuring no interference with the solution's dependencies.
 
 ```
-Problem (1)
-├── config.yaml
-├── loader.py
-├── verifier.py
-├── Checkpoint 1 (*)
-│   ├── config.yaml
-│   ├── Group 1 (*)
-│   │   ├── Case 1 (*)
-│   │   ├── Case 2 (*)
-│   │   └── ...
-│   ├── Group 2 (*)
-│   │   ├── Case 1 (*)
-│   │   └── ...
-│   └── ...
-├── Checkpoint 2 (*)
-│   ├── config.yaml
-│   └── ...
-└── ...
-
-(*) = Multiple instances can exist
+Problem
+├── config.yaml              # Problem + checkpoint configuration
+└── tests/
+    ├── conftest.py          # Required fixtures
+    ├── test_checkpoint_1.py # Tests for checkpoint 1
+    ├── test_checkpoint_2.py # Tests for checkpoint 2
+    └── ...
 ```
-
-### Key Relationships
-
-- **Problem → Checkpoints**: 1-to-many (problem contains multiple checkpoints)
-- **Checkpoint → Groups**: 1-to-many (checkpoint contains multiple groups)
-- **Group → Cases**: 1-to-many (group contains multiple test cases)
-- **Adapter**: Created once per checkpoint, shared by all groups within it
-- **Verifier**: Instantiated once per checkpoint, used for all case verification
 
 ## Execution Flow
 
@@ -48,256 +27,229 @@ Problem (1)
 
 ```
 ┌─────────────────┐
-│   Problem       │
-│   Config        │
-└─────────┬───────┘
-          │ Load config.yaml in the problem directory.
-          ▼
-┌──────────────────┐
-│   For Each       │
-│   Checkpoint:    │
-│                  │
-│ ┌──────────────┐ │
-│ │   Load       │ │
-│ │   checkpoint │ │
-│ │   config     │ │
-│ └──────────────┘ │
-│                  │
-│ ┌──────────────┐ │
-│ │   Create     │ │
-│ │   Adapter    │ │
-│ │   (CLI/API)  │ │
-│ └──────────────┘ │
-│                  │
-│ ┌──────────────┐ │
-│ │   For Each   │ │
-│ │   Group:     │ │
-│ │ ┌─────────┐  │ │
-│ │ │ Load    │  │ │
-│ │ │ cases   │  │ │
-│ │ └─────────┘  │ │
-│ │ ┌─────────┐  │ │
-│ │ │ For     │  │ │
-│ │ │ Each    │  │ │
-│ │ │ Case:   │  │ │
-│ │ │ ┌─────┐ │  │ │
-│ │ │ │Run  │ │  │ │
-│ │ │ │Case │ │  │ │
-│ │ │ └─────┘ │  │ │
-│ │ │ ┌──────┐│  │ │
-│ │ │ │Verify││  │ │
-│ │ │ │Result││  │ │
-│ │ │ └──────┘│  │ │
-│ │ └─────────┘  │ │
-│ └──────────────┘ │
-└─────────┬────────┘
-          │
-          ▼
+│  ProblemConfig  │
+│  + Checkpoint   │
+└────────┬────────┘
+         │
+         ▼
 ┌─────────────────┐
-│   Report        │
-│   Generation    │
-│   (Aggregate    │
-│    all results) │
+│  PytestRunner   │
+│                 │
+│ 1. Copy tests   │
+│ 2. Gen pytest.ini│
+│ 3. Build command│
+│ 4. Execute uvx  │
+│ 5. Parse reports│
+│ 6. Categorize   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ CorrectnessResults │
+│ + TestResult[]  │
 └─────────────────┘
 ```
 
-### Execution Sequence
-
-1. **Problem Setup** → Load `problem.yaml` with global configuration
-2. **Checkpoint Iteration** → For each checkpoint in the problem:
-   - Load `checkpoint/config.yaml`
-   - Create adapter instance (CLI/API/Playwright)
-   - Initialize verifier
-   - Load group loader
-3. **Group Processing** → For each group in the checkpoint:
-   - Discover test cases using group loader
-   - Execute all cases through the shared adapter
-   - Verify each case result against expected values
-4. **Report Generation** → Aggregate all group results into checkpoint report
-
-Each checkpoint runs independently with its own adapter and verifier instances, but shares the problem-level configuration and execution environment.
-
 ### Detailed Execution Steps
 
-1. **Initialization**: Load problem and checkpoint configurations
-2. **Context Creation**: Build ExecutionContext with environment and assets
-3. **Adapter Construction**: Create appropriate adapter based on configuration
-4. **Loader Initialization**: Initialize group loader for case discovery
-5. **Case Discovery**: Load test cases using configured group loader
-6. **Execution**: Run each case through the adapter with timeout handling
-7. **Verification**: Apply user-defined verifier to compare actual vs expected
-8. **Aggregation**: Collect results into structured reports
-9. **Output**: Generate reports in specified formats
+1. **Test Preparation**
+   - Copy test files from `problems/{problem}/tests/` to workspace
+   - Only copy tests for checkpoints 0..N based on `include_prior_tests` setting
+   - Generate `pytest.ini` with marker registration
+
+2. **Command Construction**
+   - Build `uvx` command with test dependencies
+   - Pass `--entrypoint` and `--checkpoint` options to pytest
+   - Configure CTRF and pytest-json-report output paths
+
+3. **Isolated Execution**
+   - Execute via Docker runtime
+   - `uvx` installs test dependencies in ephemeral environment
+   - Solution's virtualenv/dependencies are not affected
+
+4. **Report Parsing**
+   - Parse CTRF JSON report (pytest-json-ctrf plugin)
+   - Parse pytest-json-report for detailed failure messages
+   - Prefer pytest-json-report (expands parametrized tests)
+
+5. **Test Categorization**
+   - Determine `GroupType` for each test based on:
+     - Pytest markers (`@pytest.mark.error`, `@pytest.mark.functionality`)
+     - Which checkpoint the test file belongs to
+   - Aggregate counts by `GroupType`
+
+6. **Result Generation**
+   - Create `TestResult` for each test
+   - Build `CorrectnessResults` with aggregated statistics
 
 ## Core Components
 
-### 1. Configuration Layer (`config.py`)
+### PytestRunner (`pytest_runner.py`)
 
-The configuration system defines three hierarchical levels:
+The main orchestrator class that manages the full evaluation lifecycle:
 
-- **ProblemConfig**: Top-level problem definition with metadata, entry points, and shared assets
-- **CheckpointConfig**: Execution-specific wiring for milestones, including adapter configuration and group definitions
-- **GroupConfig**: Case discovery rules and verification pipelines
+```python
+runner = PytestRunner(
+    problem=problem_config,
+    checkpoint=checkpoint_config,
+    environment=env_spec,
+    submission_path=Path("outputs/submission/checkpoint_1"),
+)
+results = runner.run()
+```
 
-All configurations use Pydantic models with validation and support inheritance of defaults from parent scopes.
+**Key Methods:**
+- `_copy_tests_from_problem()`: Selectively copy test files
+- `_generate_pytest_ini()`: Create pytest.ini with markers
+- `_build_pytest_command()`: Construct uvx + pytest command
+- `_parse_ctrf_report()`: Parse CTRF JSON output
+- `_determine_group_type()`: Categorize tests by markers/checkpoint
+- `run()`: Main orchestration method
 
-**See**: [Configuration Guide](configuration.md) for detailed YAML examples and structure.
+### Test Categorization Logic
 
-### 2. Execution Adapters (`adapters/`)
+The `_determine_group_type()` method implements categorization rules:
 
-Adapters provide different execution environments for running submissions:
+```python
+def _determine_group_type(test_checkpoint, markers, current_checkpoint):
+    # Rule 1: Error marker always wins
+    if "error" in markers:
+        return GroupType.ERROR
 
-- **CLI Adapter**: Executes command-line interface submissions
-- **API Adapter**: Runs HTTP API-based submissions with mock server support
-- **Playwright Adapter**: Handles web browser automation scenarios
+    # Rule 2: Regression if from prior checkpoint or explicit marker
+    if "regression" in markers or test_checkpoint != current_checkpoint:
+        return GroupType.REGRESSION
 
-All adapters implement the `Adapter` protocol and provide:
-- Context manager setup/teardown
-- Case execution with timeout handling
-- Standardized `CaseResult` output
+    # Rule 3: Check custom markers from problem config
+    for marker in markers:
+        if marker in problem.markers:
+            return problem.markers[marker].group
 
-**See**: [Adapters Guide](adapters.md) for choosing and configuring adapters.
+    # Rule 4: Functionality marker
+    if "functionality" in markers:
+        return GroupType.FUNCTIONALITY
 
-### 3. Verification System (`verifiers/`)
+    # Rule 5: Default to CORE
+    return GroupType.CORE
+```
 
-The verification layer validates submission results against expected outcomes:
+### Result Models (`report.py`)
 
-- **VerifierProtocol**: Interface for user-defined verification logic
-- **VerificationResult**: Per-attribute validation with diff information
-- **VerifierReport**: Aggregated results with scoring and metadata
+**TestResult**: Individual test outcome
+```python
+class TestResult(BaseModel):
+    id: str                    # Pytest nodeid
+    checkpoint: str            # "checkpoint_1", etc.
+    group_type: GroupType      # CORE, FUNCTIONALITY, etc.
+    status: Literal["passed", "failed", "skipped", "error"]
+    duration_ms: float
+    file_path: str
+    markers: list[str]
+    failure_message: str | None
+```
 
-Verifiers can compare output, status codes, files, and custom attributes with weighted scoring.
+**CorrectnessResults**: Aggregated checkpoint results
+```python
+class CorrectnessResults(BaseModel):
+    problem_name: str
+    checkpoint_name: str
+    duration: float
+    tests: list[TestResult]
+    pass_counts: dict[GroupType, int]
+    total_counts: dict[GroupType, int]
+    pytest_exit_code: int
+    infrastructure_failure: bool
+```
 
-**See**: [Verification Guide](verification.md) for implementation details.
+## Pytest Command Structure
 
-### 4. Case Loading (`loader.py`)
+The runner builds a command like:
 
-Dynamic case discovery and loading system:
+```bash
+uvx \
+  --with=pytest \
+  --with=pytest-json-ctrf \
+  --with=pytest-json-report \
+  --with=pytest-timeout \
+  --with=jsonschema \
+  --with=deepdiff \
+  pytest \
+  --timeout=30 \
+  --entrypoint='python main.py' \
+  --checkpoint='checkpoint_1' \
+  --ctrf=.scbench/ctrf-report.json \
+  --json-report \
+  --json-report-file=.scbench/pytest-report.json \
+  -vv \
+  .evaluation_tests
+```
 
-- **GroupLoader Protocol**: Interface for custom case loading logic
-- **Script Loader**: Loads user-defined Python scripts for case generation
-- **Pattern Matching**: Supports glob patterns and exclusion rules for file discovery
+**Key Options:**
+- `--entrypoint`: Command to run submission (passed to test fixtures)
+- `--checkpoint`: Current checkpoint name
+- `--timeout`: Session-level timeout from checkpoint config
+- `--ctrf`: CTRF JSON output path
+- `--json-report`: Enable detailed failure reports
 
-**See**: [Loaders Guide](loaders.md) for case discovery strategies.
+## Test Dependencies
 
-### 5. Execution Context (`context.py`)
+Tests run with these packages installed via uvx:
 
-Enhanced execution context that combines configuration with execution capabilities:
+| Package | Purpose |
+|---------|---------|
+| `pytest` | Test framework |
+| `pytest-json-ctrf` | CTRF JSON report generation |
+| `pytest-json-report` | Detailed failure messages |
+| `pytest-timeout` | Session-level timeout |
+| `jsonschema` | JSON schema validation |
+| `deepdiff` | Deep comparison utilities |
 
-- **ExecutionContext**: Aggregates configuration from problem and checkpoint scopes
-- **Environment Management**: Handles environment variables and execution specifications
-- **Static Asset Resolution**: Manages static assets available at runtime
-- **Run Information Tracking**: Tracks problem, checkpoint, and version metadata
+Additional dependencies can be specified per-problem via `test_dependencies` in config.
 
-### 6. Orchestration Engine (`runner.py`)
+## Exit Codes
 
-The core execution coordinator that:
+| Code | Meaning | Infrastructure Failure? |
+|------|---------|------------------------|
+| 0 | All tests passed | No |
+| 1 | Some tests failed | No |
+| 2 | Interrupted | Yes |
+| 3 | Internal error | Yes |
+| 4 | Usage error | Yes |
+| 5 | No tests collected | Yes |
 
-- Constructs ExecutionContext with proper configuration
-- Creates adapters with execution environments
-- Manages case execution lifecycle through loaders
-- Coordinates verification and result collection
-- Handles timeouts and error conditions
+Infrastructure failures set `results.infrastructure_failure = True` and cause all pass policies to fail.
 
-### 7. Reporting (`report.py`)
+## Design Patterns
 
-Comprehensive reporting system with:
+### uvx Isolation
 
-- **CorrectnessResults**: Aggregated results across all groups with pass/fail counts by GroupType
-- **GroupReport**: Per-group summaries with case scores
-- **PassPolicy**: Configurable passing criteria (any-case, all-cases, core-cases, etc.)
-- Export formats: JSON (evaluation.json), Parquet (reports.parquet) for analytics
-- Detailed diff information and timing metrics
+Tests run via `uvx` to ensure complete isolation:
+- Solution's dependencies don't interfere with test environment
+- Works with any solution package manager (pip, uv, poetry)
+- Test dependencies installed fresh each run
 
-**See**: [Reporting Guide](reporting.md) for understanding results and scoring.
+### Marker-Based Categorization
 
-## Terminology and Notation
+Instead of directory-based grouping, tests use pytest markers:
+- Built-in: `@pytest.mark.error`, `@pytest.mark.functionality`, `@pytest.mark.regression`
+- Custom markers defined in problem config
+- Automatic regression detection for prior checkpoint tests
 
-| Term | Definition |
-|------|------------|
-| **Problem** | Top-level benchmark definition containing multiple checkpoints |
-| **Checkpoint** | A milestone or test suite within a problem (e.g., "checkpoint_1") |
-| **Group** | Collection of related test cases with shared configuration |
-| **Case** | Individual test scenario with inputs and expected outputs |
-| **ExecutionContext** | Execution bundle with configuration, environment, and metadata |
-| **Adapter** | Execution environment wrapper (CLI, API, or Playwright) |
-| **Verifier** | User-defined logic that validates actual vs expected results |
-| **Loader** | Component that discovers and loads test cases from filesystem |
-| **Static Assets** | Files mounted into execution environment (mock data, configs) |
-| **Submission** | Agent code being evaluated |
-| **CaseResult** | Standardized output structure from adapter execution |
-| **VerificationResult** | Per-attribute validation with diff information |
+### Checkpoint Test Selection
 
-## Key Design Patterns
-
-### Protocol-Based Architecture
-
-- Uses Python protocols for extensible interfaces
-- Runtime type checking ensures compliance
-- Allows user-defined implementations for loaders and verifiers
-
-**Benefits:**
-- Type safety without inheritance constraints
-- Easy to extend with custom implementations
-- Clear contracts between components
-
-### Configuration Inheritance
-
-- Child scopes inherit defaults from parents
-- Nested priority merging ensures specific values override general ones
-- Supports environment variables and timeouts at multiple levels
-
-**Benefits:**
-- DRY principle: define once, use everywhere
-- Easy to override at specific levels
-- Consistent behavior across checkpoints
-
-### Context Management
-
-- Adapters use context managers for resource cleanup
-- ExecutionContext provides shared configuration and state across components
-- Proper isolation between test runs
-
-**Benefits:**
-- Automatic resource cleanup
-- Centralized configuration management
-- Clean state between executions
-- Consistent environment setup across checkpoints
-
-### Error Handling
-
-- Structured exception hierarchy for different failure modes
-- Detailed error reporting with context
-- Graceful degradation for partial failures
-
-**Benefits:**
-- Clear error diagnostics
-- Partial results even on failures
-- Easier debugging
-
-**See**: [Troubleshooting Guide](troubleshooting.md) for exception reference.
+When `include_prior_tests=True` (default):
+- Copy test files for checkpoints 0..N (current)
+- Prior checkpoint tests automatically become REGRESSION type
+- Ensures solutions don't break earlier functionality
 
 ## Integration Points
 
-The evaluation module integrates with several other system components:
-
-- **Task Runner**: CLI entry points for batch execution
-- **Execution Module**: Environment specifications and Docker management
-- **Protocol Loader**: Dynamic loading of user code (loaders and verifiers)
-- **Analytics**: Parquet export for downstream analysis
-
-## Design Philosophy
-
-The evaluation module is designed to be:
-
-1. **Extensible**: Protocol-based interfaces allow custom implementations
-2. **Consistent**: Standardized interfaces across different execution modes
-3. **Isolated**: Proper resource management prevents cross-contamination
-4. **Observable**: Detailed reporting and error diagnostics
-5. **Composable**: Mix and match adapters, verifiers, and loaders
+- **Execution Module**: `Session` and `EnvironmentSpec` for Docker runtime
+- **Configuration**: `ProblemConfig` and `CheckpointConfig` from `config.py`
+- **CLI**: `slop-code eval` command uses `run_checkpoint_pytest()`
 
 ## Next Steps
 
-- **Implement your first evaluation**: [Getting Started Guide](getting-started.md)
-- **Configure problems and checkpoints**: [Configuration Guide](configuration.md)
-- **Understand verification**: [Verification Guide](verification.md)
+- **Configure problems**: [Configuration Guide](configuration.md)
+- **Understand results**: [Reporting Guide](reporting.md)
+- **Debug failures**: [Troubleshooting Guide](troubleshooting.md)

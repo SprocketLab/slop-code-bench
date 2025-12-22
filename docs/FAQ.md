@@ -93,12 +93,6 @@ Good problems:
 
 See [Problem Design Guide](contributing-problems/README.md) for details.
 
-### What's the difference between CLI and API adapters?
-- **CLI adapter**: For command-line tools (agents run shell commands)
-- **API adapter**: For HTTP APIs (agents make HTTP requests)
-
-Choose based on what your problem tests. See [Adapters documentation](evaluation/adapters.md).
-
 ---
 
 ## Agents
@@ -163,7 +157,7 @@ Check the expected outputs in the problem's test cases. Some test failures may b
 - Numeric precision (for floating point)
 - Output order (for unordered results)
 
-See [Verification Guide](evaluation/verification.md) for handling edge cases.
+See [Troubleshooting Guide](evaluation/troubleshooting.md) for handling edge cases.
 
 ---
 
@@ -195,7 +189,7 @@ It depends on the problem and checkpoint. See [Interpreting Results](metrics/int
 
 ### How do I contribute a problem?
 1. Design the problem (see [Design Philosophy](contributing-problems/README.md))
-2. Implement loaders and verifiers (see [Tutorial](problems/tutorial.md))
+2. Write pytest tests (see [Tutorial](problems/tutorial.md))
 3. Test thoroughly (see [Checklist](contributing-problems/checklist.md))
 4. Submit a PR (see [Contributing Guide](../CONTRIBUTING.md))
 

@@ -198,21 +198,29 @@ class MigrationTool:
             graph[version] = list(deps)
         return graph
 
+    def _validate_dependency_links(
+        self, migrations: dict[int, dict[str, Any]]
+    ) -> None:
+        """Validate dependency references and ordering."""
+        versions = set(migrations.keys())
+        for version, migration in migrations.items():
+            for dep in migration.get("depends_on", []) or []:
+                if dep > version:
+                    raise MigrationError(
+                        f"migration version {version} cannot depend on future version {dep}"
+                    )
+                if dep not in versions:
+                    raise MigrationError(f"dependency version {dep} not found")
+
     def _validate_dependency_graph(
         self, migrations: dict[int, dict[str, Any]]
     ) -> dict[int, list[int]]:
         """Validate dependency references and ordering; return graph."""
-        versions = set(migrations.keys())
         graph = self._build_dependency_graph(migrations)
-
-        for version, migration in migrations.items():
-            for dep in migration.get("depends_on", []) or []:
-                if dep not in versions:
-                    raise MigrationError(f"dependency version {dep} not found")
-
         cycle = self._detect_cycle(graph)
         if cycle:
             raise MigrationError(f"circular dependency detected: cycle {cycle}")
+        self._validate_dependency_links(migrations)
         return graph
 
     def _detect_cycle(self, graph: dict[int, list[int]]) -> list[int] | None:
@@ -321,7 +329,9 @@ class MigrationTool:
         )
         return migration_map
 
-    def _build_column_definition(self, column: dict[str, Any]) -> str:
+    def _build_column_definition(
+        self, column: dict[str, Any], include_unique: bool = True
+    ) -> str:
         """Build SQL column definition from column spec.
 
         Args:
@@ -348,7 +358,7 @@ class MigrationTool:
         if column.get("not_null", False):
             parts.append("NOT NULL")
 
-        if column.get("unique", False):
+        if include_unique and column.get("unique", False):
             parts.append("UNIQUE")
 
         if "default" in column and column["default"] is not None:
@@ -368,6 +378,7 @@ class MigrationTool:
         description: str,
         operations: list[dict[str, Any]],
         rollback_operations: list[dict[str, Any]],
+        depends_on: list[int] | None = None,
     ) -> None:
         """Apply a single migration without dependency handling.
 
@@ -431,13 +442,14 @@ class MigrationTool:
                     events.append(event)
                 operations_count += 1
 
-            stored_payload: dict[str, Any] = {
-                "operations": operations_for_storage
-            }
+            if depends_on:
+                operations_for_storage[0]["depends_on"] = depends_on
             if rollback_operations:
-                stored_payload["rollback_operations"] = rollback_operations
+                operations_for_storage[0]["rollback_operations"] = (
+                    rollback_operations
+                )
             self._record_migration(
-                version, description, json.dumps(stored_payload)
+                version, description, json.dumps(operations_for_storage)
             )
             self.conn.commit()
         except MigrationError:
@@ -791,15 +803,23 @@ class MigrationTool:
                 (c for c in columns_info if c["name"] == column), None
             )
             if column_info:
-                # Identify uniqueness via indexes.
+                # Identify uniqueness via any index (including auto indexes).
                 unique = False
-                for idx in self._get_table_indexes(table):
-                    has_unique_sql = (
-                        idx["sql"] and "UNIQUE" in idx["sql"].upper()
+                index_cursor = self.conn.execute(
+                    f"PRAGMA index_list({self._quote_identifier(table)})"
+                )
+                for row in index_cursor.fetchall():
+                    index_name = row[1]
+                    is_unique = bool(row[2])
+                    if not is_unique:
+                        continue
+                    info_cursor = self.conn.execute(
+                        f"PRAGMA index_info({self._quote_identifier(index_name)})"
                     )
-                    if idx["columns"] == [column] and (
-                        idx["origin"] in ("u", "pk") or has_unique_sql
-                    ):
+                    columns = [
+                        info_row[2] for info_row in info_cursor.fetchall()
+                    ]
+                    if columns == [column]:
                         unique = True
                         break
                 op["original_definition"] = {
@@ -932,8 +952,8 @@ class MigrationTool:
                 f"column '{column_name}' already exists in table '{table_name}'"
             )
 
-        # Build column definition
-        col_def = self._build_column_definition(column)
+        # Build column definition without UNIQUE (SQLite limitation on ALTER).
+        col_def = self._build_column_definition(column, include_unique=False)
 
         # Add column
         alter_sql = f"ALTER TABLE {self._quote_identifier(table_name)} ADD COLUMN {col_def}"
@@ -984,6 +1004,24 @@ class MigrationTool:
             raise MigrationError(
                 f"column '{column_name}' does not exist in table '{table_name}'"
             )
+
+        if operation.get("_check_dependents"):
+            index_cursor = self.conn.execute(
+                f"PRAGMA index_list({self._quote_identifier(table_name)})"
+            )
+            for row in index_cursor.fetchall():
+                index_name = row[1]
+                info_cursor = self.conn.execute(
+                    f"PRAGMA index_info({self._quote_identifier(index_name)})"
+                )
+                columns = [
+                    info_row[2] for info_row in info_cursor.fetchall()
+                ]
+                if column_name in columns:
+                    raise MigrationError(
+                        f"cannot drop column '{column_name}': "
+                        f"dependent index '{index_name}' exists"
+                    )
 
         # Get table columns
         columns = self._get_table_columns(table_name)
@@ -1347,7 +1385,12 @@ class MigrationTool:
             table = operation["table"]
             column_name = operation["column"]["name"]
             self.drop_column(
-                {"type": "drop_column", "table": table, "column": column_name},
+                {
+                    "type": "drop_column",
+                    "table": table,
+                    "column": column_name,
+                    "_check_dependents": True,
+                },
                 version,
             )
         elif op_type == "drop_column":
@@ -1919,38 +1962,29 @@ class MigrationTool:
 
         # Handle dependencies
         if depends_on and migrations_dir:
-            # Validate and auto-apply missing dependencies
-            self._validate_dependencies_exist(
-                depends_on, migrations_dir, version
-            )
-            self._output_event(
-                {
-                    "event": "dependency_check",
-                    "version": version,
-                    "depends_on": depends_on,
-                    "status": "ok",
-                }
-            )
-
-            # Build dependency graph to apply all needed migrations in order
             path = Path(migrations_dir)
+            if not path.exists() or not path.is_dir():
+                raise MigrationError(
+                    f"invalid migrations directory: {migrations_dir}"
+                )
             migration_map = {}
-            for file_path in path.glob("*.json"):
-                try:
-                    mig = self._load_migration_file(str(file_path))
-                    v, desc, ops, deps, rollback_ops = (
-                        self._validate_migration_schema(mig, str(file_path))
+            for file_path in sorted(path.glob("*.json")):
+                mig = self._load_migration_file(str(file_path))
+                v, desc, ops, deps, rollback_ops = (
+                    self._validate_migration_schema(mig, str(file_path))
+                )
+                if v in migration_map:
+                    raise MigrationError(
+                        f"duplicate migration version {v} found in directory"
                     )
-                    migration_map[v] = {
-                        "version": v,
-                        "description": desc,
-                        "operations": ops,
-                        "depends_on": deps or [],
-                        "rollback_operations": rollback_ops,
-                        "_file_path": str(file_path),
-                    }
-                except:
-                    continue
+                migration_map[v] = {
+                    "version": v,
+                    "description": desc,
+                    "operations": ops,
+                    "depends_on": deps or [],
+                    "rollback_operations": rollback_ops,
+                    "_file_path": str(file_path),
+                }
 
             # Add target migration
             migration_map[version] = {
@@ -1962,27 +1996,42 @@ class MigrationTool:
                 "_file_path": migration_path,
             }
 
-            # Get all migrations needed (target + transitive dependencies)
-            def get_transitive_deps(v, visited=None):
-                if visited is None:
-                    visited = set()
-                if v in visited or v not in migration_map:
-                    return set()
-                visited.add(v)
-                deps = set([v])
-                for dep in migration_map[v].get("depends_on", []):
-                    deps.update(get_transitive_deps(dep, visited))
-                return deps
+            graph = self._build_dependency_graph(migration_map)
+            cycle = self._detect_cycle(graph)
+            if cycle:
+                raise MigrationError(
+                    f"circular dependency detected: cycle {cycle}"
+                )
+            self._validate_dependency_links(migration_map)
+            self._output_event(
+                {
+                    "event": "dependency_check",
+                    "version": version,
+                    "depends_on": depends_on,
+                    "status": "ok",
+                }
+            )
 
-            needed_versions = get_transitive_deps(version)
+            # Get all migrations needed (target + transitive dependencies).
+            needed_versions: set[int] = set()
 
-            # Topologically sort needed migrations
-            graph = {
-                v: migration_map[v]["depends_on"]
+            def collect_deps(v: int) -> None:
+                if v in needed_versions:
+                    return
+                needed_versions.add(v)
+                for dep in graph.get(v, []):
+                    collect_deps(dep)
+
+            collect_deps(version)
+            graph_needed = {
+                v: [
+                    dep
+                    for dep in graph.get(v, [])
+                    if dep in needed_versions
+                ]
                 for v in needed_versions
-                if v in migration_map
             }
-            sorted_versions = self._topological_sort(graph)
+            sorted_versions = self._topological_sort(graph_needed)
 
             # Apply each needed migration that isn't already applied
             for v in sorted_versions:
@@ -1996,9 +2045,15 @@ class MigrationTool:
                         mig["description"],
                         mig["operations"],
                         mig.get("rollback_operations", []),
+                        mig.get("depends_on", []),
                     )
         elif depends_on:
             # Dependencies declared but no migrations_dir provided
+            for dep in depends_on:
+                if dep > version:
+                    raise MigrationError(
+                        f"migration version {version} cannot depend on future version {dep}"
+                    )
             self._output_event(
                 {
                     "event": "dependency_check",
@@ -2011,6 +2066,9 @@ class MigrationTool:
 
         # Check if already applied
         if self._is_migration_applied(version):
+            sys.stderr.write(
+                f"Warning: Migration version {version} already applied, skipping\n"
+            )
             self._output_event(
                 {
                     "event": "migration_skipped",
@@ -2066,16 +2124,14 @@ class MigrationTool:
                     events.append(event)
                 operations_count += 1
 
-            stored_payload: dict[str, Any] = {
-                "operations": operations_for_storage,
-                "depends_on": depends_on,
-            }
+            if depends_on:
+                operations_for_storage[0]["depends_on"] = depends_on
             if explicit_rollback_operations:
-                stored_payload["rollback_operations"] = (
+                operations_for_storage[0]["rollback_operations"] = (
                     explicit_rollback_operations
                 )
             self._record_migration(
-                version, description, json.dumps(stored_payload)
+                version, description, json.dumps(operations_for_storage)
             )
             self.conn.commit()
         except MigrationError:
@@ -2144,6 +2200,11 @@ class MigrationTool:
             deps = []
             if isinstance(stored_payload, dict):
                 deps = stored_payload.get("depends_on", []) or []
+            else:
+                for op in stored_payload:
+                    if isinstance(op, dict) and "depends_on" in op:
+                        deps = op.get("depends_on") or []
+                        break
             graph[version] = [dep for dep in deps if dep in stored_map]
 
         # Reverse topological order for rollback (dependents before dependencies).
@@ -2174,6 +2235,10 @@ class MigrationTool:
                 else:
                     applied_ops = stored
                     explicit_ops = []
+                    for op in applied_ops:
+                        if isinstance(op, dict) and "rollback_operations" in op:
+                            explicit_ops = op["rollback_operations"] or []
+                            break
 
                 rollback_ops = self._build_rollback_operations(
                     applied_ops, explicit_ops, version
@@ -2254,31 +2319,42 @@ class MigrationTool:
         if migrations_dir:
             # Scan directory silently (without outputting events)
             migration_map = {}
-            target_was_in_dir = False
             path = Path(migrations_dir)
-            if path.exists() and path.is_dir():
-                for file_path in sorted(path.glob("*.json")):
-                    try:
-                        mig = self._load_migration_file(str(file_path))
-                        v, desc, ops, deps, rollback_ops = (
-                            self._validate_migration_schema(mig, str(file_path))
-                        )
-                        if v in migration_map:
-                            raise MigrationError(
-                                f"duplicate migration version {v} found in directory"
-                            )
-                        migration_map[v] = {
-                            "version": v,
-                            "description": desc,
-                            "operations": ops,
-                            "depends_on": deps or [],
-                            "rollback_operations": rollback_ops,
-                            "_file_path": str(file_path),
+            if not path.exists() or not path.is_dir():
+                self._output_event(
+                    {
+                        "event": "validation_complete",
+                        "version": version,
+                        "status": "invalid",
+                    }
+                )
+                raise MigrationError(
+                    f"invalid migrations directory: {migrations_dir}"
+                )
+            for file_path in sorted(path.glob("*.json")):
+                mig = self._load_migration_file(str(file_path))
+                v, desc, ops, deps, rollback_ops = (
+                    self._validate_migration_schema(mig, str(file_path))
+                )
+                if v in migration_map:
+                    self._output_event(
+                        {
+                            "event": "validation_complete",
+                            "version": version,
+                            "status": "invalid",
                         }
-                        if v == version:
-                            target_was_in_dir = True
-                    except:
-                        continue
+                    )
+                    raise MigrationError(
+                        f"duplicate migration version {v} found in directory"
+                    )
+                migration_map[v] = {
+                    "version": v,
+                    "description": desc,
+                    "operations": ops,
+                    "depends_on": deps or [],
+                    "rollback_operations": rollback_ops,
+                    "_file_path": str(file_path),
+                }
             # Ensure target migration is included (override to use file contents).
             migration["_file_path"] = migration_file
             migration["version"] = version
@@ -2289,36 +2365,59 @@ class MigrationTool:
             migration_map[version] = migration
 
             graph = self._build_dependency_graph(migration_map)
+            cycle = self._detect_cycle(graph)
+            if cycle:
+                self._output_event(
+                    {
+                        "event": "dependency_check",
+                        "version": version,
+                        "depends_on": depends_on,
+                        "status": "ok",
+                    }
+                )
+                self._output_event(
+                    {
+                        "event": "circular_dependency_detected",
+                        "cycle": cycle,
+                        "status": "error",
+                    }
+                )
+                self._output_event(
+                    {
+                        "event": "validation_complete",
+                        "version": version,
+                        "status": "invalid",
+                    }
+                )
+                raise MigrationError(
+                    f"circular dependency detected: cycle {cycle}"
+                )
 
             # Check dependencies of the target migration only
             if depends_on:
                 # Check for missing or forward dependencies
                 for dep in depends_on:
+                    if dep > version:
+                        self._output_event(
+                            {
+                                "event": "dependency_check",
+                                "version": version,
+                                "depends_on": depends_on,
+                                "status": "error",
+                                "message": f"migration version {version} cannot depend on future version {dep}",
+                            }
+                        )
+                        self._output_event(
+                            {
+                                "event": "validation_complete",
+                                "version": version,
+                                "status": "invalid",
+                            }
+                        )
+                        raise MigrationError(
+                            f"migration version {version} cannot depend on future version {dep}"
+                        )
                     if dep not in migration_map:
-                        # Dependency doesn't exist - determine error message
-                        # Use "forward dependency" only if target was in directory AND dep > version
-                        if target_was_in_dir and dep > version:
-                            # Forward dependency (higher version number that doesn't exist)
-                            self._output_event(
-                                {
-                                    "event": "dependency_check",
-                                    "version": version,
-                                    "depends_on": depends_on,
-                                    "status": "error",
-                                    "message": f"migration version {version} cannot depend on future version {dep}",
-                                }
-                            )
-                            self._output_event(
-                                {
-                                    "event": "validation_complete",
-                                    "version": version,
-                                    "status": "invalid",
-                                }
-                            )
-                            raise MigrationError(
-                                f"migration version {version} cannot depend on future version {dep}"
-                            )
-                        # Missing dependency
                         self._output_event(
                             {
                                 "event": "dependency_check",
@@ -2349,16 +2448,9 @@ class MigrationTool:
                 }
             )
 
-            # Check for circular dependencies
-            cycle = self._detect_cycle(graph)
-            if cycle:
-                self._output_event(
-                    {
-                        "event": "circular_dependency_detected",
-                        "cycle": cycle,
-                        "status": "error",
-                    }
-                )
+            try:
+                self._validate_dependency_links(migration_map)
+            except MigrationError:
                 self._output_event(
                     {
                         "event": "validation_complete",
@@ -2366,9 +2458,7 @@ class MigrationTool:
                         "status": "invalid",
                     }
                 )
-                raise MigrationError(
-                    f"circular dependency detected: cycle {cycle}"
-                )
+                raise
         else:
             status = "ok" if not depends_on else "warning"
             message = None
@@ -2414,6 +2504,7 @@ class MigrationTool:
                 migration["description"],
                 migration["operations"],
                 migration.get("rollback_operations", []),
+                migration.get("depends_on", []),
             )
             migrations_applied += 1
 

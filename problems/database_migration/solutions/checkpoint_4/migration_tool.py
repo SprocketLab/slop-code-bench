@@ -127,7 +127,9 @@ class MigrationTool:
                     f"Identifier '{identifier}' contains invalid character '{char}'"
                 )
 
-    def _build_column_definition(self, column: dict[str, Any]) -> str:
+    def _build_column_definition(
+        self, column: dict[str, Any], include_unique: bool = True
+    ) -> str:
         """Build SQL column definition from column spec.
 
         Args:
@@ -154,7 +156,7 @@ class MigrationTool:
         if column.get("not_null", False):
             parts.append("NOT NULL")
 
-        if column.get("unique", False):
+        if include_unique and column.get("unique", False):
             parts.append("UNIQUE")
 
         if "default" in column and column["default"] is not None:
@@ -455,15 +457,23 @@ class MigrationTool:
                 (c for c in columns_info if c["name"] == column), None
             )
             if column_info:
-                # Identify uniqueness via indexes.
+                # Identify uniqueness via any index (including auto indexes).
                 unique = False
-                for idx in self._get_table_indexes(table):
-                    has_unique_sql = (
-                        idx["sql"] and "UNIQUE" in idx["sql"].upper()
+                index_cursor = self.conn.execute(
+                    f"PRAGMA index_list({self._quote_identifier(table)})"
+                )
+                for row in index_cursor.fetchall():
+                    index_name = row[1]
+                    is_unique = bool(row[2])
+                    if not is_unique:
+                        continue
+                    info_cursor = self.conn.execute(
+                        f"PRAGMA index_info({self._quote_identifier(index_name)})"
                     )
-                    if idx["columns"] == [column] and (
-                        idx["origin"] in ("u", "pk") or has_unique_sql
-                    ):
+                    columns = [
+                        info_row[2] for info_row in info_cursor.fetchall()
+                    ]
+                    if columns == [column]:
                         unique = True
                         break
                 op["original_definition"] = {
@@ -596,8 +606,8 @@ class MigrationTool:
                 f"column '{column_name}' already exists in table '{table_name}'"
             )
 
-        # Build column definition
-        col_def = self._build_column_definition(column)
+        # Build column definition without UNIQUE (SQLite limitation on ALTER).
+        col_def = self._build_column_definition(column, include_unique=False)
 
         # Add column
         alter_sql = f"ALTER TABLE {self._quote_identifier(table_name)} ADD COLUMN {col_def}"
@@ -648,6 +658,24 @@ class MigrationTool:
             raise MigrationError(
                 f"column '{column_name}' does not exist in table '{table_name}'"
             )
+
+        if operation.get("_check_dependents"):
+            index_cursor = self.conn.execute(
+                f"PRAGMA index_list({self._quote_identifier(table_name)})"
+            )
+            for row in index_cursor.fetchall():
+                index_name = row[1]
+                info_cursor = self.conn.execute(
+                    f"PRAGMA index_info({self._quote_identifier(index_name)})"
+                )
+                columns = [
+                    info_row[2] for info_row in info_cursor.fetchall()
+                ]
+                if column_name in columns:
+                    raise MigrationError(
+                        f"cannot drop column '{column_name}': "
+                        f"dependent index '{index_name}' exists"
+                    )
 
         # Get table columns
         columns = self._get_table_columns(table_name)
@@ -998,7 +1026,12 @@ class MigrationTool:
             table = operation["table"]
             column_name = operation["column"]["name"]
             self.drop_column(
-                {"type": "drop_column", "table": table, "column": column_name},
+                {
+                    "type": "drop_column",
+                    "table": table,
+                    "column": column_name,
+                    "_check_dependents": True,
+                },
                 version,
             )
         elif op_type == "drop_column":
@@ -1648,15 +1681,12 @@ class MigrationTool:
                     events.append(event)
                 operations_count += 1
 
-            stored_payload: dict[str, Any] = {
-                "operations": operations_for_storage
-            }
-            if explicit_rollback_operations:
-                stored_payload["rollback_operations"] = (
+            if explicit_rollback_operations and operations_for_storage:
+                operations_for_storage[0]["rollback_operations"] = (
                     explicit_rollback_operations
                 )
             self._record_migration(
-                version, description, json.dumps(stored_payload)
+                version, description, json.dumps(operations_for_storage)
             )
             self.conn.commit()
         except MigrationError:
@@ -1735,6 +1765,10 @@ class MigrationTool:
                 else:
                     applied_ops = stored
                     explicit_ops = []
+                    for op in applied_ops:
+                        if isinstance(op, dict) and "rollback_operations" in op:
+                            explicit_ops = op["rollback_operations"] or []
+                            break
 
                 rollback_ops = self._build_rollback_operations(
                     applied_ops, explicit_ops, version

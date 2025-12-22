@@ -6,6 +6,7 @@ import traceback
 from collections import defaultdict
 from collections.abc import Generator
 from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -394,9 +395,11 @@ def evaluate(
             enabled=live_progress,
             console=console,
         ) as bar:
-            for i, future in enumerate(futures, start=1):
+            completed = 0
+            for future in as_completed(futures):
                 eval_result = future.result()
-                bar.update(i)
+                completed += 1
+                bar.update(completed)
 
                 if not eval_result.success:
                     logger.error(
