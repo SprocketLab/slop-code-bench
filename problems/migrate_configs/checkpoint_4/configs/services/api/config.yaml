@@ -1,4 +1,0 @@
-service:
-  name: api-gateway
-  port: 8080
-environment: development

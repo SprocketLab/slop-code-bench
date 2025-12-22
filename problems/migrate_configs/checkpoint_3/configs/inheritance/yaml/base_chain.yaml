@@ -1,2 +1,0 @@
-extends: root.yaml
-retry: 3

@@ -1,3 +1,0 @@
-extends: base_only.yaml
-app: myapp
-timeout: 60

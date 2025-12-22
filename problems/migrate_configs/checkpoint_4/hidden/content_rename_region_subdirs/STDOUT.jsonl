@@ -1,2 +1,0 @@
-{"event":"file_relocated","from":"services/app.yaml","to":"services/us-west-2/api.yaml"}
-{"event":"file_relocated","from":"services/worker.yaml","to":"services/eu-west-1/worker.yaml"}

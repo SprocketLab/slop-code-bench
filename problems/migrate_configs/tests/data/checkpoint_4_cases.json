@@ -1,0 +1,849 @@
+{
+  "shared_configs": {
+    "app.yaml": "extends: base.yaml\napp: myapp\nenvironment: staging\n",
+    "apps/service_refs/api.yaml": "extends: ../../base.yaml\nservice: api\n",
+    "apps/service_refs/worker.yaml": "extends: ../../base.yaml\nservice: worker\n",
+    "base.yaml": "timeout: 30\nregion: us-west-2\n",
+    "content_refs/missing.yaml": "service:\n  name: partial\n",
+    "content_refs/service_a.yaml": "service:\n  name: audit\nenvironment: qa\n",
+    "content_refs/service_b.yaml": "service:\n  name: logging\nenvironment: prod\n",
+    "deploy/conflict.yaml": "app: deployed\n",
+    "environments/production/app.yaml": "app: web\nenvironment: production\n",
+    "environments/production/db.yaml": "database: prod-db\nengine: postgres\n",
+    "environments/staging/app.yaml": "app: web\nenvironment: staging\n",
+    "environments/staging/db.yaml": "database: staging-db\nengine: postgres\n",
+    "existing/base.yaml": "timeout: 99\n",
+    "inheritance/default/case.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  }\n}\n",
+    "inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  }\n}\n",
+    "logs/archive/2024-01-01/app.log": "event: start\n",
+    "logs/archive/2024-01-02/app.log": "event: stop\n",
+    "relocate_src/nyc/app.yaml": "name: nyc\ntype: web\n",
+    "relocate_src/sfo/api.yaml": "name: sfo\ntype: api\n",
+    "services/api/config.yaml": "service:\n  name: api-gateway\n  port: 8080\nenvironment: development\n",
+    "services/api/deploy/production.yaml": "env: production\nimage: api:production\n",
+    "services/api/deploy/staging.yaml": "env: staging\nimage: api:staging\n",
+    "services/app.yaml": "service:\n  name: api\naws:\n  region: us-west-2\nenvironment: staging\n",
+    "services/regionless.yaml": "service:\n  name: orphan\nenvironment: staging\n",
+    "services/worker/config.yaml": "service:\n  name: background-worker\n  port: 8081\nenvironment: development\n",
+    "services/worker/deploy/production.yaml": "env: production\nimage: worker:production\n",
+    "services/worker/deploy/staging.yaml": "env: staging\nimage: worker:staging\n",
+    "services/worker.yaml": "service:\n  name: worker\naws:\n  region: eu-west-1\nenvironment: production\n",
+    "temp/app.yaml": "app: myapp\nenvironment: development\n",
+    "temp/conflict.yaml": "app: conflict\n"
+  },
+  "cases": {
+    "core": {
+      "content_rename_multivar": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "descriptive_names": {
+              "type": "content_rename",
+              "scope": "file",
+              "file_pattern": "content_refs/*.yaml",
+              "variables": {
+                "svc": "service.name",
+                "env": "environment"
+              },
+              "new_path": "${svc}.${env}.yaml"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "content_refs/service_a.yaml",
+              "to": "content_refs/audit.qa.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "content_refs/service_b.yaml",
+              "to": "content_refs/logging.prod.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "content_refs/audit.qa.yaml": "service:\n  name: audit\nenvironment: qa\n",
+          "content_refs/logging.prod.yaml": "service:\n  name: logging\nenvironment: prod\n"
+        }
+      },
+      "content_rename_service_names": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "name_by_service": {
+              "type": "content_rename",
+              "scope": "file",
+              "file_pattern": "services/*/config.yaml",
+              "variables": {
+                "svc": "service.name"
+              },
+              "new_path": "${svc}.yaml"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "services/api/config.yaml",
+              "to": "services/api/api-gateway.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "services/worker/config.yaml",
+              "to": "services/worker/background-worker.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "services/api/api-gateway.yaml": "service:\n  name: api-gateway\n  port: 8080\nenvironment: development\n",
+          "services/worker/background-worker.yaml": "service:\n  name: background-worker\n  port: 8081\nenvironment: development\n"
+        }
+      },
+      "content_then_relocate": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "set_production": {
+              "type": "replace_value",
+              "key": "environment",
+              "value": "production"
+            },
+            "move_temp_configs": {
+              "type": "path_rename",
+              "scope": "file",
+              "path_pattern": "temp/$name.yaml",
+              "new_path": "deploy/${name}.yaml"
+            }
+          },
+          "files": {
+            "configs/temp/app.yaml": "app: myapp\nenvironment: development\n"
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "temp/app.yaml",
+              "rules_applied": [
+                "set_production"
+              ]
+            },
+            {
+              "event": "file_relocated",
+              "from": "temp/app.yaml",
+              "to": "deploy/app.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "deploy/app.yaml": "app: myapp\nenvironment: production\n"
+        }
+      },
+      "inheritance_reference_update": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "rules": {
+            "move_base_configs": {
+              "type": "relocate_files",
+              "scope": "file",
+              "source_pattern": "base.yaml",
+              "destination": "common/"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "base.yaml",
+              "to": "common/base.yaml"
+            },
+            {
+              "event": "file_updated",
+              "file": "app.yaml",
+              "rules_applied": [],
+              "reason": "inheritance_reference_update"
+            },
+            {
+              "event": "file_updated",
+              "file": "apps/service_refs/api.yaml",
+              "rules_applied": [],
+              "reason": "inheritance_reference_update"
+            },
+            {
+              "event": "file_updated",
+              "file": "apps/service_refs/worker.yaml",
+              "rules_applied": [],
+              "reason": "inheritance_reference_update"
+            }
+          ]
+        },
+        "expected_files": {
+          "app.yaml": "extends: common/base.yaml\napp: myapp\nenvironment: staging\n",
+          "common/base.yaml": "timeout: 30\nregion: us-west-2\n"
+        }
+      },
+      "multiphase_inheritance_move": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "rules": {
+            "add_environment": {
+              "type": "merge_data",
+              "data": {
+                "environment": "production"
+              }
+            },
+            "move_to_deploy": {
+              "type": "content_rename",
+              "scope": "file",
+              "file_pattern": "app.yaml",
+              "variables": {
+                "env": "environment"
+              },
+              "new_path": "deploy/${env}.yaml"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "app.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "apps/service_refs/api.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "apps/service_refs/worker.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "content_refs/missing.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "content_refs/service_a.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "content_refs/service_b.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "deploy/conflict.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "environments/production/db.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "environments/staging/app.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "environments/staging/db.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "existing/base.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "inheritance/default/case.json",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "relocate_src/nyc/app.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "relocate_src/sfo/api.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/api/config.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/api/deploy/production.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/api/deploy/staging.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/app.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/regionless.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/worker/config.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/worker/deploy/production.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "services/worker/deploy/staging.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "temp/app.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_updated",
+              "file": "temp/conflict.yaml",
+              "rules_applied": [
+                "add_environment"
+              ]
+            },
+            {
+              "event": "file_relocated",
+              "from": "app.yaml",
+              "to": "deploy/production.yaml"
+            },
+            {
+              "event": "file_updated",
+              "file": "deploy/production.yaml",
+              "rules_applied": [],
+              "reason": "inheritance_reference_update"
+            }
+          ]
+        },
+        "expected_files": {
+          "deploy/production.yaml": "extends: ../base.yaml\napp: myapp\nenvironment: production\ntimeout: 30\nregion: us-west-2\n"
+        }
+      },
+      "path_rename_services": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "flatten_service_configs": {
+              "type": "path_rename",
+              "scope": "file",
+              "path_pattern": "services/$name/config.yaml",
+              "new_path": "flattened/${name}.yaml"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "services/api/config.yaml",
+              "to": "flattened/api.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "services/worker/config.yaml",
+              "to": "flattened/worker.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "flattened/api.yaml": "service:\n  name: api-gateway\n  port: 8080\nenvironment: development\n",
+          "flattened/worker.yaml": "service:\n  name: background-worker\n  port: 8081\nenvironment: development\n"
+        }
+      },
+      "relocate_environment_configs": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "consolidate_envs": {
+              "type": "relocate_files",
+              "scope": "file",
+              "source_pattern": "environments/$env/*.yaml",
+              "destination": "flattened_env/${env}/"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "environments/production/app.yaml",
+              "to": "flattened_env/production/app.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "environments/production/db.yaml",
+              "to": "flattened_env/production/db.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "environments/staging/app.yaml",
+              "to": "flattened_env/staging/app.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "environments/staging/db.yaml",
+              "to": "flattened_env/staging/db.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "flattened_env/production/app.yaml": "app: web\nenvironment: production\n",
+          "flattened_env/production/db.yaml": "database: prod-db\nengine: postgres\n",
+          "flattened_env/staging/app.yaml": "app: web\nenvironment: staging\n",
+          "flattened_env/staging/db.yaml": "database: staging-db\nengine: postgres\n"
+        }
+      }
+    },
+    "hidden": {
+      "content_rename_missing_variable_noop": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "missing_vars_skip": {
+              "type": "content_rename",
+              "scope": "file",
+              "file_pattern": "content_refs/missing.yaml",
+              "variables": {
+                "region": "aws.region"
+              },
+              "new_path": "${region}.yaml"
+            }
+          }
+        },
+        "expected_files": {}
+      },
+      "content_rename_region_subdirs": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "organize_by_region": {
+              "type": "content_rename",
+              "scope": "file",
+              "file_pattern": "services/*.yaml",
+              "variables": {
+                "region": "aws.region",
+                "name": "service.name"
+              },
+              "new_path": "${region}/${name}.yaml"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "services/app.yaml",
+              "to": "services/us-west-2/api.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "services/worker.yaml",
+              "to": "services/eu-west-1/worker.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "services/eu-west-1/worker.yaml": "service:\n  name: worker\naws:\n  region: eu-west-1\nenvironment: production\n",
+          "services/us-west-2/api.yaml": "service:\n  name: api\naws:\n  region: us-west-2\nenvironment: staging\n"
+        }
+      },
+      "content_rename_recursive_glob": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "rename_nested_configs": {
+              "type": "content_rename",
+              "scope": "file",
+              "file_pattern": "services/**/config.yaml",
+              "variables": {
+                "svc": "service.name"
+              },
+              "new_path": "renamed/${svc}.yaml"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "services/api/config.yaml",
+              "to": "services/api/renamed/api-gateway.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "services/worker/config.yaml",
+              "to": "services/worker/renamed/background-worker.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "services/api/renamed/api-gateway.yaml": "service:\n  name: api-gateway\n  port: 8080\nenvironment: development\n",
+          "services/worker/renamed/background-worker.yaml": "service:\n  name: background-worker\n  port: 8081\nenvironment: development\n"
+        }
+      },
+      "inheritance_multi_reference_update": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "rules": {
+            "move_shared_base": {
+              "type": "relocate_files",
+              "scope": "file",
+              "source_pattern": "base.yaml",
+              "destination": "shared/"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "base.yaml",
+              "to": "shared/base.yaml"
+            },
+            {
+              "event": "file_updated",
+              "file": "app.yaml",
+              "rules_applied": [],
+              "reason": "inheritance_reference_update"
+            },
+            {
+              "event": "file_updated",
+              "file": "apps/service_refs/api.yaml",
+              "rules_applied": [],
+              "reason": "inheritance_reference_update"
+            },
+            {
+              "event": "file_updated",
+              "file": "apps/service_refs/worker.yaml",
+              "rules_applied": [],
+              "reason": "inheritance_reference_update"
+            }
+          ]
+        },
+        "expected_files": {
+          "apps/service_refs/api.yaml": "extends: ../../shared/base.yaml\nservice: api\n",
+          "apps/service_refs/worker.yaml": "extends: ../../shared/base.yaml\nservice: worker\n",
+          "shared/base.yaml": "timeout: 30\nregion: us-west-2\n"
+        }
+      },
+      "inheritance_move_base_and_app": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "files": {
+            "configs/inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  }\n}\n",
+            "configs/app.yaml": "extends: base.yaml\napp: moved\n",
+            "configs/base.yaml": "timeout: 30\n"
+          },
+          "rules": {
+            "a_move_base": {
+              "type": "relocate_files",
+              "scope": "file",
+              "source_pattern": "base.yaml",
+              "destination": "common/"
+            },
+            "b_move_app": {
+              "type": "path_rename",
+              "scope": "file",
+              "path_pattern": "app.yaml",
+              "new_path": "deploy/app.yaml"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "base.yaml",
+              "to": "common/base.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "app.yaml",
+              "to": "deploy/app.yaml"
+            },
+            {
+              "event": "file_updated",
+              "file": "deploy/app.yaml",
+              "rules_applied": [],
+              "reason": "inheritance_reference_update"
+            }
+          ]
+        },
+        "expected_files": {
+          "common/base.yaml": "timeout: 30\n",
+          "deploy/app.yaml": "extends: ../common/base.yaml\napp: moved\n"
+        }
+      },
+      "path_rename_nested_capture": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "flatten_deployments": {
+              "type": "path_rename",
+              "scope": "file",
+              "path_pattern": "services/$name/deploy/$env.yaml",
+              "new_path": "deployments/${name}-${env}.yaml"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "services/api/deploy/production.yaml",
+              "to": "deployments/api-production.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "services/api/deploy/staging.yaml",
+              "to": "deployments/api-staging.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "services/worker/deploy/production.yaml",
+              "to": "deployments/worker-production.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "services/worker/deploy/staging.yaml",
+              "to": "deployments/worker-staging.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "deployments/api-production.yaml": "env: production\nimage: api:production\n",
+          "deployments/api-staging.yaml": "env: staging\nimage: api:staging\n",
+          "deployments/worker-production.yaml": "env: production\nimage: worker:production\n",
+          "deployments/worker-staging.yaml": "env: staging\nimage: worker:staging\n"
+        }
+      },
+      "relocate_files_recursive_pattern": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "flatten_logs": {
+              "type": "relocate_files",
+              "scope": "file",
+              "source_pattern": "logs/archive/$date/*.log",
+              "destination": "logs_flat/${date}/"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "logs/archive/2024-01-01/app.log",
+              "to": "logs_flat/2024-01-01/app.log"
+            },
+            {
+              "event": "file_relocated",
+              "from": "logs/archive/2024-01-02/app.log",
+              "to": "logs_flat/2024-01-02/app.log"
+            }
+          ]
+        },
+        "expected_files": {}
+      },
+      "relocate_files_variable_destination": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "bucketize_regions": {
+              "type": "relocate_files",
+              "scope": "file",
+              "source_pattern": "relocate_src/$city/*.yaml",
+              "destination": "archives/${city}/"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_relocated",
+              "from": "relocate_src/nyc/app.yaml",
+              "to": "archives/nyc/app.yaml"
+            },
+            {
+              "event": "file_relocated",
+              "from": "relocate_src/sfo/api.yaml",
+              "to": "archives/sfo/api.yaml"
+            }
+          ]
+        },
+        "expected_files": {
+          "archives/nyc/app.yaml": "name: nyc\ntype: web\n",
+          "archives/sfo/api.yaml": "name: sfo\ntype: api\n"
+        }
+      }
+    },
+    "errors": {
+      "content_rename_collision": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "same_name_by_env": {
+              "type": "content_rename",
+              "scope": "file",
+              "file_pattern": "services/*/config.yaml",
+              "variables": {
+                "env": "environment"
+              },
+              "new_path": "../${env}.yaml"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: destination already exists: services/development\\.yaml$",
+          "files": {
+            "configs/services/api/config.yaml": "service:\n  name: api-gateway\n  port: 8080\nenvironment: development\n",
+            "configs/services/worker/config.yaml": "service:\n  name: background-worker\n  port: 8081\nenvironment: development\n"
+          }
+        },
+        "expected_files": {}
+      },
+      "invalid_file_pattern": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "rename_services": {
+              "type": "content_rename",
+              "scope": "file",
+              "file_pattern": "*.{yaml",
+              "variables": {
+                "name": "service.name"
+              },
+              "new_path": "${name}.yaml"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid file pattern in rule 'rename_services': \\*\\.\\{yaml$"
+        },
+        "expected_files": {}
+      },
+      "invalid_relocate_pattern": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "bad_pattern": {
+              "type": "relocate_files",
+              "scope": "file",
+              "source_pattern": "environments/${env",
+              "destination": "noop/"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid file pattern in rule 'bad_pattern': environments/\\$\\{env$"
+        },
+        "expected_files": {}
+      },
+      "path_rename_collision": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "flatten_structure": {
+              "type": "path_rename",
+              "scope": "file",
+              "path_pattern": "services/*/deploy/$env.yaml",
+              "new_path": "deployments/${env}.yaml"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: destination already exists: deployments/production\\.yaml$",
+          "files": {
+            "configs/services/api/deploy/staging.yaml": "env: staging\nimage: api:staging\n",
+            "configs/services/api/deploy/production.yaml": "env: production\nimage: api:prod\n",
+            "configs/services/worker/deploy/staging.yaml": "env: staging\nimage: worker:staging\n",
+            "configs/services/worker/deploy/production.yaml": "env: production\nimage: worker:prod\n"
+          }
+        },
+        "expected_files": {}
+      },
+      "path_rename_destination_exists": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "move_conflict": {
+              "type": "path_rename",
+              "scope": "file",
+              "path_pattern": "temp/conflict.yaml",
+              "new_path": "deploy/conflict.yaml"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: destination already exists: deploy/conflict\\.yaml$"
+        },
+        "expected_files": {}
+      },
+      "relocate_destination_exists": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "move_base_again": {
+              "type": "relocate_files",
+              "scope": "file",
+              "source_pattern": "base.yaml",
+              "destination": "existing/"
+            }
+          },
+          "status_code": 1,
+          "expected_stderr": "^Error: destination already exists: existing/base\\.yaml$"
+        },
+        "expected_files": {}
+      }
+    }
+  }
+}

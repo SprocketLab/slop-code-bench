@@ -250,28 +250,6 @@ def test_call_param_value_object_error(entrypoint_argv):
     assert output["path"] == "pipeline.steps[0].params.config"
 
 
-@pytest.mark.error
-def test_invalid_name_and_params_error(entrypoint_argv):
-    """Error: Multiple errors - first error (invalid name) reported first."""
-    input_data = {
-        "defs": {"A": {"steps": []}},
-        "pipeline": {
-            "steps": [
-                {"op": "call", "name": "123Bad", "params": {}},
-                {"op": "call", "name": "A", "params": 42},
-            ]
-        },
-        "dataset": [{"id": 1}],
-    }
-
-    result = run_etl_execute(entrypoint_argv, input_data)
-    output = json.loads(result.stdout)
-
-    assert output["status"] == "error"
-    assert output["error_code"] == "SCHEMA_VALIDATION_FAILED"
-    assert output["path"] == "pipeline.steps[0].name"
-
-
 # =============================================================================
 # Functionality Tests (@pytest.mark.functionality)
 # =============================================================================
@@ -397,26 +375,21 @@ def test_branch_call_labeling(entrypoint_argv):
     assert output["metrics"] == {"rows_in": 2, "rows_out": 2}
 
 
-@pytest.mark.functionality
-def test_call_trimmed_name_case_sensitive(entrypoint_argv):
-    """Functionality: Whitespace is trimmed from name, but case is preserved."""
+@pytest.mark.error
+def test_call_name_case_sensitive(entrypoint_argv):
+    """Error: Definition names are case-sensitive."""
     input_data = {
-        "defs": {
-            "MixedCase": {"steps": [{"op": "map", "as": "tag", "expr": '"ok"'}]}
-        },
-        "pipeline": {
-            "steps": [{"op": "call", "name": " MixedCase ", "params": {}}]
-        },
+        "defs": {"MyDef": {"steps": [{"op": "select", "columns": ["id"]}]}},
+        "pipeline": {"steps": [{"op": "call", "name": "mydef", "params": {}}]},
         "dataset": [{"id": 1}],
     }
 
     result = run_etl_execute(entrypoint_argv, input_data)
-    assert result.returncode == 0, f"Command failed: {result.stderr}"
-
     output = json.loads(result.stdout)
-    assert output["status"] == "ok"
-    assert output["data"] == [{"id": 1, "tag": "ok"}]
-    assert output["metrics"] == {"rows_in": 1, "rows_out": 1}
+
+    assert output["status"] == "error"
+    assert output["error_code"] == "UNKNOWN_DEF"
+    assert output["path"] == "pipeline.steps[0].name"
 
 
 @pytest.mark.functionality

@@ -1,7 +1,0 @@
-{
-  "primary_endpoint": "unused",
-  "servers": [
-    {"host": "api.example.com", "port": 8080},
-    {"host": "backup.example.com", "port": 8081}
-  ]
-}

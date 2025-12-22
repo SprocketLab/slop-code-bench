@@ -1,5 +1,0 @@
-extends: ../base.yaml
-app: myapp
-environment: production
-timeout: 30
-region: us-west-2

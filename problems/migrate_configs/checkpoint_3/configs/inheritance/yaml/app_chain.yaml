@@ -1,3 +1,0 @@
-extends: base_chain.yaml
-app: chain-app
-timeout: 45

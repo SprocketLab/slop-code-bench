@@ -52,6 +52,12 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         response = {"status": "ok", "data": data, "metrics": metrics}
     else:
+        dataset = payload.get("dataset", [])
+        try:
+            execute_pipeline(plan_steps, dataset, normalized.get("defs", {}))
+        except ETLError as error:
+            _emit_error(error)
+            return 1
         response = {
             "status": "ok",
             "normalized": _public_normalized(normalized),

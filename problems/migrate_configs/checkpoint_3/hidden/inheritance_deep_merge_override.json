@@ -1,8 +1,0 @@
-{
-  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
-  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"inheritance/json/nested_child.json\",\"rules_applied\":[]}\\n",
-  "rules": {},
-  "expected_files": {
-    "configs/inheritance/json/nested_child.json": "{\\n  \\\"database\\\": {\\n    \\\"host\\\": \\\"prod.db\\\",\\n    \\\"port\\\": 5432,\\n    \\\"options\\\": {\\n      \\\"retries\\\": 5\\n    }\\n  },\\n  \\\"features\\\": [\\n    \\\"release\\\"\\n  ],\\n  \\\"app\\\": \\\"nested-override\\\"\\n}\\n"
-  }
-}

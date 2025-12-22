@@ -1,6 +1,0 @@
-{
-  "arguments": "missing_rules.json configs",
-  "expected_stdout": "",
-  "status_code": 1,
-  "expected_stderr": "^Error: rules file not found: .*missing_rules\\.json"
-}

@@ -289,14 +289,6 @@ def fetch_recipe_data(
     run_time_seconds = int(run_time_seconds * (1 - te / 100))
     run_time_minutes = math.ceil(run_time_seconds / 60)
 
-    # Validate ME for Reactions (activity_id 11)
-    if activity_id == 11 and me > 0:
-        # Get product name for error message
-        product_item = _get_item_by_id(sde, product_type_id)
-        product_name = str(product_item["typeName"])
-        sys.stderr.write(f"ERROR: {product_name} cannot be used with ME\n")
-        sys.exit(1)
-
     # Get output quantity
     products = sde.load_activity_products()
     product_row = products[

@@ -1,3 +1,0 @@
-extends: ../parents/common.yaml
-service: payments
-region: eu-west-1

@@ -1,9 +1,0 @@
-app:
-  features:
-    beta:
-      enabled: true
-      users:
-        whitelist:
-        - user1
-        - user2
-        max_count: 100

@@ -1,7 +1,0 @@
-{
-  "config": {
-    "max_timeout": 180,
-    "enabled": true,
-    "retry_count": 5
-  }
-}

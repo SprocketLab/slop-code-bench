@@ -1,3 +1,0 @@
-{"event": "file_updated", "file": "runtime/app.json", "rules_applied": ["a_legacy_replace_env"]}
-{"event": "file_updated", "file": "services/hosts.json", "rules_applied": ["a_legacy_replace_env", "b_legacy_rename_host", "pattern_default_hosts"]}
-{"event": "file_updated", "file": "services/ports.yaml", "rules_applied": ["a_legacy_replace_env", "pattern_default_hosts"]}

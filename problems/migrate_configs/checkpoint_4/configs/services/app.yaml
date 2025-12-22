@@ -1,5 +1,0 @@
-service:
-  name: api
-aws:
-  region: us-west-2
-environment: staging

@@ -58,7 +58,10 @@ def load_config(path: Path | None) -> PipelineConfig:
 
 def _parse_toml(text: str) -> dict[str, Any]:
     if _toml_module:
-        return _toml_module.loads(text)
+        try:
+            return _toml_module.loads(text)
+        except Exception as exc:  # pragma: no cover - tomllib errors vary
+            raise PipelineSyntaxError(f"Invalid TOML: {exc}") from exc
     return _simple_toml(text)
 
 

@@ -1,4 +1,0 @@
-{"event":"file_relocated","from":"services/api/deploy/production.yaml","to":"deployments/api-production.yaml"}
-{"event":"file_relocated","from":"services/api/deploy/staging.yaml","to":"deployments/api-staging.yaml"}
-{"event":"file_relocated","from":"services/worker/deploy/production.yaml","to":"deployments/worker-production.yaml"}
-{"event":"file_relocated","from":"services/worker/deploy/staging.yaml","to":"deployments/worker-staging.yaml"}

@@ -1,2 +1,0 @@
-{"event":"file_relocated","from":"services/api/config.yaml","to":"flattened/api.yaml"}
-{"event":"file_relocated","from":"services/worker/config.yaml","to":"flattened/worker.yaml"}

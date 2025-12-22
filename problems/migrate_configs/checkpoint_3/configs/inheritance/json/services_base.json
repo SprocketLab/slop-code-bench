@@ -1,6 +1,0 @@
-{
-  "services": [
-    {"name": "api", "enabled": true, "host": "localhost"},
-    {"name": "worker", "enabled": false, "host": "localhost"}
-  ]
-}

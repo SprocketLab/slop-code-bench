@@ -1,9 +1,0 @@
-{
-  "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
-  "files": {
-    "configs/inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n",
-    "configs/inheritance/projects/services/app_relative.yaml": "extends: ../parents/common.yaml\nservice: payments\nregion: eu-west-1\n",
-    "configs/inheritance/projects/parents/common.yaml": "timeout: 25\nregion: eu-central-1\nservice: shared\n"
-  },
-  "rules": {}
-}

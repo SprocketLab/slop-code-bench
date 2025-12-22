@@ -1,6 +1,0 @@
-[services.api.settings]
-timeout_milliseconds = 5000
-retry_count = 3
-
-[services.worker.settings]
-timeout_ms = 10000

@@ -1,9 +1,0 @@
-environment: qa
-metadata:
-  owner: platform-team
-  tier: core
-description: qa service
-details:
-  note: runs core workloads
-  build:
-    version: 3

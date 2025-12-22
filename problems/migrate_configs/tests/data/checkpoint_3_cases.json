@@ -1,0 +1,827 @@
+{
+  "shared_configs": {
+    "arrays/accounts.json": "{\n  \"users\": [\n    {\"name\": \"alice\", \"role\": \"admin\", \"email\": \"alice@example.com\", \"permissions\": \"limited\"},\n    {\"name\": \"bob\", \"role\": \"user\", \"email\": \"bob@example.com\", \"permissions\": \"limited\"},\n    {\"name\": \"carol\", \"role\": \"admin\", \"email\": \"carol@example.com\", \"permissions\": \"limited\"}\n  ]\n}\n",
+    "arrays/clusters.json": "{\n  \"clusters\": [\n    {\n      \"name\": \"blue\",\n      \"nodes\": [\n        {\"ip\": \"10.0.0.1\"},\n        {\"ip\": \"10.0.0.2\"}\n      ]\n    },\n    {\n      \"name\": \"green\",\n      \"nodes\": [\n        {\"ip\": \"10.0.1.1\"},\n        {\"ip\": \"10.0.1.2\"}\n      ]\n    }\n  ]\n}\n",
+    "arrays/features.json": "{\n  \"features\": [\n    {\"name\": \"beta\", \"enabled\": true, \"host\": \"beta.local\"},\n    {\"name\": \"legacy\", \"enabled\": false, \"host\": \"legacy.local\"}\n  ]\n}\n",
+    "arrays/multi_services.json": "{\n  \"services\": [\n    {\"name\": \"api\", \"env\": \"production\", \"type\": \"api\", \"replicas\": 1},\n    {\"name\": \"worker\", \"env\": \"production\", \"type\": \"worker\", \"replicas\": 1},\n    {\"name\": \"api\", \"env\": \"staging\", \"type\": \"api\", \"replicas\": 1}\n  ]\n}\n",
+    "arrays/servers.json": "{\n  \"primary_endpoint\": \"unused\",\n  \"servers\": [\n    {\"host\": \"api.example.com\", \"port\": 8080},\n    {\"host\": \"backup.example.com\", \"port\": 8081}\n  ]\n}\n",
+    "arrays/services.json": "{\n  \"services\": [\n    {\"name\": \"api\", \"port\": 3000},\n    {\"name\": \"worker\", \"port\": 3001}\n  ]\n}\n",
+    "arrays/user_profiles.yaml": "summary: \"\"\nusers:\n  - name: dana\n    status: active\n    role: basic\n  - name: emma\n    status: inactive\n    role: basic\n",
+    "arrays/users.yaml": "users:\n  - name: alice\n    status: active\n    role: basic\n  - name: bob\n    status: inactive\n    role: basic\n  - name: charlie\n    status: active\n    role: basic\n",
+    "inheritance/bad_format.json": "{\n    \"yaml\": \"extends\",\n    \"json\": \"extends\",\n    \"toml\": \"import.base\"\n}",
+    "inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n",
+    "inheritance/json/app.json": "{\n  \"extends\": \"base.json\",\n  \"name\": \"json-app\"\n}\n",
+    "inheritance/json/base.json": "{\n  \"timeout\": 30,\n  \"environment\": \"development\"\n}\n",
+    "inheritance/json/legacy_app.json": "{\n  \"extends\": \"base.json\",\n  \"name\": \"legacy-app\",\n  \"old_key\": \"value\"\n}\n",
+    "inheritance/json/nested_base.json": "{\n  \"database\": {\n    \"host\": \"localhost\",\n    \"port\": 5432,\n    \"options\": {\n      \"retries\": 1\n    }\n  },\n  \"features\": [\"alpha\", \"beta\"]\n}\n",
+    "inheritance/json/nested_child.json": "{\n  \"extends\": \"nested_base.json\",\n  \"database\": {\n    \"host\": \"prod.db\",\n    \"options\": {\n      \"retries\": 5\n    }\n  },\n  \"features\": [\"release\"],\n  \"app\": \"nested-override\"\n}\n",
+    "inheritance/json/order_app.json": "{\n  \"extends\": \"base.json\",\n  \"name\": \"order-app\",\n  \"description\": \"\"\n}\n",
+    "inheritance/json/services_app.json": "{\n  \"extends\": \"services_base.json\",\n  \"app\": \"services-app\"\n}\n",
+    "inheritance/json/services_base.json": "{\n  \"services\": [\n    {\"name\": \"api\", \"enabled\": true, \"host\": \"localhost\"},\n    {\"name\": \"worker\", \"enabled\": false, \"host\": \"localhost\"}\n  ]\n}\n",
+    "inheritance/metadata.json": "{\n  \"yaml\": {\n    \"pattern\": \"metadata.extends\"\n  }\n}\n",
+    "inheritance/missing/child.yaml": "extends: absent.yaml\nname: orphan\nenvironment: staging\n",
+    "inheritance/missing_pattern.json": "{\n  \"yaml\": {}\n}\n",
+    "inheritance/projects/parents/common.yaml": "timeout: 25\nregion: eu-central-1\nservice: shared\n",
+    "inheritance/projects/services/app_relative.yaml": "extends: ../parents/common.yaml\nservice: payments\nregion: eu-west-1\n",
+    "inheritance/toml/app.toml": "[import]\nbase = \"base.toml\"\n\n[server]\nport = 9000\n",
+    "inheritance/toml/base.toml": "timeout = 30\n\n[server]\nport = 8080\n",
+    "inheritance/yaml/app_basic.yaml": "extends: base_only.yaml\napp: myapp\ntimeout: 60\n",
+    "inheritance/yaml/app_chain.yaml": "extends: base_chain.yaml\napp: chain-app\ntimeout: 45\n",
+    "inheritance/yaml/app_metadata.yaml": "metadata:\n  extends: base_only.yaml\napp: metadata-app\n",
+    "inheritance/yaml/base_chain.yaml": "extends: root.yaml\nretry: 3\n",
+    "inheritance/yaml/base_only.yaml": "timeout: 30\nretry: 3\nregion: us-west-2\n",
+    "inheritance/yaml/root.yaml": "timeout: 30\nregion: us-west-2\n"
+  },
+  "cases": {
+    "core": {
+      "array_filter_active_roles": {
+        "data": {
+          "arguments": "rules.json configs",
+          "files": {
+            "configs/arrays/users.yaml": "users:\n  - name: alice\n    status: active\n    role: basic\n  - name: bob\n    status: inactive\n    role: basic\n  - name: charlie\n    status: active\n    role: basic\n"
+          },
+          "rules": {
+            "promote_active_users": {
+              "type": "pattern_replace",
+              "key_pattern": "users[?status=active].role",
+              "value": "premium"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/users.yaml",
+              "rules_applied": [
+                "promote_active_users"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/users.yaml": "users:\n  - name: alice\n    status: active\n    role: premium\n  - name: bob\n    status: inactive\n    role: basic\n  - name: charlie\n    status: active\n    role: premium\n"
+        }
+      },
+      "array_index_primary_host": {
+        "data": {
+          "arguments": "rules.json configs",
+          "files": {
+            "configs/arrays/servers.json": "{\n  \"primary_endpoint\": \"unused\",\n  \"servers\": [\n    {\"host\": \"api.example.com\", \"port\": 8080},\n    {\"host\": \"backup.example.com\", \"port\": 8081}\n  ]\n}\n"
+          },
+          "rules": {
+            "set_primary_host": {
+              "type": "pattern_replace",
+              "key_pattern": "servers[0].host",
+              "value": "primary.example.com"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/servers.json",
+              "rules_applied": [
+                "set_primary_host"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/servers.json": "{\n  \"primary_endpoint\": \"unused\",\n  \"servers\": [\n    {\n      \"host\": \"primary.example.com\",\n      \"port\": 8080\n    },\n    {\n      \"host\": \"backup.example.com\",\n      \"port\": 8081\n    }\n  ]\n}\n"
+        }
+      },
+      "array_multi_condition_replicas": {
+        "data": {
+          "arguments": "rules.json configs",
+          "files": {
+            "configs/arrays/multi_services.json": "{\n  \"services\": [\n    {\"name\": \"api\", \"env\": \"production\", \"type\": \"api\", \"replicas\": 1},\n    {\"name\": \"worker\", \"env\": \"production\", \"type\": \"worker\", \"replicas\": 1},\n    {\"name\": \"api\", \"env\": \"staging\", \"type\": \"api\", \"replicas\": 1}\n  ]\n}\n"
+          },
+          "rules": {
+            "update_production_apis": {
+              "type": "pattern_replace",
+              "key_pattern": "services[?env=production&type=api].replicas",
+              "value": 5
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/multi_services.json",
+              "rules_applied": [
+                "update_production_apis"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/multi_services.json": "{\n  \"services\": [\n    {\n      \"name\": \"api\",\n      \"env\": \"production\",\n      \"type\": \"api\",\n      \"replicas\": 5\n    },\n    {\n      \"name\": \"worker\",\n      \"env\": \"production\",\n      \"type\": \"worker\",\n      \"replicas\": 1\n    },\n    {\n      \"name\": \"api\",\n      \"env\": \"staging\",\n      \"type\": \"api\",\n      \"replicas\": 1\n    }\n  ]\n}\n"
+        }
+      },
+      "array_wildcard_ports": {
+        "data": {
+          "arguments": "rules.json configs",
+          "files": {
+            "configs/arrays/services.json": "{\n  \"services\": [\n    {\"name\": \"api\", \"port\": 3000},\n    {\"name\": \"worker\", \"port\": 3001}\n  ]\n}\n"
+          },
+          "rules": {
+            "standardize_ports": {
+              "type": "pattern_replace",
+              "key_pattern": "services[*].port",
+              "value": 8080
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/services.json",
+              "rules_applied": [
+                "standardize_ports"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/services.json": "{\n  \"services\": [\n    {\n      \"name\": \"api\",\n      \"port\": 8080\n    },\n    {\n      \"name\": \"worker\",\n      \"port\": 8080\n    }\n  ]\n}\n"
+        }
+      },
+      "inheritance_arrays_with_rules": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "input_files": [
+            {
+              "path": "configs/inheritance/default.json",
+              "file_type": "text",
+              "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+            },
+            {
+              "path": "configs/inheritance/json/services_app.json",
+              "file_type": "text",
+              "content": "{\n  \"extends\": \"services_base.json\",\n  \"app\": \"services-app\"\n}\n"
+            },
+            {
+              "path": "configs/inheritance/json/services_base.json",
+              "file_type": "text",
+              "content": "{\n  \"services\": [\n    {\"name\": \"api\", \"enabled\": true, \"host\": \"localhost\"},\n    {\"name\": \"worker\", \"enabled\": false, \"host\": \"localhost\"}\n  ]\n}\n"
+            }
+          ],
+          "rules": {
+            "update_enabled_services": {
+              "type": "pattern_replace",
+              "key_pattern": "services[?enabled=true].host",
+              "value": "prod.example.com"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/json/services_app.json",
+              "rules_applied": [
+                "update_enabled_services"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/json/services_app.json": "{\n  \"app\": \"services-app\",\n  \"services\": [\n    {\n      \"enabled\": true,\n      \"host\": \"prod.example.com\",\n      \"name\": \"api\"\n    },\n    {\n      \"enabled\": false,\n      \"host\": \"localhost\",\n      \"name\": \"worker\"\n    }\n  ]\n}\n"
+        }
+      },
+      "inheritance_basic_yaml": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "input_files": [
+            {
+              "path": "configs/inheritance/default.json",
+              "file_type": "text",
+              "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+            },
+            {
+              "path": "configs/inheritance/yaml/app_basic.yaml",
+              "file_type": "text",
+              "content": "extends: base_only.yaml\napp: myapp\ntimeout: 60\n"
+            },
+            {
+              "path": "configs/inheritance/yaml/base_only.yaml",
+              "file_type": "text",
+              "content": "timeout: 30\nretry: 3\nregion: us-west-2\n"
+            }
+          ],
+          "rules": {},
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/yaml/app_basic.yaml",
+              "rules_applied": []
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/yaml/app_basic.yaml": "app: myapp\ntimeout: 60\nretry: 3\nregion: us-west-2\n"
+        }
+      },
+      "inheritance_nested_chain": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "input_files": [
+            {
+              "path": "configs/inheritance/default.json",
+              "file_type": "text",
+              "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+            },
+            {
+              "path": "configs/inheritance/yaml/app_chain.yaml",
+              "file_type": "text",
+              "content": "extends: base_chain.yaml\napp: chain-app\ntimeout: 45\n"
+            },
+            {
+              "path": "configs/inheritance/yaml/base_chain.yaml",
+              "file_type": "text",
+              "content": "extends: root.yaml\nretry: 3\n"
+            },
+            {
+              "path": "configs/inheritance/yaml/root.yaml",
+              "file_type": "text",
+              "content": "timeout: 30\nregion: us-west-2\n"
+            }
+          ],
+          "rules": {},
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/yaml/app_chain.yaml",
+              "rules_applied": []
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/yaml/app_chain.yaml": "app: chain-app\ntimeout: 45\nretry: 3\nregion: us-west-2\n"
+        }
+      },
+      "inheritance_toml_import": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "input_files": [
+            {
+              "path": "configs/inheritance/default.json",
+              "file_type": "text",
+              "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+            },
+            {
+              "path": "configs/inheritance/toml/app.toml",
+              "file_type": "text",
+              "content": "[import]\nbase = \"base.toml\"\n\n[server]\nport = 9000\n"
+            },
+            {
+              "path": "configs/inheritance/toml/base.toml",
+              "file_type": "text",
+              "content": "timeout = 30\n\n[server]\nport = 8080\n"
+            }
+          ],
+          "rules": {},
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/toml/app.toml",
+              "rules_applied": []
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/toml/app.toml": "timeout = 30\n\n[server]\nport = 9000\n"
+        }
+      },
+      "inheritance_with_rules_json": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "input_files": [
+            {
+              "path": "configs/inheritance/default.json",
+              "file_type": "text",
+              "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+            },
+            {
+              "path": "configs/inheritance/json/app.json",
+              "file_type": "text",
+              "content": "{\n  \"extends\": \"base.json\",\n  \"name\": \"json-app\"\n}\n"
+            },
+            {
+              "path": "configs/inheritance/json/base.json",
+              "file_type": "text",
+              "content": "{\n  \"timeout\": 30,\n  \"environment\": \"development\"\n}\n"
+            }
+          ],
+          "rules": {
+            "set_env": {
+              "type": "replace_value",
+              "key": "environment",
+              "value": "production"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/json/app.json",
+              "rules_applied": [
+                "set_env"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/json/app.json": "{\n  \"environment\": \"production\",\n  \"name\": \"json-app\",\n  \"timeout\": 30\n}\n"
+        }
+      },
+      "template_primary_endpoint": {
+        "data": {
+          "arguments": "rules.json configs",
+          "files": {
+            "configs/arrays/servers.json": "{\n  \"primary_endpoint\": \"unused\",\n  \"servers\": [\n    {\"host\": \"api.example.com\", \"port\": 8080},\n    {\"host\": \"backup.example.com\", \"port\": 8081}\n  ]\n}\n"
+          },
+          "rules": {
+            "build_primary_url": {
+              "type": "template_string",
+              "key": "primary_endpoint",
+              "variables": {
+                "host": "servers[0].host",
+                "port": "servers[0].port"
+              },
+              "template": "http://${host}:${port}"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/servers.json",
+              "rules_applied": [
+                "build_primary_url"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/servers.json": "{\n  \"primary_endpoint\": \"http://api.example.com:8080\",\n  \"servers\": [\n    {\n      \"host\": \"api.example.com\",\n      \"port\": 8080\n    },\n    {\n      \"host\": \"backup.example.com\",\n      \"port\": 8081\n    }\n  ]\n}\n"
+        }
+      }
+    },
+    "hidden": {
+      "array_boolean_filter": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "promote_enabled_features": {
+              "type": "pattern_replace",
+              "key_pattern": "features[?enabled=true].host",
+              "value": "beta.prod"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/features.json",
+              "rules_applied": [
+                "promote_enabled_features"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/features.json": "{\n  \"features\": [\n    {\n      \"name\": \"beta\",\n      \"enabled\": true,\n      \"host\": \"beta.prod\"\n    },\n    {\n      \"name\": \"legacy\",\n      \"enabled\": false,\n      \"host\": \"legacy.local\"\n    }\n  ]\n}\n"
+        }
+      },
+      "array_condition_no_match_noop": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "no_match": {
+              "type": "pattern_replace",
+              "key_pattern": "features[?name=api].host",
+              "value": "unused"
+            }
+          }
+        },
+        "expected_files": {}
+      },
+      "array_filter_template_combo": {
+        "data": {
+          "arguments": "rules.json configs",
+          "files": {
+            "configs/arrays/user_profiles.yaml": "summary: \"\"\nusers:\n  - name: dana\n    status: active\n    role: basic\n  - name: emma\n    status: inactive\n    role: basic\n"
+          },
+          "rules": {
+            "a_promote_active": {
+              "type": "pattern_replace",
+              "key_pattern": "users[?status=active].role",
+              "value": "premium"
+            },
+            "b_build_summary": {
+              "type": "template_string",
+              "key": "summary",
+              "variables": {
+                "first": "users[0].name",
+                "second": "users[1].name"
+              },
+              "template": "${first}-${second}"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/user_profiles.yaml",
+              "rules_applied": [
+                "a_promote_active",
+                "b_build_summary"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/user_profiles.yaml": "summary: \"dana-emma\"\nusers:\n  - name: dana\n    status: active\n    role: premium\n  - name: emma\n    status: inactive\n    role: basic\n"
+        }
+      },
+      "array_filter_numeric_null": {
+        "data": {
+          "arguments": "rules.json configs",
+          "files": {
+            "configs/arrays/priority.json": "{\n  \"services\": [\n    {\"name\": \"alpha\", \"priority\": 1, \"region\": null, \"host\": \"alpha.local\"},\n    {\"name\": \"beta\", \"priority\": 2, \"region\": null, \"host\": \"beta.local\"},\n    {\"name\": \"gamma\", \"priority\": 1, \"region\": \"us-east-1\", \"host\": \"gamma.local\"}\n  ]\n}\n"
+          },
+          "rules": {
+            "select_primary": {
+              "type": "pattern_replace",
+              "key_pattern": "services[?priority=1&region=null].host",
+              "value": "primary.internal"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/priority.json",
+              "rules_applied": [
+                "select_primary"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/priority.json": "{\n  \"services\": [\n    {\n      \"name\": \"alpha\",\n      \"priority\": 1,\n      \"region\": null,\n      \"host\": \"primary.internal\"\n    },\n    {\n      \"name\": \"beta\",\n      \"priority\": 2,\n      \"region\": null,\n      \"host\": \"beta.local\"\n    },\n    {\n      \"name\": \"gamma\",\n      \"priority\": 1,\n      \"region\": \"us-east-1\",\n      \"host\": \"gamma.local\"\n    }\n  ]\n}\n"
+        }
+      },
+      "array_nested_multi_depth": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "normalize_primary_nodes": {
+              "type": "pattern_replace",
+              "key_pattern": "clusters[*].nodes[0].ip",
+              "value": "10.9.9.1"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/clusters.json",
+              "rules_applied": [
+                "normalize_primary_nodes"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/clusters.json": "{\n  \"clusters\": [\n    {\n      \"name\": \"blue\",\n      \"nodes\": [\n        {\n          \"ip\": \"10.9.9.1\"\n        },\n        {\n          \"ip\": \"10.0.0.2\"\n        }\n      ]\n    },\n    {\n      \"name\": \"green\",\n      \"nodes\": [\n        {\n          \"ip\": \"10.9.9.1\"\n        },\n        {\n          \"ip\": \"10.0.1.2\"\n        }\n      ]\n    }\n  ]\n}\n"
+        }
+      },
+      "conditional_array_regex": {
+        "data": {
+          "arguments": "rules.json configs",
+          "rules": {
+            "promote_admins": {
+              "type": "conditional_replace",
+              "key": "users[?role=admin].permissions",
+              "value": "all",
+              "condition": {
+                "current_value_matches": "^limited$"
+              }
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "arrays/accounts.json",
+              "rules_applied": [
+                "promote_admins"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "arrays/accounts.json": "{\n  \"users\": [\n    {\n      \"name\": \"alice\",\n      \"role\": \"admin\",\n      \"email\": \"alice@example.com\",\n      \"permissions\": \"all\"\n    },\n    {\n      \"name\": \"bob\",\n      \"role\": \"user\",\n      \"email\": \"bob@example.com\",\n      \"permissions\": \"limited\"\n    },\n    {\n      \"name\": \"carol\",\n      \"role\": \"admin\",\n      \"email\": \"carol@example.com\",\n      \"permissions\": \"all\"\n    }\n  ]\n}\n"
+        }
+      },
+      "inheritance_deep_merge_override": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "files": {
+            "configs/inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n",
+            "configs/inheritance/json/nested_child.json": "{\n  \"extends\": \"nested_base.json\",\n  \"database\": {\n    \"host\": \"prod.db\",\n    \"options\": {\n      \"retries\": 5\n    }\n  },\n  \"features\": [\"release\"],\n  \"app\": \"nested-override\"\n}\n",
+            "configs/inheritance/json/nested_base.json": "{\n  \"database\": {\n    \"host\": \"localhost\",\n    \"port\": 5432,\n    \"options\": {\n      \"retries\": 1\n    }\n  },\n  \"features\": [\"alpha\", \"beta\"]\n}\n"
+          },
+          "rules": {},
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/json/nested_child.json",
+              "rules_applied": []
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/json/nested_child.json": "{\n  \"database\": {\n    \"host\": \"prod.db\",\n    \"port\": 5432,\n    \"options\": {\n      \"retries\": 5\n    }\n  },\n  \"features\": [\n    \"release\"\n  ],\n  \"app\": \"nested-override\"\n}\n"
+        }
+      },
+      "inheritance_missing_parent_nonfatal": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "files": {
+            "configs/inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n",
+            "configs/inheritance/missing/child.yaml": "extends: absent.yaml\nname: orphan\nenvironment: staging\n"
+          },
+          "rules": {
+            "force_env": {
+              "type": "replace_value",
+              "key": "environment",
+              "value": "production"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/missing/child.yaml",
+              "rules_applied": [
+                "force_env"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/missing/child.yaml": "extends: absent.yaml\nname: orphan\nenvironment: production\n"
+        }
+      },
+      "inheritance_relative_paths": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "files": {
+            "configs/inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n",
+            "configs/inheritance/projects/services/app_relative.yaml": "extends: ../parents/common.yaml\nservice: payments\nregion: eu-west-1\n",
+            "configs/inheritance/projects/parents/common.yaml": "timeout: 25\nregion: eu-central-1\nservice: shared\n"
+          },
+          "rules": {},
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/projects/services/app_relative.yaml",
+              "rules_applied": []
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/projects/services/app_relative.yaml": "service: payments\nregion: eu-west-1\ntimeout: 25\n"
+        }
+      },
+      "inheritance_parent_outside_target": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "files": {
+            "configs/inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n",
+            "configs/inheritance/external/child.yaml": "extends: ../../../external_base.yaml\nname: external\nregion: eu-west-1\n",
+            "external_base.yaml": "timeout: 20\nregion: us-east-1\n"
+          },
+          "rules": {},
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/external/child.yaml",
+              "rules_applied": []
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/external/child.yaml": "name: external\nregion: eu-west-1\ntimeout: 20\n"
+        }
+      },
+      "inheritance_remove_empty_metadata": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/metadata.json",
+          "rules": {},
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/yaml/app_metadata.yaml",
+              "rules_applied": []
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/yaml/app_metadata.yaml": "app: metadata-app\ntimeout: 30\nretry: 3\nregion: us-west-2\n"
+        }
+      },
+      "inheritance_keep_metadata": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/metadata.json",
+          "files": {
+            "configs/inheritance/metadata.json": "{\n  \"yaml\": {\n    \"pattern\": \"metadata.extends\"\n  }\n}\n",
+            "configs/inheritance/yaml/app_metadata_owner.yaml": "metadata:\n  extends: base_only.yaml\n  owner: platform\napp: metadata-owner\n",
+            "configs/inheritance/yaml/base_only.yaml": "timeout: 30\nretry: 3\nregion: us-west-2\n"
+          },
+          "rules": {},
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/yaml/app_metadata_owner.yaml",
+              "rules_applied": []
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/yaml/app_metadata_owner.yaml": "metadata:\n  owner: platform\napp: metadata-owner\ntimeout: 30\nretry: 3\nregion: us-west-2\n"
+        }
+      },
+      "legacy_rule_after_inheritance": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "input_files": [
+            {
+              "path": "configs/inheritance/default.json",
+              "file_type": "text",
+              "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+            },
+            {
+              "path": "configs/inheritance/json/legacy_app.json",
+              "file_type": "text",
+              "content": "{\n  \"extends\": \"base.json\",\n  \"name\": \"legacy-app\",\n  \"old_key\": \"value\"\n}\n"
+            },
+            {
+              "path": "configs/inheritance/json/base.json",
+              "file_type": "text",
+              "content": "{\n  \"timeout\": 30,\n  \"environment\": \"development\"\n}\n"
+            }
+          ],
+          "rules": {
+            "a_rename_old_key": {
+              "type": "rename_key",
+              "old_key": "old_key",
+              "new_key": "new_key"
+            },
+            "b_force_env": {
+              "type": "replace_value",
+              "key": "environment",
+              "value": "production"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/json/legacy_app.json",
+              "rules_applied": [
+                "a_rename_old_key",
+                "b_force_env"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/json/legacy_app.json": "{\n  \"name\": \"legacy-app\",\n  \"new_key\": \"value\",\n  \"timeout\": 30,\n  \"environment\": \"production\"\n}\n"
+        }
+      },
+      "rule_order_with_inheritance": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "input_files": [
+            {
+              "path": "configs/inheritance/default.json",
+              "file_type": "text",
+              "content": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n"
+            },
+            {
+              "path": "configs/inheritance/json/order_app.json",
+              "file_type": "text",
+              "content": "{\n  \"extends\": \"base.json\",\n  \"name\": \"order-app\",\n  \"description\": \"\"\n}\n"
+            },
+            {
+              "path": "configs/inheritance/json/base.json",
+              "file_type": "text",
+              "content": "{\n  \"timeout\": 30,\n  \"environment\": \"development\"\n}\n"
+            }
+          ],
+          "rules": {
+            "alpha_merge_env": {
+              "type": "merge_data",
+              "data": {
+                "environment": "qa"
+              }
+            },
+            "beta_template_description": {
+              "type": "template_string",
+              "key": "description",
+              "variables": {
+                "env": "environment"
+              },
+              "template": "${env}-service"
+            }
+          },
+          "expected_stdout": [
+            {
+              "event": "file_updated",
+              "file": "inheritance/json/order_app.json",
+              "rules_applied": [
+                "alpha_merge_env",
+                "beta_template_description"
+              ]
+            }
+          ]
+        },
+        "expected_files": {
+          "inheritance/json/order_app.json": "{\n  \"name\": \"order-app\",\n  \"description\": \"qa-service\",\n  \"timeout\": 30,\n  \"environment\": \"qa\"\n}\n"
+        }
+      },
+      "template_array_missing_variable": {
+        "data": {
+          "arguments": "rules.json configs",
+          "expected_stdout": "",
+          "rules": {
+            "missing_server_template": {
+              "type": "template_string",
+              "key": "backup_endpoint",
+              "variables": {
+                "host": "servers[5].host"
+              },
+              "template": "http://${host}"
+            }
+          }
+        },
+        "expected_files": {}
+      }
+    },
+    "errors": {
+      "circular_inheritance": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "expected_stdout": "",
+          "status_code": 1,
+          "expected_stderr": "^Error: circular dependency detected: .*circular/app\\.yaml -> .*circular/base\\.yaml -> .*circular/app\\.yaml$",
+          "files": {
+            "configs/inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n",
+            "configs/inheritance/circular/app.yaml": "extends: base.yaml\nname: circular-app\n",
+            "configs/inheritance/circular/base.yaml": "extends: app.yaml\nname: circular-base\n"
+          },
+          "rules": {}
+        },
+        "expected_files": {}
+      },
+      "invalid_inheritance_config_format": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/bad_format.json",
+          "files": {
+            "configs/inheritance/bad_format.json": "{\"yaml\":\n"
+          },
+          "expected_stdout": "",
+          "rules": {},
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid inheritance config: .*bad_format\\.json$"
+        },
+        "expected_files": {}
+      },
+      "invalid_inheritance_config_schema": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/missing_pattern.json",
+          "expected_stdout": "",
+          "rules": {},
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid inheritance config: .*missing_pattern\\.json$"
+        },
+        "expected_files": {}
+      },
+      "missing_inheritance_file": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/not_found.json",
+          "expected_stdout": "",
+          "rules": {},
+          "status_code": 1,
+          "expected_stderr": "^Error: invalid inheritance config: .*not_found\\.json$"
+        },
+        "expected_files": {}
+      },
+      "parent_parse_failure": {
+        "data": {
+          "arguments": "rules.json configs --inheritance configs/inheritance/default.json",
+          "expected_stdout": "",
+          "status_code": 1,
+          "expected_stderr": "^Error: failed to parse parent config: .*parent_bad\\.yaml$",
+          "files": {
+            "configs/inheritance/default.json": "{\n  \"yaml\": {\n    \"pattern\": \"extends\"\n  },\n  \"json\": {\n    \"pattern\": \"extends\"\n  },\n  \"toml\": {\n    \"pattern\": \"import.base\"\n  }\n}\n",
+            "configs/inheritance/invalid/app.yaml": "extends: parent_bad.yaml\napp: bad-parent\n",
+            "configs/inheritance/invalid/parent_bad.yaml": "timeout: [unterminated\n"
+          },
+          "rules": {}
+        },
+        "expected_files": {}
+      }
+    }
+  }
+}

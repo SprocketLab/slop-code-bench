@@ -1,5 +1,0 @@
-{
-  "extends": "base.json",
-  "name": "order-app",
-  "description": ""
-}

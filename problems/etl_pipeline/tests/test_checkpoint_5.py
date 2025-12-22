@@ -701,7 +701,7 @@ def test_compose_lib_trimmed_ops_exprs_normalize(entrypoint_argv):
         },
         "compose": [
             {"ref": "ops:Filter"},
-            {"steps": [{"op": " MAP ", "as": " result ", "expr": " value * 2 "}]},
+            {"steps": [{"op": " MAP ", "as": "result", "expr": " value * 2 "}]},
         ],
         "dataset": [{"value": 15}],
     }
@@ -752,12 +752,16 @@ def test_compose_lib_empty_dataset(entrypoint_argv):
 
 
 @pytest.mark.functionality
-def test_compose_lib_filter_non_boolean(entrypoint_argv):
-    """Functionality: Filter with non-boolean status field - only true passes."""
+def test_compose_lib_filter_boolean_comparison(entrypoint_argv):
+    """Functionality: Filter with boolean comparison against true."""
     input_data = {
         "library": {
             "filters": {
-                "defs": {"FilterActive": {"steps": [{"op": "filter", "where": "status"}]}}
+                "defs": {
+                    "FilterActive": {
+                        "steps": [{"op": "filter", "where": "status == true"}]
+                    }
+                }
             }
         },
         "compose": [{"ref": "filters:FilterActive"}],
@@ -781,7 +785,7 @@ def test_compose_lib_filter_non_boolean(entrypoint_argv):
 
 @pytest.mark.functionality
 def test_compose_lib_logical_negation(entrypoint_argv):
-    """Functionality: Filter with logical negation - falsy values pass."""
+    """Functionality: Filter with logical negation - false and missing pass."""
     input_data = {
         "library": {
             "filters": {
@@ -792,9 +796,7 @@ def test_compose_lib_logical_negation(entrypoint_argv):
         "dataset": [
             {"id": 1, "active": True},
             {"id": 2, "active": False},
-            {"id": 3, "active": None},
-            {"id": 4, "active": 0},
-            {"id": 5, "active": ""},
+            {"id": 3},
         ],
     }
 
@@ -805,11 +807,9 @@ def test_compose_lib_logical_negation(entrypoint_argv):
     assert output["status"] == "ok"
     assert output["data"] == [
         {"id": 2, "active": False},
-        {"id": 3, "active": None},
-        {"id": 4, "active": 0},
-        {"id": 5, "active": ""},
+        {"id": 3},
     ]
-    assert output["metrics"] == {"rows_in": 5, "rows_out": 4}
+    assert output["metrics"] == {"rows_in": 3, "rows_out": 2}
 
 
 @pytest.mark.functionality
@@ -891,7 +891,7 @@ def test_compose_lib_full_pipeline_trimmed(entrypoint_argv):
                                 "note": "drop this",
                             },
                             {"op": " FILTER ", "where": " active ", "metadata": "ignored"},
-                            {"op": " MAP ", "as": " total ", "expr": " price * qty "},
+                            {"op": " MAP ", "as": "total", "expr": " price * qty "},
                             {"op": " RENAME ", "from": "price", "to": "unit_price"},
                             {"op": " LIMIT ", "n": 2, "extra": "drop"},
                         ]

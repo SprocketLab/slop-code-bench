@@ -1,8 +1,0 @@
-{
-  "arguments": "rules.json configs --inheritance configs/inheritance/metadata.json",
-  "expected_stdout": "{\"event\":\"file_updated\",\"file\":\"inheritance/yaml/app_metadata.yaml\",\"rules_applied\":[]}\\n",
-  "rules": {},
-  "expected_files": {
-    "configs/inheritance/yaml/app_metadata.yaml": "app: metadata-app\\ntimeout: 30\\nretry: 3\\nregion: us-west-2\\n"
-  }
-}

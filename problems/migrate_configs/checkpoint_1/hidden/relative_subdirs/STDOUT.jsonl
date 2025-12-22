@@ -1,2 +1,0 @@
-{"event":"file_updated","file":"features/rollout.yaml","rules_applied":["adjust_logging_handlers","increase_rollout"]}
-{"event":"file_updated","file":"services/api.yaml","rules_applied":["adjust_logging_handlers"]}
