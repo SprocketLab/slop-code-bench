@@ -12,6 +12,26 @@ import httpx
 import jsonschema
 import pytest
 
+CFG_SCHEMA_V1 = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": True,
+    "properties": {
+        "db": {
+            "properties": {
+                "host": {"type": "string"},
+                "pool": {"type": "integer"},
+            },
+            "required": ["host"],
+            "type": "object",
+        },
+        "feature_flags": {
+            "items": {"type": "string"},
+            "type": "array",
+        },
+    },
+    "type": "object",
+}
+
 
 def _is_json_schema(payload: Any) -> bool:
     """Check if a payload looks like a JSON Schema definition."""
@@ -44,6 +64,25 @@ def _is_json_schema(payload: Any) -> bool:
     } and any(key in payload for key in ("properties", "items"))
 
 
+def _extract_versions(payload: Any) -> list[int]:
+    """Extract version numbers from list or envelope responses."""
+    if isinstance(payload, list):
+        versions = []
+        for item in payload:
+            if isinstance(item, dict) and "version" in item:
+                versions.append(item["version"])
+            elif isinstance(item, int):
+                versions.append(item)
+            else:
+                raise AssertionError(f"Unexpected version entry: {item}")
+        return versions
+    if isinstance(payload, dict):
+        versions = payload.get("versions")
+        if isinstance(versions, list):
+            return _extract_versions(versions)
+    raise AssertionError("No versions list found in response.")
+
+
 def _make_request(
     client: httpx.Client,
     method: str,
@@ -53,7 +92,7 @@ def _make_request(
     """Make HTTP request to the server."""
     if method == "POST":
         return client.post(path, json=body)
-    elif method == "GET":
+    if method == "GET":
         return client.get(path)
     raise ValueError(f"Unsupported method: {method}")
 
@@ -114,25 +153,7 @@ class TestCore:
             "POST",
             "/v1/schemas/cfg",
             body={
-                "schema": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "additionalProperties": True,
-                    "properties": {
-                        "db": {
-                            "properties": {
-                                "host": {"type": "string"},
-                                "pool": {"type": "integer"},
-                            },
-                            "required": ["host"],
-                            "type": "object",
-                        },
-                        "feature_flags": {
-                            "items": {"type": "string"},
-                            "type": "array",
-                        },
-                    },
-                    "type": "object",
-                }
+                "schema": CFG_SCHEMA_V1
             },
         )
         _assert_response(
@@ -225,14 +246,13 @@ class TestCore:
             "/v1/schemas/cfg/versions",
             body={},
         )
-        _assert_response(
-            response,
-            200,
-            {
-                "name": "cfg",
-                "versions": [{"version": 1}, {"version": 2}],
-            },
+        assert response.status_code == 200, (
+            f"Expected status 200, got {response.status_code}. "
+            f"Response: {response.text}"
         )
+        versions = _extract_versions(response.json())
+        assert versions == sorted(versions), "Schema versions are not sorted."
+        assert versions == [1, 2]
 
     def test_07_get_specific_schema_version(self, client: httpx.Client) -> None:
         """Get cfg schema version 1."""
@@ -242,33 +262,17 @@ class TestCore:
             "/v1/schemas/cfg/1",
             body={},
         )
-        _assert_response(
-            response,
-            200,
-            {
-                "name": "cfg",
-                "schema": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "additionalProperties": True,
-                    "properties": {
-                        "db": {
-                            "properties": {
-                                "host": {"type": "string"},
-                                "pool": {"type": "integer"},
-                            },
-                            "required": ["host"],
-                            "type": "object",
-                        },
-                        "feature_flags": {
-                            "items": {"type": "string"},
-                            "type": "array",
-                        },
-                    },
-                    "type": "object",
-                },
-                "version": 1,
-            },
+        assert response.status_code == 200, (
+            f"Expected status 200, got {response.status_code}. "
+            f"Response: {response.text}"
         )
+        payload = response.json()
+        schema = payload.get("schema", payload)
+        assert schema == CFG_SCHEMA_V1
+        if "name" in payload:
+            assert payload["name"] == "cfg"
+        if "version" in payload:
+            assert payload["version"] == 1
 
     def test_08_update_binding(self, client: httpx.Client) -> None:
         """Update billing binding to cfg schema v2."""
@@ -574,25 +578,7 @@ class TestError:
             "POST",
             "/v1/schemas/cfg",
             body={
-                "schema": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "additionalProperties": True,
-                    "properties": {
-                        "db": {
-                            "properties": {
-                                "host": {"type": "string"},
-                                "pool": {"type": "integer"},
-                            },
-                            "required": ["host"],
-                            "type": "object",
-                        },
-                        "feature_flags": {
-                            "items": {"type": "string"},
-                            "type": "array",
-                        },
-                    },
-                    "type": "object",
-                }
+                "schema": CFG_SCHEMA_V1
             },
         )
         # Accept any version since Core tests may have created earlier versions
@@ -636,7 +622,7 @@ class TestError:
         response = _make_request(
             client,
             "POST",
-            "/v1/configs/billing:bindSchema",
+            "/v1/configs/billing:bind",
             body={
                 "schema_ref": {"name": "missing", "version": 1},
                 "scope": {"app": "billing", "env": "prod"},
@@ -990,31 +976,66 @@ class TestError:
         )
 
     def test_14_validation_failed_enum(self, client: httpx.Client) -> None:
-        """Create config referencing non-existent schema returns 404."""
+        """Create config with enum violation returns 422."""
+        schema_response = _make_request(
+            client,
+            "POST",
+            "/v1/schemas/enum_schema",
+            body={
+                "schema": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "properties": {
+                        "environment": {
+                            "type": "string",
+                            "enum": ["prod", "staging"],
+                        }
+                    },
+                    "required": ["environment"],
+                }
+            },
+        )
+        assert schema_response.status_code == 201, (
+            f"Expected status 201, got {schema_response.status_code}. "
+            f"Response: {schema_response.text}"
+        )
+        schema_payload = schema_response.json()
+        schema_version = schema_payload["version"]
+
         response = _make_request(
             client,
             "POST",
             "/v1/configs/enum_test",
             body={
                 "scope": {"env": "test", "app": "enum_test"},
-                "schema_ref": {"name": "enum_schema", "version": 1},
+                "schema_ref": {
+                    "name": "enum_schema",
+                    "version": schema_version,
+                },
                 "config": {"environment": "production"},
             },
         )
         _assert_response(
             response,
-            404,
+            422,
             {
                 "type": "object",
                 "required": ["error"],
                 "properties": {
                     "error": {
                         "type": "object",
-                        "required": ["code", "message"],
+                        "required": ["code", "message", "details"],
                         "properties": {
-                            "code": {"type": "string", "const": "not_found"},
+                            "code": {"type": "string", "const": "validation_failed"},
                             "message": {"type": "string"},
-                            "details": {"type": "object"},
+                            "details": {
+                                "type": "object",
+                                "required": ["path", "rule"],
+                                "properties": {
+                                    "path": {"const": "/environment"},
+                                    "rule": {"const": "enum"},
+                                },
+                            },
                         },
                     }
                 },
@@ -1022,31 +1043,66 @@ class TestError:
         )
 
     def test_15_validation_failed_pattern(self, client: httpx.Client) -> None:
-        """Create config referencing non-existent pattern_schema returns 404."""
+        """Create config with pattern violation returns 422."""
+        schema_response = _make_request(
+            client,
+            "POST",
+            "/v1/schemas/pattern_schema",
+            body={
+                "schema": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "properties": {
+                        "email": {
+                            "type": "string",
+                            "pattern": "^[a-z]+$",
+                        }
+                    },
+                    "required": ["email"],
+                }
+            },
+        )
+        assert schema_response.status_code == 201, (
+            f"Expected status 201, got {schema_response.status_code}. "
+            f"Response: {schema_response.text}"
+        )
+        schema_payload = schema_response.json()
+        schema_version = schema_payload["version"]
+
         response = _make_request(
             client,
             "POST",
             "/v1/configs/pattern_test",
             body={
                 "scope": {"env": "test", "app": "pattern_test"},
-                "schema_ref": {"name": "pattern_schema", "version": 1},
+                "schema_ref": {
+                    "name": "pattern_schema",
+                    "version": schema_version,
+                },
                 "config": {"email": "invalid-email"},
             },
         )
         _assert_response(
             response,
-            404,
+            422,
             {
                 "type": "object",
                 "required": ["error"],
                 "properties": {
                     "error": {
                         "type": "object",
-                        "required": ["code", "message"],
+                        "required": ["code", "message", "details"],
                         "properties": {
-                            "code": {"type": "string", "const": "not_found"},
+                            "code": {"type": "string", "const": "validation_failed"},
                             "message": {"type": "string"},
-                            "details": {"type": "object"},
+                            "details": {
+                                "type": "object",
+                                "required": ["path", "rule"],
+                                "properties": {
+                                    "path": {"const": "/email"},
+                                    "rule": {"const": "pattern"},
+                                },
+                            },
                         },
                     }
                 },
@@ -1085,31 +1141,64 @@ class TestError:
         )
 
     def test_17_validation_failed_nested_path(self, client: httpx.Client) -> None:
-        """Create config with non-existent schema returns 404."""
+        """Return lexicographically smallest error path for validation."""
+        schema_response = _make_request(
+            client,
+            "POST",
+            "/v1/schemas/determinism_schema",
+            body={
+                "schema": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "properties": {
+                        "a": {"type": "integer"},
+                        "b": {"type": "integer"},
+                    },
+                    "required": ["a", "b"],
+                }
+            },
+        )
+        assert schema_response.status_code == 201, (
+            f"Expected status 201, got {schema_response.status_code}. "
+            f"Response: {schema_response.text}"
+        )
+        schema_payload = schema_response.json()
+        schema_version = schema_payload["version"]
+
         response = _make_request(
             client,
             "POST",
             "/v1/configs/nested_test",
             body={
                 "scope": {"env": "test", "app": "nested_test"},
-                "schema_ref": {"name": "nested_schema", "version": 1},
-                "config": {"level1": {"level2": {"level3": {"value": 123}}}},
+                "schema_ref": {
+                    "name": "determinism_schema",
+                    "version": schema_version,
+                },
+                "config": {"a": "bad", "b": "bad"},
             },
         )
         _assert_response(
             response,
-            404,
+            422,
             {
                 "type": "object",
                 "required": ["error"],
                 "properties": {
                     "error": {
                         "type": "object",
-                        "required": ["code", "message"],
+                        "required": ["code", "message", "details"],
                         "properties": {
-                            "code": {"type": "string", "const": "not_found"},
+                            "code": {"type": "string", "const": "validation_failed"},
                             "message": {"type": "string"},
-                            "details": {"type": "object"},
+                            "details": {
+                                "type": "object",
+                                "required": ["path", "rule"],
+                                "properties": {
+                                    "path": {"const": "/a"},
+                                    "rule": {"const": "type"},
+                                },
+                            },
                         },
                     }
                 },
@@ -1355,6 +1444,121 @@ class TestError:
                             "code": {"type": "string", "const": "unprocessable"},
                             "message": {"type": "string"},
                             "details": {"type": "object"},
+                        },
+                    }
+                },
+            },
+        )
+
+    def test_25_raw_schema_too_large(self, client: httpx.Client) -> None:
+        """Creating oversized raw schema returns 413."""
+        raw_schema = (
+            '{"type":"object","description":"'
+            + ("a" * (1024 * 1024 + 1))
+            + '"}'
+        )
+        response = _make_request(
+            client,
+            "POST",
+            "/v1/schemas/oversize_schema",
+            body={
+                "raw_format": "json",
+                "raw_schema": raw_schema,
+            },
+        )
+        _assert_response(
+            response,
+            413,
+            {
+                "type": "object",
+                "required": ["error"],
+                "properties": {
+                    "error": {
+                        "type": "object",
+                        "required": ["code", "message"],
+                        "properties": {
+                            "code": {"type": "string", "const": "too_large"},
+                            "message": {"type": "string"},
+                        },
+                    }
+                },
+            },
+        )
+
+    def test_26_schema_version_limit(self, client: httpx.Client) -> None:
+        """Creating more than 1,000 schema versions returns conflict."""
+        for _ in range(1000):
+            response = _make_request(
+                client,
+                "POST",
+                "/v1/schemas/limit_schema",
+                body={"schema": {"type": "object"}},
+            )
+            assert response.status_code == 201, (
+                "Expected 201 for schema create, "
+                f"got {response.status_code}."
+            )
+
+        response = _make_request(
+            client,
+            "POST",
+            "/v1/schemas/limit_schema",
+            body={"schema": {"type": "object"}},
+        )
+        _assert_response(
+            response,
+            409,
+            {
+                "type": "object",
+                "required": ["error"],
+                "properties": {
+                    "error": {
+                        "type": "object",
+                        "required": ["code", "message", "details"],
+                        "properties": {
+                            "code": {"type": "string", "const": "conflict"},
+                            "message": {"type": "string"},
+                            "details": {"type": "object"},
+                        },
+                    }
+                },
+            },
+        )
+
+    def test_27_yaml_non_string_key(self, client: httpx.Client) -> None:
+        """Create config with non-string YAML key returns 422."""
+        response = _make_request(
+            client,
+            "POST",
+            "/v1/configs/yaml_key_test",
+            body={
+                "scope": {"env": "test", "app": "yaml_key_test"},
+                "raw_config": "1: value\n",
+                "raw_format": "yaml",
+            },
+        )
+        _assert_response(
+            response,
+            422,
+            {
+                "type": "object",
+                "required": ["error"],
+                "properties": {
+                    "error": {
+                        "type": "object",
+                        "required": ["code", "message", "details"],
+                        "properties": {
+                            "code": {"type": "string", "const": "unprocessable"},
+                            "message": {"type": "string"},
+                            "details": {
+                                "type": "object",
+                                "required": ["reason"],
+                                "properties": {
+                                    "reason": {
+                                        "const": "yaml_feature_not_allowed"
+                                    }
+                                },
+                            },
                         },
                     }
                 },

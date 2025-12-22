@@ -1,4 +1,0 @@
-{"job_id": 2, "task": "QuickTask", "params": {}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.0037060479990032036}
-{"job_id": 3, "task": "SlowTask", "params": {}, "stdout": "", "stderr": "", "timed_out": true, "success": {}, "output": null, "exit_code": 124, "parent": 1, "duration": 1.0047244329980458}
-{"job_id": 4, "task": "NormalTask", "params": {"delay": 0.3}, "stdout": "", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.30552696099766763}
-{"job_id": 1, "task": "main", "params": {}, "stdout": "Testing timeouts\nnormal.txt\nquick.txt\nslow.txt\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": null, "duration": 1.3198828380009218}

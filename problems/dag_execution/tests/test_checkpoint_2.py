@@ -11,8 +11,6 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-import pytest
-
 # Event ordering for normalization (from checkpoint_1)
 EVENT_ORDER = [
     "TASK_STARTED",

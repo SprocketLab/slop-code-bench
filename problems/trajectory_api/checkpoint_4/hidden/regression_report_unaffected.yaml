@@ -3,27 +3,42 @@ case:
     content-type: application/json; charset=utf-8
   id: regression_report_unaffected
   method: GET
-  path: /trajectories/report?group_by=model
+  path: /reports?group_by=model&model=regression-model
 expected:
   output:
     properties:
-      groups:
+      rows:
         type: array
         items:
           properties:
-            key:
+            bucket:
+              const: null
+            group:
+              properties:
+                model:
+                  const: regression-model
+              required:
+                - model
               type: object
-            count:
+            count_runs:
               type: integer
-            total_steps:
-              type: integer
-            total_cost:
+              minimum: 1
+            sum_cost:
+              type: number
+            avg_steps:
+              type: number
+            avg_output_tokens:
               type: number
           required:
-            - key
-            - count
+            - bucket
+            - group
+            - count_runs
+            - sum_cost
+            - avg_steps
+            - avg_output_tokens
           type: object
+        minItems: 1
     required:
-      - groups
+      - rows
     type: object
   status_code: 200

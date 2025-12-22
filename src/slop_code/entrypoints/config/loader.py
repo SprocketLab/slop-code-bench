@@ -80,11 +80,13 @@ def resolve_config_path(value: str, category: str) -> Path:
 
     # Build helpful error message
     searched = [str(path)] if path != Path(value) else []
-    searched.extend([
-        str(package_path),
-        str(cwd_path),
-        str(cwd_category_path),
-    ])
+    searched.extend(
+        [
+            str(package_path),
+            str(cwd_path),
+            str(cwd_category_path),
+        ]
+    )
     raise FileNotFoundError(
         f"Config '{value}' not found. Searched:\n  " + "\n  ".join(searched)
     )
@@ -149,7 +151,9 @@ def _load_yaml_file(path: Path) -> dict[str, Any]:
     if data is None:
         return {}
     if not isinstance(data, dict):
-        raise ValueError(f"Expected YAML mapping in {path}, got {type(data).__name__}")
+        raise ValueError(
+            f"Expected YAML mapping in {path}, got {type(data).__name__}"
+        )
     return data
 
 
@@ -291,7 +295,7 @@ def _resolve_output_path(
 def _get_default_config() -> dict[str, Any]:
     """Get the default configuration as a dict."""
     return {
-        "agent": "claude_code-2.0.51",
+        "agent": "claude_code",
         "environment": "docker-python3.12-uv",
         "prompt": "just-solve",
         "model": {"provider": "anthropic", "name": "sonnet-4.5"},
@@ -406,7 +410,9 @@ def load_run_config(
         raise ValueError(f"Invalid model config: {model_data}")
 
     # 7. Handle thinking config
-    thinking_preset, thinking_max_tokens = _get_thinking_values(cfg_dict["thinking"])
+    thinking_preset, thinking_max_tokens = _get_thinking_values(
+        cfg_dict["thinking"]
+    )
 
     # 8. Handle pass_policy
     pass_policy_value = cfg_dict["pass_policy"]
@@ -550,26 +556,38 @@ def resolve_environment(
         return model_cls.model_validate(env_data)
 
     except FileNotFoundError as e:
-        typer.echo(typer.style(
-            f"Environment configuration not found: {e}",
-            fg=typer.colors.RED, bold=True,
-        ))
+        typer.echo(
+            typer.style(
+                f"Environment configuration not found: {e}",
+                fg=typer.colors.RED,
+                bold=True,
+            )
+        )
         raise typer.Exit(1) from e
     except yaml.YAMLError as e:
-        typer.echo(typer.style(
-            f"YAML parsing error in environment configuration: {e}",
-            fg=typer.colors.RED, bold=True,
-        ))
+        typer.echo(
+            typer.style(
+                f"YAML parsing error in environment configuration: {e}",
+                fg=typer.colors.RED,
+                bold=True,
+            )
+        )
         raise typer.Exit(1) from e
     except ValidationError as e:
-        typer.echo(typer.style(
-            f"Environment configuration validation failed:\n{e}",
-            fg=typer.colors.RED, bold=True,
-        ))
+        typer.echo(
+            typer.style(
+                f"Environment configuration validation failed:\n{e}",
+                fg=typer.colors.RED,
+                bold=True,
+            )
+        )
         raise typer.Exit(1) from e
     except ValueError as e:
-        typer.echo(typer.style(
-            f"Environment configuration error: {e}",
-            fg=typer.colors.RED, bold=True,
-        ))
+        typer.echo(
+            typer.style(
+                f"Environment configuration error: {e}",
+                fg=typer.colors.RED,
+                bold=True,
+            )
+        )
         raise typer.Exit(1) from e

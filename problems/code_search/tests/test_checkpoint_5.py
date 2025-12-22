@@ -11,7 +11,6 @@ import subprocess
 
 import pytest
 
-
 # =============================================================================
 # Helper Functions
 # =============================================================================
@@ -60,6 +59,13 @@ def assert_output(actual_stdout, expected, exit_code=0, actual_returncode=0):
     assert actual_returncode == exit_code, f"Expected exit code {exit_code}, got {actual_returncode}"
     actual = parse_jsonl(actual_stdout)
     assert sort_output(actual) == sort_output(expected)
+
+
+def assert_output_raw(actual_stdout, expected, exit_code=0, actual_returncode=0):
+    """Assert that actual output matches expected (no sorting)."""
+    assert actual_returncode == exit_code, f"Expected exit code {exit_code}, got {actual_returncode}"
+    actual = parse_jsonl(actual_stdout)
+    assert actual == expected
 
 
 def create_test_files(tmp_path, input_files):
@@ -202,12 +208,12 @@ def test_regex_match_rust(entrypoint_argv, tmp_path):
 
 
 def test_selector_match_rust(entrypoint_argv, tmp_path):
-    """Core: Selector rules for Rust (function_item)."""
-    input_files = {"proj/code.rs": "fn main() {\n    println!(\"test\");\n}\n\nfn helper(x: i32) -> i32 {\n    x + 1\n}"}
-    rules = [{"id": "rust_functions", "kind": "selector", "languages": ["rust"], "selector": "function_item"}]
+    """Core: Selector rules for Rust (identifier)."""
+    input_files = {"proj/code.rs": "fn main() {}\n\nfn helper() {}"}
+    rules = [{"id": "rust_functions", "kind": "selector", "languages": ["rust"], "selector": "identifier"}]
     expected = [
-        {"rule_id": "rust_functions", "file": "code.rs", "language": "rust", "start": {"line": 1, "col": 1}, "end": {"line": 3, "col": 2}, "match": "fn main() {\n    println!(\"test\");\n}"},
-        {"rule_id": "rust_functions", "file": "code.rs", "language": "rust", "start": {"line": 5, "col": 1}, "end": {"line": 7, "col": 2}, "match": "fn helper(x: i32) -> i32 {\n    x + 1\n}"}
+        {"rule_id": "rust_functions", "file": "code.rs", "language": "rust", "start": {"line": 1, "col": 4}, "end": {"line": 1, "col": 8}, "match": "main"},
+        {"rule_id": "rust_functions", "file": "code.rs", "language": "rust", "start": {"line": 3, "col": 4}, "end": {"line": 3, "col": 10}, "match": "helper"},
     ]
 
     proj = create_test_files(tmp_path, input_files)
@@ -355,7 +361,7 @@ def test_sorting_across_languages(entrypoint_argv, tmp_path):
     proj = create_test_files(tmp_path, input_files)
     rules_file = write_rules(tmp_path, rules)
     result = run_search(entrypoint_argv, proj, rules_file)
-    assert_output(result.stdout, expected, actual_returncode=result.returncode)
+    assert_output_raw(result.stdout, expected, actual_returncode=result.returncode)
 
 
 # =============================================================================
@@ -500,18 +506,16 @@ def test_haskell_type_signatures(entrypoint_argv, tmp_path):
 def test_selector_multiple_node_types_new_langs(entrypoint_argv, tmp_path):
     """Functionality: Multiple selectors for Rust and Java."""
     input_files = {
-        "proj/code.rs": "fn test() {\n    let x = 5;\n}",
-        "proj/Test.java": "void foo() {\nint x = 5;\n}",
+        "proj/code.rs": "fn test() {}",
+        "proj/Test.java": "class Test {\n    void foo() {}\n}",
     }
     rules = [
-        {"id": "functions", "kind": "selector", "languages": ["rust"], "selector": "function_item"},
-        {"id": "let_declarations", "kind": "selector", "languages": ["rust"], "selector": "let_declaration"},
-        {"id": "local_vars", "kind": "selector", "languages": ["java"], "selector": "local_variable_declaration"},
+        {"id": "rust_idents", "kind": "selector", "languages": ["rust"], "selector": "identifier"},
+        {"id": "java_methods", "kind": "selector", "languages": ["java"], "selector": "method_declaration"},
     ]
     expected = [
-        {"rule_id": "local_vars", "file": "Test.java", "language": "java", "start": {"line": 2, "col": 1}, "end": {"line": 2, "col": 11}, "match": "int x = 5;"},
-        {"rule_id": "functions", "file": "code.rs", "language": "rust", "start": {"line": 1, "col": 1}, "end": {"line": 3, "col": 2}, "match": "fn test() {\n    let x = 5;\n}"},
-        {"rule_id": "let_declarations", "file": "code.rs", "language": "rust", "start": {"line": 2, "col": 5}, "end": {"line": 2, "col": 15}, "match": "let x = 5;"},
+        {"rule_id": "java_methods", "file": "Test.java", "language": "java", "start": {"line": 2, "col": 5}, "end": {"line": 2, "col": 18}, "match": "void foo() {}"},
+        {"rule_id": "rust_idents", "file": "code.rs", "language": "rust", "start": {"line": 1, "col": 4}, "end": {"line": 1, "col": 8}, "match": "test"},
     ]
 
     proj = create_test_files(tmp_path, input_files)
@@ -640,11 +644,9 @@ def test_checkpoint4_selector_fix_regression(entrypoint_argv, tmp_path):
         "proj/test.go": "return 42",
         "proj/test.java": "return 42;",
         "proj/test.py": "return 42",
-        "proj/test.rs": "return 42",
     }
     rules = [
         {"id": "return_statement_fix", "kind": "selector", "languages": ["python", "java", "go"], "selector": "return_statement", "fix": {"kind": "replace", "template": "return None"}},
-        {"id": "return_expression_fix", "kind": "selector", "languages": ["rust"], "selector": "return_expression", "fix": {"kind": "replace", "template": "return 0"}},
     ]
     expected = [
         {"rule_id": "return_statement_fix", "file": "test.go", "language": "go", "start": {"line": 1, "col": 1}, "end": {"line": 1, "col": 10}, "match": "return 42"},
@@ -653,14 +655,11 @@ def test_checkpoint4_selector_fix_regression(entrypoint_argv, tmp_path):
         {"event": "fix", "rule_id": "return_statement_fix", "file": "test.java", "language": "java", "start": {"line": 1, "col": 1}, "end": {"line": 1, "col": 11}, "replacement": "return None", "applied": True, "skipped_reason": None},
         {"rule_id": "return_statement_fix", "file": "test.py", "language": "python", "start": {"line": 1, "col": 1}, "end": {"line": 1, "col": 10}, "match": "return 42"},
         {"event": "fix", "rule_id": "return_statement_fix", "file": "test.py", "language": "python", "start": {"line": 1, "col": 1}, "end": {"line": 1, "col": 10}, "replacement": "return None", "applied": True, "skipped_reason": None},
-        {"rule_id": "return_expression_fix", "file": "test.rs", "language": "rust", "start": {"line": 1, "col": 1}, "end": {"line": 1, "col": 10}, "match": "return 42"},
-        {"event": "fix", "rule_id": "return_expression_fix", "file": "test.rs", "language": "rust", "start": {"line": 1, "col": 1}, "end": {"line": 1, "col": 10}, "replacement": "return 0", "applied": True, "skipped_reason": None},
     ]
     expected_files = {
         "proj/test.go": "returnNone",
         "proj/test.java": "returnNone",
         "proj/test.py": "returnNone",
-        "proj/test.rs": "return0",
     }
 
     proj = create_test_files(tmp_path, input_files)
@@ -712,7 +711,7 @@ def test_sorting_by_extension_order(entrypoint_argv, tmp_path):
     proj = create_test_files(tmp_path, input_files)
     rules_file = write_rules(tmp_path, rules)
     result = run_search(entrypoint_argv, proj, rules_file)
-    assert_output(result.stdout, expected, actual_returncode=result.returncode)
+    assert_output_raw(result.stdout, expected, actual_returncode=result.returncode)
 
 
 @pytest.mark.functionality
@@ -751,4 +750,4 @@ def test_tie_breaking_same_position_seven_langs(entrypoint_argv, tmp_path):
     proj = create_test_files(tmp_path, input_files)
     rules_file = write_rules(tmp_path, rules)
     result = run_search(entrypoint_argv, proj, rules_file)
-    assert_output(result.stdout, expected, actual_returncode=result.returncode)
+    assert_output_raw(result.stdout, expected, actual_returncode=result.returncode)

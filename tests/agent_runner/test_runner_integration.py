@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import patch
 
-from slop_code.evaluation.adapters.models import GroupType
-
 from slop_code.agent_runner import runner
 from slop_code.agent_runner.agent import Agent
 from slop_code.agent_runner.agent import AgentConfigBase
@@ -15,6 +13,7 @@ from slop_code.agent_runner.models import AgentRunSpec
 from slop_code.agent_runner.state import AgentStateEnum
 from slop_code.common import AGENT_DIR_NAME
 from slop_code.common import PROMPT_FILENAME
+from slop_code.evaluation import GroupType
 from slop_code.evaluation import PassPolicy
 
 

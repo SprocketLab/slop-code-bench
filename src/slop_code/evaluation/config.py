@@ -41,6 +41,30 @@ class ConfigError(Exception):
     """Error raised when a configuration is invalid."""
 
 
+class MarkerConfig(BaseModel):
+    """Configuration for a custom pytest marker.
+
+    Custom markers allow problems to define additional test categorizations
+    beyond the built-in markers (error, functionality, regression). Each
+    custom marker must specify which GroupType it maps to.
+
+    Attributes:
+        description: Description shown in pytest.ini marker registration.
+        group: GroupType this marker maps to for test categorization.
+
+    Example:
+        >>> config = MarkerConfig(
+        ...     description="performance and load tests",
+        ...     group=GroupType.FUNCTIONALITY,
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid", use_enum_values=True)
+
+    description: str = Field(description="Marker description for pytest.ini")
+    group: GroupType = Field(description="GroupType this marker maps to")
+
+
 class BaseConfig(BaseModel):
     """Shared knobs present on problem, checkpoint, and group models.
 
@@ -697,12 +721,12 @@ class ProblemConfig(BaseConfig):
             "Entry file required for executing checkpoints when not overridden."
         ),
     )
-    markers: dict[str, str] = Field(
-        default_factory=lambda: {
-            "functionality": "non-core / nice-to-have tests",
-            "error": "error-handling / edge-case tests",
-        },
-        description="Custom pytest markers to register (marker_name -> description)",
+    markers: dict[str, MarkerConfig] = Field(
+        default_factory=dict,
+        description=(
+            "Custom pytest markers beyond built-ins (error, functionality, regression). "
+            "Each marker must specify a description and GroupType mapping."
+        ),
     )
     test_dependencies: list[str] = Field(
         default_factory=list,

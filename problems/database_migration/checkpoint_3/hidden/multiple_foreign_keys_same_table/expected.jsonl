@@ -1,3 +1,0 @@
-{"event": "operation_applied", "type": "add_foreign_key", "table": "employees", "name": "fk_employees_department", "version": 2}
-{"event": "operation_applied", "type": "add_foreign_key", "table": "employees", "name": "fk_employees_location", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 2}

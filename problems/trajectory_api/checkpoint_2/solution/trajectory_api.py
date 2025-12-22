@@ -413,21 +413,18 @@ def validate_steps(
                     error_factory,
                     "non-assistant input_tokens must be null",
                     f"{prefix}[{idx}].input_tokens",
-                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
                 )
             if output_tokens is not None:
                 raise_error(
                     error_factory,
                     "non-assistant output_tokens must be null",
                     f"{prefix}[{idx}].output_tokens",
-                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
                 )
             if cost is not None:
                 raise_error(
                     error_factory,
                     "non-assistant cost must be null",
                     f"{prefix}[{idx}].cost",
-                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
                 )
 
         validated_steps.append(
@@ -491,6 +488,19 @@ def validate_new_trajectory(
         prev_output_tokens=None,
         prev_cost=None,
     )
+    if status == STATUS_FINALIZED and len(validated_steps) >= 3:
+        assistant_indices = [
+            idx
+            for idx, step in enumerate(validated_steps)
+            if step["role"] == ASSISTANT_ROLE
+        ]
+        if assistant_indices and all(
+            idx == len(validated_steps) - 1 for idx in assistant_indices
+        ):
+            raise InvalidInputError(
+                "assistant step must appear before end of trajectory",
+                "trajectory",
+            )
 
     validated_payload = {
         "date": payload["date"],

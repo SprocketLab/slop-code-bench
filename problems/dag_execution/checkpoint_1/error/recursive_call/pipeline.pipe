@@ -1,8 +1,0 @@
-task main {
-    run: {
-        echo "Hello"
-    }
-    requires: {
-        main()
-    }
-}

@@ -1,4 +1,0 @@
-id,name,internal_id,score,temp_flag
-1,Alice,INT001,85,true
-2,Bob,INT002,90,false
-3,Carol,INT003,78,true

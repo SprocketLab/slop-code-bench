@@ -350,19 +350,16 @@ def validate_trajectory_payload(
                 raise InvalidInputError(
                     "non-assistant input_tokens must be null",
                     f"trajectory[{idx}].input_tokens",
-                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
                 )
             if output_tokens is not None:
                 raise InvalidInputError(
                     "non-assistant output_tokens must be null",
                     f"trajectory[{idx}].output_tokens",
-                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
                 )
             if cost is not None:
                 raise InvalidInputError(
                     "non-assistant cost must be null",
                     f"trajectory[{idx}].cost",
-                    status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
                 )
 
         validated_steps.append(

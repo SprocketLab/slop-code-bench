@@ -255,10 +255,11 @@ class PytestRunner:
                 shutil.copytree(item, workspace_tests / item.name)
 
     # Built-in markers that are always registered
-    BUILTIN_MARKERS = {
-        "error": "error-handling / edge-case tests",
-        "functionality": "non-core / nice-to-have tests",
-        "regression": "regression tests from prior checkpoints",
+    # Maps marker name -> (description, GroupType)
+    BUILTIN_MARKERS: dict[str, tuple[str, GroupType]] = {
+        "error": ("error-handling / edge-case tests", GroupType.ERROR),
+        "functionality": ("non-core / nice-to-have tests", GroupType.FUNCTIONALITY),
+        "regression": ("regression tests from prior checkpoints", GroupType.REGRESSION),
     }
 
     def _generate_pytest_ini(self, workspace_path: Path) -> None:
@@ -285,13 +286,13 @@ class PytestRunner:
         """
         # Build markers section from built-in + problem.markers
         markers_lines = []
-        # Add built-in markers first
-        for marker_name, marker_desc in self.BUILTIN_MARKERS.items():
+        # Add built-in markers first (BUILTIN_MARKERS values are (description, GroupType) tuples)
+        for marker_name, (marker_desc, _) in self.BUILTIN_MARKERS.items():
             markers_lines.append(f"    {marker_name}: {marker_desc}")
-        # Add problem-specific markers (may override built-in descriptions)
-        for marker_name, marker_desc in self.problem.markers.items():
+        # Add problem-specific custom markers (MarkerConfig objects)
+        for marker_name, marker_config in self.problem.markers.items():
             if marker_name not in self.BUILTIN_MARKERS:
-                markers_lines.append(f"    {marker_name}: {marker_desc}")
+                markers_lines.append(f"    {marker_name}: {marker_config.description}")
 
         markers_section = "\n".join(markers_lines)
 
@@ -503,7 +504,8 @@ markers =
         1. If "error" marker present -> ERROR (always, regardless of checkpoint)
         2. If "regression" marker present OR test is from prior checkpoint:
            -> REGRESSION (explicit regression tests or tests from earlier checkpoints)
-        3. If test is from current checkpoint:
+        3. Check custom markers from problem config -> return their configured GroupType
+        4. If test is from current checkpoint:
            - If "functionality" marker -> FUNCTIONALITY
            - If no marker -> CORE
 
@@ -550,7 +552,12 @@ markers =
         if "regression" in markers or not is_current:
             return GroupType.REGRESSION
 
-        # RULE 3: Current checkpoint tests
+        # RULE 3: Check custom markers from problem config
+        for marker in markers:
+            if marker in self.problem.markers:
+                return self.problem.markers[marker].group
+
+        # RULE 4: Current checkpoint tests
         # If has functionality marker -> FUNCTIONALITY
         # Otherwise -> CORE
         if "functionality" in markers:
@@ -803,10 +810,9 @@ markers =
         # Extract markers from keywords
         # pytest-json-report stores markers in the keywords list
         keywords = test_data.get("keywords", []) or []
-        # Filter to only include our known markers (problem-defined + built-in)
-        known_markers = set(self.problem.markers.keys()) if self.problem.markers else set()
-        # Add built-in markers that are always recognized
-        known_markers.update({"error", "functionality", "regression"})
+        # Filter to only include our known markers (built-in + problem-defined custom)
+        known_markers = set(self.BUILTIN_MARKERS.keys())
+        known_markers.update(self.problem.markers.keys())
         markers = [kw for kw in keywords if kw in known_markers]
 
         # Determine group type using categorization logic
@@ -825,19 +831,27 @@ markers =
             "skipped": "skipped",
             "error": "error",
             "xfailed": "skipped",  # Expected failure = skip
-            "xpassed": "passed",   # Unexpected pass = pass
+            "xpassed": "passed",  # Unexpected pass = pass
         }
         status = status_map.get(outcome, "error")
 
         # Extract failure message from call phase
         failure_message = self._extract_failure_message(test_data)
 
-        # Duration is in seconds, convert to milliseconds
-        duration_seconds = test_data.get("duration", 0) or 0
+        # Duration is stored inside phase objects (setup, call, teardown), sum them
+        duration_seconds = 0.0
+        for phase in ["setup", "call", "teardown"]:
+            phase_data = test_data.get(phase) or {}
+            if isinstance(phase_data, dict):
+                duration_seconds += phase_data.get("duration", 0) or 0
         duration_ms = duration_seconds * 1000
 
+        # Extract simple test ID from nodeid (remove file path prefix)
+        # "tests/test_file.py::TestClass::test_func[param]" -> "TestClass::test_func[param]"
+        test_id = nodeid.split("::", 1)[-1] if "::" in nodeid else nodeid
+
         return TestResult(
-            id=nodeid,
+            id=test_id,
             checkpoint=test_checkpoint,
             group_type=group_type,
             status=status,
@@ -1034,7 +1048,7 @@ markers =
                 duration=exec_result.elapsed,
             )
             if exec_result.exit_code != EXIT_OK:
-                logger.warning(
+                logger.debug(
                     "Pytest execution reported failure",
                     exit_code=exec_result.exit_code,
                     stdout=_truncate_output(exec_result.stdout),
@@ -1123,7 +1137,9 @@ markers =
             # otherwise fall back to CTRF (collapses parametrized tests)
             if use_pytest_report:
                 for test_data in pytest_report_tests:
-                    test_result = self._convert_pytest_report_test_to_result(test_data)
+                    test_result = self._convert_pytest_report_test_to_result(
+                        test_data
+                    )
                     results.add_test_result(test_result)
             else:
                 for test_data in ctrf_tests:
@@ -1137,8 +1153,6 @@ markers =
                 "Pytest evaluation complete",
                 problem=self.problem.name,
                 checkpoint=self.checkpoint.name,
-                pass_counts=dict(results.pass_counts),
-                total_counts=dict(results.total_counts),
                 infrastructure_failure=infrastructure_failure,
                 status_counts=dict(status_counts),
             )

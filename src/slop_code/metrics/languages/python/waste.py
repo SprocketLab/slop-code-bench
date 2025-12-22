@@ -53,48 +53,83 @@ def _is_docstring_statement(node: Node) -> bool:
     return child.type == "string"
 
 
+def _find_single_call(expr: Node) -> Node | None:
+    """Return the call node if expr contains exactly one call node, else None."""
+    # unwrap common wrappers that don't add new calls
+    while expr and expr.type in {"parenthesized_expression"}:
+        # tree-sitter-python uses "expression" for parenthesized_expression
+        inner = expr.child_by_field_name("expression")
+        if inner is None and expr.named_children:
+            inner = expr.named_children[0]
+        if inner is None:
+            break
+        expr = inner
+
+    calls: list[Node] = []
+    stack = [expr]
+    while stack:
+        n = stack.pop()
+        if n.type == "call":
+            calls.append(n)
+            # keep walking to detect nested calls like f(g(x))
+        for ch in n.named_children:
+            stack.append(ch)
+
+    return calls[0] if len(calls) == 1 else None
+
+
+def _callee_name(call: Node) -> str | None:
+    func = call.child_by_field_name("function")
+    if func is None and call.named_children:
+        func = call.named_children[0]
+
+    if not func:
+        return None
+    if func.type == "identifier":
+        return func.text.decode("utf-8")
+    if func.type == "attribute":
+        # your current behavior: last attribute only (foo.bar -> "bar")
+        attr = func.child_by_field_name("attribute")
+        if attr and attr.type == "identifier":
+            return attr.text.decode("utf-8")
+    return None
+
+
 def _is_trivial_wrapper(func_node: Node) -> tuple[bool, str | None]:
-    """Check if a function is a trivial wrapper."""
     block = _get_block_child(func_node)
     if block is None:
         return False, None
 
     statements = [
-        child
-        for child in block.named_children
-        if child.type != "pass_statement"
+        ch for ch in block.named_children if ch.type != "pass_statement"
     ]
-    non_doc = [stmt for stmt in statements if not _is_docstring_statement(stmt)]
+    non_doc = [s for s in statements if not _is_docstring_statement(s)]
     if len(non_doc) != 1:
         return False, None
 
     stmt = non_doc[0]
-    target = None
-    if (
-        stmt.type == "return_statement"
-        and stmt.named_children
-        or stmt.type == "expression_statement"
-        and stmt.named_children
-    ):
-        target = stmt.named_children[0]
-    if target is None or target.type != "call":
+
+    expr = None
+    if stmt.type == "return_statement":
+        expr = stmt.child_by_field_name("argument")
+        if expr is None and stmt.named_children:
+            expr = stmt.named_children[0]
+    elif stmt.type == "expression_statement":
+        expr = stmt.child_by_field_name("expression")
+        if expr is None and stmt.named_children:
+            expr = stmt.named_children[0]
+    else:
         return False, None
 
-    func = target.child_by_field_name("function")
-    if func is None and target.named_children:
-        func = target.named_children[0]
+    if expr is None:
+        return False, None
 
-    wrapped: str | None = None
-    if func and func.type == "identifier":
-        wrapped = func.text.decode("utf-8")
-    elif func and func.type == "attribute":
-        attr_child = func.child_by_field_name("attribute")
-        if attr_child and attr_child.type == "identifier":
-            wrapped = attr_child.text.decode("utf-8")
+    call = _find_single_call(expr)
+    if call is None:
+        return False, None
 
-    if wrapped:
-        return True, wrapped
-    return False, None
+    wrapped = _callee_name(call)
+    return (True, wrapped) if wrapped else (False, None)
 
 
 def detect_waste(source: Path, symbols: list[SymbolMetrics]) -> WasteMetrics:

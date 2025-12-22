@@ -1,2 +1,0 @@
-{"event": "operation_applied", "type": "create_table", "table": "accounts", "version": 1}
-{"event": "migration_complete", "version": 1, "operations_count": 1}

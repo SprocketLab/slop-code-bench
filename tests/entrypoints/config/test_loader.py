@@ -162,15 +162,15 @@ class TestLoadRunConfig:
         """Test that CLI flags override defaults."""
         config = load_run_config(
             cli_flags={
-                "prompt": "best_practice",
-                "model": {"provider": "openai", "name": "gpt-4.1"},
+                "prompt": "plan_first",
+                "model": {"provider": "openai", "name": "gpt-5.2"},
             }
         )
 
         assert config.model.provider == "openai"
-        assert config.model.name == "gpt-4.1"
+        assert config.model.name == "gpt-5.2"
         # Should find the prompt file
-        assert config.prompt_path.stem == "best_practice"
+        assert config.prompt_path.stem == "plan_first"
 
     def test_cli_overrides_override_flags(self):
         """Test that key=value overrides take highest priority."""
@@ -178,11 +178,11 @@ class TestLoadRunConfig:
             cli_flags={
                 "model": {"provider": "anthropic", "name": "sonnet-4.5"},
             },
-            cli_overrides=["model.name=opus-4"],
+            cli_overrides=["model.name=opus-4.5"],
         )
 
         # Override should win
-        assert config.model.name == "opus-4"
+        assert config.model.name == "opus-4.5"
         # Provider unchanged
         assert config.model.provider == "anthropic"
 

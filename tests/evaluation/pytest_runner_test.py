@@ -33,10 +33,9 @@ def mock_problem_config():
     problem.version = 1
     problem.path = Path("/problems/test_problem")
     problem.entry_file = "main.py"
-    problem.markers = {
-        "functionality": "optional tests",
-        "error": "error handling tests",
-    }
+    # Built-in markers (error, functionality, regression) are handled by
+    # PytestRunner.BUILTIN_MARKERS. problem.markers is only for custom markers.
+    problem.markers = {}
     problem.static_assets = {}
     problem.test_dependencies = []
 
@@ -785,30 +784,32 @@ class TestPytestJsonReportConversion:
         test_data = {
             "nodeid": "tests/test_checkpoint_2.py::test_example",
             "outcome": "passed",
-            "duration": 0.123,
             "keywords": ["test_example", "TestClass"],
+            "setup": {"duration": 0.001, "outcome": "passed"},
+            "call": {"duration": 0.120, "outcome": "passed"},
+            "teardown": {"duration": 0.002, "outcome": "passed"},
         }
 
         result = pytest_runner._convert_pytest_report_test_to_result(test_data)
 
-        assert result.id == "tests/test_checkpoint_2.py::test_example"
+        assert result.id == "test_example"
         assert result.status == "passed"
         assert result.file_path == "tests/test_checkpoint_2.py"
         assert result.checkpoint == "checkpoint_2"
-        assert result.duration_ms == 123.0  # Converted from seconds to ms
+        assert result.duration_ms == 123.0  # Sum of setup + call + teardown
 
     def test_convert_pytest_report_test_parametrized(self, pytest_runner):
         """Parametrized test with [param] in nodeid is converted correctly."""
         test_data = {
             "nodeid": "tests/test_checkpoint_2.py::test_calculation[input=1]",
             "outcome": "passed",
-            "duration": 0.05,
             "keywords": ["test_calculation", "parametrize"],
+            "call": {"duration": 0.05, "outcome": "passed"},
         }
 
         result = pytest_runner._convert_pytest_report_test_to_result(test_data)
 
-        assert result.id == "tests/test_checkpoint_2.py::test_calculation[input=1]"
+        assert result.id == "test_calculation[input=1]"
         assert result.status == "passed"
         assert result.checkpoint == "checkpoint_2"
 
@@ -817,9 +818,9 @@ class TestPytestJsonReportConversion:
         test_data = {
             "nodeid": "tests/test_checkpoint_2.py::test_fail",
             "outcome": "failed",
-            "duration": 0.1,
             "keywords": [],
             "call": {
+                "duration": 0.1,
                 "outcome": "failed",
                 "longreprtext": "AssertionError: expected 5, got 3",
             },
@@ -835,8 +836,8 @@ class TestPytestJsonReportConversion:
         test_data = {
             "nodeid": "tests/test_checkpoint_2.py::test_optional",
             "outcome": "passed",
-            "duration": 0.05,
             "keywords": ["test_optional", "functionality", "some_other_keyword"],
+            "call": {"duration": 0.05, "outcome": "passed"},
         }
 
         result = pytest_runner._convert_pytest_report_test_to_result(test_data)
@@ -850,8 +851,8 @@ class TestPytestJsonReportConversion:
         test_data = {
             "nodeid": "tests/test_checkpoint_1.py::test_old",
             "outcome": "passed",
-            "duration": 0.03,
             "keywords": [],
+            "call": {"duration": 0.03, "outcome": "passed"},
         }
 
         result = pytest_runner._convert_pytest_report_test_to_result(test_data)
@@ -864,8 +865,8 @@ class TestPytestJsonReportConversion:
         test_data = {
             "nodeid": "tests/test_checkpoint_2.py::test_skip",
             "outcome": "skipped",
-            "duration": 0.001,
             "keywords": [],
+            "setup": {"duration": 0.001, "outcome": "skipped"},
         }
 
         result = pytest_runner._convert_pytest_report_test_to_result(test_data)
@@ -877,8 +878,8 @@ class TestPytestJsonReportConversion:
         test_data = {
             "nodeid": "tests/test_checkpoint_2.py::test_xfail",
             "outcome": "xfailed",
-            "duration": 0.01,
             "keywords": [],
+            "call": {"duration": 0.01, "outcome": "xfailed"},
         }
 
         result = pytest_runner._convert_pytest_report_test_to_result(test_data)

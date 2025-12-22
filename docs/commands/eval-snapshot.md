@@ -41,6 +41,11 @@ slop-code eval-snapshot [OPTIONS] SNAPSHOT_DIR
 | `--rubric-model` | string | - | Model ID for rubric grading |
 | `--rubric-temperature` | float | 0.0 | Sampling temperature |
 | `--rubric-provider` | enum | `OPENROUTER` | LLM provider for grading |
+| `--json` | flag | false | Output correctness results as JSON |
+
+**Global options** (apply to all commands):
+| `-q, --quiet` | flag | false | Suppress console logging (logs still written to file) |
+| `-v, --verbose` | flag | false | Increase verbosity (incompatible with `--quiet`) |
 
 ## Behavior
 

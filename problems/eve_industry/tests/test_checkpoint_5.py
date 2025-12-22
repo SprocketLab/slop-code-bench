@@ -10,8 +10,6 @@ import csv
 import subprocess
 from pathlib import Path
 
-import pytest
-
 
 def run_command(entrypoint_argv, *args, cwd=None, timeout=60):
     """Run CLI command and return result."""

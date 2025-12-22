@@ -30,7 +30,9 @@ def apply_one_shot_mode(
             rendered_prefix = prefix_template.render(idx=idx)
             separator = f"{rendered_prefix}\n" if rendered_prefix else "\n"
             combined_parts.append(separator)
-        combined_parts.append(checkpoint.get_spec_text())
+        combined_parts.append(
+            problem_config.get_checkpoint_spec(checkpoint.name)
+        )
 
     combined_spec = "".join(combined_parts)
 

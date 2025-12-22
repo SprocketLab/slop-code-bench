@@ -156,6 +156,7 @@ def setup_command_logging(
     log_file_name: str = "evaluation.log",
     console: Console | None = None,
     add_multiproc_info: bool = False,
+    quiet: bool = False,
 ) -> Any:
     """Setup logging for commands."""
     return setup_logging(
@@ -164,4 +165,5 @@ def setup_command_logging(
         log_file_name=log_file_name,
         console=console,
         add_multiproc_info=add_multiproc_info,
+        suppress_console=quiet,
     )

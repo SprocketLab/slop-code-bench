@@ -1,3 +1,0 @@
-Reports generated:
-report_sales_html/report.html
-report_sales_pdf/report.pdf

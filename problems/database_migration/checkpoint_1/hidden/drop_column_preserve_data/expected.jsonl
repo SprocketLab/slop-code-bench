@@ -1,2 +1,0 @@
-{"event": "operation_applied", "type": "drop_column", "table": "products", "column": "description", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 1}

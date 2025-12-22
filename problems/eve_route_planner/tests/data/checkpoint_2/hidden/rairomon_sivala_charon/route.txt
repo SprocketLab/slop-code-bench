@@ -1,0 +1,3 @@
+START: Rairomon
+GO: Rairomon (0.6) -> Huttaken (0.6) -> Halaima (0.7) -> Kamio (0.7) -> Ikao (0.6) -> Uedama (0.5) -> Sivala (0.6)
+DONE: 00:10

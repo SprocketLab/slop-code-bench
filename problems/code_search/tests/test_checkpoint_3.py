@@ -11,7 +11,6 @@ import subprocess
 
 import pytest
 
-
 # =============================================================================
 # Helper Functions
 # =============================================================================
@@ -332,46 +331,6 @@ def test_complex_python_decorators(entrypoint_argv, tmp_path):
 
 
 @pytest.mark.functionality
-def test_complex_javascript_arrow(entrypoint_argv, tmp_path):
-    """Functionality: Arrow function patterns in JavaScript."""
-    input_files = {"proj/utils.js": "const double = (x) => x * 2;\nconst greet = (name) => `Hello ${name}`;"}
-    rules = [{"id": "arrow_func", "kind": "pattern", "languages": ["javascript"], "pattern": "const $NAME = ($ARG) => $BODY"}]
-    expected = [
-        {
-            "captures": {
-                "$ARG": {"ranges": [{"end": {"col": 18, "line": 1}, "start": {"col": 17, "line": 1}}], "text": "x"},
-                "$BODY": {"ranges": [{"end": {"col": 24, "line": 1}, "start": {"col": 23, "line": 1}}], "text": "x"},
-                "$NAME": {"ranges": [{"end": {"col": 13, "line": 1}, "start": {"col": 7, "line": 1}}], "text": "double"},
-            },
-            "end": {"col": 24, "line": 1},
-            "file": "utils.js",
-            "language": "javascript",
-            "match": "const double = (x) => x",
-            "rule_id": "arrow_func",
-            "start": {"col": 1, "line": 1},
-        },
-        {
-            "captures": {
-                "$ARG": {"ranges": [{"end": {"col": 20, "line": 2}, "start": {"col": 16, "line": 2}}], "text": "name"},
-                "$BODY": {"ranges": [{"end": {"col": 40, "line": 2}, "start": {"col": 25, "line": 2}}], "text": "`Hello ${name}`"},
-                "$NAME": {"ranges": [{"end": {"col": 12, "line": 2}, "start": {"col": 7, "line": 2}}], "text": "greet"},
-            },
-            "end": {"col": 40, "line": 2},
-            "file": "utils.js",
-            "language": "javascript",
-            "match": "const greet = (name) => `Hello ${name}`",
-            "rule_id": "arrow_func",
-            "start": {"col": 1, "line": 2},
-        },
-    ]
-
-    proj = create_test_files(tmp_path, input_files)
-    rules_file = write_rules(tmp_path, rules)
-    result = run_search(entrypoint_argv, proj, rules_file)
-    assert_matches(result.stdout, expected, actual_returncode=result.returncode)
-
-
-@pytest.mark.functionality
 def test_complex_cpp_templates(entrypoint_argv, tmp_path):
     """Functionality: C++ template class patterns."""
     input_files = {
@@ -402,56 +361,6 @@ def test_complex_cpp_templates(entrypoint_argv, tmp_path):
             "match": "template<typename U>\nclass List {",
             "rule_id": "template_class",
             "start": {"col": 1, "line": 7},
-        },
-    ]
-
-    proj = create_test_files(tmp_path, input_files)
-    rules_file = write_rules(tmp_path, rules)
-    result = run_search(entrypoint_argv, proj, rules_file)
-    assert_matches(result.stdout, expected, actual_returncode=result.returncode)
-
-
-@pytest.mark.functionality
-def test_cpp_pointer_patterns(entrypoint_argv, tmp_path):
-    """Functionality: C++ pointer dereference patterns."""
-    input_files = {"proj/ptrs.cpp": "int* p = nullptr;\n*p = 42;\nint x = 10;\n*ptr = x + 5;"}
-    rules = [{"id": "ptr_deref", "kind": "pattern", "languages": ["cpp"], "pattern": "*$PTR = $VAL;"}]
-    expected = [
-        {
-            "captures": {
-                "$PTR": {"ranges": [{"end": {"col": 7, "line": 1}, "start": {"col": 6, "line": 1}}], "text": "p"},
-                "$VAL": {"ranges": [{"end": {"col": 17, "line": 1}, "start": {"col": 10, "line": 1}}], "text": "nullptr"},
-            },
-            "end": {"col": 18, "line": 1},
-            "file": "ptrs.cpp",
-            "language": "cpp",
-            "match": "* p = nullptr;",
-            "rule_id": "ptr_deref",
-            "start": {"col": 4, "line": 1},
-        },
-        {
-            "captures": {
-                "$PTR": {"ranges": [{"end": {"col": 3, "line": 2}, "start": {"col": 2, "line": 2}}], "text": "p"},
-                "$VAL": {"ranges": [{"end": {"col": 8, "line": 2}, "start": {"col": 6, "line": 2}}], "text": "42"},
-            },
-            "end": {"col": 9, "line": 2},
-            "file": "ptrs.cpp",
-            "language": "cpp",
-            "match": "*p = 42;",
-            "rule_id": "ptr_deref",
-            "start": {"col": 1, "line": 2},
-        },
-        {
-            "captures": {
-                "$PTR": {"ranges": [{"end": {"col": 5, "line": 4}, "start": {"col": 2, "line": 4}}], "text": "ptr"},
-                "$VAL": {"ranges": [{"end": {"col": 13, "line": 4}, "start": {"col": 8, "line": 4}}], "text": "x + 5"},
-            },
-            "end": {"col": 14, "line": 4},
-            "file": "ptrs.cpp",
-            "language": "cpp",
-            "match": "*ptr = x + 5;",
-            "rule_id": "ptr_deref",
-            "start": {"col": 1, "line": 4},
         },
     ]
 
@@ -529,58 +438,6 @@ def test_literal_dollar_sign(entrypoint_argv, tmp_path):
             "rule_id": "dollar_var",
             "start": {"col": 1, "line": 1},
         }
-    ]
-
-    proj = create_test_files(tmp_path, input_files)
-    rules_file = write_rules(tmp_path, rules)
-    result = run_search(entrypoint_argv, proj, rules_file)
-    assert_matches(result.stdout, expected, actual_returncode=result.returncode)
-
-
-@pytest.mark.functionality
-def test_metavar_at_different_depths(entrypoint_argv, tmp_path):
-    """Functionality: Optional metavariable with method calls."""
-    input_files = {"proj/methods.js": "user.getName();\nobj.foo(123);\nconsole.log('test');"}
-    rules = [{"id": "method_call", "kind": "pattern", "languages": ["javascript"], "pattern": "$OBJ.$METHOD($ARG?)"}]
-    expected = [
-        {
-            "captures": {
-                "$METHOD": {"ranges": [{"end": {"col": 13, "line": 1}, "start": {"col": 6, "line": 1}}], "text": "getName"},
-                "$OBJ": {"ranges": [{"end": {"col": 5, "line": 1}, "start": {"col": 1, "line": 1}}], "text": "user"},
-            },
-            "end": {"col": 15, "line": 1},
-            "file": "methods.js",
-            "language": "javascript",
-            "match": "user.getName()",
-            "rule_id": "method_call",
-            "start": {"col": 1, "line": 1},
-        },
-        {
-            "captures": {
-                "$ARG": {"ranges": [{"end": {"col": 12, "line": 2}, "start": {"col": 9, "line": 2}}], "text": "123"},
-                "$METHOD": {"ranges": [{"end": {"col": 8, "line": 2}, "start": {"col": 5, "line": 2}}], "text": "foo"},
-                "$OBJ": {"ranges": [{"end": {"col": 4, "line": 2}, "start": {"col": 1, "line": 2}}], "text": "obj"},
-            },
-            "end": {"col": 13, "line": 2},
-            "file": "methods.js",
-            "language": "javascript",
-            "match": "obj.foo(123)",
-            "rule_id": "method_call",
-            "start": {"col": 1, "line": 2},
-        },
-        {
-            "captures": {
-                "$ARG": {"ranges": [{"end": {"col": 19, "line": 3}, "start": {"col": 13, "line": 3}}], "text": "'test'"},
-                "$METHOD": {"ranges": [{"end": {"col": 12, "line": 3}, "start": {"col": 9, "line": 3}}], "text": "log"},
-                "$OBJ": {"ranges": [{"end": {"col": 8, "line": 3}, "start": {"col": 1, "line": 3}}], "text": "console"},
-            },
-            "end": {"col": 20, "line": 3},
-            "file": "methods.js",
-            "language": "javascript",
-            "match": "console.log('test')",
-            "rule_id": "method_call",
-            "start": {"col": 1, "line": 3},
-        },
     ]
 
     proj = create_test_files(tmp_path, input_files)
@@ -710,11 +567,93 @@ def test_multiple_files_sorted(entrypoint_argv, tmp_path):
 
 
 @pytest.mark.functionality
+def test_same_start_ordering(entrypoint_argv, tmp_path):
+    """Functionality: Same-start matches ordered by end, then rule_id."""
+    input_files = {"proj/order.py": "print(1)\nprint(2)\nprint(3)"}
+    rules = [
+        {"id": "short", "kind": "pattern", "languages": ["python"], "pattern": "print($X)"},
+        {"id": "b_long", "kind": "pattern", "languages": ["python"], "pattern": "print($X)\nprint($Y)"},
+        {"id": "a_long", "kind": "pattern", "languages": ["python"], "pattern": "print($X)\nprint($Y)"},
+    ]
+
+    proj = create_test_files(tmp_path, input_files)
+    rules_file = write_rules(tmp_path, rules)
+    result = run_search(entrypoint_argv, proj, rules_file)
+
+    assert result.returncode == 0
+    matches = parse_jsonl(result.stdout)
+    same_start = [
+        match
+        for match in matches
+        if match["file"] == "order.py" and match["start"] == {"line": 1, "col": 1}
+    ]
+    assert [match["rule_id"] for match in same_start] == ["short", "a_long", "b_long"]
+
+
+@pytest.mark.functionality
 def test_no_matches(entrypoint_argv, tmp_path):
     """Functionality: Pattern with no matches returns empty output."""
     input_files = {"proj/test.js": "console.log('hello');\nconst x = 5;"}
     rules = [{"id": "nonexistent", "kind": "pattern", "languages": ["javascript"], "pattern": "throw new Error($MSG)"}]
     expected = []
+
+    proj = create_test_files(tmp_path, input_files)
+    rules_file = write_rules(tmp_path, rules)
+    result = run_search(entrypoint_argv, proj, rules_file)
+    assert_matches(result.stdout, expected, actual_returncode=result.returncode)
+
+
+@pytest.mark.functionality
+def test_captures_key_order(entrypoint_argv, tmp_path):
+    """Functionality: Captures keys sorted lexicographically."""
+    input_files = {"proj/order.js": "foo(1, 2);"}
+    rules = [{"id": "captures_order", "kind": "pattern", "languages": ["javascript"], "pattern": "foo($B, $A);"}]
+
+    proj = create_test_files(tmp_path, input_files)
+    rules_file = write_rules(tmp_path, rules)
+    result = run_search(entrypoint_argv, proj, rules_file)
+
+    assert result.returncode == 0
+    matches = parse_jsonl(result.stdout)
+    assert len(matches) == 1
+    captures = matches[0]["captures"]
+    assert list(captures.keys()) == ["$A", "$B"]
+
+
+@pytest.mark.functionality
+def test_default_languages_include_cpp(entrypoint_argv, tmp_path):
+    """Functionality: Rules without languages apply to C++ too."""
+    input_files = {"proj/a.py": "x = 1;", "proj/b.js": "x = 2;", "proj/c.cpp": "x = 3;"}
+    rules = [{"id": "assign_stmt", "kind": "pattern", "pattern": "x = $VAL;"}]
+    expected = [
+        {
+            "captures": {"$VAL": {"ranges": [{"end": {"col": 6, "line": 1}, "start": {"col": 5, "line": 1}}], "text": "1"}},
+            "end": {"col": 7, "line": 1},
+            "file": "a.py",
+            "language": "python",
+            "match": "x = 1;",
+            "rule_id": "assign_stmt",
+            "start": {"col": 1, "line": 1},
+        },
+        {
+            "captures": {"$VAL": {"ranges": [{"end": {"col": 6, "line": 1}, "start": {"col": 5, "line": 1}}], "text": "2"}},
+            "end": {"col": 7, "line": 1},
+            "file": "b.js",
+            "language": "javascript",
+            "match": "x = 2;",
+            "rule_id": "assign_stmt",
+            "start": {"col": 1, "line": 1},
+        },
+        {
+            "captures": {"$VAL": {"ranges": [{"end": {"col": 6, "line": 1}, "start": {"col": 5, "line": 1}}], "text": "3"}},
+            "end": {"col": 7, "line": 1},
+            "file": "c.cpp",
+            "language": "cpp",
+            "match": "x = 3;",
+            "rule_id": "assign_stmt",
+            "start": {"col": 1, "line": 1},
+        },
+    ]
 
     proj = create_test_files(tmp_path, input_files)
     rules_file = write_rules(tmp_path, rules)

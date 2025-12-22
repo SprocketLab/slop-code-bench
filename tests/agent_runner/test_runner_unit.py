@@ -106,18 +106,14 @@ def test_run_checkpoint_task_runs_inference_when_no_replay() -> None:
 def test_get_task_for_checkpoint_renders_prompt_and_writes_file(
     tmp_path: Path,
 ) -> None:
-    checkpoint = StubCheckpoint(
-        name="checkpoint_one",
-        spec_text=(
-            "Start with %%%ENTRYPOINT:entry_file%%% and run %%%ENTRYPOINT:entry_command%%%"
-        ),
-    )
+    spec_text = "Start with %%%ENTRYPOINT:entry_file%%% and run %%%ENTRYPOINT:entry_command%%%"
     environment = Mock()
     environment.format_entry_file.return_value = "formatted/main.py"
     environment.get_command.return_value = "uv run formatted/main.py"
 
     prompt = runner.get_task_for_checkpoint(
-        checkpoint=checkpoint,
+        checkpoint_name="checkpoint_1",
+        spec_text=spec_text,
         template="{{ 'CONT' if is_continuation else 'START' }} :: {{ spec }}",
         entry_file="main.py",
         environment=environment,

@@ -1,4 +1,0 @@
-{"event": "operation_applied", "type": "add_foreign_key", "table": "transactions", "name": "fk_transactions_account", "version": 2}
-{"event": "operation_applied", "type": "create_index", "name": "idx_transactions_txn_id", "table": "transactions", "version": 2}
-{"event": "operation_applied", "type": "add_check_constraint", "table": "transactions", "name": "chk_transactions_amount", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 3}

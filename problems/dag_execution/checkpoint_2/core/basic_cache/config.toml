@@ -1,5 +1,0 @@
-# expensive_compute(10) should execute once and cache
-# expensive_compute(20) should execute once
-# Total: 2 actual executions, 2 cache hits
-
-entry = "aggregate"

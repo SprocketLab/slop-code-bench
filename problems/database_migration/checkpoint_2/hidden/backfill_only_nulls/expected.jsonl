@@ -1,2 +1,0 @@
-{"event": "operation_applied", "type": "backfill_data", "table": "products", "column": "status", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 1}

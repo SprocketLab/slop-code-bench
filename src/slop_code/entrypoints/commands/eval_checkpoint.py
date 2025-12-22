@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter
+from collections import defaultdict
 from pathlib import Path
 from typing import Annotated
 
@@ -27,6 +29,58 @@ EXIT_CODE_MEANINGS = {
     4: "pytest usage error",
     5: "no tests collected",
 }
+
+
+def parse_test_id(test_id: str) -> tuple[str, str | None]:
+    """Extract base name and param from test_id like 'test_foo[bar]'."""
+    name = test_id.split("::")[-1] if "::" in test_id else test_id
+    match = re.match(r"^(.+?)\[(.+)\]$", name)
+    if match:
+        return match.group(1), match.group(2)
+    return name, None
+
+
+def _status_icon(status: str) -> str:
+    """Return colored status icon for test status."""
+    if status == "passed":
+        return "[green]✓[/green]"
+    if status == "skipped":
+        return "[yellow]○[/yellow]"
+    return "[red]✗[/red]"
+
+
+def _render_tests_tree(
+    console: Console, tests: list, indent: str = "  "
+) -> None:
+    """Render tests in tree-style hierarchy, grouping parametrized tests."""
+    # Group tests by base name, preserving order
+    grouped: dict[str, list[tuple[str | None, object]]] = defaultdict(list)
+    order: list[str] = []
+    for test in tests:
+        base, param = parse_test_id(test.id)
+        if base not in grouped:
+            order.append(base)
+        grouped[base].append((param, test))
+
+    for base_name in order:
+        items = grouped[base_name]
+        # Get group type from first test
+        group_type = items[0][1].group_type.value
+
+        if len(items) == 1 and items[0][0] is None:
+            # Single non-parametrized test
+            _, test = items[0]
+            icon = _status_icon(test.status)
+            console.print(f"{indent}{base_name} ({group_type}) {icon}")
+        else:
+            # Parametrized tests - render as tree
+            console.print(f"{indent}{base_name} ({group_type})")
+            for i, (param, test) in enumerate(items):
+                is_last = i == len(items) - 1
+                connector = "└──" if is_last else "├──"
+                icon = _status_icon(test.status)
+                param_display = param if param else "(no param)"
+                console.print(f"{indent}{connector} {param_display} {icon}")
 
 
 def render_pytest_results(
@@ -83,31 +137,20 @@ def render_pytest_results(
 
     # Show failed tests only (unless verbose)
     failed_tests = [
-        test
-        for test in results.tests
-        if test.status in {"failed", "error"}
+        test for test in results.tests if test.status in {"failed", "error"}
     ]
 
-    if failed_tests:
-        console.print(f"\n[red bold]Failed Tests ({len(failed_tests)}):[/red bold]")
-        for test_result in failed_tests:
-            # Extract just the test name from nodeid (includes param like [case1])
-            test_name = test_result.id.split("::")[-1] if "::" in test_result.id else test_result.id
-            console.print(f"  [red]✗[/red] {test_name}")
-
-    # Verbose mode: show all tests
-    if verbosity > 1:
+    if verbosity <= 1 and failed_tests:
+        console.print(
+            f"\n[red bold]Failed Tests ({len(failed_tests)}):[/red bold]"
+        )
+        _render_tests_tree(console, failed_tests)
+    elif verbosity > 1:
         console.print(f"\n[bold]All Tests ({total}):[/bold]")
-        for test_result in sorted(
+        sorted_tests = sorted(
             results.tests, key=lambda x: (x.group_type.value, x.status, x.id)
-        ):
-            test_name = test_result.id.split("::")[-1] if "::" in test_result.id else test_result.id
-            if test_result.status == "passed":
-                console.print(f"  [green]✓[/green] {test_name}")
-            elif test_result.status == "skipped":
-                console.print(f"  [yellow]○[/yellow] {test_name}")
-            else:
-                console.print(f"  [red]✗[/red] {test_name}")
+        )
+        _render_tests_tree(console, sorted_tests)
 
 
 def register(app: typer.Typer, name: str) -> None:
@@ -225,6 +268,7 @@ def evaluate_snapshot(
         log_dir=save_dir,
         verbosity=ctx.obj.verbosity,
         log_file_name="evaluation.log",
+        quiet=ctx.obj.quiet,
     )
     logger.info(
         "Evaluating a single snapshot",

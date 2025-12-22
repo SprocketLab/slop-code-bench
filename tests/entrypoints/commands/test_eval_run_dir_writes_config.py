@@ -10,7 +10,9 @@ from slop_code.entrypoints.commands import eval_run_dir
 from slop_code.evaluation import ProblemConfig
 
 
-def test_write_problem_and_checkpoint_configs_overwrites(tmp_path: Path) -> None:
+def test_write_problem_and_checkpoint_configs_overwrites(
+    tmp_path: Path,
+) -> None:
     source_problem = ProblemConfig.from_yaml(
         Path("tests/agent_runner/resources/tiny_settings_cli_debug_problem")
     )
@@ -28,18 +30,23 @@ def test_write_problem_and_checkpoint_configs_overwrites(tmp_path: Path) -> None
             sort_keys=True,
         )
 
-    eval_run_dir._write_problem_and_checkpoint_configs(problem_dir, source_problem)
+    eval_run_dir._write_problem_and_checkpoint_configs(
+        problem_dir, source_problem
+    )
 
     with (problem_dir / PROBLEM_CONFIG_NAME).open("r") as f:
         saved_problem = yaml.safe_load(f)
     assert saved_problem["name"] == source_problem.name
     assert saved_problem["version"] == source_problem.version
 
-    for checkpoint_name, checkpoint in source_problem.iterate_checkpoint_items():
+    for (
+        checkpoint_name,
+        checkpoint,
+    ) in source_problem.iterate_checkpoint_items():
         checkpoint_yaml = problem_dir / checkpoint_name / CHECKPOINT_CONFIG_NAME
         assert checkpoint_yaml.exists()
         with checkpoint_yaml.open("r") as f:
             saved_checkpoint = yaml.safe_load(f)
         assert saved_checkpoint["version"] == checkpoint.version
-        assert Path(saved_checkpoint["path"]).name == checkpoint_name
-
+        assert saved_checkpoint["order"] == checkpoint.order
+        assert saved_checkpoint["name"] == checkpoint.name

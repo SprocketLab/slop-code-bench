@@ -1,0 +1,431 @@
+{
+  "01_basic_inner_grouping": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query \"SELECT a.service, b.status, COUNT(*) AS n FROM a CONFLATE INTERSECTING b UPON a.req = b.req GROUP BY a.service, b.status\"",
+      "input_files": [
+        {
+          "path": "b.ndjson",
+          "content": [
+            {
+              "edge_id": "e1",
+              "req": "r1",
+              "status": 200
+            },
+            {
+              "edge_id": "e2",
+              "req": "r2",
+              "status": 502
+            },
+            {
+              "edge_id": "e3",
+              "req": "r5",
+              "status": 404
+            },
+            {
+              "edge_id": "e4",
+              "req": null,
+              "status": 504
+            }
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "a.ndjson",
+          "content": [
+            {
+              "id": 1,
+              "service": "api",
+              "req": "r1",
+              "bytes": 100,
+              "host": "h1"
+            },
+            {
+              "id": 2,
+              "service": "api",
+              "req": "r2",
+              "bytes": null,
+              "host": "h2"
+            },
+            {
+              "id": 3,
+              "service": "web",
+              "req": "r3",
+              "bytes": 250,
+              "host": "h1"
+            },
+            {
+              "id": 4,
+              "service": "api",
+              "req": "r1",
+              "bytes": -50,
+              "host": "h1"
+            },
+            {
+              "id": 5,
+              "service": null,
+              "req": "r4",
+              "bytes": 0,
+              "host": "h3"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "a.service": "api",
+          "b.status": 200,
+          "n": 2
+        },
+        {
+          "a.service": "api",
+          "b.status": 502,
+          "n": 1
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "02_preserving_left_alias_star": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query \"SELECT a.*, b.status AS edge_status FROM a CONFLATE PRESERVING LEFT b UPON a.req = b.req\"",
+      "input_files": [
+        {
+          "path": "b.ndjson",
+          "content": [
+            {
+              "edge_id": "e1",
+              "req": "r1",
+              "status": 200
+            },
+            {
+              "edge_id": "e2",
+              "req": "r2",
+              "status": 502
+            },
+            {
+              "edge_id": "e3",
+              "req": "r5",
+              "status": 404
+            },
+            {
+              "edge_id": "e4",
+              "req": null,
+              "status": 504
+            }
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "a.ndjson",
+          "content": [
+            {
+              "id": 1,
+              "service": "api",
+              "req": "r1",
+              "bytes": 100,
+              "host": "h1"
+            },
+            {
+              "id": 2,
+              "service": "api",
+              "req": "r2",
+              "bytes": null,
+              "host": "h2"
+            },
+            {
+              "id": 3,
+              "service": "web",
+              "req": "r3",
+              "bytes": 250,
+              "host": "h1"
+            },
+            {
+              "id": 4,
+              "service": "api",
+              "req": "r1",
+              "bytes": -50,
+              "host": "h1"
+            },
+            {
+              "id": 5,
+              "service": null,
+              "req": "r4",
+              "bytes": 0,
+              "host": "h3"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "a.id": 1,
+          "a.service": "api",
+          "a.req": "r1",
+          "a.bytes": 100,
+          "a.host": "h1",
+          "edge_status": 200
+        },
+        {
+          "a.id": 2,
+          "a.service": "api",
+          "a.req": "r2",
+          "a.bytes": null,
+          "a.host": "h2",
+          "edge_status": 502
+        },
+        {
+          "a.id": 3,
+          "a.service": "web",
+          "a.req": "r3",
+          "a.bytes": 250,
+          "a.host": "h1",
+          "edge_status": null
+        },
+        {
+          "a.id": 4,
+          "a.service": "api",
+          "a.req": "r1",
+          "a.bytes": -50,
+          "a.host": "h1",
+          "edge_status": 200
+        },
+        {
+          "a.id": 5,
+          "a.service": null,
+          "a.req": "r4",
+          "a.bytes": 0,
+          "a.host": "h3",
+          "edge_status": null
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "03_preserving_right": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query \"SELECT b.edge_id, b.status FROM a CONFLATE PRESERVING RIGHT b UPON a.req = b.req\"",
+      "input_files": [
+        {
+          "path": "b.ndjson",
+          "content": [
+            {
+              "edge_id": "e1",
+              "req": "r1",
+              "status": 200
+            },
+            {
+              "edge_id": "e2",
+              "req": "r2",
+              "status": 502
+            },
+            {
+              "edge_id": "e3",
+              "req": "r5",
+              "status": 404
+            },
+            {
+              "edge_id": "e4",
+              "req": null,
+              "status": 504
+            }
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "a.ndjson",
+          "content": [
+            {
+              "id": 1,
+              "service": "api",
+              "req": "r1",
+              "bytes": 100,
+              "host": "h1"
+            },
+            {
+              "id": 2,
+              "service": "api",
+              "req": "r2",
+              "bytes": null,
+              "host": "h2"
+            },
+            {
+              "id": 3,
+              "service": "web",
+              "req": "r3",
+              "bytes": 250,
+              "host": "h1"
+            },
+            {
+              "id": 4,
+              "service": "api",
+              "req": "r1",
+              "bytes": -50,
+              "host": "h1"
+            },
+            {
+              "id": 5,
+              "service": null,
+              "req": "r4",
+              "bytes": 0,
+              "host": "h3"
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "b.edge_id": "e1",
+          "b.status": 200
+        },
+        {
+          "b.edge_id": "e2",
+          "b.status": 502
+        },
+        {
+          "b.edge_id": "e1",
+          "b.status": 200
+        },
+        {
+          "b.edge_id": "e3",
+          "b.status": 404
+        },
+        {
+          "b.edge_id": "e4",
+          "b.status": 504
+        }
+      ],
+      "status_code": 0
+    }
+  },
+  "04_multi_conflation_chain": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --source c=c.ndjson --query \"SELECT a.service, c.geo, COUNT(*) AS n, SUM(a.bytes) AS bytes_sum FROM a CONFLATE INTERSECTING b UPON a.req = b.req CONFLATE PRESERVING LEFT c UPON a.req = c.req GROUP BY a.service, c.geo\"",
+      "input_files": [
+        {
+          "path": "b.ndjson",
+          "content": [
+            {
+              "edge_id": "e1",
+              "req": "r1",
+              "status": 200
+            },
+            {
+              "edge_id": "e2",
+              "req": "r2",
+              "status": 502
+            },
+            {
+              "edge_id": "e3",
+              "req": "r5",
+              "status": 404
+            },
+            {
+              "edge_id": "e4",
+              "req": null,
+              "status": 504
+            }
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "a.ndjson",
+          "content": [
+            {
+              "id": 1,
+              "service": "api",
+              "req": "r1",
+              "bytes": 100,
+              "host": "h1"
+            },
+            {
+              "id": 2,
+              "service": "api",
+              "req": "r2",
+              "bytes": null,
+              "host": "h2"
+            },
+            {
+              "id": 3,
+              "service": "web",
+              "req": "r3",
+              "bytes": 250,
+              "host": "h1"
+            },
+            {
+              "id": 4,
+              "service": "api",
+              "req": "r1",
+              "bytes": -50,
+              "host": "h1"
+            },
+            {
+              "id": 5,
+              "service": null,
+              "req": "r4",
+              "bytes": 0,
+              "host": "h3"
+            }
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "c.ndjson",
+          "content": [
+            {
+              "req": "r1",
+              "geo": "us",
+              "meta": {
+                "k": 1
+              }
+            },
+            {
+              "req": "r2",
+              "geo": "eu",
+              "meta": {
+                "k": 1
+              }
+            },
+            {
+              "req": "r3",
+              "geo": "us",
+              "meta": {
+                "k": 2
+              }
+            },
+            {
+              "req": "r4",
+              "geo": null
+            }
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {
+          "a.service": "api",
+          "c.geo": "us",
+          "n": 2,
+          "bytes_sum": 50
+        },
+        {
+          "a.service": "api",
+          "c.geo": "eu",
+          "n": 1,
+          "bytes_sum": null
+        }
+      ],
+      "status_code": 0
+    }
+  }
+}

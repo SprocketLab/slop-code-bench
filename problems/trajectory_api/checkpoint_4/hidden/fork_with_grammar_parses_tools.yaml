@@ -1,13 +1,13 @@
 case:
   body:
-    up_to_step: 2
+    up_to_step: 1
     status: in_progress
     append:
       - role: assistant
         content: '<tool forked_tool args="fork_arg"/> Forked step'
         input_tokens: 10
-        output_tokens: 15
-        cost: 0.001
+        output_tokens: 40
+        cost: 0.004
   headers:
     content-type: application/json; charset=utf-8
     if-match: W/"1"

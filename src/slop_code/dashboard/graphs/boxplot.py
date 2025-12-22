@@ -48,7 +48,9 @@ def build_checkpoint_delta_boxplot(context: ChartContext) -> go.Figure:
     ]
 
     variation_info = analyze_model_variations(df)
-    tracker = LegendGroupTracker(context.color_map, variation_info)
+    tracker = LegendGroupTracker(
+        context.color_map, context.base_color_map, variation_info
+    )
 
     # Sort runs according to the new logic
     sorted_unique_runs = (

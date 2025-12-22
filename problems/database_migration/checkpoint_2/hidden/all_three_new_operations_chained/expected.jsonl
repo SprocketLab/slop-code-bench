@@ -1,7 +1,0 @@
-{"event": "operation_applied", "type": "add_column", "table": "employees", "column": "email", "version": 2}
-{"event": "operation_applied", "type": "add_column", "table": "employees", "column": "full_name", "version": 2}
-{"event": "operation_applied", "type": "add_column", "table": "employees", "column": "bonus", "version": 2}
-{"event": "operation_applied", "type": "migrate_column_data", "table": "employees", "from_column": "temp_email", "to_column": "email", "version": 2}
-{"event": "operation_applied", "type": "transform_data", "table": "employees", "version": 2}
-{"event": "operation_applied", "type": "backfill_data", "table": "employees", "column": "email", "version": 2}
-{"event": "migration_complete", "version": 2, "operations_count": 6}

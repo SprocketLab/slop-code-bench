@@ -1,0 +1,65 @@
+case:
+  arguments: --output out.csv --key user.contact.email --schema schema.json users.parquet events.jsonl
+  input_files:
+  - content:
+    - user_id: 101
+      user_name: Alice
+      email: alice@example.com
+    - user_id: 102
+      user_name: Bob
+      email: bob@example.com
+    file_type: parquet
+    path: users.parquet
+  - content:
+    - event_id: 1
+      user:
+        contact:
+          email: alice@example.com
+          phone: "555-0001"
+        profile:
+          age: 30
+    - event_id: 2
+      user:
+        contact:
+          email: bob@example.com
+          phone: "555-0002"
+        profile:
+          age: 25
+    file_type: jsonl
+    path: events.jsonl
+  - content:
+      columns:
+      - name: event_id
+        type: int
+      - name: user
+        type:
+          struct:
+            fields:
+            - name: contact
+              type:
+                struct:
+                  fields:
+                  - name: email
+                    type: string
+                  - name: phone
+                    type: string
+            - name: profile
+              type:
+                struct:
+                  fields:
+                  - name: age
+                    type: int
+    file_type: json
+    path: schema.json
+expected:
+  files:
+    out.csv:
+    - event_id: 1
+      user: '{"contact":{"email":"alice@example.com","phone":"555-0001"},"profile":{"age":30}}'
+    - event_id: 2
+      user: '{"contact":{"email":"bob@example.com","phone":"555-0002"},"profile":{"age":25}}'
+    - event_id: null
+      user: null
+    - event_id: null
+      user: null
+  status_code: 0

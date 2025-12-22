@@ -9,7 +9,9 @@ from slop_code.evaluation import ProblemConfig
 
 def test_apply_one_shot_mode_combines_specs():
     tests_root = Path(__file__).resolve().parents[2]
-    problem_path = tests_root / "agent_runner/resources/inventory_cli_debug_problem"
+    problem_path = (
+        tests_root / "agent_runner/resources/inventory_cli_debug_problem"
+    )
     problem_config = ProblemConfig.from_yaml(problem_path)
 
     combined = apply_one_shot_mode(
@@ -26,12 +28,17 @@ def test_apply_one_shot_mode_combines_specs():
 
     assert checkpoint_name == "checkpoint_2"
     assert checkpoint.order == 1
-    assert checkpoint.get_spec_text() == f"{spec1}PREFIX\n{spec2}"
+    assert (
+        problem_config.get_checkpoint_spec(checkpoint_name)
+        == f"{spec1}PREFIX\n{spec2}"
+    )
 
 
 def test_apply_one_shot_prefix_template_renders_idx():
     tests_root = Path(__file__).resolve().parents[2]
-    problem_path = tests_root / "agent_runner/resources/inventory_cli_debug_problem"
+    problem_path = (
+        tests_root / "agent_runner/resources/inventory_cli_debug_problem"
+    )
     problem_config = ProblemConfig.from_yaml(problem_path)
 
     combined = apply_one_shot_mode(
@@ -48,7 +55,9 @@ def test_apply_one_shot_prefix_template_renders_idx():
 
 def test_apply_one_shot_prefix_on_first_checkpoint():
     tests_root = Path(__file__).resolve().parents[2]
-    problem_path = tests_root / "agent_runner/resources/inventory_cli_debug_problem"
+    problem_path = (
+        tests_root / "agent_runner/resources/inventory_cli_debug_problem"
+    )
     problem_config = ProblemConfig.from_yaml(problem_path)
 
     combined = apply_one_shot_mode(

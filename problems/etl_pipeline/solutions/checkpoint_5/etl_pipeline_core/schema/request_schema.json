@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/etl-pipeline-request.schema.json",
+  "title": "ETL Pipeline Request",
+  "type": "object",
+  "required": ["dataset"],
+  "properties": {
+    "pipeline": {
+      "type": "object",
+      "required": ["steps"],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["op"],
+            "properties": {
+              "op": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "dataset": {
+      "type": "array"
+    },
+    "defs": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "compose": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": true
+}

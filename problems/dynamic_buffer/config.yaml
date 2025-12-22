@@ -46,7 +46,3 @@ checkpoints:
     version: 1
     order: 4
     state: Core Tests
-
-markers:
-  functionality: "non-core / nice-to-have tests"
-  error: "error-handling / edge-case tests"

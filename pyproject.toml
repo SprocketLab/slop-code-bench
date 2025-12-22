@@ -104,9 +104,12 @@ packages = ["src/slop_code"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--ignore=src --ignore=data --ignore=scratch --ignore=tests/evaluation/fixtures "
+addopts = "--ignore=src --ignore=data --ignore=scratch --ignore=tests/evaluation/fixtures --ignore=tests/agent_runner/resources/"
 testpaths = [
     "tests"
+]
+norecursedirs = [
+    "tests/agent_runner/resources/*/tests",
 ]
 
 [tool.ruff]

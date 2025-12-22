@@ -1,2 +1,0 @@
-{"job_id": 2, "task": "WriteMessage", "params": {"message": "Hello, World!", "prefix": "GREETING: "}, "stdout": "", "stderr": "", "timed_out": false, "success": {"file_exists": true}, "output": null, "exit_code": 0, "parent": 1, "duration": 0.01622991899967019}
-{"job_id": 1, "task": "main", "params": {"greeting": "Hello, World!"}, "stdout": "GREETING: Hello, World!\nTask completed\n", "stderr": "", "timed_out": false, "success": {}, "output": null, "exit_code": 0, "parent": null, "duration": 0.032170522999876994}

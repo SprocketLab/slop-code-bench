@@ -505,6 +505,7 @@ def test_unknown_op(entrypoint_argv):
     assert output["status"] == "error"
     assert output["error_code"] == "UNKNOWN_OP"
     assert output["path"] == "pipeline.steps[0].op"
+    assert output["message"].startswith("ETL_ERROR:")
 
 
 @pytest.mark.error
@@ -513,6 +514,22 @@ def test_dataset_not_array(entrypoint_argv):
     input_data = {
         "pipeline": {"steps": []},
         "dataset": {"id": 1},
+    }
+
+    result = run_etl(entrypoint_argv, input_data)
+    assert result.returncode == 1, "Expected command to fail"
+
+    output = json.loads(result.stdout)
+    assert output["status"] == "error"
+    assert output["error_code"] == "SCHEMA_VALIDATION_FAILED"
+    assert output["path"] == "dataset"
+
+
+@pytest.mark.error
+def test_dataset_missing(entrypoint_argv):
+    """Error: Dataset key is required."""
+    input_data = {
+        "pipeline": {"steps": []},
     }
 
     result = run_etl(entrypoint_argv, input_data)
