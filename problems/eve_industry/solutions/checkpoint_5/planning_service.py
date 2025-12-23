@@ -140,9 +140,9 @@ def _create_recursive_build_plan(
     """
     Create a recursive build plan (build all buildable components).
 
-    Uses a two-phase approach:
-    1. Build dependency graph (discover all jobs)
-    2. Calculate runs top-down from root to leaves
+    Uses collect + recalculate approach:
+    1. Collect initial requirements recursively
+    2. Recalculate runs with fractional consumption until stable
 
     Args:
         build_spec: Parsed build specification
@@ -161,11 +161,10 @@ def _create_recursive_build_plan(
     me, te = _calculate_me_te(build_spec)
     top_runs = build_spec.runs_per_job * build_spec.num_jobs
 
-    # Phase 1: Build the dependency graph
-    # jobs: {product_type_id: (bp_id, activity_id, me, te, output_qty)}
-    # graph: {product_type_id: [(consumer_bp_id, consumer_activity_id, per_run_consumption)]}
+    # Build dependency graph and calculate runs top-down
+    # This approach: discover jobs, then calculate runs starting from root
     jobs = {}
-    graph = {}  # product -> list of consumers
+    graph = {}
 
     _discover_jobs(
         blueprint_type_id,
@@ -178,8 +177,6 @@ def _create_recursive_build_plan(
         graph,
     )
 
-    # Phase 2: Calculate runs top-down
-    # materials_to_build: {(bp_id, activity_id, me, te): runs}
     materials_to_build = _calculate_runs_topdown(
         blueprint_type_id,
         activity_id,
@@ -764,6 +761,7 @@ def _calculate_runs_topdown(
                 continue
 
             # Calculate total consumption from all consumers
+            # Use ceiling for each consumer's consumption (EVE behavior)
             total_consumption = 0
             for consumer_bp_id, consumer_act_id, base_qty, consumer_me in consumers:
                 consumer_runs = job_runs[(consumer_bp_id, consumer_act_id)]
@@ -772,11 +770,11 @@ def _calculate_runs_topdown(
                     per_run = max(1, base_qty * (1 - consumer_me / 100))
                 else:
                     per_run = base_qty
-                # Calculate consumption with ceiling
+                # Ceiling at each consumer (matches EVE material consumption)
                 consumption = math.ceil(per_run * consumer_runs)
                 total_consumption += consumption
 
-            # Calculate runs needed to produce this consumption
+            # Calculate runs needed
             runs_needed = math.ceil(total_consumption / output_qty)
             job_runs[job_key] = runs_needed
             progress = True
