@@ -89,7 +89,7 @@ def _process_problem(
     Returns:
         Number of checkpoints rendered.
     """
-    problem_output_dir = output_dir / problem_config.name
+    problem_output_dir = output_dir
     problem_output_dir.mkdir(parents=True, exist_ok=True)
 
     checkpoint_count = 0

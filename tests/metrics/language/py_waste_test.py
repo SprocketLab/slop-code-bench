@@ -7,14 +7,10 @@ Tests all functions in slop_code.metrics.languages.python.waste including:
 
 from __future__ import annotations
 
-from pathlib import Path
 from textwrap import dedent
-
-import pytest
 
 from slop_code.metrics.languages.python import calculate_waste_metrics
 from slop_code.metrics.languages.python import get_symbols
-
 
 # =============================================================================
 # Calculate Waste Metrics Tests

@@ -12,11 +12,8 @@ from __future__ import annotations
 from pathlib import Path
 from textwrap import dedent
 
-import pytest
-
 from slop_code.metrics.languages.python import extract_imports
 from slop_code.metrics.languages.python import trace_source_files
-
 
 # =============================================================================
 # Extract Imports Tests

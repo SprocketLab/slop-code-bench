@@ -8,14 +8,11 @@ from __future__ import annotations
 
 import json
 import subprocess
-from pathlib import Path
-from textwrap import dedent
 from unittest.mock import MagicMock
 
 import pytest
 
 from slop_code.metrics.languages.python import calculate_lint_metrics
-
 
 # =============================================================================
 # Calculate Lint Metrics Tests

@@ -19,7 +19,6 @@ import pytest
 from slop_code.metrics.languages.python.graph import build_dependency_graph
 from slop_code.metrics.languages.python.graph import compute_graph_metrics
 
-
 # =============================================================================
 # Test Utilities
 # =============================================================================

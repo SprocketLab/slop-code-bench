@@ -18,33 +18,33 @@ from __future__ import annotations
 
 import re
 import subprocess
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
 
 from slop_code.metrics.languages.python.parser import get_python_parser
+from slop_code.metrics.languages.python.symbols import _calculate_max_depth
+from slop_code.metrics.languages.python.symbols import _compute_body_hash
+from slop_code.metrics.languages.python.symbols import _compute_signature_hash
+from slop_code.metrics.languages.python.symbols import _compute_structure_hash
+from slop_code.metrics.languages.python.symbols import _count_class_attributes
 from slop_code.metrics.languages.python.symbols import (
-    _calculate_max_depth,
-    _compute_body_hash,
-    _compute_signature_hash,
-    _compute_structure_hash,
-    _count_class_attributes,
     _count_complexity_and_branches,
-    _count_control_blocks,
-    _count_control_flow_and_comparisons,
-    _count_expressions,
-    _count_methods,
-    _count_returns_and_raises,
-    _count_statements,
-    _count_variables,
-    _extract_base_classes,
-    _extract_signature,
-    _get_assignment_name,
-    _get_name_from_node,
-    get_symbols,
 )
-
+from slop_code.metrics.languages.python.symbols import _count_control_blocks
+from slop_code.metrics.languages.python.symbols import (
+    _count_control_flow_and_comparisons,
+)
+from slop_code.metrics.languages.python.symbols import _count_expressions
+from slop_code.metrics.languages.python.symbols import _count_methods
+from slop_code.metrics.languages.python.symbols import _count_returns_and_raises
+from slop_code.metrics.languages.python.symbols import _count_statements
+from slop_code.metrics.languages.python.symbols import _count_variables
+from slop_code.metrics.languages.python.symbols import _extract_base_classes
+from slop_code.metrics.languages.python.symbols import _extract_signature
+from slop_code.metrics.languages.python.symbols import _get_assignment_name
+from slop_code.metrics.languages.python.symbols import _get_name_from_node
+from slop_code.metrics.languages.python.symbols import get_symbols
 
 # =============================================================================
 # Test Utilities

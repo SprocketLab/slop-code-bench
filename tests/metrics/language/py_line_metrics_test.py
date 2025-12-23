@@ -6,15 +6,11 @@ Tests all functions in slop_code.metrics.languages.python.line_metrics including
 
 from __future__ import annotations
 
-from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock
 
-import pytest
-
 from slop_code.metrics.languages.python import calculate_line_metrics
 from slop_code.metrics.languages.python import calculate_mi
-
 
 # =============================================================================
 # Calculate MI Tests

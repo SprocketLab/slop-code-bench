@@ -7,13 +7,9 @@ Tests all functions in slop_code.metrics.languages.python.redundancy including:
 
 from __future__ import annotations
 
-from pathlib import Path
 from textwrap import dedent
 
-import pytest
-
 from slop_code.metrics.languages.python import calculate_redundancy_metrics
-
 
 # =============================================================================
 # Basic Clone Detection Tests
