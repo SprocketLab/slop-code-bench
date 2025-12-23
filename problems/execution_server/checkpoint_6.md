@@ -59,7 +59,7 @@ Augmented to require a persistent environment and respect its concurrency mode.
   "timeout": 10,                             // optional
   "max_memory_mb": 0,                        // optional
   "track": ["*.txt"],                        // optional
-  "environment": "my-env"                    // optional
+  "environment": "my-env"                    // required
 }
 ```
 

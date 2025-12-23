@@ -1,8 +1,7 @@
-"""Checkpoint metric extraction from disk.
+"""Metric extractors for checkpoint directories.
 
-This module extracts metrics from individual checkpoint directories by reading
-and parsing JSON/JSONL files (evaluation.json, inference_result.json,
-overall_quality.json, file_quality.jsonl, rubric.jsonl, diff.json).
+This module provides functions to extract specific metric categories from
+checkpoint directories by reading and processing various JSON/JSONL files.
 """
 
 from __future__ import annotations
@@ -14,109 +13,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from slop_code.common import DIFF_FILENAME
 from slop_code.common import EVALUATION_FILENAME
-from slop_code.common import FILES_QUALITY_SAVENAME
 from slop_code.common import INFERENCE_RESULT_FILENAME
-from slop_code.common import QUALITY_DIR
 from slop_code.common import QUALITY_METRIC_SAVENAME
-from slop_code.common import SYMBOLS_QUALITY_SAVENAME
 from slop_code.logging import get_logger
+from slop_code.metrics.checkpoint.loaders import load_diff_metrics
+from slop_code.metrics.checkpoint.loaders import load_file_metrics
+from slop_code.metrics.checkpoint.loaders import load_snapshot_metrics
+from slop_code.metrics.checkpoint.loaders import load_symbol_metrics
+from slop_code.metrics.checkpoint.mass import compute_mass_metrics
 from slop_code.metrics.models import MetricsThresholds
 from slop_code.metrics.utils import MetricsError
 
 logger = get_logger(__name__)
-
-# Metric keys for which to compute percentage deltas between checkpoints.
-# Each key will be prefixed with "delta." in the output.
-# Only keys that are actually consumed by dashboard/summary/variance.
-DELTA_METRIC_KEYS: tuple[str, ...] = (
-    "loc",
-    "lint_errors",
-    "ast_grep_violations",
-    "cc_high_count",
-    "comparisons",
-)
-
-# -----------------------------------------------------------------------------
-# File Loaders
-# -----------------------------------------------------------------------------
-
-
-def _load_snapshot_metrics(
-    checkpoint_dir: Path, quality_file_name: str = QUALITY_METRIC_SAVENAME
-) -> dict | None:
-    """Load overall_quality.json and return as dict, or None if missing."""
-    quality_file = checkpoint_dir / QUALITY_DIR / quality_file_name
-    if not quality_file.exists():
-        return None
-    try:
-        with quality_file.open("r") as f:
-            return json.load(f)
-    except json.JSONDecodeError as e:
-        logger.error(
-            "Failed to parse quality metrics JSON",
-            checkpoint_dir=str(checkpoint_dir),
-            quality_file=str(quality_file),
-            error=str(e),
-        )
-        raise MetricsError(
-            f"Failed to parse quality file '{quality_file}': {e}",
-            context={"checkpoint_dir": str(checkpoint_dir)},
-        ) from e
-
-
-def _load_file_metrics(
-    checkpoint_dir: Path,
-    file_quality_name: str = FILES_QUALITY_SAVENAME,
-) -> Generator[dict, None, None]:
-    """Yield file metrics from files.jsonl."""
-    file_quality_path = checkpoint_dir / QUALITY_DIR / file_quality_name
-    if not file_quality_path.exists():
-        return
-    with file_quality_path.open("r") as f:
-        for line in f:
-            if line.strip():
-                yield json.loads(line)
-
-
-def _load_symbol_metrics(
-    checkpoint_dir: Path,
-    symbol_file_name: str = SYMBOLS_QUALITY_SAVENAME,
-) -> Generator[dict, None, None]:
-    """Yield symbol metrics from symbols.jsonl."""
-    symbol_path = checkpoint_dir / QUALITY_DIR / symbol_file_name
-    if not symbol_path.exists():
-        return
-    with symbol_path.open("r") as f:
-        for line in f:
-            if line.strip():
-                yield json.loads(line)
-
-
-def _load_diff_metrics(checkpoint_dir: Path) -> dict | None:
-    """Load diff.json and return as dict, or None if missing/invalid."""
-    diff_file = checkpoint_dir / DIFF_FILENAME
-    if not diff_file.exists():
-        logger.debug(
-            "diff.json not found, skipping diff metrics",
-            checkpoint_dir=str(checkpoint_dir),
-        )
-        return None
-    try:
-        return json.loads(diff_file.read_text())
-    except json.JSONDecodeError as e:
-        logger.warning(
-            "Failed to parse diff.json, skipping diff metrics",
-            checkpoint_dir=str(checkpoint_dir),
-            error=str(e),
-        )
-        return None
-
-
-# -----------------------------------------------------------------------------
-# Distribution Computation
-# -----------------------------------------------------------------------------
 
 
 def _compute_distributions(
@@ -225,9 +134,7 @@ def _build_metrics_from_snapshot(
         "nesting_mean": functions.get("nesting_mean", 0.0),
         "nesting_concentration": functions.get("nesting_concentration", 0.0),
         "comparisons_mean": functions.get("comparisons_mean", 0.0),
-        "comparisons_concentration": functions.get(
-            "comparisons_concentration", 0.0
-        ),
+        "comparisons_concentration": functions.get("comparisons_concentration", 0.0),
         "branches_mean": functions.get("branches_mean", 0.0),
         "branches_concentration": functions.get("branches_concentration", 0.0),
         "control_mean": functions.get("control_mean", 0.0),
@@ -280,11 +187,6 @@ def _build_metrics_from_snapshot(
     return result
 
 
-# -----------------------------------------------------------------------------
-# Metric Extractors
-# -----------------------------------------------------------------------------
-
-
 def get_evaluation_metrics(
     checkpoint_dir: Path, eval_file_name: str = EVALUATION_FILENAME
 ) -> dict:
@@ -333,8 +235,8 @@ def get_evaluation_metrics(
     total_passed = total_total = 0
     core_passed = core_total = 0
 
-    for c_type, c_passed in metrics["pass_counts"].items():
-        c_total = metrics["total_counts"][c_type]
+    for c_type, c_total in metrics["total_counts"].items():
+        c_passed = metrics["pass_counts"].get(c_type, 0)
 
         # Map to lowercase key
         type_key = c_type.lower()
@@ -447,22 +349,28 @@ def get_quality_metrics(
     if thresholds is None:
         thresholds = MetricsThresholds()
 
-    snapshot_data = _load_snapshot_metrics(checkpoint_dir, quality_file_name)
+    snapshot_data = load_snapshot_metrics(checkpoint_dir, quality_file_name)
     if snapshot_data is None:
         return {}
 
     # Compute distributions from file-level and symbol-level data
-    diff = _load_diff_metrics(checkpoint_dir)
-    file_metrics_iter = _load_file_metrics(checkpoint_dir)
-    symbol_metrics_iter = _load_symbol_metrics(checkpoint_dir)
+    diff = load_diff_metrics(checkpoint_dir)
+    file_metrics_iter = load_file_metrics(checkpoint_dir)
+    symbol_metrics_iter = load_symbol_metrics(checkpoint_dir)
     distributions = _compute_distributions(
         file_metrics_iter,
         symbol_metrics_iter,
         diff,
     )
 
+    # Compute mass metrics (needs separate iterator since we consume it)
+    mass_symbol_iter = load_symbol_metrics(checkpoint_dir)
+    mass_metrics = compute_mass_metrics(mass_symbol_iter)
+
     # Build flat metrics from SnapshotMetrics structure (data is at root level)
-    return _build_metrics_from_snapshot(snapshot_data, distributions)
+    result = _build_metrics_from_snapshot(snapshot_data, distributions)
+    result.update(mass_metrics)
+    return result
 
 
 def get_rubric_metrics(
@@ -531,142 +439,3 @@ def get_rubric_metrics(
         "rubric_verbosity_flags": verbosity_count,
         "rubric_erosion_flags": erosion_count,
     }
-
-
-def get_checkpoint_metrics(
-    checkpoint_dir: Path,
-    prior_metrics: dict | None = None,
-    is_first: bool = False,
-    is_last: bool = False,
-) -> dict:
-    """Extract all metrics for a checkpoint directory.
-
-    Combines evaluation, inference, quality, and rubric metrics into a single dict.
-
-    Args:
-        checkpoint_dir: Path to the checkpoint directory.
-        prior_metrics: Metrics from previous checkpoint.
-        is_first: Whether this is the first checkpoint.
-        is_last: Whether this is the last checkpoint.
-    Returns:
-        Dictionary with all metrics combined. Keys use dot-notation for namespacing.
-
-    Raises:
-        MetricsError: If any metric extraction fails.
-    """
-    metrics = {
-        **get_evaluation_metrics(checkpoint_dir),
-        **get_inference_metrics(checkpoint_dir),
-        **get_quality_metrics(checkpoint_dir),
-        **get_rubric_metrics(checkpoint_dir),
-    }
-    if "rubric_total_flags" in metrics and metrics.get("loc", 0) > 0:
-        metrics["rubric_per_loc"] = (
-            metrics["rubric_total_flags"] / metrics["loc"]
-        )
-
-    if prior_metrics is not None:
-        delta = compute_checkpoint_delta(prior_metrics, metrics)
-    else:
-        delta = {}
-    return {
-        "is_first": is_first,
-        "is_last": is_last,
-        **metrics,
-        **delta,
-    }
-
-
-# -----------------------------------------------------------------------------
-# Delta Computation
-# -----------------------------------------------------------------------------
-
-
-def _safe_delta_pct(prev_val: float | None, curr_val: float | None) -> float:
-    """Compute (curr - prev) / prev * 100 with zero handling.
-
-    Args:
-        prev_val: Previous checkpoint value.
-        curr_val: Current checkpoint value.
-
-    Returns:
-        Percentage change, 0 if both are 0, inf if prev is 0 but curr isn't.
-    """
-    prev_val = prev_val or 0
-    curr_val = curr_val or 0
-    if prev_val > 0:
-        return ((curr_val - prev_val) / prev_val) * 100
-    return 0 if curr_val == 0 else float("inf")
-
-
-def compute_checkpoint_delta(
-    prev_metrics: dict[str, Any] | None,
-    curr_metrics: dict[str, Any],
-) -> dict[str, float | None]:
-    """Compute percentage delta metrics between two consecutive checkpoints.
-
-    All deltas are percentage changes: ((curr - prev) / prev) * 100.
-    When prev == 0, returns float('inf') if curr > 0, else 0.
-
-    Args:
-        prev_metrics: Metrics from checkpoint N (from get_checkpoint_metrics).
-                      Pass None for first checkpoint.
-        curr_metrics: Metrics from checkpoint N+1.
-
-    Returns:
-        Dict with delta.* keys containing percentage changes.
-        Returns empty dict if prev_metrics is None (first checkpoint).
-    """
-    if prev_metrics is None:
-        return {}
-
-    result: dict[str, float | None] = {}
-
-    # Compute percentage deltas for all standard metrics
-    for key in DELTA_METRIC_KEYS:
-        result[f"delta.{key}"] = _safe_delta_pct(
-            prev_metrics.get(key), curr_metrics.get(key)
-        )
-
-    # churn_ratio: curr.lines.churn / prev.lines.total
-    churn = curr_metrics["lines_added"] + curr_metrics["lines_removed"]
-    result["delta.churn_ratio"] = (
-        churn / prev_metrics["total_lines"]
-        if prev_metrics["total_lines"] > 0
-        else (0 if churn == 0 else float("inf"))
-    )
-    if "rubric_total_flags" in curr_metrics:
-        # new_violations_per_loc: (rubric_total_flags - rubric.carried_over) / curr.lines.loc
-        curr_total_flags = curr_metrics["rubric_total_flags"]
-        curr_carried_over = curr_metrics["rubric_carried_over"]
-        curr_lines_loc = curr_metrics["loc"]
-        new_flags = curr_total_flags - curr_carried_over
-        result["delta.new_violations_per_loc"] = new_flags / curr_lines_loc
-
-    return result
-
-
-def get_checkpoint_delta(
-    prev_checkpoint_dir: Path | None,
-    curr_checkpoint_dir: Path,
-) -> dict[str, float | None]:
-    """Load metrics from two checkpoint directories and compute deltas.
-
-    Convenience function that loads metrics from directories and computes
-    percentage delta metrics between consecutive checkpoints.
-
-    Args:
-        prev_checkpoint_dir: Path to checkpoint N directory, or None for first.
-        curr_checkpoint_dir: Path to checkpoint N+1 directory.
-
-    Returns:
-        Dict with delta.* keys containing percentage changes.
-        Returns empty dict if prev_checkpoint_dir is None.
-    """
-    if prev_checkpoint_dir is None:
-        return {}
-
-    prev_metrics = get_checkpoint_metrics(prev_checkpoint_dir)
-    curr_metrics = get_checkpoint_metrics(curr_checkpoint_dir)
-
-    return compute_checkpoint_delta(prev_metrics, curr_metrics)

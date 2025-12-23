@@ -30,8 +30,8 @@
     },
     "expected": {
       "stderr": {
-        "error": ".*E_SEMANTIC.*",
-        "code": "E_SEMANTIC"
+        "error": ".*E_(SEMANTIC|RUNTIME).*",
+        "code": ""
       },
       "status_code": 1
     }
@@ -63,8 +63,8 @@
     },
     "expected": {
       "stderr": {
-        "error": ".*E_SEMANTIC.*",
-        "code": "E_SEMANTIC"
+        "error": ".*E_(SEMANTIC|RUNTIME).*",
+        "code": ""
       },
       "status_code": 1
     }

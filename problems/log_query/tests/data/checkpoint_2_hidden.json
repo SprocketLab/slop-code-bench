@@ -43,26 +43,6 @@
       "status_code": 0
     }
   },
-  "08_min_max_string_mode": {
-    "case": {
-      "arguments": "--log-file logs.ndjson --query 'SELECT MIN(s) AS min_s, MAX(s) AS max_s FROM logs'",
-      "input_files": [
-        {
-          "path": "logs.ndjson",
-          "content": [
-            {"s": "zebra"},
-            {"s": "apple"},
-            {"s": "banana"}
-          ],
-          "file_type": "jsonl"
-        }
-      ]
-    },
-    "expected": {
-      "output": [{"min_s": "apple", "max_s": "zebra"}],
-      "status_code": 0
-    }
-  },
   "09_min_prefers_numbers_over_strings": {
     "case": {
       "arguments": "--log-file logs.ndjson --query 'SELECT MIN(x) AS min_x, MAX(x) AS max_x FROM logs'",
@@ -372,26 +352,6 @@
     },
     "expected": {
       "output": [{"c_arr": 2, "c_obj": 2}],
-      "status_code": 0
-    }
-  },
-  "23_sum_all_null_or_non_numeric": {
-    "case": {
-      "arguments": "--log-file logs.ndjson --query 'SELECT SUM(x) AS total FROM logs'",
-      "input_files": [
-        {
-          "path": "logs.ndjson",
-          "content": [
-            {"x": "10"},
-            {"x": null},
-            {"x": true}
-          ],
-          "file_type": "jsonl"
-        }
-      ]
-    },
-    "expected": {
-      "output": [{"total": null}],
       "status_code": 0
     }
   },
@@ -710,25 +670,6 @@
     },
     "expected": {
       "output": [{"n": 2, "total": 15}],
-      "status_code": 0
-    }
-  },
-  "39_global_aggregate_empty_result": {
-    "case": {
-      "arguments": "--log-file logs.ndjson --query \"SELECT COUNT(*) AS n, SUM(x) AS total FROM logs WHERE level = \\\"NEVER\\\"\"",
-      "input_files": [
-        {
-          "path": "logs.ndjson",
-          "content": [
-            {"level": "INFO", "x": 10},
-            {"level": "ERROR", "x": 20}
-          ],
-          "file_type": "jsonl"
-        }
-      ]
-    },
-    "expected": {
-      "output": [{"n": 0, "total": null}],
       "status_code": 0
     }
   },

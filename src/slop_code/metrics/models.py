@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
+from pydantic import Field
 from pydantic import computed_field
 
 from slop_code.logging import get_logger
@@ -601,3 +602,176 @@ class LanguageSpec(BaseModel):
     redundancy: Callable[[Path], RedundancyMetrics] | None = None
     waste: Callable[[Path, list[SymbolMetrics]], WasteMetrics] | None = None
     ast_grep: Callable[[Path], AstGrepMetrics] | None = None
+
+
+# -----------------------------------------------------------------------------
+# Run Summary Models
+# -----------------------------------------------------------------------------
+
+
+class MetricStats(BaseModel):
+    """Statistics for a single metric across checkpoints."""
+
+    mean: float | None = None
+    stddev: float | None = None
+    min: float | None = None
+    max: float | None = None
+    median: float | None = None
+    count: int = 0
+
+    def format_display(self, precision: int = 4, suffix: str = "") -> str:
+        """Format as 'mean +/- stddev' for console display.
+
+        Args:
+            precision: Number of decimal places.
+            suffix: Optional suffix to append (e.g., 's' for seconds).
+
+        Returns:
+            Formatted string like '0.82 +/- 0.21s' or 'N/A'.
+        """
+        if self.mean is None:
+            return "N/A"
+        if self.stddev is None or self.stddev == 0:
+            return f"{self.mean:.{precision}f}{suffix}"
+        return f"{self.mean:.{precision}f} +/- {self.stddev:.{precision}f}{suffix}"
+
+
+class CostsStats(BaseModel):
+    """Cost statistics at different aggregation levels."""
+
+    checkpoint: MetricStats = Field(default_factory=MetricStats)
+    problem: MetricStats = Field(default_factory=MetricStats)
+    total: float = 0.0
+
+
+class TimeStats(BaseModel):
+    """Time statistics at different aggregation levels."""
+
+    checkpoint: MetricStats = Field(default_factory=MetricStats)
+    problem: MetricStats = Field(default_factory=MetricStats)
+
+
+class TokenMeans(BaseModel):
+    """Mean token counts by type."""
+
+    input: float = 0.0
+    output: float = 0.0
+    cache_read: float = 0.0
+    cache_write: float = 0.0
+    reasoning: float = 0.0
+
+
+class TokenStats(BaseModel):
+    """Token statistics: totals and per-level means."""
+
+    input: int = 0
+    output: int = 0
+    cache_read: int = 0
+    cache_write: int = 0
+    reasoning: int = 0
+    problem: TokenMeans = Field(default_factory=TokenMeans)
+    checkpoint: TokenMeans = Field(default_factory=TokenMeans)
+
+
+class StepsStats(BaseModel):
+    """Step statistics at different aggregation levels."""
+
+    checkpoint: MetricStats = Field(default_factory=MetricStats)
+    problem: MetricStats = Field(default_factory=MetricStats)
+
+
+class CyclomaticComplexityStats(BaseModel):
+    """Cyclomatic complexity aggregates across checkpoints."""
+
+    high_count: MetricStats = Field(default_factory=MetricStats)
+    high_mean: MetricStats = Field(default_factory=MetricStats)
+    max: MetricStats = Field(default_factory=MetricStats)
+
+
+class PassRatesByType(BaseModel):
+    """Pass rates by test type (means)."""
+
+    core: float = 0.0
+    total: float = 0.0
+    error: float = 0.0
+    functionality: float = 0.0
+    regression: float = 0.0
+
+
+class PassRatesStats(BaseModel):
+    """Pass rate statistics at different aggregation levels."""
+
+    problem: PassRatesByType = Field(default_factory=PassRatesByType)
+    checkpoint: PassRatesByType = Field(default_factory=PassRatesByType)
+
+
+class RatiosStats(BaseModel):
+    """Quality ratio statistics (per LOC)."""
+
+    rubric: MetricStats = Field(default_factory=MetricStats)
+    lint: MetricStats = Field(default_factory=MetricStats)
+    ast_grep: MetricStats = Field(default_factory=MetricStats)
+
+
+class DeltaStats(BaseModel):
+    """Delta statistics between consecutive checkpoints."""
+
+    lint: MetricStats = Field(default_factory=MetricStats)
+    complex: MetricStats = Field(default_factory=MetricStats)
+    ast_grep: MetricStats = Field(default_factory=MetricStats)
+    comparisons: MetricStats = Field(default_factory=MetricStats)
+    rubric_non_carryover: MetricStats = Field(default_factory=MetricStats)
+
+
+class RunSummary(BaseModel):
+    """Complete summary statistics for a run."""
+
+    model: str
+    thinking: str
+    prompt: str
+    agent_type: str
+    agent_version: str | None
+
+    # Counts
+    num_problems: int
+    num_checkpoints: int
+
+    # Costs: {checkpoint, problem, total}
+    costs: CostsStats = Field(default_factory=CostsStats)
+
+    # Time: {checkpoint, problem}
+    time: TimeStats = Field(default_factory=TimeStats)
+
+    # Tokens: totals + per-level means
+    tokens: TokenStats = Field(default_factory=TokenStats)
+
+    # Steps: {checkpoint, problem}
+    steps: StepsStats = Field(default_factory=StepsStats)
+
+    # Solve rates
+    checkpoints_solved: int = 0
+    checkpoints_iso_solved: int = 0
+    checkpoints_core_solved: int = 0
+    problem_solved: float = 0.0
+    problem_partial: float = 0.0
+    pct_checkpoints_solved: float = 0.0
+    pct_checkpoints_iso_solved: float = 0.0
+    pct_problems_solved: float = 0.0
+    pct_problems_partial: float = 0.0
+    pct_checkpoints_core_solved: float = 0.0
+
+    # Pass rates by test type: {problem, checkpoint} x {core, total, error, ...}
+    pass_rates: PassRatesStats = Field(default_factory=PassRatesStats)
+
+    # Cyclomatic complexity
+    cc: CyclomaticComplexityStats = Field(default_factory=CyclomaticComplexityStats)
+
+    # Quality ratios (per LOC): {rubric, lint, ast_grep}
+    ratios: RatiosStats = Field(default_factory=RatiosStats)
+
+    # Delta stats between consecutive checkpoints
+    delta: DeltaStats = Field(default_factory=DeltaStats)
+
+    # Composite quality scores
+    verbosity: MetricStats = Field(default_factory=MetricStats)
+    erosion: MetricStats = Field(default_factory=MetricStats)

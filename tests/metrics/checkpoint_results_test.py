@@ -12,11 +12,11 @@ from slop_code.common import FILES_QUALITY_SAVENAME
 from slop_code.common import QUALITY_DIR
 from slop_code.common import QUALITY_METRIC_SAVENAME
 from slop_code.common import SYMBOLS_QUALITY_SAVENAME
-from slop_code.metrics.checkpoint_results import compute_checkpoint_delta
-from slop_code.metrics.checkpoint_results import get_checkpoint_metrics
-from slop_code.metrics.checkpoint_results import get_evaluation_metrics
-from slop_code.metrics.checkpoint_results import get_quality_metrics
-from slop_code.metrics.checkpoint_results import get_rubric_metrics
+from slop_code.metrics.checkpoint import compute_checkpoint_delta
+from slop_code.metrics.checkpoint import get_checkpoint_metrics
+from slop_code.metrics.checkpoint import get_evaluation_metrics
+from slop_code.metrics.checkpoint import get_quality_metrics
+from slop_code.metrics.checkpoint import get_rubric_metrics
 
 
 class TestGetEvaluationMetrics:

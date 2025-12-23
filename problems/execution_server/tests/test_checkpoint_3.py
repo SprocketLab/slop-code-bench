@@ -143,7 +143,8 @@ def _assert_execute_payload(
     assert isinstance(duration, (int, float))
     assert duration <= case.expected_duration
     if case.expected_files is None:
-        assert "files" not in payload
+        # Accept either absent or empty dict (both valid interpretations)
+        assert payload.get("files", {}) == {}
     else:
         actual_files = payload.get("files", {})
         # Normalize file content for comparison

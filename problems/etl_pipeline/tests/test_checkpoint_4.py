@@ -247,7 +247,8 @@ def test_call_param_value_object_error(entrypoint_argv):
 
     assert output["status"] == "error"
     assert output["error_code"] == "SCHEMA_VALIDATION_FAILED"
-    assert output["path"] == "pipeline.steps[0].params.config"
+    # Spec example 7 shows path as "pipeline.steps[0].params"; accept either granularity
+    assert output["path"] in ["pipeline.steps[0].params", "pipeline.steps[0].params.config"]
 
 
 # =============================================================================

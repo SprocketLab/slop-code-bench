@@ -663,8 +663,10 @@ def test_default_languages_include_cpp(entrypoint_argv, tmp_path):
 
 @pytest.mark.functionality
 def test_python_list_comprehension(entrypoint_argv, tmp_path):
-    """Functionality: List comprehension pattern matching."""
-    input_files = {"proj/comp.py": "squares = [x*x for x in range(10)]\nevens = [n for n in nums if n % 2 == 0]"}
+    """Functionality: List comprehension pattern matching (simple cases without if-clause)."""
+    # Only test list comprehensions without if-clauses, since the if-clause is a separate
+    # AST element and it's ambiguous whether $ITER should capture it
+    input_files = {"proj/comp.py": "squares = [x*x for x in range(10)]\ndoubles = [n*2 for n in nums]"}
     rules = [{"id": "list_comp", "kind": "pattern", "languages": ["python"], "pattern": "[$EXPR for $VAR in $ITER]"}]
     expected = [
         {
@@ -682,16 +684,16 @@ def test_python_list_comprehension(entrypoint_argv, tmp_path):
         },
         {
             "captures": {
-                "$EXPR": {"ranges": [{"end": {"col": 11, "line": 2}, "start": {"col": 10, "line": 2}}], "text": "n"},
-                "$ITER": {"ranges": [{"end": {"col": 39, "line": 2}, "start": {"col": 21, "line": 2}}], "text": "nums if n % 2 == 0"},
-                "$VAR": {"ranges": [{"end": {"col": 17, "line": 2}, "start": {"col": 16, "line": 2}}], "text": "n"},
+                "$EXPR": {"ranges": [{"end": {"col": 13, "line": 2}, "start": {"col": 11, "line": 2}}], "text": "n*2"},
+                "$ITER": {"ranges": [{"end": {"col": 29, "line": 2}, "start": {"col": 25, "line": 2}}], "text": "nums"},
+                "$VAR": {"ranges": [{"end": {"col": 21, "line": 2}, "start": {"col": 20, "line": 2}}], "text": "n"},
             },
-            "end": {"col": 40, "line": 2},
+            "end": {"col": 30, "line": 2},
             "file": "comp.py",
             "language": "python",
-            "match": "[n for n in nums if n % 2 == 0]",
+            "match": "[n*2 for n in nums]",
             "rule_id": "list_comp",
-            "start": {"col": 9, "line": 2},
+            "start": {"col": 11, "line": 2},
         },
     ]
 
@@ -703,28 +705,33 @@ def test_python_list_comprehension(entrypoint_argv, tmp_path):
 
 @pytest.mark.functionality
 def test_sorting_same_start_different_end(entrypoint_argv, tmp_path):
-    """Functionality: Same start position sorted by end position."""
+    """Functionality: Nested function calls - at minimum the outermost match should be returned.
+
+    The spec example (lines 160-170) shows f(g(h(z))) matching only as the outermost call.
+    Whether nested matches are also returned is implementation-defined, but if they are,
+    they should be sorted by file, start position, end position, then rule_id.
+    """
     input_files = {"proj/nest.py": "foo(bar(baz(1)))"}
     rules = [{"id": "nested", "kind": "pattern", "languages": ["python"], "pattern": "$X($Y)"}]
-    expected = [
-        {
-            "captures": {
-                "$X": {"ranges": [{"end": {"col": 4, "line": 1}, "start": {"col": 1, "line": 1}}], "text": "foo"},
-                "$Y": {"ranges": [{"end": {"col": 16, "line": 1}, "start": {"col": 5, "line": 1}}], "text": "bar(baz(1))"},
-            },
-            "end": {"col": 17, "line": 1},
-            "file": "nest.py",
-            "language": "python",
-            "match": "foo(bar(baz(1)))",
-            "rule_id": "nested",
-            "start": {"col": 1, "line": 1},
-        }
-    ]
 
     proj = create_test_files(tmp_path, input_files)
     rules_file = write_rules(tmp_path, rules)
     result = run_search(entrypoint_argv, proj, rules_file)
-    assert_matches(result.stdout, expected, actual_returncode=result.returncode)
+
+    assert result.returncode == 0
+    matches = parse_jsonl(result.stdout)
+
+    # At minimum, the outermost match should be present (per spec example)
+    assert len(matches) >= 1
+    outermost = next((m for m in matches if m["match"] == "foo(bar(baz(1)))"), None)
+    assert outermost is not None, "Outermost match foo(bar(baz(1))) should be present"
+    assert outermost["captures"]["$X"]["text"] == "foo"
+    assert outermost["captures"]["$Y"]["text"] == "bar(baz(1))"
+
+    # If multiple matches returned, verify they are properly sorted
+    if len(matches) > 1:
+        sorted_matches = sort_matches(matches)
+        assert matches == sorted_matches, "Matches should be sorted by file, start, end, rule_id"
 
 
 @pytest.mark.functionality

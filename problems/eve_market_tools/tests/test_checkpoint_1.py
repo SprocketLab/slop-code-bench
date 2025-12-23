@@ -8,6 +8,7 @@ import math
 
 import httpx
 import pytest
+from conftest import assert_dict_equal
 
 # =============================================================================
 # Tests that must run BEFORE data upload (order=0)
@@ -19,7 +20,10 @@ def test_hub_compare_error_no_data(api_server):
     """Functionality: Hub compare returns 404 when no price data loaded."""
     resp = httpx.get(f"{api_server}/v1/hub-compare/28665", timeout=60)
     assert resp.status_code == 404
-    assert resp.json() == {"error": "NO_PRICE_DATA", "details": "28665"}
+    body = resp.json()
+    assert body["error"] == "NO_PRICE_DATA"
+    # Spec says details should be "human readable" - don't require exact format
+    assert "details" in body and isinstance(body["details"], str)
 
 
 # =============================================================================
@@ -32,14 +36,14 @@ def test_get_market_stats(uploaded_data):
     resp = httpx.get(f"{uploaded_data}/v1/market/10000002", timeout=60)
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {
+    assert_dict_equal(body, {
         "name": "The Forge",
         "sell_orders": 196990,
         "buy_orders": 80242,
         "sell_value": 138168.48,
         "buy_value": 168450.26,
         "unique_items": 8709,
-    }
+    })
 
 
 def test_get_market_stats_with_type_ids(uploaded_data):
@@ -49,7 +53,7 @@ def test_get_market_stats_with_type_ids(uploaded_data):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {
+    assert_dict_equal(body, {
         "name": "The Forge",
         "sell_orders": 196990,
         "buy_orders": 80242,
@@ -79,7 +83,7 @@ def test_get_market_stats_with_type_ids(uploaded_data):
                 "sell_orders": 21,
             },
         },
-    }
+    })
 
 
 def test_tritanium(uploaded_data, orders_df):
@@ -121,7 +125,7 @@ def test_hubs(uploaded_data):
     resp = httpx.get(f"{uploaded_data}/v1/market/10000002?hubs=10", timeout=60)
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {
+    assert_dict_equal(body, {
         "name": "The Forge",
         "sell_orders": 196990,
         "buy_orders": 80242,
@@ -180,7 +184,7 @@ def test_hubs(uploaded_data):
                 "sell_value": 6.4,
             },
         ],
-    }
+    })
 
 
 # =============================================================================
@@ -194,7 +198,7 @@ def test_domain_stats(uploaded_data):
     resp = httpx.get(f"{uploaded_data}/v1/market/10000043?hubs=3", timeout=60)
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {
+    assert_dict_equal(body, {
         "name": "Domain",
         "sell_orders": 70109,
         "buy_orders": 36685,
@@ -218,7 +222,7 @@ def test_domain_stats(uploaded_data):
                 "sell_value": 35.72,
             },
         ],
-    }
+    })
 
 
 @pytest.mark.functionality
@@ -281,7 +285,7 @@ def test_rhea_orders(uploaded_data):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {
+    assert_dict_equal(body, {
         "name": "The Forge",
         "sell_orders": 196990,
         "buy_orders": 80242,
@@ -311,7 +315,7 @@ def test_rhea_orders(uploaded_data):
                 "sell_orders": 45,
             },
         },
-    }
+    })
 
 
 @pytest.mark.functionality
@@ -320,7 +324,7 @@ def test_domain_vargur(uploaded_data):
     resp = httpx.get(f"{uploaded_data}/v1/market/10000043/28665", timeout=60)
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {
+    assert_dict_equal(body, {
         "name": "Vargur",
         "buy": 1000000000.0,
         "sell": 1138000000.0,
@@ -333,7 +337,7 @@ def test_domain_vargur(uploaded_data):
         "buy_volume": 26,
         "sell_volume": 20,
         "total_value": 22.76,
-    }
+    })
 
 
 @pytest.mark.functionality
@@ -342,7 +346,7 @@ def test_hub_compare(uploaded_data):
     resp = httpx.get(f"{uploaded_data}/v1/hub-compare/28665", timeout=60)
     assert resp.status_code == 200
     body = resp.json()
-    assert body == {
+    assert_dict_equal(body, {
         "jita_buy": 940700000.0,
         "jita_buy_volume": 30,
         "jita_buy_5pct": 940700000.0,
@@ -378,4 +382,4 @@ def test_hub_compare(uploaded_data):
         "hek_sell_volume": 16,
         "hek_sell_5pct": 1228000000.0,
         "hek_value": 19.65,
-    }
+    })

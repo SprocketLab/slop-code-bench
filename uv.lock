@@ -1,172 +1,10 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
     "python_full_version == '3.13.*'",
     "python_full_version < '3.13'",
-]
-
-[[package]]
-name = "agent-slop-code"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aiofiles" },
-    { name = "anthropic" },
-    { name = "boto3" },
-    { name = "botocore", extra = ["crt"] },
-    { name = "click" },
-    { name = "dash" },
-    { name = "dash-ag-grid" },
-    { name = "dash-bootstrap-components" },
-    { name = "deepdiff" },
-    { name = "docker" },
-    { name = "geopy" },
-    { name = "gitpython" },
-    { name = "httpx" },
-    { name = "httpx-sse" },
-    { name = "isort" },
-    { name = "jupyter" },
-    { name = "kaleido" },
-    { name = "litellm" },
-    { name = "mini-swe-agent" },
-    { name = "mypy" },
-    { name = "networkx", extra = ["default"] },
-    { name = "nltk" },
-    { name = "numpy" },
-    { name = "omegaconf" },
-    { name = "pandas" },
-    { name = "playwright" },
-    { name = "pulp" },
-    { name = "pyarrow" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "pydeps" },
-    { name = "python-dotenv" },
-    { name = "pytz" },
-    { name = "pyyaml" },
-    { name = "pyyaml-include" },
-    { name = "radon" },
-    { name = "rfc3339-validator" },
-    { name = "rich" },
-    { name = "scipy" },
-    { name = "semgrep" },
-    { name = "streamlit" },
-    { name = "structlog" },
-    { name = "swe-rex" },
-    { name = "tabulate" },
-    { name = "tenacity" },
-    { name = "tokenizers" },
-    { name = "toml" },
-    { name = "tree-sitter" },
-    { name = "tree-sitter-language-pack" },
-    { name = "typer" },
-    { name = "types-pyyaml" },
-    { name = "ujson" },
-    { name = "universal-pathlib" },
-]
-
-[package.optional-dependencies]
-hydra = [
-    { name = "hydra-core" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "flask" },
-    { name = "isort" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-json-ctrf" },
-    { name = "pytest-xdist" },
-    { name = "ruff" },
-    { name = "seaborn" },
-    { name = "watchdog" },
-]
-openhands = [
-    { name = "openhands-agent-server" },
-    { name = "openhands-sdk" },
-    { name = "openhands-tools" },
-    { name = "openhands-workspace" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiofiles", specifier = ">=25.1.0" },
-    { name = "anthropic", specifier = ">=0.72.0" },
-    { name = "boto3", specifier = ">=1.42.9" },
-    { name = "botocore", extras = ["crt"], specifier = ">=1.42.9" },
-    { name = "click", specifier = ">=8.2.1" },
-    { name = "dash", specifier = ">=3.2.0" },
-    { name = "dash-ag-grid", specifier = ">=32.3.2" },
-    { name = "dash-bootstrap-components", specifier = ">=2.0.4" },
-    { name = "deepdiff", specifier = ">=8.6.0" },
-    { name = "docker", specifier = ">=7.1.0" },
-    { name = "geopy", specifier = ">=2.4.1" },
-    { name = "gitpython", specifier = ">=3.1.45" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "httpx-sse", specifier = ">=0.4.3" },
-    { name = "hydra-core", marker = "extra == 'hydra'", specifier = ">=1.3.2" },
-    { name = "isort", specifier = ">=6.0.1" },
-    { name = "jupyter", specifier = ">=1.1.1" },
-    { name = "kaleido", specifier = ">=1.2.0" },
-    { name = "litellm", specifier = ">=1.77.1" },
-    { name = "mini-swe-agent", specifier = ">=1.9.0" },
-    { name = "mypy", specifier = ">=1.19.0" },
-    { name = "networkx", extras = ["default"], specifier = ">=3.6.1" },
-    { name = "nltk", specifier = ">=3.9.1" },
-    { name = "numpy", specifier = ">=2.3.2" },
-    { name = "omegaconf", specifier = ">=2.3.0" },
-    { name = "pandas", specifier = ">=2.3.1" },
-    { name = "playwright", specifier = ">=1.55.0" },
-    { name = "pulp", specifier = ">=3.3.0" },
-    { name = "pyarrow", specifier = ">=20.0.0" },
-    { name = "pydantic", specifier = ">=2.11.7" },
-    { name = "pydantic-settings", specifier = ">=2.10.1" },
-    { name = "pydeps", specifier = ">=3.0.0" },
-    { name = "python-dotenv", specifier = ">=1.1.1" },
-    { name = "pytz", specifier = ">=2025.2" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "pyyaml-include", specifier = ">=2.2" },
-    { name = "radon", specifier = ">=6.0.1" },
-    { name = "rfc3339-validator", specifier = ">=0.1.4" },
-    { name = "rich", specifier = ">=13.7.0" },
-    { name = "scipy", specifier = ">=1.15.0" },
-    { name = "semgrep", specifier = ">=1.85.0" },
-    { name = "streamlit", specifier = ">=1.50.0" },
-    { name = "structlog", specifier = ">=25.4.0" },
-    { name = "swe-rex", specifier = ">=1.4.0" },
-    { name = "tabulate", specifier = ">=0.9.0" },
-    { name = "tenacity", specifier = ">=9.0.0" },
-    { name = "tokenizers", specifier = ">=0.15.0" },
-    { name = "toml", specifier = ">=0.10.2" },
-    { name = "tree-sitter", specifier = ">=0.25.0" },
-    { name = "tree-sitter-language-pack", specifier = ">=0.6.0" },
-    { name = "typer", specifier = ">=0.9.0" },
-    { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
-    { name = "ujson", specifier = ">=5.10.0" },
-    { name = "universal-pathlib", specifier = ">=0.3.0" },
-]
-provides-extras = ["hydra"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "flask", specifier = ">=3.1.2" },
-    { name = "isort" },
-    { name = "pytest", specifier = ">=8.4.1" },
-    { name = "pytest-asyncio", specifier = ">=1.2.0" },
-    { name = "pytest-json-ctrf", specifier = ">=0.1.0" },
-    { name = "pytest-xdist", specifier = ">=3.8.0" },
-    { name = "ruff", specifier = ">=0.12.7" },
-    { name = "seaborn", specifier = ">=0.13.2" },
-    { name = "watchdog", specifier = ">=6.0.0" },
-]
-openhands = [
-    { name = "openhands-agent-server", specifier = ">=1.0.0a5" },
-    { name = "openhands-sdk", specifier = ">=1.0.0a5" },
-    { name = "openhands-tools", specifier = ">=1.0.0a5" },
-    { name = "openhands-workspace", specifier = ">=1.0.0a5" },
 ]
 
 [[package]]
@@ -8029,6 +7867,168 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
+]
+
+[[package]]
+name = "slop-code-bench"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "aiofiles" },
+    { name = "anthropic" },
+    { name = "boto3" },
+    { name = "botocore", extra = ["crt"] },
+    { name = "click" },
+    { name = "dash" },
+    { name = "dash-ag-grid" },
+    { name = "dash-bootstrap-components" },
+    { name = "deepdiff" },
+    { name = "docker" },
+    { name = "geopy" },
+    { name = "gitpython" },
+    { name = "httpx" },
+    { name = "httpx-sse" },
+    { name = "isort" },
+    { name = "jupyter" },
+    { name = "kaleido" },
+    { name = "litellm" },
+    { name = "mini-swe-agent" },
+    { name = "mypy" },
+    { name = "networkx", extra = ["default"] },
+    { name = "nltk" },
+    { name = "numpy" },
+    { name = "omegaconf" },
+    { name = "pandas" },
+    { name = "playwright" },
+    { name = "pulp" },
+    { name = "pyarrow" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pydeps" },
+    { name = "python-dotenv" },
+    { name = "pytz" },
+    { name = "pyyaml" },
+    { name = "pyyaml-include" },
+    { name = "radon" },
+    { name = "rfc3339-validator" },
+    { name = "rich" },
+    { name = "scipy" },
+    { name = "semgrep" },
+    { name = "streamlit" },
+    { name = "structlog" },
+    { name = "swe-rex" },
+    { name = "tabulate" },
+    { name = "tenacity" },
+    { name = "tokenizers" },
+    { name = "toml" },
+    { name = "tree-sitter" },
+    { name = "tree-sitter-language-pack" },
+    { name = "typer" },
+    { name = "types-pyyaml" },
+    { name = "ujson" },
+    { name = "universal-pathlib" },
+]
+
+[package.optional-dependencies]
+hydra = [
+    { name = "hydra-core" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "flask" },
+    { name = "isort" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-json-ctrf" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+    { name = "seaborn" },
+    { name = "watchdog" },
+]
+openhands = [
+    { name = "openhands-agent-server" },
+    { name = "openhands-sdk" },
+    { name = "openhands-tools" },
+    { name = "openhands-workspace" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiofiles", specifier = ">=25.1.0" },
+    { name = "anthropic", specifier = ">=0.72.0" },
+    { name = "boto3", specifier = ">=1.42.9" },
+    { name = "botocore", extras = ["crt"], specifier = ">=1.42.9" },
+    { name = "click", specifier = ">=8.2.1" },
+    { name = "dash", specifier = ">=3.2.0" },
+    { name = "dash-ag-grid", specifier = ">=32.3.2" },
+    { name = "dash-bootstrap-components", specifier = ">=2.0.4" },
+    { name = "deepdiff", specifier = ">=8.6.0" },
+    { name = "docker", specifier = ">=7.1.0" },
+    { name = "geopy", specifier = ">=2.4.1" },
+    { name = "gitpython", specifier = ">=3.1.45" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "httpx-sse", specifier = ">=0.4.3" },
+    { name = "hydra-core", marker = "extra == 'hydra'", specifier = ">=1.3.2" },
+    { name = "isort", specifier = ">=6.0.1" },
+    { name = "jupyter", specifier = ">=1.1.1" },
+    { name = "kaleido", specifier = ">=1.2.0" },
+    { name = "litellm", specifier = ">=1.77.1" },
+    { name = "mini-swe-agent", specifier = ">=1.9.0" },
+    { name = "mypy", specifier = ">=1.19.0" },
+    { name = "networkx", extras = ["default"], specifier = ">=3.6.1" },
+    { name = "nltk", specifier = ">=3.9.1" },
+    { name = "numpy", specifier = ">=2.3.2" },
+    { name = "omegaconf", specifier = ">=2.3.0" },
+    { name = "pandas", specifier = ">=2.3.1" },
+    { name = "playwright", specifier = ">=1.55.0" },
+    { name = "pulp", specifier = ">=3.3.0" },
+    { name = "pyarrow", specifier = ">=20.0.0" },
+    { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "pydantic-settings", specifier = ">=2.10.1" },
+    { name = "pydeps", specifier = ">=3.0.0" },
+    { name = "python-dotenv", specifier = ">=1.1.1" },
+    { name = "pytz", specifier = ">=2025.2" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "pyyaml-include", specifier = ">=2.2" },
+    { name = "radon", specifier = ">=6.0.1" },
+    { name = "rfc3339-validator", specifier = ">=0.1.4" },
+    { name = "rich", specifier = ">=13.7.0" },
+    { name = "scipy", specifier = ">=1.15.0" },
+    { name = "semgrep", specifier = ">=1.85.0" },
+    { name = "streamlit", specifier = ">=1.50.0" },
+    { name = "structlog", specifier = ">=25.4.0" },
+    { name = "swe-rex", specifier = ">=1.4.0" },
+    { name = "tabulate", specifier = ">=0.9.0" },
+    { name = "tenacity", specifier = ">=9.0.0" },
+    { name = "tokenizers", specifier = ">=0.15.0" },
+    { name = "toml", specifier = ">=0.10.2" },
+    { name = "tree-sitter", specifier = ">=0.25.0" },
+    { name = "tree-sitter-language-pack", specifier = ">=0.6.0" },
+    { name = "typer", specifier = ">=0.9.0" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
+    { name = "ujson", specifier = ">=5.10.0" },
+    { name = "universal-pathlib", specifier = ">=0.3.0" },
+]
+provides-extras = ["hydra"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "flask", specifier = ">=3.1.2" },
+    { name = "isort" },
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-asyncio", specifier = ">=1.2.0" },
+    { name = "pytest-json-ctrf", specifier = ">=0.1.0" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
+    { name = "ruff", specifier = ">=0.12.7" },
+    { name = "seaborn", specifier = ">=0.13.2" },
+    { name = "watchdog", specifier = ">=6.0.0" },
+]
+openhands = [
+    { name = "openhands-agent-server", specifier = ">=1.0.0a5" },
+    { name = "openhands-sdk", specifier = ">=1.0.0a5" },
+    { name = "openhands-tools", specifier = ">=1.0.0a5" },
+    { name = "openhands-workspace", specifier = ">=1.0.0a5" },
 ]
 
 [[package]]

@@ -25,6 +25,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 
+from slop_code.common import WORKSPACE_TEST_DIR
 from slop_code.execution.assets import ResolvedStaticAsset
 from slop_code.logging import get_logger
 
@@ -119,7 +120,7 @@ class SnapshotConfig(BaseModel):
         description="Glob patterns of files to always include in snapshots.",
     )
     ignore_globs: set[str] = Field(
-        default={"*.pyc", "venv/*", ".venv/*"},
+        default={"*.pyc", "venv/*", ".venv/*", f"{WORKSPACE_TEST_DIR}/*"},
         description="Glob patterns of files to exclude from snapshots.",
     )
     compression: str = Field(

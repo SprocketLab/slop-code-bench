@@ -1206,3 +1206,340 @@ def test_invalid_identifier_rejected(entrypoint_argv, tmp_path):
 
     assert result.returncode == 1, "Expected command to fail with exit code 1"
     assert result.stderr.strip()
+
+
+# =============================================================================
+# Additional Tests - Case Sensitivity, Type Validation, UNIQUE Enforcement
+# =============================================================================
+
+
+@pytest.mark.functionality
+def test_case_sensitive_column_names(entrypoint_argv, tmp_path):
+    """Functionality: Column names are case-sensitive per spec.
+
+    The spec explicitly states: "Table and column names are case-sensitive"
+    This means 'Email' and 'email' should be treated as DIFFERENT columns.
+    """
+    migration_file = tmp_path / "migration.json"
+    db_file = tmp_path / "app.db"
+
+    # First, create a table with an "Email" column (capital E)
+    migration1 = {
+        "version": 1,
+        "description": "Create table with Email column",
+        "operations": [
+            {
+                "type": "create_table",
+                "table": "users",
+                "columns": [
+                    {"name": "id", "type": "INTEGER", "primary_key": True},
+                    {"name": "Email", "type": "TEXT", "not_null": True},
+                ],
+            }
+        ],
+    }
+
+    migration_file.write_text(json.dumps(migration1))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+    assert result.returncode == 0, f"First migration failed: {result.stderr}"
+
+    # Now add an "email" column (lowercase e) - should succeed since names are case-sensitive
+    migration2 = {
+        "version": 2,
+        "description": "Add email column (lowercase)",
+        "operations": [
+            {
+                "type": "add_column",
+                "table": "users",
+                "column": {"name": "email", "type": "TEXT"},
+            }
+        ],
+    }
+
+    migration_file.write_text(json.dumps(migration2))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+    assert result.returncode == 0, f"Second migration failed (should allow case-different column): {result.stderr}"
+
+    # Verify both columns exist
+    with sqlite3.connect(db_file) as conn:
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(users)")]
+
+    assert "Email" in columns, "Email column should exist"
+    assert "email" in columns, "email column should exist (case-sensitive)"
+
+
+@pytest.mark.error
+def test_invalid_column_type_rejected(entrypoint_argv, tmp_path):
+    """Error: Invalid column types should fail schema validation.
+
+    The spec lists valid types as: INTEGER|TEXT|REAL|BLOB|TIMESTAMP
+    Types like VARCHAR, BOOLEAN, INT should be rejected.
+    """
+    migration_file = tmp_path / "migration.json"
+    db_file = tmp_path / "app.db"
+
+    migration = {
+        "version": 1,
+        "description": "Table with invalid type",
+        "operations": [
+            {
+                "type": "create_table",
+                "table": "users",
+                "columns": [
+                    {"name": "id", "type": "INTEGER", "primary_key": True},
+                    {"name": "name", "type": "VARCHAR"},  # Invalid type!
+                ],
+            }
+        ],
+    }
+
+    migration_file.write_text(json.dumps(migration))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+
+    assert result.returncode == 1, "Expected command to fail with exit code 1 for invalid type"
+    assert result.stderr.strip()
+
+
+@pytest.mark.functionality
+def test_unique_constraint_prevents_duplicates(entrypoint_argv, tmp_path):
+    """Functionality: UNIQUE columns prevent duplicate values.
+
+    The spec says: "For UNIQUE columns, create a UNIQUE index"
+    This test verifies the constraint actually works, not just that an index exists.
+    """
+    migration_file = tmp_path / "migration.json"
+    db_file = tmp_path / "app.db"
+
+    migration = {
+        "version": 1,
+        "description": "Create table with unique email",
+        "operations": [
+            {
+                "type": "create_table",
+                "table": "users",
+                "columns": [
+                    {"name": "id", "type": "INTEGER", "primary_key": True, "auto_increment": True},
+                    {"name": "email", "type": "TEXT", "unique": True},
+                ],
+            }
+        ],
+    }
+
+    migration_file.write_text(json.dumps(migration))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+    assert result.returncode == 0, f"Migration failed: {result.stderr}"
+
+    # Now try to insert duplicate values
+    with sqlite3.connect(db_file) as conn:
+        conn.execute("INSERT INTO users (email) VALUES ('test@example.com')")
+        conn.commit()
+
+        # Second insert with same email should fail
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute("INSERT INTO users (email) VALUES ('test@example.com')")
+
+
+@pytest.mark.error
+def test_version_zero_rejected(entrypoint_argv, tmp_path):
+    """Error: Migration version 0 should be rejected.
+
+    The spec says: "Migration version must be a positive integer"
+    Zero is not positive.
+    """
+    migration_file = tmp_path / "migration.json"
+    db_file = tmp_path / "app.db"
+
+    migration = {
+        "version": 0,
+        "description": "Zero version",
+        "operations": [
+            {
+                "type": "create_table",
+                "table": "test",
+                "columns": [{"name": "id", "type": "INTEGER", "primary_key": True}],
+            }
+        ],
+    }
+
+    migration_file.write_text(json.dumps(migration))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+
+    assert result.returncode == 1, "Expected command to fail with exit code 1 for version 0"
+    assert result.stderr.strip()
+
+
+@pytest.mark.error
+def test_version_negative_rejected(entrypoint_argv, tmp_path):
+    """Error: Negative migration version should be rejected.
+
+    The spec says: "Migration version must be a positive integer"
+    """
+    migration_file = tmp_path / "migration.json"
+    db_file = tmp_path / "app.db"
+
+    migration = {
+        "version": -5,
+        "description": "Negative version",
+        "operations": [
+            {
+                "type": "create_table",
+                "table": "test",
+                "columns": [{"name": "id", "type": "INTEGER", "primary_key": True}],
+            }
+        ],
+    }
+
+    migration_file.write_text(json.dumps(migration))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+
+    assert result.returncode == 1, "Expected command to fail with exit code 1 for negative version"
+    assert result.stderr.strip()
+
+
+@pytest.mark.error
+def test_version_string_rejected(entrypoint_argv, tmp_path):
+    """Error: String migration version should be rejected.
+
+    The spec says version should be an integer, not a string.
+    """
+    migration_file = tmp_path / "migration.json"
+    db_file = tmp_path / "app.db"
+
+    migration = {
+        "version": "1",  # String, not int
+        "description": "String version",
+        "operations": [
+            {
+                "type": "create_table",
+                "table": "test",
+                "columns": [{"name": "id", "type": "INTEGER", "primary_key": True}],
+            }
+        ],
+    }
+
+    migration_file.write_text(json.dumps(migration))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+
+    assert result.returncode == 1, "Expected command to fail with exit code 1 for string version"
+    assert result.stderr.strip()
+
+
+@pytest.mark.functionality
+def test_drop_column_removes_unique_index_on_dropped_column(entrypoint_argv, tmp_path):
+    """Functionality: Dropping a UNIQUE column removes its index.
+
+    When a column with a UNIQUE constraint is dropped, the associated
+    index should also be removed.
+    """
+    migration_file = tmp_path / "migration.json"
+    db_file = tmp_path / "app.db"
+
+    # Create table with unique column
+    migration1 = {
+        "version": 1,
+        "description": "Create table with unique email",
+        "operations": [
+            {
+                "type": "create_table",
+                "table": "users",
+                "columns": [
+                    {"name": "id", "type": "INTEGER", "primary_key": True},
+                    {"name": "name", "type": "TEXT"},
+                    {"name": "email", "type": "TEXT", "unique": True},
+                ],
+            }
+        ],
+    }
+
+    migration_file.write_text(json.dumps(migration1))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+    assert result.returncode == 0, f"First migration failed: {result.stderr}"
+
+    # Verify unique index exists
+    with sqlite3.connect(db_file) as conn:
+        indexes = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='users'"
+        ).fetchall()
+        index_names = [idx[0] for idx in indexes]
+
+    # Should have at least one index containing 'email' or 'unique'
+    assert any("email" in name.lower() or "unique" in name.lower() for name in index_names), \
+        f"Expected unique index for email, got: {index_names}"
+
+    # Drop the email column
+    migration2 = {
+        "version": 2,
+        "description": "Drop email column",
+        "operations": [{"type": "drop_column", "table": "users", "column": "email"}],
+    }
+
+    migration_file.write_text(json.dumps(migration2))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+    assert result.returncode == 0, f"Drop column failed: {result.stderr}"
+
+    # Verify the index is gone
+    with sqlite3.connect(db_file) as conn:
+        indexes = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='users'"
+        ).fetchall()
+        index_names = [idx[0] for idx in indexes]
+
+    # No index should reference email now
+    assert not any("email" in name.lower() for name in index_names), \
+        f"Email index should be removed, got: {index_names}"
+
+
+@pytest.mark.functionality
+def test_drop_column_preserves_unique_index_on_other_column(entrypoint_argv, tmp_path):
+    """Functionality: Dropping one column preserves UNIQUE on another.
+
+    When dropping column A, a UNIQUE constraint on column B should still work.
+    """
+    migration_file = tmp_path / "migration.json"
+    db_file = tmp_path / "app.db"
+
+    # Create table with two unique columns
+    migration1 = {
+        "version": 1,
+        "description": "Create table with two unique columns",
+        "operations": [
+            {
+                "type": "create_table",
+                "table": "users",
+                "columns": [
+                    {"name": "id", "type": "INTEGER", "primary_key": True},
+                    {"name": "email", "type": "TEXT", "unique": True},
+                    {"name": "username", "type": "TEXT", "unique": True},
+                    {"name": "temp", "type": "TEXT"},
+                ],
+            }
+        ],
+    }
+
+    migration_file.write_text(json.dumps(migration1))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+    assert result.returncode == 0, f"First migration failed: {result.stderr}"
+
+    # Drop the temp column (not a unique one)
+    migration2 = {
+        "version": 2,
+        "description": "Drop temp column",
+        "operations": [{"type": "drop_column", "table": "users", "column": "temp"}],
+    }
+
+    migration_file.write_text(json.dumps(migration2))
+    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
+    assert result.returncode == 0, f"Drop column failed: {result.stderr}"
+
+    # Verify UNIQUE constraints still work on both email and username
+    with sqlite3.connect(db_file) as conn:
+        conn.execute("INSERT INTO users (id, email, username) VALUES (1, 'a@test.com', 'user_a')")
+        conn.commit()
+
+        # Try duplicate email - should fail
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute("INSERT INTO users (id, email, username) VALUES (2, 'a@test.com', 'user_b')")
+
+        # Try duplicate username - should fail
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute("INSERT INTO users (id, email, username) VALUES (3, 'b@test.com', 'user_a')")

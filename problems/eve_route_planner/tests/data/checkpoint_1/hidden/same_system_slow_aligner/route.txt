@@ -1,0 +1,4 @@
+START: Jita IV - Moon 4 - Caldari Navy Assembly Plant
+UNDOCK
+DOCK: Jita VII - Moon 2 - Caldari Business Tribunal Law School
+DONE: 00:01

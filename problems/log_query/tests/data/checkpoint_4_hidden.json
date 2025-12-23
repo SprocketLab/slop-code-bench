@@ -117,7 +117,7 @@
   },
   "10_canon_in_where_anchor_only": {
     "case": {
-      "arguments": "--source a=a.ndjson --query 'SELECT a.id FROM a WHERE CANON.status = 200 GLOSS { status := a.http_status | a.status }'",
+      "arguments": "--source a=a.ndjson --query 'SELECT a.id FROM a GLOSS { status := a.http_status | a.status } WHERE CANON.status = 200'",
       "input_files": [
         {
           "path": "a.ndjson",
@@ -456,7 +456,7 @@
   },
   "25_canon_with_complex_where": {
     "case": {
-      "arguments": "--source a=a.ndjson --query 'SELECT a.id FROM a WHERE CANON.status >= 400 AND CANON.status < 500 GLOSS { status := a.http_status | a.status }'",
+      "arguments": "--source a=a.ndjson --query 'SELECT a.id FROM a GLOSS { status := a.http_status | a.status } WHERE CANON.status >= 400 AND CANON.status < 500'",
       "input_files": [
         {
           "path": "a.ndjson",

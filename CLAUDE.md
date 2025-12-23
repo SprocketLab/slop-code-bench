@@ -83,18 +83,17 @@ uv run isort .                            # Format imports
   - `assets.py` - Static asset resolution and placeholder substitution
   - `models.py` - `EnvironmentSpec` and related Pydantic models
 
-- **`evaluation/`** - Test case execution and validation
-  - `config.py` - `ProblemConfig`, `CheckpointConfig`, `GroupConfig` (Core, Functionality, Error groups)
-  - `runner.py` - Orchestrates test execution via adapters
-  - `report.py` - `CorrectnessResults` and aggregation
-  - `adapters/` - Execution environments: CLI (shell commands), API (HTTP requests), Playwright (browser automation)
-  - `loaders/` - `GroupLoader` protocol for discovering test cases
-  - `verifiers/` - `VerifierProtocol` for validating outputs (exact match, JSON, etc.)
+- **`evaluation/`** - Pytest-based test execution and validation
+  - `config.py` - `ProblemConfig`, `CheckpointConfig`, `MarkerConfig` definitions
+  - `pytest_runner.py` - `PytestRunner` orchestrates pytest execution via uvx
+  - `report.py` - `CorrectnessResults`, `TestResult`, and `GroupType` (CORE, FUNCTIONALITY, REGRESSION, ERROR)
 
 - **`metrics/`** - Code quality measurement
   - `driver.py` - Quality metric orchestration
   - `grade.py` - Grading logic and scoring
-  - `checkpoint_results.py` - Per-checkpoint quality tracking
+  - `models.py` - Core data models for metrics
+  - `checkpoint/` - Per-checkpoint quality tracking and extraction
+  - `summary/` - Aggregation and run-level statistics
   - `languages/` - Language-specific parsers (Python, JavaScript, etc.)
   - `rubric/` - LLM judge templates and criteria
 
@@ -136,12 +135,12 @@ uv run isort .                            # Format imports
 4. Results aggregated into `CorrectnessResults` and quality reports
 
 **Problem Evaluation Flow:**
-1. `ProblemConfig` defines checkpoints and groups (Core, Functionality, Error)
-2. Each checkpoint has `spec.md` (what to build) and test cases
-3. `GroupLoader` discovers cases from `checkpoint_N/{group_name}/`
-4. Adapter executes cases (CLI runs commands, API makes requests, Playwright drives browser)
-5. `VerifierProtocol` validates outputs (exact match, JSON schema, custom logic)
-6. `PassPolicy` (all/majority/any) determines checkpoint success
+1. `ProblemConfig` defines checkpoints with pytest markers
+2. Each checkpoint has `checkpoint_N.md` (spec) and `tests/test_checkpoint_N.py` (tests)
+3. `PytestRunner` copies tests to workspace, generates pytest.ini with markers
+4. Pytest runs via `uvx` (isolated from solution environment)
+5. Tests categorized by markers: unmarked=CORE, `@pytest.mark.functionality`=FUNCTIONALITY, `@pytest.mark.error`=ERROR, prior checkpoint tests=REGRESSION
+6. `PassPolicy` ("core-cases" or "all-non-error-cases") determines checkpoint success
 7. Metrics computed: correctness (pass/fail) + quality (complexity, duplication, etc.)
 
 **Configuration Hierarchy:**
@@ -157,33 +156,42 @@ uv run isort .                            # Format imports
 Each problem in `problems/` follows this pattern:
 ```
 problem_name/
-├── config.yaml              # Problem metadata, adapter config, inline checkpoints
-├── loader.py               # GroupLoader implementation for test discovery
-├── verifier.py            # (Optional) Custom VerifierProtocol
-└── checkpoint_N/
-    ├── spec.md            # Specification for this checkpoint
-    └── {group_name}/      # Test case data (core/, functionality/, errors/)
-        ├── case_1.json
-        ├── case_2.json
-        └── ...
+├── config.yaml              # Problem metadata and inline checkpoint definitions
+├── checkpoint_1.md          # Specification for checkpoint 1
+├── checkpoint_2.md          # Specification for checkpoint 2
+└── tests/
+    ├── conftest.py          # Pytest configuration (entrypoint, checkpoint fixtures)
+    ├── test_checkpoint_1.py # Tests for checkpoint 1
+    ├── test_checkpoint_2.py # Tests for checkpoint 2
+    ├── data/                # Test case data
+    │   ├── checkpoint_1/
+    │   │   ├── core/        # Core test cases (must pass)
+    │   │   ├── hidden/      # Functionality tests (optional)
+    │   │   └── errors/      # Error handling tests
+    │   └── checkpoint_2/
+    └── assets/              # Static test files
 ```
 
 **Modern config.yaml structure** (checkpoints are inline, not separate files):
 ```yaml
 name: problem_name
+entry_file: main_command
+timeout: 20
 checkpoints:
   checkpoint_1:
+    version: 1
     order: 1
-    path: checkpoint_1
-    groups:
-      core:
-        type: Core
-        timeout: 10
-      functionality:
-        type: Functionality
-        timeout: 10
-    specification: spec.md
-    timeout: 10
+    state: Core Tests
+  checkpoint_2:
+    version: 1
+    order: 2
+    state: Extended Features
+test_dependencies:
+  - pyyaml  # Additional packages for test environment
+markers:  # Custom pytest markers beyond built-ins
+  custom_marker:
+    description: Custom test category
+    group: Functionality
 ```
 
 ## Important Technical Notes
@@ -207,10 +215,10 @@ checkpoints:
 - Setup commands run before each checkpoint
 
 ### Evaluation System
-- **GroupType**: Core (must pass), Functionality (optional), Error (expected failures)
-- **PassPolicy**: `all` (strict), `majority` (>50%), `any` (at least one)
-- **Adapters**: CLI (shell), API (HTTP), Playwright (browser) - chosen per problem
-- **Verifiers**: Built-in (exact, JSON, subset) or custom (implement `VerifierProtocol`)
+- **GroupType**: CORE (must pass), FUNCTIONALITY (optional), REGRESSION (from prior checkpoints), ERROR (expected failures)
+- **PassPolicy**: `"core-cases"` (all CORE tests pass), `"all-non-error-cases"` (CORE + FUNCTIONALITY + REGRESSION all pass)
+- **Markers**: Tests categorized by pytest markers (`@pytest.mark.error`, `@pytest.mark.functionality`)
+- **Isolation**: Tests run via `uvx` for complete isolation from solution environment
 
 ### Quality Metrics
 - Language-specific parsers extract AST information
@@ -238,11 +246,12 @@ checkpoints:
 1. Design checkpoints and spec (see `docs/contributing-problems/`)
 2. Create directory structure in `problems/`
 3. Write `config.yaml` with inline checkpoint definitions
-4. Write `checkpoint_N/spec.md` for each checkpoint
-5. Create test cases in `checkpoint_N/{group_name}/`
-6. Implement `loader.py` (extend `GroupLoader`)
-7. (Optional) Implement `verifier.py` for custom validation
-8. Validate with `slop-code eval` and submit PR
+4. Write `checkpoint_N.md` for each checkpoint specification
+5. Create `tests/conftest.py` with entrypoint/checkpoint fixtures
+6. Write `tests/test_checkpoint_N.py` for each checkpoint
+7. Add test data in `tests/data/checkpoint_N/{core,hidden,errors}/`
+8. Use pytest markers for test categorization (`@pytest.mark.error`, etc.)
+9. Validate with `slop-code eval` and submit PR
 
 ### Running Evaluation on Existing Workspace
 ```bash
@@ -280,7 +289,7 @@ slop-code metrics static \
 
 - `src/slop_code/agent_runner/agent.py` - Agent protocol definition
 - `src/slop_code/execution/session.py` - Execution session management
-- `src/slop_code/evaluation/runner.py` - Test case execution
+- `src/slop_code/evaluation/pytest_runner.py` - Pytest execution orchestration
 - `src/slop_code/entrypoints/problem_runner/driver.py` - Problem execution driver
 - `docs/execution/README.md` - Execution architecture deep dive
 - `docs/evaluation/README.md` - Evaluation system guide

@@ -180,6 +180,9 @@ def _assert_events(stdout: str, expected: list[dict[str, Any]]) -> None:
     assert actual_events == expected_events
 
 
+import deepdiff
+
+
 def _assert_expected_files(
     tmp_path: Path,
     expected_files: dict[str, str],
@@ -192,7 +195,9 @@ def _assert_expected_files(
         actual_content = target.read_text()
         norm_actual = _normalize_content(target, actual_content)
         norm_expected = _normalize_content(target, expected_content)
-        assert norm_actual == norm_expected
+        assert not deepdiff.DeepDiff(
+            norm_actual, norm_expected, ignore_order=True
+        )
 
 
 def _run_case(

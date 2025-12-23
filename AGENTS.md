@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 - `src/slop_code/` holds the core library. Key areas: `entrypoints/` (CLI), `evaluation/`, `execution/`, `agent_runner/`, `metrics/`, and `dashboard/`.
 - `tests/` contains the pytest suite, generally mirroring `src/` subpackages.
-- `problems/` contains benchmark problems. Each problem has `config.yaml`, `loader.py`, `verifier.py` (optional), and `checkpoint_N/spec.md` plus test case data under `checkpoint_N/core/`.
+- `problems/` contains benchmark problems. Each problem has `config.yaml`, `checkpoint_N.md` (specs), and a `tests/` directory with `conftest.py`, `test_checkpoint_N.py` files, and test data under `tests/data/`.
 - `configs/` houses agent, model, prompt, environment, and run configs (e.g., `configs/agents/`, `configs/models/`).
 - `docs/` provides guides for agents, evaluation, execution, and problem authoring; `assets/` stores images; `outputs/` stores run artifacts.
 

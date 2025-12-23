@@ -26,6 +26,7 @@ OVER (
     [frame_clause]
 )
 ```
+Within `ORDER BY`, NULL values sort after all non-NULL values regardless of sort direction. Rows with NULL partition keys form their own partition.
 
 **Frame Clauses:**
 - `RANGE UNBOUNDED PRECEDING` (default)

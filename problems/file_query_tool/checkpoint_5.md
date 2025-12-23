@@ -20,6 +20,9 @@ main_query
 - **Correlated subqueries**: Reference columns from outer query
 - **EXISTS/NOT EXISTS subqueries**: Boolean conditions in WHERE clauses
 
+**Filtered Aggregates:**
+Aggregate functions accept an optional `FILTER (WHERE condition)` clause to count or sum only rows matching the condition, e.g. `COUNT(*) FILTER (WHERE status = 'active')`.
+
 **Recursive CTEs:**
 ```sql
 WITH RECURSIVE cte_name AS (
@@ -82,7 +85,7 @@ Result:
 ```
 |department|total_salary|employee_count|
 |----------|------------|--------------|
-|Engineering|475000|5|
+|Engineering|470000|5|
 |Sales|255000|3|
 ```
 
@@ -206,8 +209,8 @@ Result:
 ```
 |name|salary|department|dept_avg|
 |----|------|----------|--------|
-|Alice|120000|Engineering|95000.0|
-|Charlie|95000|Engineering|95000.0|
+|Alice|120000|Engineering|94000.0|
+|Charlie|95000|Engineering|94000.0|
 |Frank|110000|Sales|85000.0|
 ```
 

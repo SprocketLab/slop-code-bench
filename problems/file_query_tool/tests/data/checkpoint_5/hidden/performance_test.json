@@ -64,55 +64,6 @@
                     "manager_id": "6",
                     "department": "Sales",
                     "salary": "70000"
-                },
-                {
-                    "id": "9",
-                    "name": "Ivan",
-                    "manager_id": "1",
-                    "department": "Engineering",
-                    "salary": "88000"
-                },
-                {
-                    "id": "10",
-                    "name": "Julia",
-                    "manager_id": "2",
-                    "department": "Engineering",
-                    "salary": "82000"
-                },
-                {
-                    "id": "11",
-                    "name": "Karl",
-                    "manager_id": "3",
-                    "department": "Engineering",
-                    "salary": "87000"
-                },
-                {
-                    "id": "12",
-                    "name": "Lisa",
-                    "manager_id": "6",
-                    "department": "Sales",
-                    "salary": "78000"
-                },
-                {
-                    "id": "13",
-                    "name": "Mike",
-                    "manager_id": "7",
-                    "department": "Sales",
-                    "salary": "72000"
-                },
-                {
-                    "id": "14",
-                    "name": "Nancy",
-                    "manager_id": "8",
-                    "department": "Sales",
-                    "salary": "71000"
-                },
-                {
-                    "id": "15",
-                    "name": "Oscar",
-                    "manager_id": "9",
-                    "department": "Engineering",
-                    "salary": "83000"
                 }
             ],
             "file_type": "csv",

@@ -33,7 +33,7 @@ def test_compress_jita_only(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": False, "plus10": False, "plus15": False},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -55,7 +55,7 @@ def test_compress_dodixie_single(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -77,7 +77,7 @@ def test_compress_amarr_hek(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -107,7 +107,7 @@ def test_compress_all_five_hubs(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -141,7 +141,7 @@ def test_compress_multi_material(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -163,7 +163,7 @@ def test_compress_with_collateral_tax(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -194,7 +194,7 @@ def test_compress_hek_single(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -217,7 +217,7 @@ def test_compress_rens_single(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -240,7 +240,7 @@ def test_compress_dodixie_rens(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -263,7 +263,7 @@ def test_compress_all_hubs_pyerite(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -286,7 +286,7 @@ def test_compress_gas_target(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -309,7 +309,7 @@ def test_compress_high_ore_efficiency(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -332,7 +332,7 @@ def test_compress_low_ore_efficiency(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -355,7 +355,7 @@ def test_compress_low_gas_efficiency(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -378,7 +378,7 @@ def test_compress_custom_gas_efficiency(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -401,7 +401,7 @@ def test_compress_zero_shipping(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -427,7 +427,7 @@ def test_compress_high_shipping(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -450,7 +450,7 @@ def test_compress_collateral_tax_hidden(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -476,7 +476,7 @@ def test_compress_full_config_combo(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -499,7 +499,7 @@ def test_compress_efficiency_with_shipping(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -522,7 +522,7 @@ def test_compress_efficiency_with_tax(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -545,7 +545,7 @@ def test_compress_base_ore_only(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": False, "plus10": False, "plus15": False},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -568,7 +568,7 @@ def test_compress_plus5_only(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": False, "plus5": True, "plus10": False, "plus15": False},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -591,7 +591,7 @@ def test_compress_plus10_only(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": False, "plus5": False, "plus10": True, "plus15": False},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -614,7 +614,7 @@ def test_compress_plus15_only(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": False, "plus5": False, "plus10": False, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -637,7 +637,7 @@ def test_compress_enhanced_efficiency_plus5(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": False, "plus5": True, "plus10": False, "plus15": False},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -660,7 +660,7 @@ def test_compress_small_quantity(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -683,7 +683,7 @@ def test_compress_large_quantity(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -710,7 +710,7 @@ def test_compress_mixed_category(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -733,7 +733,7 @@ def test_compress_hub_case_mixed(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -756,7 +756,7 @@ def test_compress_low_cost_weight(uploaded_data, sde_data, orders_df):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 200
 
     body = resp.json()
@@ -784,7 +784,7 @@ def test_compress_unknown_material(uploaded_data):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 404
 
     body = resp.json()
@@ -806,7 +806,7 @@ def test_compress_no_candidates(uploaded_data):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 404
 
     body = resp.json()
@@ -827,7 +827,7 @@ def test_compress_infeasible(uploaded_data):
         "ore_variants": {"base": True, "plus5": True, "plus10": True, "plus15": True},
     }
 
-    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=120)
+    resp = httpx.post(f"{uploaded_data}/v1/compress", json=request, timeout=60)
     assert resp.status_code == 400
 
     body = resp.json()
