@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -294,11 +295,324 @@ def _get_assignment_name(node: Node) -> str | None:
     return None
 
 
+def _extract_signature(node: Node) -> tuple[dict[str, str | None], str | None]:
+    """Extract function signature (parameters and return type).
+
+    Args:
+        node: The function_definition tree-sitter node.
+
+    Returns:
+        Tuple of (signature_dict, return_type) where signature_dict maps
+        parameter names to their type annotations (or None if untyped).
+    """
+    signature: dict[str, str | None] = {}
+
+    # Extract parameters
+    params_node = node.child_by_field_name("parameters")
+    if params_node:
+        for child in params_node.named_children:
+            param_name: str | None = None
+            param_type: str | None = None
+
+            if child.type == "identifier":
+                # Simple parameter: def f(x)
+                param_name = child.text.decode("utf-8")
+            elif child.type == "typed_parameter":
+                # Typed parameter: def f(x: int)
+                name_node = child.child_by_field_name("name")
+                if name_node is None:
+                    # Fallback: first identifier child
+                    for subchild in child.children:
+                        if subchild.type == "identifier":
+                            name_node = subchild
+                            break
+                if name_node:
+                    param_name = name_node.text.decode("utf-8")
+                type_node = child.child_by_field_name("type")
+                if type_node:
+                    param_type = type_node.text.decode("utf-8")
+            elif child.type == "default_parameter":
+                # Default parameter: def f(x=1)
+                name_node = child.child_by_field_name("name")
+                if name_node:
+                    param_name = name_node.text.decode("utf-8")
+            elif child.type == "typed_default_parameter":
+                # Typed default parameter: def f(x: int = 1)
+                name_node = child.child_by_field_name("name")
+                if name_node:
+                    param_name = name_node.text.decode("utf-8")
+                type_node = child.child_by_field_name("type")
+                if type_node:
+                    param_type = type_node.text.decode("utf-8")
+            elif child.type == "list_splat_pattern":
+                # *args
+                for subchild in child.children:
+                    if subchild.type == "identifier":
+                        param_name = "*" + subchild.text.decode("utf-8")
+                        break
+            elif child.type == "dictionary_splat_pattern":
+                # **kwargs
+                for subchild in child.children:
+                    if subchild.type == "identifier":
+                        param_name = "**" + subchild.text.decode("utf-8")
+                        break
+
+            if param_name:
+                signature[param_name] = param_type
+
+    # Extract return type
+    return_type: str | None = None
+    return_type_node = node.child_by_field_name("return_type")
+    if return_type_node:
+        return_type = return_type_node.text.decode("utf-8")
+
+    return signature, return_type
+
+
+def _extract_base_classes(node: Node) -> list[str]:
+    """Extract base class names from a class definition.
+
+    Args:
+        node: The class_definition tree-sitter node.
+
+    Returns:
+        List of base class names as strings.
+    """
+    base_classes: list[str] = []
+
+    # Look for argument_list which contains base classes
+    for child in node.children:
+        if child.type == "argument_list":
+            for arg_child in child.named_children:
+                if arg_child.type == "identifier":
+                    # Simple base class: class Foo(Bar)
+                    base_classes.append(arg_child.text.decode("utf-8"))
+                elif arg_child.type == "attribute":
+                    # Qualified base class: class Foo(module.Bar)
+                    base_classes.append(arg_child.text.decode("utf-8"))
+                elif arg_child.type == "subscript":
+                    # Generic base class: class Foo(Generic[T])
+                    base_classes.append(arg_child.text.decode("utf-8"))
+                elif arg_child.type == "keyword_argument":
+                    # metaclass=... or other keyword args - skip
+                    pass
+            break
+
+    return base_classes
+
+
+def _compute_body_hash(node: Node) -> str:
+    """Compute hash of function body with normalized identifiers.
+
+    Replaces all identifiers with positional placeholders (VAR_0, VAR_1, etc.)
+    to detect code that is structurally identical but with renamed variables.
+
+    Args:
+        node: The function_definition tree-sitter node.
+
+    Returns:
+        SHA256 hash of the normalized body.
+    """
+    block = _get_block_child(node)
+    if block is None:
+        return hashlib.sha256(b"").hexdigest()
+
+    # Build normalized representation
+    identifier_map: dict[str, str] = {}
+    counter = 0
+    parts: list[str] = []
+
+    stack: list[Node] = [block]
+    while stack:
+        current = stack.pop()
+        if current.type == "identifier":
+            name = current.text.decode("utf-8")
+            if name not in identifier_map:
+                identifier_map[name] = f"VAR_{counter}"
+                counter += 1
+            parts.append(identifier_map[name])
+        elif current.type in {"string", "integer", "float"}:
+            # Keep literals as-is for differentiation
+            parts.append(current.text.decode("utf-8"))
+        else:
+            parts.append(current.type)
+
+        # Add children in reverse to maintain order with stack
+        stack.extend(reversed(current.children))
+
+    normalized = " ".join(parts)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _compute_structure_hash(node: Node) -> str:
+    """Compute hash of AST structure only (node types, no content).
+
+    Ignores all identifiers, literals, and content - only considers
+    the tree structure of node types.
+
+    Args:
+        node: The function_definition tree-sitter node.
+
+    Returns:
+        SHA256 hash of the structure.
+    """
+    block = _get_block_child(node)
+    if block is None:
+        return hashlib.sha256(b"").hexdigest()
+
+    # Build structure representation using depth-first traversal
+    parts: list[str] = []
+
+    def traverse(n: Node, depth: int) -> None:
+        parts.append(f"{depth}:{n.type}")
+        for child in n.children:
+            traverse(child, depth + 1)
+
+    traverse(block, 0)
+
+    structure = "|".join(parts)
+    return hashlib.sha256(structure.encode("utf-8")).hexdigest()
+
+
+def _compute_signature_hash(
+    signature: dict[str, str | None], return_type: str | None
+) -> str:
+    """Compute hash of normalized function signature.
+
+    Creates a canonical representation based on:
+    - Number of parameters
+    - Which parameters have type annotations
+    - Whether there's a return type annotation
+
+    Args:
+        signature: Dict mapping parameter names to type annotations.
+        return_type: Return type annotation or None.
+
+    Returns:
+        SHA256 hash of the normalized signature.
+    """
+    # Sort parameters by name for consistency
+    sorted_params = sorted(signature.items())
+
+    # Build canonical representation
+    # Format: "arg_count:typed_positions:has_return"
+    # typed_positions shows which args (by sorted index) have types
+    typed_positions = [
+        str(i) for i, (_, type_ann) in enumerate(sorted_params) if type_ann
+    ]
+
+    canonical = (
+        f"{len(signature)}:"
+        f"{','.join(typed_positions) if typed_positions else 'none'}:"
+        f"{'1' if return_type else '0'}"
+    )
+
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _count_variables(node: Node) -> tuple[int, int]:
+    """Count variable definitions and usages in a function body.
+
+    Args:
+        node: The function_definition tree-sitter node.
+
+    Returns:
+        Tuple of (variables_defined, variables_used).
+    """
+    block = _get_block_child(node)
+    if block is None:
+        return 0, 0
+
+    defined: set[str] = set()
+    used: set[str] = set()
+
+    # Track assignment contexts to distinguish definitions from uses
+    assignment_types = {"assignment", "augmented_assignment", "annotated_assignment"}
+
+    stack: list[tuple[Node, bool]] = [(block, False)]
+    while stack:
+        current, in_assignment_target = stack.pop()
+
+        if current.type in assignment_types:
+            # Process left side as definition
+            target = current.child_by_field_name("left")
+            if target is None:
+                target = current.child_by_field_name("target")
+            if target:
+                stack.append((target, True))
+            # Process right side as usage
+            value = current.child_by_field_name("right")
+            if value is None:
+                value = current.child_by_field_name("value")
+            if value:
+                stack.append((value, False))
+            # Process type annotation if present
+            type_node = current.child_by_field_name("type")
+            if type_node:
+                stack.append((type_node, False))
+            continue
+
+        if current.type == "identifier":
+            name = current.text.decode("utf-8")
+            if in_assignment_target:
+                defined.add(name)
+            else:
+                used.add(name)
+        else:
+            for child in reversed(current.children):
+                stack.append((child, in_assignment_target))
+
+    return len(defined), len(used)
+
+
+def _count_returns_and_raises(node: Node) -> tuple[int, int]:
+    """Count return and raise statements in a function body.
+
+    Args:
+        node: The function_definition tree-sitter node.
+
+    Returns:
+        Tuple of (return_count, raise_count).
+    """
+    block = _get_block_child(node)
+    if block is None:
+        return 0, 0
+
+    return_count = 0
+    raise_count = 0
+
+    stack: list[Node] = [block]
+    while stack:
+        current = stack.pop()
+        if current.type == "return_statement":
+            return_count += 1
+        elif current.type == "raise_statement":
+            raise_count += 1
+
+        # Don't count returns/raises inside nested functions
+        if current.type not in {"function_definition", "lambda"}:
+            stack.extend(current.children)
+
+    return return_count, raise_count
+
+
 def _create_symbol(
     node: Node,
     name: str,
     symbol_type: str,
     include_base_complexity: bool = False,
+    *,
+    parent_class: str | None = None,
+    base_classes: list[str] | None = None,
+    signature: dict[str, str | None] | None = None,
+    return_type: str | None = None,
+    body_hash: str | None = None,
+    structure_hash: str | None = None,
+    signature_hash: str | None = None,
+    variables_defined: int = 0,
+    variables_used: int = 0,
+    return_count: int = 0,
+    raise_count: int = 0,
 ) -> SymbolMetrics:
     """Create a SymbolMetrics from a tree-sitter node.
 
@@ -309,6 +623,17 @@ def _create_symbol(
             type_alias).
         include_base_complexity: If True, add 1 to complexity (for
             functions/methods).
+        parent_class: Name of parent class if this is a method.
+        base_classes: List of base class names for class definitions.
+        signature: Dict mapping parameter names to type annotations.
+        return_type: Return type annotation.
+        body_hash: Hash of normalized function body.
+        structure_hash: Hash of AST structure only.
+        signature_hash: Hash of normalized signature.
+        variables_defined: Number of variable definitions.
+        variables_used: Number of variable usages.
+        return_count: Number of return statements.
+        raise_count: Number of raise statements.
 
     Returns:
         A SymbolMetrics instance with computed metrics.
@@ -341,6 +666,17 @@ def _create_symbol(
         comparisons=comparisons,
         max_nesting_depth=max_depth,
         lines=lines,
+        parent_class=parent_class,
+        base_classes=base_classes,
+        signature=signature,
+        return_type=return_type,
+        body_hash=body_hash,
+        structure_hash=structure_hash,
+        signature_hash=signature_hash,
+        variables_defined=variables_defined,
+        variables_used=variables_used,
+        return_count=return_count,
+        raise_count=raise_count,
     )
 
 
@@ -361,8 +697,34 @@ def _handle_function_definition(
         return
 
     symbol_type = "method" if parent_class else "function"
+
+    # Extract signature and hashes
+    signature, return_type = _extract_signature(node)
+    body_hash = _compute_body_hash(node)
+    structure_hash = _compute_structure_hash(node)
+    signature_hash = _compute_signature_hash(signature, return_type)
+
+    # Extract flow metrics
+    variables_defined, variables_used = _count_variables(node)
+    return_count, raise_count = _count_returns_and_raises(node)
+
     symbols.append(
-        _create_symbol(node, name, symbol_type, include_base_complexity=True)
+        _create_symbol(
+            node,
+            name,
+            symbol_type,
+            include_base_complexity=True,
+            parent_class=parent_class,
+            signature=signature,
+            return_type=return_type,
+            body_hash=body_hash,
+            structure_hash=structure_hash,
+            signature_hash=signature_hash,
+            variables_defined=variables_defined,
+            variables_used=variables_used,
+            return_count=return_count,
+            raise_count=raise_count,
+        )
     )
 
     # Check for nested functions (not at module level)
@@ -385,8 +747,15 @@ def _handle_class_definition(
 
     method_count = _count_methods(node)
     attribute_count = _count_class_attributes(node)
+    base_classes = _extract_base_classes(node)
 
-    symbol = _create_symbol(node, name, "class", include_base_complexity=False)
+    symbol = _create_symbol(
+        node,
+        name,
+        "class",
+        include_base_complexity=False,
+        base_classes=base_classes if base_classes else None,
+    )
     symbol.method_count = method_count
     symbol.attribute_count = attribute_count
     symbols.append(symbol)
@@ -503,5 +872,10 @@ def get_symbols(source: Path) -> list[SymbolMetrics]:
 
     symbols: list[SymbolMetrics] = []
     _extract_symbols_from_node(tree.root_node, symbols, at_module_level=True)
+
+    # Set file_path on all symbols
+    file_path_str = str(source)
+    for sym in symbols:
+        sym.file_path = file_path_str
 
     return symbols

@@ -131,6 +131,18 @@ class SymbolMetrics(BaseModel):
         lines: Number of lines in the symbol.
         method_count: Number of methods in the symbol.
         attribute_count: Number of attributes in the symbol.
+        file_path: Path to the file containing this symbol.
+        parent_class: Name of parent class if this is a method.
+        base_classes: List of base class names for class definitions.
+        body_hash: Hash of normalized body (identifiers replaced with placeholders).
+        structure_hash: Hash of AST structure only (node types, no content).
+        signature: Dict mapping parameter names to type annotations (or None).
+        return_type: Return type annotation as string.
+        signature_hash: Hash of normalized signature for move detection.
+        variables_defined: Number of variable definitions in the symbol.
+        variables_used: Number of variable usages in the symbol.
+        return_count: Number of return statements.
+        raise_count: Number of raise statements.
     """
 
     name: str
@@ -152,6 +164,21 @@ class SymbolMetrics(BaseModel):
     lines: int = 0
     method_count: int | None = None
     attribute_count: int | None = None
+    # Location info
+    file_path: str = ""
+    parent_class: str | None = None
+    base_classes: list[str] | None = None
+    # Signature info (functions/methods only)
+    body_hash: str | None = None
+    structure_hash: str | None = None
+    signature: dict[str, str | None] | None = None
+    return_type: str | None = None
+    signature_hash: str | None = None
+    # Flow metrics (functions/methods only)
+    variables_defined: int = 0
+    variables_used: int = 0
+    return_count: int = 0
+    raise_count: int = 0
 
     @computed_field
     @property

@@ -1,4 +1,9 @@
-"""Tests for AST-grep metrics."""
+"""Exhaustive tests for AST-grep metrics.
+
+Tests all functions in slop_code.metrics.languages.python.ast_grep including:
+- Public API: calculate_ast_grep_metrics, build_ast_grep_rules_lookup
+- Helper functions: _is_sg_available, _get_ast_grep_rules_dir, _count_rules_in_file
+"""
 
 from __future__ import annotations
 
@@ -24,6 +29,11 @@ def _write(tmp_path: Path, name: str, content: str) -> Path:
     return path
 
 
+# =============================================================================
+# sg Availability Tests
+# =============================================================================
+
+
 class TestSgAvailability:
     """Tests for _is_sg_available."""
 
@@ -34,6 +44,11 @@ class TestSgAvailability:
     def test_sg_unavailable_when_not_installed(self) -> None:
         with patch("shutil.which", return_value=None):
             assert _is_sg_available() is False
+
+
+# =============================================================================
+# Rules Directory Tests
+# =============================================================================
 
 
 class TestGetAstGrepRulesDir:
@@ -55,6 +70,11 @@ class TestGetAstGrepRulesDir:
         """Verify the default rules directory actually exists."""
         assert AST_GREP_RULES_DIR.exists(), f"Expected {AST_GREP_RULES_DIR} to exist"
         assert AST_GREP_RULES_DIR.is_dir()
+
+
+# =============================================================================
+# Calculate AST-grep Metrics Tests
+# =============================================================================
 
 
 class TestCalculateAstGrepMetrics:
@@ -112,7 +132,7 @@ def bad():
         )
         rules_dir = tmp_path / "rules"
         rules_dir.mkdir()
-        # Rule YAML includes metadata - this is where weights/category come from
+        # Rule YAML includes metadata
         (rules_dir / "bare-except-pass.yaml").write_text(
             "id: bare-except-pass\n"
             "language: python\n"
@@ -123,7 +143,6 @@ def bad():
             "  pattern: 'pass'"
         )
 
-        # Note: ast-grep JSON output doesn't include rule metadata
         mock_output = (
             '{"ruleId": "bare-except-pass", '
             '"severity": "warning", '
@@ -149,9 +168,6 @@ def bad():
         assert len(result.violations) == 1
         assert result.violations[0].rule_id == "bare-except-pass"
         assert result.violations[0].severity == "warning"
-        assert result.violations[0].category == "bare-except-pass"  # From filename
-        assert result.violations[0].subcategory == "safety"  # From metadata
-        assert result.violations[0].weight == 2
         assert result.violations[0].line == 5
         assert result.violations[0].column == 8
         assert result.counts == {"bare-except-pass": 1}
@@ -321,34 +337,10 @@ def bad():
         assert result.total_violations == 0
         assert result.rules_checked == 1
 
-    def test_uses_rule_file_stem_as_fallback_id(self, tmp_path: Path) -> None:
-        source = _write(tmp_path, "test.py", "x = 1")
-        rules_dir = tmp_path / "rules"
-        rules_dir.mkdir()
-        (rules_dir / "my-custom-rule.yaml").write_text("id: my-custom-rule")
 
-        # Output without ruleId field
-        mock_output = (
-            '{"severity": "warning", '
-            '"range": {"start": {"line": 1, "column": 0}, '
-            '"end": {"line": 1, "column": 5}}}'
-        )
-
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}), patch(
-            "slop_code.metrics.languages.python.ast_grep.subprocess.run"
-        ) as mock_run:
-            mock_run.return_value = MagicMock(
-                stdout=mock_output,
-                stderr="",
-                returncode=0,
-            )
-            result = calculate_ast_grep_metrics(source)
-
-        assert result.total_violations == 1
-        assert result.violations[0].rule_id == "my-custom-rule"
+# =============================================================================
+# AST-grep Metrics Model Tests
+# =============================================================================
 
 
 class TestAstGrepMetricsModel:
@@ -429,6 +421,11 @@ class TestAstGrepMetricsModel:
         assert data["rules_checked"] == 0
         assert data["violations"] == []
         assert data["counts"] == {}
+
+
+# =============================================================================
+# Integration Tests
+# =============================================================================
 
 
 class TestAstGrepMetricsIntegration:

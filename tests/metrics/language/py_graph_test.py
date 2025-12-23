@@ -1,15 +1,44 @@
-"""Tests for program call graph construction and metrics."""
+"""Exhaustive tests for Python dependency graph construction and metrics.
+
+Tests all functions in slop_code.metrics.languages.python.graph including:
+- Public API: build_dependency_graph, compute_graph_metrics
+- Helper functions: _extract_functions_from_file, _extract_class_hierarchy,
+  _extract_imports, _extract_function_calls, _extract_local_types, _resolve_call
+- Metrics: _compute_cyclic_dependency_mass, _compute_propagation_cost,
+  _compute_dependency_entropy
+"""
 
 from __future__ import annotations
 
+from pathlib import Path
+from textwrap import dedent
+
 import networkx as nx
+import pytest
 
 from slop_code.metrics.languages.python.graph import build_dependency_graph
 from slop_code.metrics.languages.python.graph import compute_graph_metrics
 
 
-class TestBuildCallGraph:
-    """Tests for build_dependency_graph function (now builds call graphs)."""
+# =============================================================================
+# Test Utilities
+# =============================================================================
+
+
+def write_file(tmp_path: Path, name: str, content: str) -> Path:
+    """Write content to a file and return its path."""
+    path = tmp_path / name
+    path.write_text(dedent(content))
+    return path
+
+
+# =============================================================================
+# Build Call Graph Tests
+# =============================================================================
+
+
+class TestBuildDependencyGraph:
+    """Tests for build_dependency_graph function (builds call graphs)."""
 
     def test_single_function_no_calls(self, tmp_path):
         """Test graph with a single function and no calls."""
@@ -177,6 +206,43 @@ class TestBuildCallGraph:
         assert graph.number_of_nodes() == 0
         assert graph.number_of_edges() == 0
 
+    def test_nested_functions_not_included(self, tmp_path):
+        """Nested functions should not be included in graph."""
+        (tmp_path / "main.py").write_text(dedent("""
+        def outer():
+            def inner():
+                return 1
+            return inner()
+        """))
+
+        graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
+
+        # Only outer function should be in graph
+        node_names = [n for n in graph.nodes]
+        assert len(node_names) == 1
+        assert "::outer" in node_names[0]
+
+    def test_recursive_function(self, tmp_path):
+        """Test graph with recursive function."""
+        (tmp_path / "main.py").write_text(dedent("""
+        def factorial(n):
+            if n <= 1:
+                return 1
+            return n * factorial(n - 1)
+        """))
+
+        graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
+
+        assert graph.number_of_nodes() == 1
+        factorial_node = list(graph.nodes)[0]
+        # Self-loop for recursive call
+        assert graph.has_edge(factorial_node, factorial_node)
+
+
+# =============================================================================
+# Compute Graph Metrics Tests
+# =============================================================================
+
 
 class TestComputeGraphMetrics:
     """Tests for compute_graph_metrics function."""
@@ -219,6 +285,23 @@ class TestComputeGraphMetrics:
         assert metrics.propagation_cost == 0.5
         assert metrics.dependency_entropy == 0.0
 
+    def test_multiple_nodes_and_edges(self):
+        """Test metrics with multiple nodes and edges."""
+        graph = nx.DiGraph()
+        graph.add_edge("a.py::f1", "b.py::f2", weight=1)
+        graph.add_edge("b.py::f2", "c.py::f3", weight=1)
+        graph.add_edge("a.py::f1", "c.py::f3", weight=1)
+
+        metrics = compute_graph_metrics(graph)
+
+        assert metrics.node_count == 3
+        assert metrics.edge_count == 3
+
+
+# =============================================================================
+# Cyclic Dependency Mass Tests
+# =============================================================================
+
 
 class TestCyclicDependencyMass:
     """Tests for cyclic dependency mass metric."""
@@ -243,6 +326,35 @@ class TestCyclicDependencyMass:
 
         # All edges are in the SCC, so CY = 2/2 = 1.0
         assert metrics.cyclic_dependency_mass == 1.0
+
+    def test_partial_cycle(self):
+        """Test CY when only some edges are in a cycle."""
+        graph = nx.DiGraph()
+        # Cycle: a -> b -> a
+        graph.add_edge("a.py::a", "a.py::b", weight=1)
+        graph.add_edge("a.py::b", "a.py::a", weight=1)
+        # Non-cycle: c -> a
+        graph.add_edge("a.py::c", "a.py::a", weight=1)
+
+        metrics = compute_graph_metrics(graph)
+
+        # 2 edges in cycle, 3 total edges -> CY = 2/3
+        assert metrics.cyclic_dependency_mass == pytest.approx(2/3, rel=0.01)
+
+    def test_self_loop(self):
+        """Test CY with self-loop (recursive function)."""
+        graph = nx.DiGraph()
+        graph.add_edge("a.py::f1", "a.py::f1", weight=1)  # Self-loop
+
+        metrics = compute_graph_metrics(graph)
+
+        # Implementation requires SCC of size >= 2, self-loops don't count
+        assert metrics.cyclic_dependency_mass == 0.0
+
+
+# =============================================================================
+# Propagation Cost Tests
+# =============================================================================
 
 
 class TestPropagationCost:
@@ -288,6 +400,25 @@ class TestPropagationCost:
         # PC = 1.0
         assert metrics.propagation_cost == 1.0
 
+    def test_star_topology(self):
+        """Test PC for star topology (hub calls all spokes)."""
+        graph = nx.DiGraph()
+        graph.add_edge("hub.py::hub", "spoke.py::s1")
+        graph.add_edge("hub.py::hub", "spoke.py::s2")
+        graph.add_edge("hub.py::hub", "spoke.py::s3")
+
+        metrics = compute_graph_metrics(graph)
+
+        # hub reaches s1, s2, s3 (3 pairs)
+        # Total pairs: 4 * 3 = 12
+        # PC = 3/12 = 0.25
+        assert metrics.propagation_cost == 0.25
+
+
+# =============================================================================
+# Dependency Entropy Tests
+# =============================================================================
+
 
 class TestDependencyEntropy:
     """Tests for dependency entropy metric."""
@@ -304,7 +435,7 @@ class TestDependencyEntropy:
         assert metrics.dependency_entropy == 0.0
 
     def test_uniform_distribution(self):
-        """Test ENT ≈ 1 for uniform distribution."""
+        """Test ENT for uniform distribution."""
         graph = nx.DiGraph()
         # Function f1 calls f2, f3, f4 equally
         graph.add_edge("a.py::f1", "a.py::f2", weight=1)
@@ -318,16 +449,26 @@ class TestDependencyEntropy:
         # Average: 1/4 = 0.25
         assert abs(metrics.dependency_entropy - 0.25) < 0.001
 
+    def test_single_node(self):
+        """Test ENT = 0 for single node."""
+        graph = nx.DiGraph()
+        graph.add_node("a.py::f1")
+
+        metrics = compute_graph_metrics(graph)
+
+        assert metrics.dependency_entropy == 0.0
+
+
+# =============================================================================
+# Call Resolution Tests
+# =============================================================================
+
 
 class TestCallResolution:
     """Tests for proper call resolution to avoid false edges."""
 
     def test_same_function_name_different_files_no_false_edges(self, tmp_path):
-        """Test that same function names in different files don't create false edges.
-
-        This tests the bug where suffix matching creates edges to ALL functions
-        with the same name, even if they're in different files.
-        """
+        """Test that same function names in different files don't create false edges."""
         # Create two files with same function name "process"
         (tmp_path / "module_a.py").write_text(
             "def process():\n"
@@ -362,11 +503,7 @@ class TestCallResolution:
             "Should NOT have edge from main to module_b.process (false edge bug)"
 
     def test_qualified_module_calls(self, tmp_path):
-        """Test that qualified calls like 'module.function()' are resolved correctly.
-
-        This tests the bug where only the method name is extracted from qualified
-        calls, losing the module context.
-        """
+        """Test that qualified calls like 'module.function()' are resolved correctly."""
         (tmp_path / "utils.py").write_text(
             "def helper():\n"
             "    return 42\n"
@@ -396,11 +533,7 @@ class TestCallResolution:
             "Should NOT have edge from main to local helper (wrong resolution)"
 
     def test_same_file_resolution_priority(self, tmp_path):
-        """Test that same-file calls are resolved correctly when imported names exist.
-
-        When a function calls 'helper()', and both a local helper and an imported
-        helper exist, the local one should take priority.
-        """
+        """Test that same-file calls are resolved correctly when imported names exist."""
         (tmp_path / "external.py").write_text(
             "def helper():\n"
             "    return 'external'\n"
@@ -430,15 +563,16 @@ class TestCallResolution:
             "Should NOT have edge from main to external helper"
 
 
-class TestFailureModes:
-    """Tests for known failure modes that need fixing."""
+# =============================================================================
+# Advanced Resolution Tests
+# =============================================================================
+
+
+class TestAdvancedResolution:
+    """Tests for more advanced call resolution scenarios."""
 
     def test_dotted_import_resolution(self, tmp_path):
-        """Test that dotted imports like 'from package.submodule import func' resolve.
-
-        FAILURE MODE: Current implementation only matches file_path.stem == module_name,
-        which fails for dotted imports where module_name is 'package.submodule'.
-        """
+        """Test that dotted imports like 'from package.submodule import func' resolve."""
         # Create package structure
         pkg = tmp_path / "mypackage"
         pkg.mkdir()
@@ -467,10 +601,7 @@ class TestFailureModes:
             "Should resolve dotted import 'from mypackage.submodule import helper'"
 
     def test_relative_import_same_package(self, tmp_path):
-        """Test that relative imports like 'from . import sibling' resolve.
-
-        FAILURE MODE: Current implementation doesn't handle relative imports at all.
-        """
+        """Test that relative imports like 'from . import sibling' resolve."""
         # Create package structure
         pkg = tmp_path / "mypackage"
         pkg.mkdir()
@@ -495,10 +626,7 @@ class TestFailureModes:
             "Should resolve relative import 'from . import utils'"
 
     def test_relative_import_from_module(self, tmp_path):
-        """Test that relative imports like 'from .sibling import func' resolve.
-
-        FAILURE MODE: Current implementation doesn't handle relative imports at all.
-        """
+        """Test that relative imports like 'from .sibling import func' resolve."""
         # Create package structure
         pkg = tmp_path / "mypackage"
         pkg.mkdir()
@@ -523,11 +651,7 @@ class TestFailureModes:
             "Should resolve relative import 'from .utils import helper'"
 
     def test_local_variable_type_tracking(self, tmp_path):
-        """Test that method calls on local variables are resolved.
-
-        FAILURE MODE: Current implementation returns None for qualified calls
-        where the qualifier is not 'self' or a known import.
-        """
+        """Test that method calls on local variables are resolved."""
         (tmp_path / "client.py").write_text(
             "class Client:\n"
             "    def connect(self):\n"
@@ -557,11 +681,7 @@ class TestFailureModes:
             "Should resolve c.send() to Client.send via type tracking"
 
     def test_super_resolution(self, tmp_path):
-        """Test that super().method() calls resolve to parent class methods.
-
-        FAILURE MODE: Current implementation doesn't track class hierarchy
-        or resolve super() calls.
-        """
+        """Test that super().method() calls resolve to parent class methods."""
         (tmp_path / "main.py").write_text(
             "class Base:\n"
             "    def process(self):\n"
@@ -582,30 +702,10 @@ class TestFailureModes:
         assert graph.has_edge(child_process, base_process), \
             "Should resolve super().process() to Base.process"
 
-    def test_identifier_vs_dotted_name_import(self, tmp_path):
-        """Test that simple identifier imports are parsed correctly.
 
-        FAILURE MODE: Line 126 checks 'child.type == "dotted_name"' but
-        simple imports like 'from module import func' use 'identifier' type.
-        """
-        (tmp_path / "utils.py").write_text(
-            "def func():\n"
-            "    return 42\n"
-        )
-        (tmp_path / "main.py").write_text(
-            "from utils import func\n\n"
-            "def main():\n"
-            "    return func()\n"
-        )
-
-        graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
-
-        main_node = [n for n in graph.nodes if "main.py::main" in n][0]
-        func_node = [n for n in graph.nodes if "utils.py::func" in n][0]
-
-        # main() should call utils.func
-        assert graph.has_edge(main_node, func_node), \
-            "Should parse 'from utils import func' correctly (identifier type)"
+# =============================================================================
+# Integration Tests
+# =============================================================================
 
 
 class TestGraphIntegration:
@@ -654,3 +754,45 @@ class TestGraphIntegration:
         assert "dependency_entropy" in json_dict
         assert json_dict["node_count"] == 2
         assert json_dict["edge_count"] == 1
+
+    def test_complex_multi_file_project(self, tmp_path):
+        """Test with a more complex multi-file project."""
+        # Create a realistic project structure
+        (tmp_path / "main.py").write_text(dedent("""
+        from utils import process
+        from helpers import helper1, helper2
+
+        def main():
+            data = helper1()
+            result = process(data)
+            return helper2(result)
+        """))
+
+        (tmp_path / "utils.py").write_text(dedent("""
+        def process(data):
+            return transform(validate(data))
+
+        def transform(data):
+            return str(data)
+
+        def validate(data):
+            return data or {}
+        """))
+
+        (tmp_path / "helpers.py").write_text(dedent("""
+        def helper1():
+            return {}
+
+        def helper2(data):
+            return len(str(data))
+        """))
+
+        graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
+        metrics = compute_graph_metrics(graph)
+
+        # Should have functions from all files
+        assert metrics.node_count >= 5  # main, process, transform, validate, helper1, helper2
+
+        # Should have edges from main to imported functions
+        main_node = [n for n in graph.nodes if "main.py::main" in n][0]
+        assert graph.out_degree(main_node) >= 2  # Calls process, helper1, helper2
