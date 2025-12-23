@@ -66,12 +66,11 @@ def execute_case(api_server: str, market_data_dir: Path, case: dict) -> httpx.Re
         file_path = market_data_dir / input_spec["input_file"]
         content = file_path.read_bytes()
         return httpx.request(method, url, content=content, headers=headers, timeout=60)
-    elif "body" in input_spec:
+    if "body" in input_spec:
         # JSON body case
         return httpx.request(method, url, json=input_spec["body"], headers=headers, timeout=60)
-    else:
-        # No body
-        return httpx.request(method, url, headers=headers, timeout=60)
+    # No body
+    return httpx.request(method, url, headers=headers, timeout=60)
 
 
 def verify_response(case: dict, response: httpx.Response):
@@ -98,13 +97,12 @@ def verify_response(case: dict, response: httpx.Response):
             if expected_output["key"] == "STRING":
                 # Just needed to verify it's a string, don't check exact value
                 return
-            else:
-                # Check the exact key value matches
-                assert actual["key"] == expected_output["key"], (
-                    f"API key mismatch for {case['_name']}: "
-                    f"got {actual['key']}, expected {expected_output['key']}"
-                )
-                return
+            # Check the exact key value matches
+            assert actual["key"] == expected_output["key"], (
+                f"API key mismatch for {case['_name']}: "
+                f"got {actual['key']}, expected {expected_output['key']}"
+            )
+            return
 
         assert_dict_equal(actual, expected_output, f"Response mismatch for {case['_name']}")
 

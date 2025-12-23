@@ -232,28 +232,38 @@ def warp_travel_time(
 ) -> float:
     if distance_m <= 0:
         return 0.0
-    v_warp_max = warp_speed_au * AU_IN_M
+
+    # k values stay in AU/s
+    k_a = warp_speed_au
+    k_d = min(warp_speed_au / 3.0, 2.0)  # capped at 2 AU/s
+    if k_d <= 0:
+        return 0.0
+
+    # Convert to m/s for distance calculations
+    v_warp_max_ms = warp_speed_au * AU_IN_M
+
     v_sub = top_speed
     v_drop = min(v_sub / 2.0, 100.0)
     if v_drop <= 0:
         v_drop = 1e-9
-    k_a = v_warp_max
-    k_d = min(v_warp_max / 3.0, 2.0)
-    if k_d <= 0:
-        return 0.0
+
     d_a = AU_IN_M
-    d_d = v_warp_max / k_d
+    d_d = v_warp_max_ms / k_d
     d_min = d_a + d_d
+
     if distance_m < d_min:
-        v_warp = (distance_m * k_a * k_d) / (k_a + k_d)
+        v_warp_ms = (distance_m * k_a * k_d) / (k_a + k_d)
     else:
-        v_warp = v_warp_max
-    v_warp = max(v_warp, 1e-9)
-    t_accel = (1.0 / k_a) * math.log(v_warp / k_a)
-    t_decel = (1.0 / k_d) * math.log(v_warp / v_drop)
+        v_warp_ms = v_warp_max_ms
+
+    v_warp_ms = max(v_warp_ms, 1e-9)
+
+    t_accel = (1.0 / k_a) * math.log(v_warp_ms / k_a)
+    t_decel = (1.0 / k_d) * math.log(v_warp_ms / v_drop)
     t_cruise = 0.0
     if distance_m >= d_min:
-        t_cruise = (distance_m - (d_a + d_d)) / v_warp
+        t_cruise = (distance_m - (d_a + d_d)) / v_warp_ms
+
     total = t_accel + t_cruise + t_decel
     return max(total, 0.0)
 

@@ -34,5 +34,5 @@ UNDOCK
 GO: Fora (0.9) -> Eba (0.9) -> Bhizheba (1.0) -> Amarr (1.0)
 DOCK: Amarr VIII (Oris) - Emperor Family Academy
 UNLOAD: 1,000,000.00 m3
-DONE: 01:54
+DONE: 02:52
 MOVED: 3,001,000.00 m3

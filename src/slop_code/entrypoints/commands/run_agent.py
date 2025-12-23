@@ -37,6 +37,132 @@ from slop_code.logging import get_logger
 logger = get_logger(__name__)
 
 
+def _get_nested(data: dict[str, object], path: str) -> object | None:
+    """Get nested value using dot notation (e.g., 'model.name').
+
+    Args:
+        data: Dictionary to search
+        path: Dot-separated path to value
+
+    Returns:
+        Value at path, or None if not found
+    """
+    keys = path.split(".")
+    current: object = data
+    for key in keys:
+        if not isinstance(current, dict) or key not in current:
+            return None
+        current = current[key]
+    return current
+
+
+def _validate_resume_config(
+    run_dir: Path,
+    run_cfg: ResolvedRunConfig,
+    env_spec: EnvironmentSpecType,
+) -> list[tuple[str, object, object]]:
+    """Validate current config matches saved config for resume.
+
+    Compares critical configuration fields that should not change between resume:
+    - Model (provider, name)
+    - Agent type
+    - Thinking preset
+    - Prompt template path
+    - Environment (type, name, docker image)
+
+    Args:
+        run_dir: Path to existing run directory
+        run_cfg: Current resolved run configuration
+        env_spec: Current environment specification
+
+    Returns:
+        List of (field_name, saved_value, current_value) for mismatches.
+        Empty list if configuration is compatible.
+    """
+    mismatches: list[tuple[str, object, object]] = []
+
+    config_path = run_dir / CONFIG_FILENAME
+    env_path = run_dir / ENV_CONFIG_NAME
+
+    # No saved config - allow resume (old runs before this feature)
+    if not config_path.exists():
+        return []
+
+    # Load saved config
+    try:
+        with config_path.open() as f:
+            saved_config = yaml.safe_load(f)
+    except (yaml.YAMLError, OSError) as e:
+        logger.warning("Failed to load saved config.yaml", error=str(e))
+        return []
+
+    if saved_config is None:
+        return []
+
+    # Build current config dict for comparison
+    current_config = run_cfg.model_dump(mode="json")
+
+    # Fields to validate from config.yaml
+    config_fields = [
+        "model.provider",
+        "model.name",
+        "agent.type",
+        "thinking",
+        "prompt_path",
+    ]
+
+    for field in config_fields:
+        saved_val = _get_nested(saved_config, field)
+        current_val = _get_nested(current_config, field)
+
+        # Skip if saved config doesn't have this field (schema evolution)
+        if saved_val is None:
+            continue
+
+        # Normalize paths for comparison
+        if field == "prompt_path":
+            saved_val = str(saved_val) if saved_val else None
+            current_val = str(current_val) if current_val else None
+
+        if saved_val != current_val:
+            mismatches.append((field, saved_val, current_val))
+
+    # Load and validate environment config
+    if env_path.exists():
+        try:
+            with env_path.open() as f:
+                saved_env = yaml.safe_load(f)
+        except (yaml.YAMLError, OSError) as e:
+            logger.warning("Failed to load saved environment.yaml", error=str(e))
+            saved_env = None
+
+        if saved_env:
+            current_env = env_spec.model_dump(mode="json")
+
+            env_fields = ["type", "name"]
+            for field in env_fields:
+                saved_val = _get_nested(saved_env, field)
+                current_val = _get_nested(current_env, field)
+
+                if saved_val is None:
+                    continue
+
+                if saved_val != current_val:
+                    mismatches.append((f"environment.{field}", saved_val, current_val))
+
+            # Check Docker image if Docker environment
+            if saved_env.get("type") == "docker":
+                saved_image = _get_nested(saved_env, "docker.image")
+                current_image = _get_nested(current_env, "docker.image")
+
+                if saved_image and saved_image != current_image:
+                    mismatches.append(
+                        ("environment.docker.image", saved_image, current_image)
+                    )
+
+    return mismatches
+
+
 def _clear_problem_outputs(run_dir: Path, problem_name: str) -> None:
     """Remove any prior outputs for a problem (but keep the run dir)."""
     shutil.rmtree(run_dir / problem_name, ignore_errors=True)
@@ -906,6 +1032,24 @@ def run_agent(
                     bold=True,
                 )
             )
+
+        # Validate config matches saved config when resuming
+        if resume and not ctx.obj.overwrite:
+            mismatches = _validate_resume_config(run_dir, run_cfg, env_spec_typed)
+            if mismatches:
+                typer.echo(
+                    typer.style(
+                        "Cannot resume with different configuration:",
+                        fg=typer.colors.RED,
+                        bold=True,
+                    )
+                )
+                for field, saved, current in mismatches:
+                    typer.echo(f"  {field}: saved='{saved}' vs current='{current}'")
+                typer.echo(
+                    "\nUse --overwrite to start fresh with new configuration."
+                )
+                raise typer.Exit(1)
 
         to_run, skipped, rerun_reasons = _filter_problems_for_execution(
             run_dir,

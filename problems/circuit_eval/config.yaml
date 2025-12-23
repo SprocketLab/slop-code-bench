@@ -10,7 +10,7 @@ description: |
   3-valued logic, generates truth tables, checks equivalence between circuits, and
   optimizes circuits with configurable passes (constant folding, CSE, DCE, etc.).
 category: NOT_SET
-difficulty: Hard
+difficulty: Medium
 author: "Gabriel Orlanski"
 entry_file: circopt
 timeout: 30

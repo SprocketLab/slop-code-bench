@@ -8,10 +8,10 @@ UNDOCK
 GO: Lanngisi (0.5) -> Nakugard (0.5) -> Hek (0.8)
 DOCK: Hek VIII - Moon 12 - Boundless Creation Factory
 UNLOAD Alexander Blessed (id=1): 2 Jumps | 100,000.00 m3
-DONE: 00:10
+DONE: 00:15
 MOVED: 100,000.00 m3
 NUM CONTRACTS: 1
 PROFIT: 5.00M
 ISK/M3: 50.00
 ISK/Jump: 1.25M
-ISK/Hour: 32.43M
+ISK/Hour: 21.20M

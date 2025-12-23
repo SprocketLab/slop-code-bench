@@ -18,10 +18,10 @@ GO: Ikuchi (1.0) -> Jita (0.9)
 DOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant
 UNLOAD Timoxa Zero (id=3): 1 Jumps | 20,000.00 m3
 UNLOAD youngpuke2 (id=4): 1 Jumps | 20,000.00 m3
-DONE: 00:05
+DONE: 00:06
 MOVED: 80,000.00 m3
 NUM CONTRACTS: 4
 PROFIT: 20.00M
 ISK/M3: 250.00
 ISK/Jump: 10.00M
-ISK/Hour: 270.95M
+ISK/Hour: 235.35M

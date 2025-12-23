@@ -23,7 +23,7 @@ Analyze a checkpoint's spec and existing tests to identify and add missing edge 
 Read these files for the specified problem/checkpoint:
 
 ```
-problems/{problem}/checkpoint_N/spec.md    # or checkpoint_N.md
+problems/{problem}/checkpoint_N.md    # or checkpoint_N.md
 problems/{problem}/tests/conftest.py
 problems/{problem}/tests/test_checkpoint_N.py
 ```
@@ -137,7 +137,7 @@ See [patterns.md](patterns.md) for detailed patterns by problem type:
 1. Review each TODO and implement the test
 2. Run eval-snapshot to verify:
    ```bash
-   slop-code -v eval-snapshot problems/{problem}/checkpoint_N/solution \
+   slop-code -v eval-snapshot problems/{problem}/solutions/checkpoint_N \
        -p {problem} -o /tmp/eval -c N \
        -e configs/environments/docker-python3.12-uv.yaml --json
    ```

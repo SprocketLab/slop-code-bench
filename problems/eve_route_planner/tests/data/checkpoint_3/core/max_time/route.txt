@@ -8,20 +8,10 @@ UNLOAD Alexander Blessed (id=2): 1 Jumps | 100,000.00 m3
 UNDOCK
 GO: Nakugard (0.5) -> Hek (0.8)
 DOCK: Hek VIII - Moon 12 - Boundless Creation Factory
-[--- TRIP 2 ---]
-START: Hek VIII - Moon 12 - Boundless Creation Factory
-LOAD Alexander Blessed (id=1): 4.90M ISK | 100,000.00 m3
-UNDOCK
-GO: Hek (0.8) -> Nakugard (0.5) -> Lanngisi (0.5)
-DOCK: Lanngisi III - Moon 2 - Sisters of EVE Bureau
-UNLOAD Alexander Blessed (id=1): 2 Jumps | 100,000.00 m3
-UNDOCK
-GO: Lanngisi (0.5) -> Nakugard (0.5) -> Hek (0.8)
-DOCK: Hek VIII - Moon 12 - Boundless Creation Factory
-DONE: 00:16
-MOVED: 200,000.00 m3
-NUM CONTRACTS: 2
-PROFIT: 9.90M
-ISK/M3: 49.50
-ISK/Jump: 1.65M
-ISK/Hour: 37.41M
+DONE: 00:10
+MOVED: 100,000.00 m3
+NUM CONTRACTS: 1
+PROFIT: 5.00M
+ISK/M3: 50.00
+ISK/Jump: 2.50M
+ISK/Hour: 30.33M

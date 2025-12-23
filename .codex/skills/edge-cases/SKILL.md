@@ -105,7 +105,7 @@ Edge cases are additional coverage beyond the core tests - they should not block
 
 1. Run eval-snapshot to verify:
    ```bash
-   slop-code --quiet eval-snapshot problems/{problem}/checkpoint_N/solution \
+   slop-code --quiet eval-snapshot problems/{problem}/solutions/checkpoint_N \
        -p {problem} -o /tmp/eval -c N \
        -e configs/environments/docker-python3.12-uv.yaml --json
    ```

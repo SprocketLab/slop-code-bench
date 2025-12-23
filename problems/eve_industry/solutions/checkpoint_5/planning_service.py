@@ -7,14 +7,30 @@ from __future__ import annotations
 
 
 import math
+from collections import deque
 from dataclasses import dataclass
 
+import networkx as nx
 from build_parser import BuildSpec
 from models import DECRYPTORS
 from models import BuildConfig
 from recipe_service import calculate_volume
 from recipe_service import resolve_item
 from sde_loader import SDELoader
+
+
+@dataclass
+class Recipe:
+    """A recipe for producing an item."""
+
+    id: int  # blueprint_type_id
+    type: str  # "Reaction" or "Manufacturing"
+    output: int  # product_type_id
+    output_quantity: int
+    inputs: dict[int, int]  # {material_type_id: base_quantity}
+    time: float  # base time in seconds
+    me: int  # material efficiency to apply
+    te: int  # time efficiency to apply
 
 
 @dataclass
@@ -140,9 +156,10 @@ def _create_recursive_build_plan(
     """
     Create a recursive build plan (build all buildable components).
 
-    Uses collect + recalculate approach:
-    1. Collect initial requirements recursively
-    2. Recalculate runs with fractional consumption until stable
+    Uses NetworkX graph approach:
+    1. Build graph with all recipes, edges from product -> inputs
+    2. Process level-by-level, accumulating fractional requirements
+    3. Only ceiling when calculating runs for each node
 
     Args:
         build_spec: Parsed build specification
@@ -161,32 +178,78 @@ def _create_recursive_build_plan(
     me, te = _calculate_me_te(build_spec)
     top_runs = build_spec.runs_per_job * build_spec.num_jobs
 
-    # Build dependency graph and calculate runs top-down
-    # This approach: discover jobs, then calculate runs starting from root
-    jobs = {}
-    graph = {}
+    # Get top-level product type ID
+    products_df = sde.load_activity_products()
+    top_product_row = products_df[
+        (products_df["typeID"] == blueprint_type_id)
+        & (products_df["activityID"] == activity_id)
+    ]
+    top_product_id = int(top_product_row.iloc[0]["productTypeID"])
 
-    _discover_jobs(
+    # Build the graph and recipes
+    G = nx.DiGraph()
+    recipes = {}  # {product_type_id: Recipe}
+
+    _build_recipe_graph(
+        top_product_id,
         blueprint_type_id,
         activity_id,
         me,
         te,
         config,
         sde,
-        jobs,
-        graph,
+        G,
+        recipes,
     )
 
-    materials_to_build = _calculate_runs_topdown(
-        blueprint_type_id,
-        activity_id,
-        me,
-        top_runs,
-        config,
-        sde,
-        jobs,
-        graph,
-    )
+    # Calculate requirements using graph-based approach
+    required = {}  # {product_type_id: float}
+    runs_needed = {}  # {product_type_id: int}
+
+    # Initialize top-level requirements for its inputs
+    top_recipe = recipes[top_product_id]
+    for input_id, base_qty in top_recipe.inputs.items():
+        if top_recipe.type == "Manufacturing":
+            # EVE formula: per_run = max(1, base * (1 - ME/100)), total = per_run * runs
+            per_run = max(1, base_qty * (1 - me / 100))
+            req = per_run * top_runs
+        else:
+            req = top_runs * base_qty
+        required[input_id] = required.get(input_id, 0) + req
+
+    # Process graph level by level
+    work_graph = G.copy()
+    work_graph.remove_node(top_product_id)
+
+    while work_graph.nodes():
+        # Find roots (nodes with in_degree=0)
+        roots = [n for n in work_graph.nodes() if work_graph.in_degree(n) == 0]
+        if not roots:
+            break
+
+        for root in roots:
+            # Ceiling the accumulated requirement
+            required[root] = math.ceil(required.get(root, 0))
+
+            work_graph.remove_node(root)
+
+            if root not in recipes:
+                # Raw material, no recipe to process
+                continue
+
+            recipe = recipes[root]
+            runs = math.ceil(required[root] / recipe.output_quantity)
+            runs_needed[root] = runs
+
+            # Propagate requirements to inputs
+            for input_id, base_qty in recipe.inputs.items():
+                if recipe.type == "Reaction":
+                    actual_add = runs * base_qty
+                else:
+                    # EVE formula: per_run = max(1, base * (1 - ME/100)), total = per_run * runs
+                    per_run = max(1, base_qty * (1 - recipe.me / 100))
+                    actual_add = per_run * runs
+                required[input_id] = required.get(input_id, 0) + actual_add
 
     # Create jobs with splitting
     all_jobs = []
@@ -211,43 +274,38 @@ def _create_recursive_build_plan(
         )
     )
 
-    # Add component jobs with splitting
-    for (
-        bp_id,
-        act_id,
-        job_me,
-        job_te,
-    ), runs_needed in materials_to_build.items():
-        # Get base time and calculate splits
-        base_time_per_run = _get_base_time_per_run(sde, bp_id, act_id)
-        job_splits = _calculate_jobs_with_split(
-            runs_needed, base_time_per_run, threshold
-        )
+    # Build materials_to_build from runs_needed for job splitting
+    materials_to_build = {}
+    for product_id, runs in runs_needed.items():
+        recipe = recipes[product_id]
+        job_key = (recipe.id, 11 if recipe.type == "Reaction" else 1, recipe.me, recipe.te)
+        materials_to_build[job_key] = runs
 
-        # Create JobPlan for each split
+    # Add component jobs with splitting
+    for (bp_id, act_id, job_me, job_te), runs in materials_to_build.items():
+        base_time_per_run = _get_base_time_per_run(sde, bp_id, act_id)
+        job_splits = _calculate_jobs_with_split(runs, base_time_per_run, threshold)
+
         bp_name = _get_blueprint_name(sde, bp_id)
-        for runs, count in job_splits:
-            # Calculate actual job time with TE
-            if act_id == 11:  # Reaction - only te_bonus applies
+        for split_runs, count in job_splits:
+            if act_id == 11:  # Reaction
                 job_time_days = _calculate_job_time(
-                    sde, bp_id, act_id, 0, config.te_bonus, runs
+                    sde, bp_id, act_id, 0, config.te_bonus, split_runs
                 )
-            else:  # Manufacturing - both blueprint TE and te_bonus apply
+            else:
                 job_time_days = _calculate_job_time(
-                    sde, bp_id, act_id, job_te, config.te_bonus, runs
+                    sde, bp_id, act_id, job_te, config.te_bonus, split_runs
                 )
 
             all_jobs.append(
-                JobPlan(
-                    name=bp_name, runs=runs, days=job_time_days, count=count
-                )
+                JobPlan(name=bp_name, runs=split_runs, days=job_time_days, count=count)
             )
 
-    # Compute final consumption from all jobs (including top-level)
+    # Compute final consumption from all jobs
+    materials_df = sde.load_activity_materials()
     final_consumption = {}
 
-    # Add top-level job consumption
-    materials_df = sde.load_activity_materials()
+    # Top-level job consumption
     top_level_materials = materials_df[
         (materials_df["typeID"] == blueprint_type_id)
         & (materials_df["activityID"] == activity_id)
@@ -256,16 +314,13 @@ def _create_recursive_build_plan(
         mat_type_id = int(mat_row["materialTypeID"])
         base_quantity = int(mat_row["quantity"])
         per_run = _calculate_material_per_run(base_quantity, me, activity_id)
-        total = math.ceil(per_run * (build_spec.runs_per_job * build_spec.num_jobs))
-        final_consumption[mat_type_id] = (
-            final_consumption.get(mat_type_id, 0) + total
-        )
+        total = math.ceil(per_run * top_runs)
+        final_consumption[mat_type_id] = final_consumption.get(mat_type_id, 0) + total
 
-    # Add component job consumption
+    # Component job consumption
     for (bp_id, act_id, job_me, job_te), runs in materials_to_build.items():
         material_rows = materials_df[
-            (materials_df["typeID"] == bp_id)
-            & (materials_df["activityID"] == act_id)
+            (materials_df["typeID"] == bp_id) & (materials_df["activityID"] == act_id)
         ]
         for _, mat_row in material_rows.iterrows():
             mat_type_id = int(mat_row["materialTypeID"])
@@ -276,12 +331,11 @@ def _create_recursive_build_plan(
                 final_consumption.get(mat_type_id, 0) + total
             )
 
-    # Compute final production from all jobs
+    # Compute final production
     final_production = {}
     for (bp_id, act_id, job_me, job_te), runs in materials_to_build.items():
-        products = sde.load_activity_products()
-        product_row = products[
-            (products["typeID"] == bp_id) & (products["activityID"] == act_id)
+        product_row = products_df[
+            (products_df["typeID"] == bp_id) & (products_df["activityID"] == act_id)
         ]
         if len(product_row) > 0:
             product_type_id = int(product_row.iloc[0]["productTypeID"])
@@ -291,8 +345,7 @@ def _create_recursive_build_plan(
                 final_production.get(product_type_id, 0) + total_produced
             )
 
-    # Create materials list with production tracking
-    # Pass empty dict for raw_materials - the function calculates to_buy from consumed - produced
+    # Create materials list
     materials = _create_materials_with_production(
         {}, final_production, final_consumption, sde
     )
@@ -302,6 +355,112 @@ def _create_recursive_build_plan(
     all_jobs.sort(key=lambda x: (x.name, x.runs, x.count, x.days))
 
     return BuildPlan(materials=materials, jobs=all_jobs)
+
+
+def _build_recipe_graph(
+    product_type_id: int,
+    blueprint_type_id: int,
+    activity_id: int,
+    me: int,
+    te: int,
+    config: BuildConfig,
+    sde: SDELoader,
+    G: nx.DiGraph,
+    recipes: dict,
+) -> None:
+    """
+    Recursively build the recipe graph using NetworkX.
+
+    Args:
+        product_type_id: The product type ID
+        blueprint_type_id: The blueprint type ID
+        activity_id: The activity ID (1=Manufacturing, 11=Reaction)
+        me: Material efficiency for this recipe
+        te: Time efficiency for this recipe
+        config: Build configuration
+        sde: SDE loader
+        G: NetworkX DiGraph to build
+        recipes: Dict to store {product_type_id: Recipe}
+    """
+    if product_type_id in recipes:
+        return
+
+    # Get materials for this blueprint
+    materials_df = sde.load_activity_materials()
+    material_rows = materials_df[
+        (materials_df["typeID"] == blueprint_type_id)
+        & (materials_df["activityID"] == activity_id)
+    ]
+
+    # Get output quantity
+    products_df = sde.load_activity_products()
+    product_row = products_df[
+        (products_df["typeID"] == blueprint_type_id)
+        & (products_df["activityID"] == activity_id)
+    ]
+    output_qty = int(product_row.iloc[0]["quantity"]) if len(product_row) > 0 else 1
+
+    # Get base time
+    activities = sde.load_activities()
+    activity_row = activities[
+        (activities["typeID"] == blueprint_type_id)
+        & (activities["activityID"] == activity_id)
+    ]
+    base_time = int(activity_row.iloc[0]["time"]) if len(activity_row) > 0 else 0
+
+    # Build inputs dict
+    inputs = {}
+    for _, mat_row in material_rows.iterrows():
+        mat_type_id = int(mat_row["materialTypeID"])
+        base_qty = int(mat_row["quantity"])
+        inputs[mat_type_id] = base_qty
+
+    # Create recipe
+    recipe_type = "Reaction" if activity_id == 11 else "Manufacturing"
+    recipe = Recipe(
+        id=blueprint_type_id,
+        type=recipe_type,
+        output=product_type_id,
+        output_quantity=output_qty,
+        inputs=inputs,
+        time=base_time,
+        me=me,
+        te=te,
+    )
+    recipes[product_type_id] = recipe
+
+    # Add node to graph
+    G.add_node(product_type_id)
+
+    # Process each input
+    for mat_type_id in inputs:
+        G.add_node(mat_type_id)
+        G.add_edge(product_type_id, mat_type_id)
+
+        # Check if this material is buildable
+        is_buildable, mat_bp_id, mat_activity_id = _is_buildable(sde, mat_type_id)
+
+        if is_buildable:
+            # Determine component ME/TE
+            if mat_activity_id == 1:  # Manufacturing
+                comp_me = config.component_me
+                comp_te = config.component_te
+            else:  # Reaction
+                comp_me = 0
+                comp_te = 0
+
+            # Recurse
+            _build_recipe_graph(
+                mat_type_id,
+                mat_bp_id,
+                mat_activity_id,
+                comp_me,
+                comp_te,
+                config,
+                sde,
+                G,
+                recipes,
+            )
 
 
 def _calculate_me_te(build_spec: BuildSpec) -> tuple[int, int]:

@@ -1,1 +1,13 @@
-No Good Contracts
+SHIP: Rhea
+START: Hek VIII - Moon 12 - Boundless Creation Factory
+LOAD Test Issuer (id=1): 1.00M ISK | 1,000.00 m3
+LOAD Test Issuer (id=1): 1.00M ISK | 1,000.00 m3
+UNLOAD Test Issuer (id=1): 0 Jumps | 1,000.00 m3
+UNLOAD Test Issuer (id=1): 0 Jumps | 1,000.00 m3
+DONE: 00:01
+MOVED: 2,000.00 m3
+NUM CONTRACTS: 2
+PROFIT: 2.00M
+ISK/M3: 1000.00
+ISK/Jump: 2.00M
+ISK/Hour: 180.00M

@@ -19,5 +19,5 @@ UNDOCK
 GO: Ikuchi (1.0) -> Jita (0.9)
 DOCK: Jita IV - Moon 4 - Caldari Navy Assembly Plant
 UNLOAD: 20,000.00 m3
-DONE: 00:06
+DONE: 00:07
 MOVED: 60,000.00 m3
