@@ -17,7 +17,6 @@ from slop_code.agent_runner.resume import detect_resume_point
 from slop_code.common import CHECKPOINT_RESULTS_FILENAME
 from slop_code.common import CONFIG_FILENAME
 from slop_code.common import ENV_CONFIG_NAME
-from slop_code.common import RUN_INFO_FILENAME
 from slop_code.common import serialize_path_dict
 from slop_code.common.llms import ModelCatalog
 from slop_code.common.llms import ModelDefinition
@@ -38,31 +37,6 @@ from slop_code.logging import get_logger
 logger = get_logger(__name__)
 
 
-def _problem_is_done(run_dir: Path, problem_name: str) -> bool:
-    """Return True if the problem appears completed in the run directory.
-
-    We consider a problem "done" if it has a run_info.yaml and its summary
-    state is "completed".
-    """
-    run_info_path = run_dir / problem_name / RUN_INFO_FILENAME
-    if not run_info_path.exists():
-        return False
-    try:
-        with run_info_path.open("r") as f:
-            data = yaml.safe_load(f)
-    except OSError:
-        return False
-    if not isinstance(data, dict):
-        return False
-    summary = data.get("summary")
-    if not isinstance(summary, dict):
-        return False
-    state = summary.get("state")
-    if state is None:
-        return False
-    return str(state).strip().lower() == "completed"
-
-
 def _clear_problem_outputs(run_dir: Path, problem_name: str) -> None:
     """Remove any prior outputs for a problem (but keep the run dir)."""
     shutil.rmtree(run_dir / problem_name, ignore_errors=True)
@@ -75,11 +49,12 @@ def _check_problem_needs_rerun(
     prompt_template: str,
     environment: EnvironmentSpecType,
 ) -> tuple[bool, str | None]:
-    """Check if a problem needs to be run (not done or specs changed).
+    """Check if a problem needs to be run based on checkpoint state.
 
-    This function checks both:
-    1. Whether the problem is completed (via run_info.yaml state)
-    2. Whether any prompts have changed since the last run
+    Uses detect_resume_point() which handles both:
+    1. Structured detection from run_info.yaml if present
+    2. Artifact-based fallback (inference_result.json + snapshot) if missing
+    3. Prompt validation to detect spec changes
 
     Args:
         run_dir: The run output directory
@@ -92,27 +67,28 @@ def _check_problem_needs_rerun(
         (needs_rerun, reason) - reason is None if doesn't need rerun,
         otherwise a human-readable explanation
     """
-    # First check basic completion state
-    if not _problem_is_done(run_dir, problem_name):
-        return True, "not completed"
-
-    # Problem shows as done - now check if prompts have changed
     output_path = run_dir / problem_name
+
+    # If output directory doesn't exist, need to run
+    if not output_path.exists():
+        return True, "no output directory"
+
+    # Load problem config for checkpoint validation
     try:
         problem_config = ProblemConfig.from_yaml(problem_path)
     except Exception as exc:  # noqa: BLE001
         logger.warning(
-            "Failed to load problem config for prompt validation",
+            "Failed to load problem config",
             problem=problem_name,
             error=str(exc),
         )
-        # Can't validate prompts, assume still valid
-        return False, None
+        return True, "invalid problem config"
 
     checkpoint_items = list(problem_config.iterate_checkpoint_items())
     checkpoint_names = [name for name, _ in checkpoint_items]
     checkpoints = [cp for _, cp in checkpoint_items]
 
+    # Use detect_resume_point for both run_info.yaml and artifact-based detection
     resume_info = detect_resume_point(
         output_path,
         checkpoint_names,
@@ -123,21 +99,21 @@ def _check_problem_needs_rerun(
         checkpoints=checkpoints,
     )
 
+    # No valid state found at all
     if resume_info is None:
-        # No valid state found, need to rerun
         return True, "no valid checkpoint state"
 
-    if resume_info.invalidated_checkpoints:
-        # Some checkpoints are invalid (e.g., spec changed)
-        reasons = []
-        for status in resume_info.checkpoint_statuses:
-            if not status.is_valid and status.reason:
-                reasons.append(f"{status.name}: {status.reason.value}")
-        reason_str = "; ".join(reasons) if reasons else "checkpoints invalidated"
-        return True, reason_str
+    # All checkpoints completed and valid
+    if not resume_info.resume_from_checkpoint:
+        return False, None
 
-    # All checkpoints valid, no rerun needed
-    return False, None
+    # Some checkpoints need to be re-run
+    reasons = []
+    for status in resume_info.checkpoint_statuses:
+        if not status.is_valid and status.reason:
+            reasons.append(f"{status.name}: {status.reason.value}")
+    reason_str = "; ".join(reasons) if reasons else "incomplete checkpoints"
+    return True, reason_str
 
 
 def _filter_problems_for_execution(

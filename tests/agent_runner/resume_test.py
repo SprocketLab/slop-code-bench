@@ -73,17 +73,22 @@ class TestResumeInfo:
 class TestDetectResumePoint:
     """Tests for detect_resume_point function."""
 
-    def test_returns_none_when_no_run_info_and_no_artifacts(
+    def test_returns_resume_info_when_no_run_info_and_no_artifacts(
         self, tmp_path: Path
     ) -> None:
-        """Returns None when run_info.yaml doesn't exist and no artifacts."""
+        """Returns ResumeInfo to start from first checkpoint when no prior state exists."""
         result = detect_resume_point(tmp_path, ["checkpoint_1", "checkpoint_2"])
-        assert result is None
+        # When no run_info.yaml and no checkpoint directories exist,
+        # returns ResumeInfo with all checkpoints invalidated (need to run from start)
+        assert result is not None
+        assert result.resume_from_checkpoint == "checkpoint_1"
+        assert result.completed_checkpoints == []
+        assert result.invalidated_checkpoints == ["checkpoint_1", "checkpoint_2"]
 
-    def test_returns_none_when_all_checkpoints_completed(
+    def test_returns_resume_info_when_all_checkpoints_completed(
         self, tmp_path: Path
     ) -> None:
-        """Returns None when all checkpoints are completed."""
+        """Returns ResumeInfo with empty resume_from when all checkpoints completed."""
         # Create run_info.yaml with all checkpoints completed
         run_info = {
             "summary": {
@@ -103,12 +108,15 @@ class TestDetectResumePoint:
         result = detect_resume_point(
             tmp_path, ["checkpoint_1", "checkpoint_2"]
         )
-        assert result is None
+        assert result is not None
+        assert result.resume_from_checkpoint == ""  # Empty = nothing to resume
+        assert result.completed_checkpoints == ["checkpoint_1", "checkpoint_2"]
+        assert result.invalidated_checkpoints == []
 
-    def test_returns_none_when_no_checkpoints_completed(
+    def test_returns_resume_info_when_no_checkpoints_completed(
         self, tmp_path: Path
     ) -> None:
-        """Returns None when no checkpoints have run."""
+        """Returns ResumeInfo to resume from first checkpoint when none completed."""
         run_info = {
             "summary": {
                 "checkpoints": {
@@ -123,7 +131,10 @@ class TestDetectResumePoint:
         result = detect_resume_point(
             tmp_path, ["checkpoint_1", "checkpoint_2"]
         )
-        assert result is None
+        assert result is not None
+        assert result.resume_from_checkpoint == "checkpoint_1"
+        assert result.completed_checkpoints == []
+        assert result.invalidated_checkpoints == ["checkpoint_1", "checkpoint_2"]
 
     def test_detects_resume_point_after_first_checkpoint(
         self, tmp_path: Path
@@ -239,23 +250,31 @@ class TestDetectResumePoint:
         assert result is None
 
     def test_handles_malformed_run_info(self, tmp_path: Path) -> None:
-        """Returns None when run_info structure is unexpected."""
+        """Returns ResumeInfo with invalidated checkpoints when run_info structure is unexpected."""
         with (tmp_path / RUN_INFO_FILENAME).open("w") as f:
             yaml.dump({"not_summary": {}}, f)
 
         result = detect_resume_point(tmp_path, ["checkpoint_1"])
-        assert result is None
+        # When run_info.yaml has unexpected structure but is valid YAML,
+        # checkpoints are treated as missing/invalid
+        assert result is not None
+        assert result.resume_from_checkpoint == "checkpoint_1"
+        assert result.completed_checkpoints == []
 
 
 class TestDetectResumeFromArtifacts:
     """Tests for _detect_resume_from_artifacts fallback function."""
 
-    def test_returns_none_when_no_snapshots(self, tmp_path: Path) -> None:
-        """Returns None when no checkpoint has a snapshot."""
+    def test_returns_resume_info_when_no_snapshots(self, tmp_path: Path) -> None:
+        """Returns ResumeInfo to resume from first checkpoint when no snapshots exist."""
         result = _detect_resume_from_artifacts(
             tmp_path, ["checkpoint_1", "checkpoint_2"]
         )
-        assert result is None
+        # When no checkpoint directories exist, returns ResumeInfo with all invalidated
+        assert result is not None
+        assert result.resume_from_checkpoint == "checkpoint_1"
+        assert result.completed_checkpoints == []
+        assert result.invalidated_checkpoints == ["checkpoint_1", "checkpoint_2"]
 
     def test_resumes_from_checkpoint_with_error(self, tmp_path: Path) -> None:
         """Resumes from checkpoint that has snapshot + error."""
@@ -295,8 +314,11 @@ class TestDetectResumeFromArtifacts:
             tmp_path, ["checkpoint_1", "checkpoint_2"]
         )
 
-        # No completed checkpoints, should return None
-        assert result is None
+        # No completed checkpoints, returns ResumeInfo to resume from first
+        assert result is not None
+        assert result.resume_from_checkpoint == "checkpoint_1"
+        assert result.completed_checkpoints == []
+        assert result.invalidated_checkpoints == ["checkpoint_1", "checkpoint_2"]
 
     def test_resumes_from_next_checkpoint_after_completed(
         self, tmp_path: Path
@@ -321,8 +343,8 @@ class TestDetectResumeFromArtifacts:
         assert result.last_snapshot_dir == checkpoint_1_dir / SNAPSHOT_DIR_NAME
         assert result.prior_usage.cost == 1.0
 
-    def test_returns_none_when_all_completed(self, tmp_path: Path) -> None:
-        """Returns None when all checkpoints completed successfully."""
+    def test_returns_resume_info_when_all_completed(self, tmp_path: Path) -> None:
+        """Returns ResumeInfo with empty resume_from when all checkpoints completed."""
         for i in range(1, 3):
             checkpoint_dir = tmp_path / f"checkpoint_{i}"
             (checkpoint_dir / SNAPSHOT_DIR_NAME).mkdir(parents=True)
@@ -332,7 +354,10 @@ class TestDetectResumeFromArtifacts:
         result = _detect_resume_from_artifacts(
             tmp_path, ["checkpoint_1", "checkpoint_2"]
         )
-        assert result is None
+        assert result is not None
+        assert result.resume_from_checkpoint == ""  # Empty = nothing to resume
+        assert result.completed_checkpoints == ["checkpoint_1", "checkpoint_2"]
+        assert result.invalidated_checkpoints == []
 
     def test_resumes_when_snapshot_but_no_inference_result(
         self, tmp_path: Path

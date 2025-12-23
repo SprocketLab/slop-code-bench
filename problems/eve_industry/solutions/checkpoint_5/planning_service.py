@@ -998,7 +998,10 @@ def _calculate_material_per_run(
         Material quantity per run (may be fractional)
     """
     if activity_id == 1:  # Manufacturing
-        return max(1, base_quantity * (1 - me / 100))
+        # Use exact arithmetic to avoid floating point issues
+        # me / 100 could have FP errors, so calculate differently
+        reduced = base_quantity * (100 - me) / 100
+        return max(1, reduced)
     return base_quantity
 
 

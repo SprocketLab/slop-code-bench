@@ -113,6 +113,7 @@ def test_checkpoint_3_regression(
     run_case(case_dir, "regression", entrypoint_argv, tmp_path)
 
 
+@pytest.mark.functionality
 def test_checkpoint_3_edge_input_union_dedup(
     entrypoint_argv: list[str],
     tmp_path: Path,
@@ -132,6 +133,7 @@ def test_checkpoint_3_edge_input_union_dedup(
     assert parse_stdout(result.stdout) == {"n": 2, "total": 3.0}
 
 
+@pytest.mark.functionality
 def test_checkpoint_3_edge_bad_records_out_not_created(
     entrypoint_argv: list[str],
     tmp_path: Path,
