@@ -1,0 +1,23 @@
+# Tests that glob matching is case-sensitive
+# Spec: "Matching is case-sensitive"
+# Pattern *.TXT should match file.TXT but not file.txt
+arguments: --now 2025-09-10T03:30:00Z --schedule schedule.yaml --duration 1 --mount mount
+input_files:
+- content:
+    version: 1
+    timezone: UTC
+    jobs:
+    - id: case-test
+      source: mount://
+      exclude:
+      - '*.TXT'
+      when:
+        kind: daily
+        at: '03:30'
+      destination: ignored://sink
+  file_type: yaml
+  path: schedule.yaml
+- content: "content"
+  path: mount/file.txt
+- content: "content"
+  path: mount/file.TXT

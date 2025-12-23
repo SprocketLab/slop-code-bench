@@ -1,0 +1,95 @@
+{
+  "order": 25,
+  "input": {
+    "body": {
+      "materials": {
+        "Nitrogen Isotopes": 50000
+      },
+      "hubs": [
+        "jita"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.8,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Compressed White Glaze": {
+          "quantity": 131,
+          "cost": 35356900.0,
+          "volume": 13100.0,
+          "category": "ice",
+          "purchases": {
+            "Jita IV - Moon 4 - Caldari Navy Assembly Plant": {
+              "quantity": 131,
+              "total": 35356900.0,
+              "avg_price": 269900.0
+            }
+          }
+        },
+        "Compressed Pristine White Glaze": {
+          "quantity": 2,
+          "cost": 670200.0,
+          "volume": 200.0,
+          "category": "ice",
+          "purchases": {
+            "Jita IV - Moon 4 - Caldari Navy Assembly Plant": {
+              "quantity": 2,
+              "total": 670200.0,
+              "avg_price": 335100.0
+            }
+          }
+        }
+      },
+      "total": 40682100.0,
+      "shipping": 4655000.0,
+      "collateral_tax": 0.0,
+      "items": 36027100.0,
+      "raw_ship": 525000.0,
+      "material_value": 44623208.65,
+      "excess_value": 2112197.1,
+      "yields": {
+        "Heavy Water": {
+          "target": null,
+          "actual": 8380,
+          "buy": 924325.96,
+          "sell": 1013142.0
+        },
+        "Liquid Ozone": {
+          "target": null,
+          "actual": 4254,
+          "buy": 439863.6,
+          "sell": 492151.9
+        },
+        "Nitrogen Isotopes": {
+          "target": 50000,
+          "actual": 50027,
+          "buy": 42321886.66,
+          "sell": 44647305.19
+        },
+        "Strontium Clathrates": {
+          "target": null,
+          "actual": 119,
+          "buy": 513009.0,
+          "sell": 582806.67
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "expected": {
+    "output": {
+      "inputs": {
+        "volume": 50.0,
+        "buy": null,
+        "sell": null,
+        "buy_5pct": null,
+        "sell_5pct": null
+      },
+      "outputs": {
+        "volume": 197.98,
+        "buy": null,
+        "sell": null,
+        "buy_5pct": null,
+        "sell_5pct": null
+      },
+      "yields": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "products": {
+        "Tritanium": {
+          "quantity": 8778,
+          "volume": 87.78,
+          "buy": null,
+          "sell": null
+        },
+        "Pyerite": {
+          "quantity": 3795,
+          "volume": 37.95,
+          "buy": null,
+          "sell": null
+        },
+        "Mexallon": {
+          "quantity": 792,
+          "volume": 7.92,
+          "buy": null,
+          "sell": null
+        },
+        "Robotics": {
+          "quantity": 5,
+          "volume": 15.0,
+          "buy": null,
+          "sell": null
+        },
+        "Morphite": {
+          "quantity": 33,
+          "volume": 0.33,
+          "buy": null,
+          "sell": null
+        },
+        "Particle Accelerator Unit": {
+          "quantity": 49,
+          "volume": 49.0,
+          "buy": null,
+          "sell": null
+        }
+      }
+    },
+    "status_code": 201
+  },
+  "input": {
+    "body": {
+      "items": {
+        "Light Neutron Blaster II": 10
+      },
+      "drill_down": false
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "method": "POST",
+    "path": "/v1/reprocess"
+  },
+  "order": 1
+}

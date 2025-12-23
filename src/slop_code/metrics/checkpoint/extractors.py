@@ -134,7 +134,9 @@ def _build_metrics_from_snapshot(
         "nesting_mean": functions.get("nesting_mean", 0.0),
         "nesting_concentration": functions.get("nesting_concentration", 0.0),
         "comparisons_mean": functions.get("comparisons_mean", 0.0),
-        "comparisons_concentration": functions.get("comparisons_concentration", 0.0),
+        "comparisons_concentration": functions.get(
+            "comparisons_concentration", 0.0
+        ),
         "branches_mean": functions.get("branches_mean", 0.0),
         "branches_concentration": functions.get("branches_concentration", 0.0),
         "control_mean": functions.get("control_mean", 0.0),
@@ -223,54 +225,31 @@ def get_evaluation_metrics(
             context={"checkpoint_dir": str(checkpoint_dir)},
         ) from e
 
-    # Initialize counters for each test type
-    tests_by_type: dict[str, dict[str, int]] = {
-        "core": {"passed": 0, "total": 0},
-        "functionality": {"passed": 0, "total": 0},
-        "error": {"passed": 0, "total": 0},
-        "regression": {"passed": 0, "total": 0},
-    }
-
-    checkpoint_passed = checkpoint_total = 0
-    total_passed = total_total = 0
-    core_passed = core_total = 0
-
-    for c_type, c_total in metrics["total_counts"].items():
-        c_passed = metrics["pass_counts"].get(c_type, 0)
-
-        # Map to lowercase key
-        type_key = c_type.lower()
-        if type_key in tests_by_type:
-            tests_by_type[type_key]["passed"] = c_passed
-            tests_by_type[type_key]["total"] = c_total
-
-        if c_type == "Core":
-            core_passed += c_passed
-            core_total += c_total
-        if c_type != "Regression":
-            checkpoint_passed += c_passed
-            checkpoint_total += c_total
-        total_passed += c_passed
-        total_total += c_total
+    total_counts = metrics["total_counts"]
+    pass_counts = metrics["pass_counts"]
+    total_passed = sum(pass_counts.values())
+    total_total = sum(total_counts.values())
+    checkpoint_passed = total_passed - pass_counts.get("Regression", 0)
+    checkpoint_total = total_total - total_counts.get("Regression", 0)
+    if "Core" not in total_counts:
+        print(checkpoint_dir)
 
     return {
-        "pass_rate": total_passed / total_total if total_total > 0 else 0,
-        "core_pass_rate": core_passed / core_total if core_total > 0 else 0,
-        "checkpoint_pass_rate": (
-            checkpoint_passed / checkpoint_total if checkpoint_total > 0 else 0
-        ),
+        "pass_rate": total_passed / total_total,
+        "core_pass_rate": pass_counts.get("Core", 0) / total_counts["Core"],
+        "checkpoint_pass_rate": checkpoint_passed / checkpoint_total,
         "duration": metrics["duration"],
         # Flattened tests
         "total_tests": total_total,
         "passed_tests": total_passed,
-        "core_total": tests_by_type["core"]["total"],
-        "core_passed": tests_by_type["core"]["passed"],
-        "functionality_total": tests_by_type["functionality"]["total"],
-        "functionality_passed": tests_by_type["functionality"]["passed"],
-        "error_total": tests_by_type["error"]["total"],
-        "error_passed": tests_by_type["error"]["passed"],
-        "regression_total": tests_by_type["regression"]["total"],
-        "regression_passed": tests_by_type["regression"]["passed"],
+        "core_total": total_counts["Core"],
+        "core_passed": pass_counts.get("Core", 0),
+        "functionality_total": total_counts.get("Functionality", 0),
+        "functionality_passed": pass_counts.get("Functionality", 0),
+        "error_total": total_counts.get("Error", 0),
+        "error_passed": pass_counts.get("Error", 0),
+        "regression_total": total_counts.get("Regression", 0),
+        "regression_passed": pass_counts.get("Regression", 0),
     }
 
 

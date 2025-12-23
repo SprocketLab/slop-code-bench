@@ -1,0 +1,28 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json data.csv
+  input_files:
+    - content: 'id,value
+1,1e100
+2,1e-100
+3,1.23456789012345'
+      file_type: text
+      path: data.csv
+    - content:
+        columns:
+          - name: id
+            type: int
+          - name: value
+            type: float
+      file_type: json
+      path: schema.json
+
+expected:
+  status_code: 0
+  files:
+    output.csv:
+      - id: 1
+        value: 1e+100
+      - id: 2
+        value: 1e-100
+      - id: 3
+        value: 1.23456789012345

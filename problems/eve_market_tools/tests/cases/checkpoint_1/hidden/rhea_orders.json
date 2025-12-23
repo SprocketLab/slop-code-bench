@@ -1,0 +1,44 @@
+{
+  "expected": {
+    "output": {
+      "name": "The Forge",
+      "sell_orders": 196990,
+      "buy_orders": 80242,
+      "sell_value": 138168.48,
+      "buy_value": 168450.26,
+      "unique_items": 8709,
+      "types": {
+        "Rhea": {
+          "buy": 8570000000.0,
+          "sell": 8799000000.0,
+          "split": 8684500000.0,
+          "buy_orders": 9,
+          "sell_orders": 18
+        },
+        "Rhea Blueprint": {
+          "buy": null,
+          "sell": null,
+          "split": null,
+          "buy_orders": 0,
+          "sell_orders": 0
+        },
+        "Charon": {
+          "buy": 1673000000.0,
+          "sell": 1818000000.0,
+          "split": 1745500000.0,
+          "buy_orders": 18,
+          "sell_orders": 45
+        }
+      }
+    },
+    "status_code": 200
+  },
+  "input": {
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "method": "GET",
+    "path": "/v1/market/10000002?type_ids=28844,28845,20185"
+  },
+  "order": 3
+}

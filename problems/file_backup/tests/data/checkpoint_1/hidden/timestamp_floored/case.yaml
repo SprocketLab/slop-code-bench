@@ -1,0 +1,19 @@
+# Tests that seconds/microseconds are floored to the minute
+# Spec: "All timestamps are floored to the minute (seconds/microseconds ignored)"
+# --now at 03:30:59 should be treated as 03:30:00, matching job at 03:30
+arguments: --now 2025-09-10T03:30:59Z --schedule schedule.yaml --duration 0 --mount {{static:files}}
+input_files:
+- content:
+    version: 1
+    timezone: UTC
+    jobs:
+    - id: floored-backup
+      source: mount://
+      exclude:
+      - '**/*'
+      when:
+        kind: daily
+        at: '03:30'
+      destination: ignored://sink
+  file_type: yaml
+  path: schedule.yaml

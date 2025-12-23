@@ -1,0 +1,98 @@
+{
+  "api_key": "skill_config_ice",
+  "expected": {
+    "output": {
+      "inputs": {
+        "volume": 50000.0,
+        "buy": 1000000000.0,
+        "sell": 1138000000.0,
+        "buy_5pct": 1000000000.0,
+        "sell_5pct": 1138000000.0
+      },
+      "outputs": {
+        "volume": 26275.62,
+        "buy": 426188230.0,
+        "sell": 567801160.0,
+        "buy_5pct": 426178490.0,
+        "sell_5pct": 567801853.26
+      },
+      "yields": {
+        "ore": 0.755,
+        "gas": 0.7122,
+        "scrap": 0.5
+      },
+      "products": {
+        "Construction Blocks": {
+          "quantity": 225,
+          "volume": 168.75,
+          "buy": 8542.0,
+          "sell": 8992.0
+        },
+        "Morphite": {
+          "quantity": 487,
+          "volume": 4.87,
+          "buy": 22920.0,
+          "sell": 25490.0
+        },
+        "Plasma Thruster": {
+          "quantity": 187,
+          "volume": 187.0,
+          "buy": 38000.0,
+          "sell": 46150.0
+        },
+        "Ladar Sensor Cluster": {
+          "quantity": 431,
+          "volume": 431.0,
+          "buy": 8050.0,
+          "sell": 37180.0
+        },
+        "Nanomechanical Microprocessor": {
+          "quantity": 3000,
+          "volume": 3000.0,
+          "buy": 45710.0,
+          "sell": 58880.0
+        },
+        "Fernite Carbide Composite Armor Plate": {
+          "quantity": 18750,
+          "volume": 18750.0,
+          "buy": 6102.0,
+          "sell": 7007.0
+        },
+        "Nuclear Reactor Unit": {
+          "quantity": 337,
+          "volume": 337.0,
+          "buy": 66870.0,
+          "sell": 129000.0
+        },
+        "Electrolytic Capacitor Unit": {
+          "quantity": 1500,
+          "volume": 1500.0,
+          "buy": 43900.0,
+          "sell": 55100.0
+        },
+        "Deflection Shield Emitter": {
+          "quantity": 1897,
+          "volume": 1897.0,
+          "buy": 33000.0,
+          "sell": 49850.0
+        }
+      }
+    },
+    "status_code": 201
+  },
+  "input": {
+    "body": {
+      "items": {
+        "Vargur": 1
+      },
+      "drill_down": false,
+      "market": "Amarr"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "method": "POST",
+    "path": "/v1/reprocess"
+  },
+  "order": 9
+}

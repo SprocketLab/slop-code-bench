@@ -1,0 +1,64 @@
+{
+  "expected": {
+    "output": {
+      "buy_list": {
+        "Compressed Mordunium": {
+          "quantity": 250800,
+          "cost": 4838407.8,
+          "volume": 250.8,
+          "category": "ore",
+          "purchases": {
+            "Dodixie IX - Moon 20 - Federation Navy Assembly Plant": {
+              "quantity": 250800,
+              "total": 4838407.8,
+              "avg_price": 19.29
+            }
+          }
+        }
+      },
+      "total": 4926187.8,
+      "shipping": 87780.0,
+      "collateral_tax": 0.0,
+      "items": 4838407.8,
+      "raw_ship": 700000.0,
+      "material_value": 5219866.23,
+      "excess_value": 626.38,
+      "yields": {
+        "Pyerite": {
+          "target": 200000,
+          "actual": 200024,
+          "buy": 4716565.92,
+          "sell": 5220492.61
+        }
+      }
+    },
+    "status_code": 200
+  },
+  "input": {
+    "body": {
+      "materials": {
+        "Pyerite": 200000
+      },
+      "hubs": [
+        "dodixie"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "order": 10
+}

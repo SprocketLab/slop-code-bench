@@ -11,6 +11,7 @@ from rich.console import Console
 from slop_code.agent_runner.credentials import API_KEY_STORE
 from slop_code.agent_runner.credentials import CredentialNotFoundError
 from slop_code.agent_runner.registry import build_agent_config
+from slop_code.agent_runner.resume import detect_resume_point
 from slop_code.common import CHECKPOINT_RESULTS_FILENAME
 from slop_code.common import CONFIG_FILENAME
 from slop_code.common import ENV_CONFIG_NAME
@@ -255,6 +256,11 @@ def run_agent(
         False,  # noqa: FBT003
         "--resume",
         help="Resume from the first incomplete checkpoint of an existing run",
+    ),
+    dry_run: bool = typer.Option(  # noqa: FBT001, FBT002
+        False,  # noqa: FBT003
+        "--dry-run",
+        help="Preview what would be done without making changes (use with --resume)",
     ),
     output_path: str | None = typer.Option(
         None,
@@ -522,6 +528,92 @@ def run_agent(
                         console=console,
                     )
                 return
+
+    # Handle dry-run mode
+    if dry_run:
+        typer.echo(
+            typer.style(
+                "\nDRY RUN - Resume Preview:",
+                fg=typer.colors.CYAN,
+                bold=True,
+            )
+        )
+        for problem_name in problem_names:
+            problem_path = ctx.obj.problem_path / problem_name
+            try:
+                problem_config = ProblemConfig.from_yaml(problem_path)
+            except Exception as exc:  # noqa: BLE001
+                typer.echo(
+                    typer.style(
+                        f"\n{problem_name}: Failed to load config - {exc}",
+                        fg=typer.colors.RED,
+                    )
+                )
+                continue
+
+            output_path = run_dir / problem_name
+            checkpoint_items = list(problem_config.iterate_checkpoint_items())
+            checkpoint_names = [name for name, _ in checkpoint_items]
+            checkpoints = [cp for _, cp in checkpoint_items]
+
+            resume_info = detect_resume_point(
+                output_path,
+                checkpoint_names,
+                problem_config=problem_config,
+                prompt_template=run_cfg.prompt_content,
+                environment=env_spec,
+                entry_file=problem_config.entry_file,
+                checkpoints=checkpoints,
+            )
+
+            # Skip fully completed problems (silently)
+            if resume_info and not resume_info.resume_from_checkpoint:
+                continue
+
+            typer.echo(
+                typer.style(
+                    f"\n{problem_name}:",
+                    fg=typer.colors.CYAN,
+                    bold=True,
+                )
+            )
+
+            if resume_info:
+                typer.echo(
+                    f"  Resume from: {resume_info.resume_from_checkpoint}"
+                )
+                typer.echo(
+                    f"  Completed: {', '.join(resume_info.completed_checkpoints)}"
+                )
+                if resume_info.invalidated_checkpoints:
+                    typer.echo("  Would delete and re-run:")
+                    for status in resume_info.checkpoint_statuses:
+                        if not status.is_valid and status.reason:
+                            typer.echo(
+                                f"    - {status.name} ({status.reason.value})"
+                            )
+                    # Show directories that would be deleted
+                    typer.echo("  Directories to delete:")
+                    for cp_name in resume_info.invalidated_checkpoints:
+                        cp_dir = output_path / cp_name
+                        if cp_dir.exists():
+                            typer.echo(f"    - {cp_dir}")
+            else:
+                if output_path.exists():
+                    typer.echo(
+                        "  Would start fresh (no valid completed checkpoints)"
+                    )
+                else:
+                    typer.echo("  Would start fresh (no existing run)")
+
+        typer.echo(
+            typer.style(
+                "\nNo changes made (dry run).",
+                fg=typer.colors.CYAN,
+                bold=True,
+            )
+        )
+        return
 
     # Save environment and config to run directory
     with (run_dir / ENV_CONFIG_NAME).open("w") as f:

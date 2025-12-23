@@ -1,0 +1,4 @@
+start_cargo: 1000
+waypoints:
+  - name: "Jita IV - Moon 4 - Caldari Navy Assembly Plant"
+    cargo: 500

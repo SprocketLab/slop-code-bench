@@ -79,7 +79,7 @@ def build_histogram(df, col, title, color):
         Output("ra-try-loc-dist", "figure"),
         Output("ra-lint-loc-scatter", "figure"),
     ],
-    Input("run-analysis-dropdown", "value"),
+    Input("run-analysis-store", "data"),
 )
 def update_quality(run_path):
     if not run_path:

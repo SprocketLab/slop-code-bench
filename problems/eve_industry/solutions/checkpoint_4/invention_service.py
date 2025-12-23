@@ -410,12 +410,21 @@ def get_t3_invention_data(
 
     # Compute probabilities for all relics and decryptors
     probability_rows = []
-    for relic in T3_RELICS:
+    for _, relic in relic_rows.iterrows():
+        relic_name = sde.get_item_name_by_id(int(relic["typeID"]))
+        relic_type = (
+            "Intact"
+            if "Intact" in relic_name
+            else "Malfunctioning"
+            if "Malfunctioning" in relic_name
+            else "Wrecked"
+        )
+        relic_data = T3_RELICS[relic_type]
         for decryptor in DECRYPTORS:
             prob = compute_invention_probability(
-                relic.base_prob, skills, skill_level, decryptor.prob_mult
+                relic_data.base_prob, skills, skill_level, decryptor.prob_mult
             )
-            runs = relic.base_runs + decryptor.runs
+            runs = relic_data.base_runs + decryptor.runs
             me = 2 + decryptor.me
             te = 4 + decryptor.te
 
@@ -426,7 +435,7 @@ def get_t3_invention_data(
                     runs=runs,
                     me=me,
                     te=te,
-                    relic_name=relic.name,
+                    relic_name=relic_name,
                 )
             )
 

@@ -1,0 +1,16 @@
+{
+    "case": {
+        "arguments": [
+            "contracts",
+            "\"Hek VIII - Moon 12 - Boundless Creation Factory\"",
+            "contracts.jsonl",
+            "--config",
+            "config.yaml",
+            "--max-time",
+            "5"
+        ]
+    },
+    "expected": {
+        "status_code": 0
+    }
+}

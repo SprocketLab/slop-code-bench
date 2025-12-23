@@ -1,0 +1,31 @@
+{
+  "expected": {
+    "output": {
+      "key": "STRING"
+    },
+    "status_code": 201
+  },
+  "input": {
+    "body": {
+      "structure": {
+        "type": "tatara",
+        "rig": "t2",
+        "security": "nullsec"
+      },
+      "skills": {
+        "Reprocessing": 5,
+        "Reprocessing Efficiency": 5,
+        "Ubiquitous Moon Ore Processing": 5,
+        "Simple Ore Processing": 5,
+        "Scrapmetal Processing": 4
+      },
+      "implant": "RX-804"
+    },
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "method": "POST",
+    "path": "/v1/config"
+  },
+  "order": 1
+}

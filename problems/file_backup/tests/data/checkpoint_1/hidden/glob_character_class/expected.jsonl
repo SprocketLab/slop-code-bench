@@ -1,0 +1,8 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"charclass-test","kind":"daily","now_local":"2025-09-10T03:30:00Z"}
+{"event":"JOB_STARTED","exclude_count":1,"job_id":"charclass-test"}
+{"event":"FILE_EXCLUDED","job_id":"charclass-test","path":"file1.txt","pattern":"file[123].txt"}
+{"event":"FILE_EXCLUDED","job_id":"charclass-test","path":"file2.txt","pattern":"file[123].txt"}
+{"event":"FILE_EXCLUDED","job_id":"charclass-test","path":"file3.txt","pattern":"file[123].txt"}
+{"event":"FILE_SELECTED","job_id":"charclass-test","path":"file4.txt"}
+{"event":"JOB_COMPLETED","job_id":"charclass-test","selected":1,"excluded":3}

@@ -1,0 +1,19 @@
+# Tests that duration=0 means only the exact minute at --now
+# Spec: "A duration of `0` means only the exact minute at `--now`"
+# Job at 03:30 with --now at 03:30 and duration=0 should trigger exactly once
+arguments: --now 2025-09-10T03:30:00Z --schedule schedule.yaml --duration 0 --mount {{static:files}}
+input_files:
+- content:
+    version: 1
+    timezone: UTC
+    jobs:
+    - id: exact-backup
+      source: mount://
+      exclude:
+      - '**/*'
+      when:
+        kind: daily
+        at: '03:30'
+      destination: ignored://sink
+  file_type: yaml
+  path: schedule.yaml

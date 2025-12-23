@@ -28,7 +28,7 @@ class BuildSpec:
 
 # Pre-compute lookup sets for performance
 _DECRYPTOR_NAMES = {d.name for d in DECRYPTORS}
-_RELIC_NAMES = {r.name for r in T3_RELICS}
+_RELIC_NAMES = {r.name for r in T3_RELICS.values()}
 
 
 def _find_special_token(

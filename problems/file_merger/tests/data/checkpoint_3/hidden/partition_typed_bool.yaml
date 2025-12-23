@@ -1,0 +1,32 @@
+case:
+  arguments: --output out --key id --partition-by active --schema schema.json data.csv
+  input_files:
+    - content: 'id,active
+1,1
+2,True
+3,0
+4,false'
+      file_type: text
+      path: data.csv
+    - content:
+        columns:
+          - name: id
+            type: int
+          - name: active
+            type: bool
+      file_type: json
+      path: schema.json
+
+expected:
+  status_code: 0
+  files:
+    out/active=false/part-00000.csv:
+      - id: 3
+        active: false
+      - id: 4
+        active: false
+    out/active=true/part-00000.csv:
+      - id: 1
+        active: true
+      - id: 2
+        active: true

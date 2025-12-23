@@ -12,6 +12,9 @@ from dash import callback_context
 from dash import no_update
 
 from slop_code.dashboard.settings_content import build_hierarchical_run_selector
+from slop_code.dashboard.settings_content import (
+    build_hierarchical_run_selector_single,
+)
 
 
 def _manage_run_selection_logic(
@@ -282,18 +285,48 @@ def register_settings_callbacks(app):
     @app.callback(
         [
             Output("h2h-run-a", "options"),
-            Output("h2h-run-b", "options"),
-            Output("run-analysis-dropdown", "options")
+            Output("h2h-run-b", "options")
         ],
         Input("all-runs-metadata", "data"),
     )
     def update_dropdowns(all_runs):
         if not all_runs:
-            return [], [], []
+            return [], []
 
         options = []
         for run in all_runs:
             options.append({"label": run["label"], "value": run["value"]})
 
         options.sort(key=lambda x: x["label"])
-        return options, options, options
+        return options, options
+
+    # Render hierarchical selector for Run Analysis
+    @app.callback(
+        Output("run-analysis-selector-container", "children"),
+        [
+            Input("all-runs-metadata", "data"),
+            Input("run-analysis-store", "data")
+        ]
+    )
+    def render_run_analysis_selector(all_runs, current_selection):
+        return build_hierarchical_run_selector_single(all_runs, current_selection)
+
+    # Handle radio selection (ensure single selection updates store)
+    @app.callback(
+        Output("run-analysis-store", "data"),
+        Input({"type": "run-analysis-radio", "index": ALL}, "value"),
+        State("run-analysis-store", "data"),
+        prevent_initial_call=True
+    )
+    def handle_run_analysis_selection(radio_values, current_store):
+        ctx = callback_context
+        if not ctx.triggered:
+            return no_update
+
+        for t in ctx.triggered:
+            val = t['value']
+            # Update only if value is truthy (selected) and different
+            if val and val != current_store:
+                return val
+
+        return no_update

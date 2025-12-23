@@ -50,6 +50,8 @@ FUNCTIONAL_CASES = (
     )
 )
 
+HIDDEN_CASES = load_cases(CHECKPOINT_DIR / "hidden", "hidden")
+
 ERROR_CASES = load_cases(CHECKPOINT_DIR / "spec_errors", "spec_errors")
 
 
@@ -68,6 +70,17 @@ def test_core_cases(
     "case", FUNCTIONAL_CASES, ids=case_ids(FUNCTIONAL_CASES)
 )
 def test_functionality_cases(
+    entrypoint_argv: list[str],
+    case: dict[str, object],
+    tmp_path: Path,
+) -> None:
+    result = run_case(entrypoint_argv, case, tmp_path)
+    assert_case_matches(result, case, tmp_path)
+
+
+@pytest.mark.functionality
+@pytest.mark.parametrize("case", HIDDEN_CASES, ids=case_ids(HIDDEN_CASES))
+def test_hidden_cases(
     entrypoint_argv: list[str],
     case: dict[str, object],
     tmp_path: Path,

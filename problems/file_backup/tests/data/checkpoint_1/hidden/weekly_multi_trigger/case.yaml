@@ -1,0 +1,20 @@
+# Tests that a weekly job runs on EACH eligible day within the duration window
+# Spec: "weekly: triggers at the specified `at` time on the specified `days`"
+# Window: Mon 15:30 to Wed 15:30 (48h inclusive) should trigger on BOTH Mon and Wed
+arguments: --now 2025-09-08T15:30:00Z --schedule schedule.yaml --duration 48 --mount {{static:files}}
+input_files:
+- content:
+    version: 1
+    timezone: UTC
+    jobs:
+    - id: weekly-backup
+      source: mount://
+      exclude:
+      - '**/*'
+      when:
+        kind: weekly
+        at: '15:30'
+        days: ['Mon', 'Wed']
+      destination: ignored://sink
+  file_type: yaml
+  path: schedule.yaml

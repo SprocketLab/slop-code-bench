@@ -131,19 +131,13 @@ DECRYPTORS = [
 ]
 
 # T3 relic baselines
-# Hull sections come in different sizes for different ship classes
-T3_RELICS = [
-    # Small hull sections (Tactical Destroyers)
-    T3Relic(name="Small Intact Hull Section", base_prob=0.26, base_runs=20),
-    T3Relic(
-        name="Small Malfunctioning Hull Section", base_prob=0.21, base_runs=10
+T3_RELICS = {
+    "Intact": T3Relic(name="Intact", base_prob=0.26, base_runs=20),
+    "Malfunctioning": T3Relic(
+        name="Malfunctioning", base_prob=0.21, base_runs=10
     ),
-    T3Relic(name="Small Wrecked Hull Section", base_prob=0.14, base_runs=3),
-    # Medium hull sections (Strategic Cruisers)
-    T3Relic(name="Intact Hull Section", base_prob=0.26, base_runs=20),
-    T3Relic(name="Malfunctioning Hull Section", base_prob=0.21, base_runs=10),
-    T3Relic(name="Wrecked Hull Section", base_prob=0.14, base_runs=3),
-]
+    "Wrecked": T3Relic(name="Wrecked", base_prob=0.14, base_runs=3),
+}
 
 
 @dataclass

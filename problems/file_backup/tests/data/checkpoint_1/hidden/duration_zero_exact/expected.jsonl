@@ -1,0 +1,15 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"exact-backup","kind":"daily","now_local":"2025-09-10T03:30:00Z"}
+{"event":"JOB_STARTED","exclude_count":1,"job_id":"exact-backup"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"A/B/C/D.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"A/B/E.bin","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"A/F/G.bin","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"A/F/H.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"A/I.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"A/J.bin","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"A/K.html","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"A/L.md","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"M.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"N.py","pattern":"**/*"}
+{"event":"FILE_EXCLUDED","job_id":"exact-backup","path":"O.md","pattern":"**/*"}
+{"event":"JOB_COMPLETED","job_id":"exact-backup","selected":0,"excluded":11}

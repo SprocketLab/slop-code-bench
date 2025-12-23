@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from dataclasses import field
+from enum import Enum
 from pathlib import Path
 
 import yaml
@@ -21,10 +23,32 @@ from slop_code.common import SNAPSHOT_DIR_NAME
 from slop_code.common import render_prompt
 from slop_code.common.llms import TokenUsage
 from slop_code.evaluation.config import CheckpointConfig
+from slop_code.evaluation.config import ProblemConfig
 from slop_code.execution.models import EnvironmentSpec
 from slop_code.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+class InvalidationReason(Enum):
+    """Reasons why a checkpoint needs to be re-run."""
+
+    SPEC_CHANGED = "spec_changed"
+    HAD_ERROR = "had_error"
+    MISSING_SNAPSHOT = "missing_snapshot"
+    MISSING_RESULT = "missing_result"
+    MISSING_DIR = "missing_directory"
+    UNREADABLE_RESULT = "unreadable_result"
+    DEPENDS_ON_INVALID = "depends_on_invalid"
+
+
+@dataclass
+class CheckpointStatus:
+    """Status of a single checkpoint for resume detection."""
+
+    name: str
+    is_valid: bool
+    reason: InvalidationReason | None = None
 
 
 @dataclass
@@ -36,15 +60,20 @@ class ResumeInfo:
         completed_checkpoints: Names of checkpoints that completed successfully
         last_snapshot_dir: Path to the last successful snapshot directory
         prior_usage: Aggregated usage from completed checkpoints
+        checkpoint_statuses: Detailed status for each checkpoint examined
+        invalidated_checkpoints: List of checkpoint names that will be re-run
     """
 
     resume_from_checkpoint: str
     completed_checkpoints: list[str]
     last_snapshot_dir: Path | None
     prior_usage: UsageTracker
+    checkpoint_statuses: list[CheckpointStatus] = field(default_factory=list)
+    invalidated_checkpoints: list[str] = field(default_factory=list)
 
 
 def _generate_expected_prompt(
+    problem_config: ProblemConfig,
     checkpoint: CheckpointConfig,
     prompt_template: str,
     environment: EnvironmentSpec,
@@ -65,7 +94,7 @@ def _generate_expected_prompt(
         Rendered prompt string
     """
     return render_prompt(
-        spec_text=checkpoint.get_spec_text(),
+        spec_text=problem_config.get_checkpoint_spec(checkpoint.name),
         context={"is_continuation": not is_first_checkpoint},
         prompt_template=prompt_template,
         entry_file=environment.format_entry_file(entry_file),
@@ -87,6 +116,7 @@ def _prompts_match(saved_prompt: str, expected_prompt: str) -> bool:
 
 
 def _check_prompt_mismatch(
+    problem_config: ProblemConfig,
     checkpoint_dir: Path,
     checkpoint_name: str,
     checkpoint_names: list[str],
@@ -129,6 +159,7 @@ def _check_prompt_mismatch(
 
     is_first = checkpoint_name == checkpoint_names[0]
     expected = _generate_expected_prompt(
+        problem_config,
         checkpoint_config,
         prompt_template,
         environment,
@@ -149,6 +180,7 @@ def _check_prompt_mismatch(
 def _detect_resume_from_artifacts(
     output_path: Path,
     checkpoint_names: list[str],
+    problem_config: ProblemConfig | None = None,
     prompt_template: str | None = None,
     environment: EnvironmentSpec | None = None,
     entry_file: str | None = None,
@@ -172,37 +204,91 @@ def _detect_resume_from_artifacts(
         ResumeInfo if resumable state found, None if should start fresh
     """
     completed: list[str] = []
-    can_validate_prompts = all([
-        prompt_template, environment, entry_file, checkpoints
-    ])
+    statuses: list[CheckpointStatus] = []
+    can_validate_prompts = all(
+        [problem_config, prompt_template, environment, entry_file, checkpoints]
+    )
+    first_invalid_reason: InvalidationReason | None = None
 
     for name in checkpoint_names:
+        # If we've already found an invalid checkpoint, mark rest as dependent
+        if first_invalid_reason is not None:
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=InvalidationReason.DEPENDS_ON_INVALID,
+                )
+            )
+            continue
+
         checkpoint_dir = output_path / name
         snapshot_dir = checkpoint_dir / SNAPSHOT_DIR_NAME
 
+        # Force re-run if checkpoint directory is missing
+        if not checkpoint_dir.exists():
+            first_invalid_reason = InvalidationReason.MISSING_DIR
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=InvalidationReason.MISSING_DIR,
+                )
+            )
+            continue
+
         if not snapshot_dir.exists():
-            # No snapshot - this is where we resume from
-            break
+            first_invalid_reason = InvalidationReason.MISSING_SNAPSHOT
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=InvalidationReason.MISSING_SNAPSHOT,
+                )
+            )
+            continue
 
         # Snapshot exists - check inference result for errors
         result_path = checkpoint_dir / INFERENCE_RESULT_FILENAME
         if not result_path.exists():
-            # Snapshot but no inference result - resume from here
-            break
+            first_invalid_reason = InvalidationReason.MISSING_RESULT
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=InvalidationReason.MISSING_RESULT,
+                )
+            )
+            continue
 
         try:
             with result_path.open() as f:
                 result = json.load(f)
         except (OSError, json.JSONDecodeError):
-            # Can't read result - resume from here
-            break
+            first_invalid_reason = InvalidationReason.UNREADABLE_RESULT
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=InvalidationReason.UNREADABLE_RESULT,
+                )
+            )
+            continue
 
         if result.get("had_error", False):
-            # Error in this checkpoint - resume from here (re-run it)
-            break
+            first_invalid_reason = InvalidationReason.HAD_ERROR
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=InvalidationReason.HAD_ERROR,
+                )
+            )
+            continue
 
         # Check prompt matches if validation is enabled
         if can_validate_prompts and _check_prompt_mismatch(
+            problem_config,
             checkpoint_dir,
             name,
             checkpoint_names,
@@ -211,37 +297,58 @@ def _detect_resume_from_artifacts(
             entry_file,  # type: ignore[arg-type]
             checkpoints,  # type: ignore[arg-type]
         ):
-            # Prompt mismatch - invalidate this and all subsequent checkpoints
-            break
+            first_invalid_reason = InvalidationReason.SPEC_CHANGED
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=InvalidationReason.SPEC_CHANGED,
+                )
+            )
+            continue
 
         # Checkpoint completed successfully
         completed.append(name)
+        statuses.append(CheckpointStatus(name=name, is_valid=True))
 
-    if not completed:
-        # No completed checkpoints, start fresh
-        return None
-
-    # Find checkpoint to resume from
+    # Find checkpoint to resume from and build invalidated list
     completed_set = set(completed)
     resume_from = None
+    invalidated: list[str] = []
     for name in checkpoint_names:
         if name not in completed_set:
-            resume_from = name
-            break
+            if resume_from is None:
+                resume_from = name
+            invalidated.append(name)
+
+    if not completed and not invalidated:
+        # No checkpoint directories exist at all, start fresh
+        return None
 
     if not resume_from:
-        # All checkpoints completed
-        return None
+        # All checkpoints completed - return ResumeInfo with empty resume_from
+        prior_usage = _aggregate_prior_usage(output_path, completed)
+        last_snapshot_dir = output_path / completed[-1] / SNAPSHOT_DIR_NAME
+        return ResumeInfo(
+            resume_from_checkpoint="",  # Empty string = nothing to resume
+            completed_checkpoints=completed,
+            last_snapshot_dir=last_snapshot_dir,
+            prior_usage=prior_usage,
+            checkpoint_statuses=statuses,
+            invalidated_checkpoints=[],
+        )
 
     # Aggregate usage and build ResumeInfo
     prior_usage = _aggregate_prior_usage(output_path, completed)
-    last_completed = completed[-1]
-    last_snapshot_dir = output_path / last_completed / SNAPSHOT_DIR_NAME
+    last_snapshot_dir = (
+        output_path / completed[-1] / SNAPSHOT_DIR_NAME if completed else None
+    )
 
     logger.info(
         "Detected resume point from artifacts (no run_info.yaml)",
         resume_from=resume_from,
         completed_count=len(completed),
+        invalidated_count=len(invalidated),
     )
 
     return ResumeInfo(
@@ -249,12 +356,15 @@ def _detect_resume_from_artifacts(
         completed_checkpoints=completed,
         last_snapshot_dir=last_snapshot_dir,
         prior_usage=prior_usage,
+        checkpoint_statuses=statuses,
+        invalidated_checkpoints=invalidated,
     )
 
 
 def detect_resume_point(
     output_path: Path,
     checkpoint_names: list[str],
+    problem_config: ProblemConfig | None = None,
     prompt_template: str | None = None,
     environment: EnvironmentSpec | None = None,
     entry_file: str | None = None,
@@ -286,10 +396,11 @@ def detect_resume_point(
         return _detect_resume_from_artifacts(
             output_path,
             checkpoint_names,
-            prompt_template,
-            environment,
-            entry_file,
-            checkpoints,
+            problem_config=problem_config,
+            prompt_template=prompt_template,
+            environment=environment,
+            entry_file=entry_file,
+            checkpoints=checkpoints,
         )
 
     try:
@@ -308,22 +419,51 @@ def detect_resume_point(
 
     summary = run_info.get("summary", {})
     checkpoint_states = summary.get("checkpoints", {})
-    can_validate_prompts = all([
-        prompt_template, environment, entry_file, checkpoints
-    ])
+    can_validate_prompts = all(
+        [problem_config, prompt_template, environment, entry_file, checkpoints]
+    )
 
     # Find completed checkpoints and first incomplete one
     completed: list[str] = []
-    resume_from: str | None = None
+    statuses: list[CheckpointStatus] = []
+    first_invalid_reason: InvalidationReason | None = None
 
     for name in checkpoint_names:
+        # If we've already found an invalid checkpoint, mark rest as dependent
+        if first_invalid_reason is not None:
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=InvalidationReason.DEPENDS_ON_INVALID,
+                )
+            )
+            continue
+
         state = checkpoint_states.get(name)
         checkpoint_dir = output_path / name
         snapshot_dir = checkpoint_dir / SNAPSHOT_DIR_NAME
 
+        # Force re-run if checkpoint directory is missing
+        if not checkpoint_dir.exists():
+            logger.debug(
+                "Checkpoint directory missing, forcing re-run",
+                checkpoint=name,
+            )
+            first_invalid_reason = InvalidationReason.MISSING_DIR
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=InvalidationReason.MISSING_DIR,
+                )
+            )
+            continue
+
         if state == CheckpointState.RAN and snapshot_dir.exists():
             # Check prompt matches if validation is enabled
             if can_validate_prompts and _check_prompt_mismatch(
+                problem_config,
                 checkpoint_dir,
                 name,
                 checkpoint_names,
@@ -337,47 +477,86 @@ def detect_resume_point(
                     "Checkpoint has prompt mismatch",
                     checkpoint=name,
                 )
-                resume_from = name
-                break
+                first_invalid_reason = InvalidationReason.SPEC_CHANGED
+                statuses.append(
+                    CheckpointStatus(
+                        name=name,
+                        is_valid=False,
+                        reason=InvalidationReason.SPEC_CHANGED,
+                    )
+                )
+                continue
 
             logger.debug(
                 "Checkpoint completed",
                 checkpoint=name,
             )
             completed.append(name)
+            statuses.append(CheckpointStatus(name=name, is_valid=True))
         else:
             logger.debug(
                 "Checkpoint not completed",
                 checkpoint=name,
+                state=state,
+                snapshot_exists=snapshot_dir.exists(),
             )
-            resume_from = name
-            break
+            # Determine the specific reason
+            if not snapshot_dir.exists():
+                reason = InvalidationReason.MISSING_SNAPSHOT
+            elif state == CheckpointState.ERROR:
+                reason = InvalidationReason.HAD_ERROR
+            else:
+                reason = InvalidationReason.MISSING_RESULT
+            first_invalid_reason = reason
+            statuses.append(
+                CheckpointStatus(
+                    name=name,
+                    is_valid=False,
+                    reason=reason,
+                )
+            )
 
-    if not resume_from:
-        # All checkpoints completed
+    # Build invalidated list from statuses
+    invalidated = [s.name for s in statuses if not s.is_valid]
+
+    if not invalidated:
+        # All checkpoints completed - return ResumeInfo with empty resume_from
         logger.debug(
             "All checkpoints completed, no resume needed",
             completed_count=len(completed),
         )
+        prior_usage = _aggregate_prior_usage(output_path, completed)
+        last_snapshot_dir = output_path / completed[-1] / SNAPSHOT_DIR_NAME
+        return ResumeInfo(
+            resume_from_checkpoint="",  # Empty string = nothing to resume
+            completed_checkpoints=completed,
+            last_snapshot_dir=last_snapshot_dir,
+            prior_usage=prior_usage,
+            checkpoint_statuses=statuses,
+            invalidated_checkpoints=[],
+        )
+
+    if not completed and not invalidated:
+        # No checkpoint directories exist at all, start fresh
+        logger.debug("No checkpoint directories found, starting fresh")
         return None
 
-    if not completed:
-        # No completed checkpoints, start fresh
-        logger.debug("No completed checkpoints found, starting fresh")
-        return None
+    resume_from = invalidated[0] if invalidated else ""
 
     # Calculate prior usage from completed checkpoints
     prior_usage = _aggregate_prior_usage(output_path, completed)
 
-    # Get the snapshot from the last completed checkpoint
-    last_completed = completed[-1]
-    last_snapshot_dir = output_path / last_completed / SNAPSHOT_DIR_NAME
+    # Get the snapshot from the last completed checkpoint (if any)
+    last_snapshot_dir = (
+        output_path / completed[-1] / SNAPSHOT_DIR_NAME if completed else None
+    )
 
     logger.info(
         "Detected resume point",
         resume_from=resume_from,
         completed_count=len(completed),
-        last_completed=last_completed,
+        invalidated_count=len(invalidated),
+        last_completed=completed[-1] if completed else None,
         prior_cost=prior_usage.cost,
         prior_steps=prior_usage.steps,
     )
@@ -387,6 +566,8 @@ def detect_resume_point(
         completed_checkpoints=completed,
         last_snapshot_dir=last_snapshot_dir,
         prior_usage=prior_usage,
+        checkpoint_statuses=statuses,
+        invalidated_checkpoints=invalidated,
     )
 
 
@@ -440,3 +621,41 @@ def _aggregate_prior_usage(
         steps=total_steps,
         net_tokens=total_net_tokens,
     )
+
+
+def format_resume_summary(
+    info: ResumeInfo, problem_name: str | None = None
+) -> str:
+    """Format a human-readable summary of resume detection results.
+
+    Args:
+        info: ResumeInfo from detect_resume_point
+        problem_name: Optional problem name for the header
+
+    Returns:
+        Formatted string summarizing the resume state
+    """
+    reason_descriptions = {
+        InvalidationReason.SPEC_CHANGED: "specification changed",
+        InvalidationReason.HAD_ERROR: "previous run had error",
+        InvalidationReason.MISSING_SNAPSHOT: "missing snapshot",
+        InvalidationReason.MISSING_RESULT: "missing results",
+        InvalidationReason.MISSING_DIR: "directory missing",
+        InvalidationReason.UNREADABLE_RESULT: "unreadable results",
+        InvalidationReason.DEPENDS_ON_INVALID: "depends on invalid checkpoint",
+    }
+
+    lines = []
+    if problem_name:
+        lines.append(f"{problem_name}:")
+    lines.append(f"  Resume from: {info.resume_from_checkpoint}")
+    lines.append(f"  Completed: {', '.join(info.completed_checkpoints)}")
+
+    if info.invalidated_checkpoints:
+        lines.append("  Will re-run:")
+        for status in info.checkpoint_statuses:
+            if not status.is_valid and status.reason:
+                desc = reason_descriptions.get(status.reason, "unknown reason")
+                lines.append(f"    - {status.name} ({desc})")
+
+    return "\n".join(lines)

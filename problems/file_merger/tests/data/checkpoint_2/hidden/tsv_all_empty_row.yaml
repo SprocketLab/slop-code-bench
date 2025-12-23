@@ -1,0 +1,30 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json data.tsv
+  input_files:
+    - content: "id\tname\tcity\n1\tAlice\tBoston\n\t\t\n2\tBob\tChicago\n"
+      file_type: text
+      path: data.tsv
+    - content:
+        columns:
+          - name: id
+            type: int
+          - name: name
+            type: string
+          - name: city
+            type: string
+      file_type: json
+      path: schema.json
+
+expected:
+  status_code: 0
+  files:
+    output.csv:
+      - id: null
+        name: null
+        city: null
+      - id: 1
+        name: Alice
+        city: Boston
+      - id: 2
+        name: Bob
+        city: Chicago

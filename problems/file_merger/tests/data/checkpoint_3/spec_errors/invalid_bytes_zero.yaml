@@ -1,0 +1,11 @@
+case:
+  arguments: --output out --key id --max-bytes-per-file 0 data.csv
+  input_files:
+    - content: 'id,name
+1,Alice'
+      file_type: text
+      path: data.csv
+
+expected:
+  status_code: 2
+  stderr: ".*"

@@ -1,0 +1,25 @@
+case:
+  arguments: --output output.csv --key id --schema schema.json data.csv
+  input_files:
+    - content: 'id,event_time
+1,2024-07-01T12:00:00.123456Z
+2,2024-07-01T12:00:00.000001Z
+3,2024-07-01T12:00:00.999999+00:00'
+      file_type: text
+      path: data.csv
+    - content:
+        columns:
+          - name: id
+            type: int
+          - name: event_time
+            type: timestamp
+      file_type: json
+      path: schema.json
+
+expected:
+  status_code: 0
+  files:
+    output.csv: 'id,event_time
+1,2024-07-01T12:00:00.123456Z
+2,2024-07-01T12:00:00.000001Z
+3,2024-07-01T12:00:00.999999Z'

@@ -1,0 +1,19 @@
+# Tests that a daily job runs on EACH day within the duration window
+# Spec: "daily: triggers at the specified `at` time each day"
+# Window: Mon 03:30 to Wed 03:30 (48h inclusive) should trigger on Mon, Tue, and Wed
+arguments: --now 2025-09-08T03:30:00Z --schedule schedule.yaml --duration 48 --mount {{static:files}}
+input_files:
+- content:
+    version: 1
+    timezone: UTC
+    jobs:
+    - id: daily-backup
+      source: mount://
+      exclude:
+      - '**/*'
+      when:
+        kind: daily
+        at: '03:30'
+      destination: ignored://sink
+  file_type: yaml
+  path: schedule.yaml

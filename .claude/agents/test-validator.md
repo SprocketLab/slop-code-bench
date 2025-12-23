@@ -124,7 +124,7 @@ For EACH test, understand:
 ```bash
 slop-code --quiet eval-snapshot {snapshot_path} \
   -p {problem_name} \
-  -c {checkpoint} \
+  -c {checkpoint index} \
   -e configs/environments/docker-python3.12-uv.yaml \
   -o /tmp/eval-output \
   --json

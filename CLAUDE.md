@@ -54,6 +54,30 @@ uv run pytest tests/path/to/test_file.py  # Run specific test file
 uv run pytest -xvs                        # Verbose with early exit on failure
 ```
 
+### Testing Problem Solutions
+
+**Use the `/run-tests` skill instead of raw pytest for problem tests.** This ensures tests run in the correct Docker environment with proper isolation.
+
+```bash
+# Use the skill:
+/run-tests <snapshot_path> <problem_name> <checkpoint_index>
+
+# Example:
+/run-tests outputs/run_001/submissions/file_backup/checkpoint_2/snapshot file_backup checkpoint_2
+```
+
+The underlying command is:
+```bash
+slop-code --quiet eval-snapshot {snapshot_path} \
+  -p {problem_name} \
+  -c {checkpoint_index} \
+  -e configs/environments/docker-python3.12-uv.yaml \
+  -o /tmp/eval-output \
+  --json
+```
+
+Results are saved to the output directory with `evaluation.json` (test results) and `quality_analysis/` (code metrics).
+
 ### Code Quality
 ```bash
 uv run ruff check .                       # Lint
@@ -284,6 +308,18 @@ slop-code metrics static \
 - Some agents (OpenHands) require additional dependencies (see `dependency-groups.openhands`)
 - LLM judge quality depends on model capabilities
 - Workspace diffs large for binary files
+
+## Available Skills
+
+Skills are invoked with `/skill-name <args>`. See `.claude/skills/` for full documentation.
+
+| Skill | Usage | Description |
+|-------|-------|-------------|
+| `/run-tests` | `/run-tests <snapshot> <problem> <checkpoint>` | Run problem tests in Docker using eval-snapshot |
+| `/fix-solution` | `/fix-solution <snapshot> <problem> <checkpoint>` | Iteratively test and repair a solution until tests pass |
+| `/edge-cases` | `/edge-cases <problem> <checkpoint>` | Analyze tests and suggest missing edge cases |
+| `/validate-run` | `/validate-run <run_path> [problem]` | Validate all checkpoints from an agent run |
+| `/test-ambiguity-detector` | `/test-ambiguity-detector <problem> <checkpoint>` | Find ambiguous test assumptions |
 
 ## Key Files to Reference
 

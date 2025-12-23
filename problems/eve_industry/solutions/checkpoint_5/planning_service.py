@@ -88,6 +88,15 @@ def _create_simple_build_plan(
         sde, build_spec.item_name
     )
 
+    # Validate that this is a Manufacturing recipe, not a Reaction
+    if activity_id != 1:
+        import sys
+
+        sys.stderr.write(
+            "ERROR: plan command only supports manufacturing, not reaction\n"
+        )
+        sys.exit(1)
+
     # Calculate ME/TE for this build
     me, te = _calculate_me_te(build_spec)
 
@@ -131,6 +140,10 @@ def _create_recursive_build_plan(
     """
     Create a recursive build plan (build all buildable components).
 
+    Uses a two-phase approach:
+    1. Build dependency graph (discover all jobs)
+    2. Calculate runs top-down from root to leaves
+
     Args:
         build_spec: Parsed build specification
         config: Build configuration
@@ -146,22 +159,36 @@ def _create_recursive_build_plan(
 
     # Calculate ME/TE for top-level item
     me, te = _calculate_me_te(build_spec)
+    top_runs = build_spec.runs_per_job * build_spec.num_jobs
 
-    # Collect component requirements (not including top-level item)
-    materials_to_build = {}  # {(bp_id, activity_id, me, te): total_runs}
-    raw_materials = {}  # {type_id: quantity}
+    # Phase 1: Build the dependency graph
+    # jobs: {product_type_id: (bp_id, activity_id, me, te, output_qty)}
+    # graph: {product_type_id: [(consumer_bp_id, consumer_activity_id, per_run_consumption)]}
+    jobs = {}
+    graph = {}  # product -> list of consumers
 
-    # Collect requirements for top-level item materials
-    _collect_component_requirements(
+    _discover_jobs(
         blueprint_type_id,
         activity_id,
         me,
         te,
-        build_spec.runs_per_job * build_spec.num_jobs,
         config,
         sde,
-        materials_to_build,
-        raw_materials,
+        jobs,
+        graph,
+    )
+
+    # Phase 2: Calculate runs top-down
+    # materials_to_build: {(bp_id, activity_id, me, te): runs}
+    materials_to_build = _calculate_runs_topdown(
+        blueprint_type_id,
+        activity_id,
+        me,
+        top_runs,
+        config,
+        sde,
+        jobs,
+        graph,
     )
 
     # Create jobs with splitting
@@ -232,7 +259,7 @@ def _create_recursive_build_plan(
         mat_type_id = int(mat_row["materialTypeID"])
         base_quantity = int(mat_row["quantity"])
         per_run = _calculate_material_per_run(base_quantity, me, activity_id)
-        total = int(per_run * (build_spec.runs_per_job * build_spec.num_jobs))
+        total = math.ceil(per_run * (build_spec.runs_per_job * build_spec.num_jobs))
         final_consumption[mat_type_id] = (
             final_consumption.get(mat_type_id, 0) + total
         )
@@ -247,7 +274,7 @@ def _create_recursive_build_plan(
             mat_type_id = int(mat_row["materialTypeID"])
             base_quantity = int(mat_row["quantity"])
             per_run = _calculate_material_per_run(base_quantity, job_me, act_id)
-            total = int(per_run * runs)
+            total = math.ceil(per_run * runs)
             final_consumption[mat_type_id] = (
                 final_consumption.get(mat_type_id, 0) + total
             )
@@ -268,8 +295,9 @@ def _create_recursive_build_plan(
             )
 
     # Create materials list with production tracking
+    # Pass empty dict for raw_materials - the function calculates to_buy from consumed - produced
     materials = _create_materials_with_production(
-        raw_materials, final_production, final_consumption, sde
+        {}, final_production, final_consumption, sde
     )
 
     # Sort results
@@ -566,6 +594,371 @@ def _calculate_jobs_with_split(
     return result
 
 
+def _discover_jobs(
+    blueprint_id: int,
+    activity_id: int,
+    me: int,
+    te: int,
+    config: BuildConfig,
+    sde: SDELoader,
+    jobs: dict,
+    graph: dict,
+    visited: set = None,
+) -> None:
+    """
+    Phase 1: Discover all jobs and build the dependency graph.
+
+    Args:
+        blueprint_id: Current blueprint type ID
+        activity_id: Current activity ID
+        me: Material efficiency for this job
+        te: Time efficiency for this job
+        config: Build configuration
+        sde: SDE loader
+        jobs: Dict to store {product_type_id: (bp_id, activity_id, me, te, output_qty)}
+        graph: Dict to store {product_type_id: [(consumer_bp_id, consumer_act_id, base_qty, consumer_me)]}
+        visited: Set of visited (bp_id, activity_id) to avoid cycles
+    """
+    if visited is None:
+        visited = set()
+
+    job_key = (blueprint_id, activity_id)
+    if job_key in visited:
+        return
+    visited.add(job_key)
+
+    # Get what this blueprint produces
+    products_df = sde.load_activity_products()
+    product_row = products_df[
+        (products_df["typeID"] == blueprint_id)
+        & (products_df["activityID"] == activity_id)
+    ]
+
+    # Get materials this blueprint consumes
+    materials_df = sde.load_activity_materials()
+    material_rows = materials_df[
+        (materials_df["typeID"] == blueprint_id)
+        & (materials_df["activityID"] == activity_id)
+    ]
+
+    for _, mat_row in material_rows.iterrows():
+        mat_type_id = int(mat_row["materialTypeID"])
+        base_qty = int(mat_row["quantity"])
+
+        # Check if this material is buildable
+        is_buildable, mat_bp_id, mat_activity_id = _is_buildable(sde, mat_type_id)
+
+        if is_buildable:
+            # Determine component ME/TE
+            if mat_activity_id == 1:  # Manufacturing
+                comp_me = config.component_me
+                comp_te = config.component_te
+            else:  # Reaction
+                comp_me = 0
+                comp_te = 0
+
+            # Get output quantity for this producer
+            mat_product_row = products_df[
+                (products_df["typeID"] == mat_bp_id)
+                & (products_df["activityID"] == mat_activity_id)
+            ]
+            output_qty = 1
+            if len(mat_product_row) > 0:
+                output_qty = int(mat_product_row.iloc[0]["quantity"])
+
+            # Record this job if not already recorded
+            if mat_type_id not in jobs:
+                jobs[mat_type_id] = (mat_bp_id, mat_activity_id, comp_me, comp_te, output_qty)
+
+            # Record the edge: mat_type_id is consumed by (blueprint_id, activity_id)
+            if mat_type_id not in graph:
+                graph[mat_type_id] = []
+            # Store: (consumer_bp_id, consumer_activity_id, base_qty, consumer_me)
+            graph[mat_type_id].append((blueprint_id, activity_id, base_qty, me))
+
+            # Recurse to discover this producer's dependencies
+            _discover_jobs(
+                mat_bp_id,
+                mat_activity_id,
+                comp_me,
+                comp_te,
+                config,
+                sde,
+                jobs,
+                graph,
+                visited,
+            )
+
+
+def _calculate_runs_topdown(
+    top_blueprint_id: int,
+    top_activity_id: int,
+    top_me: int,
+    top_runs: int,
+    config: BuildConfig,
+    sde: SDELoader,
+    jobs: dict,
+    graph: dict,
+) -> dict:
+    """
+    Phase 2: Calculate runs for all jobs, top-down from root.
+
+    Args:
+        top_blueprint_id: Top-level blueprint ID
+        top_activity_id: Top-level activity ID
+        top_me: Top-level ME
+        top_runs: Number of runs for top-level item
+        config: Build configuration
+        sde: SDE loader
+        jobs: Job info from Phase 1
+        graph: Dependency graph from Phase 1
+
+    Returns:
+        Dict of {(bp_id, activity_id, me, te): runs}
+    """
+    materials_to_build = {}
+
+    # job_runs tracks the calculated runs for each job
+    # {(bp_id, activity_id): runs}
+    job_runs = {(top_blueprint_id, top_activity_id): top_runs}
+
+    # Process jobs in order - we need to process a job only after all its consumers are processed
+    # Use a simple iterative approach: keep processing until all jobs have runs
+    products_df = sde.load_activity_products()
+
+    # Build reverse lookup: bp_id, activity_id -> product_type_id
+    bp_to_product = {}
+    for product_type_id, (bp_id, act_id, job_me, job_te, output_qty) in jobs.items():
+        bp_to_product[(bp_id, act_id)] = product_type_id
+
+    # Also add top-level
+    top_product_row = products_df[
+        (products_df["typeID"] == top_blueprint_id)
+        & (products_df["activityID"] == top_activity_id)
+    ]
+    if len(top_product_row) > 0:
+        top_product_id = int(top_product_row.iloc[0]["productTypeID"])
+        bp_to_product[(top_blueprint_id, top_activity_id)] = top_product_id
+
+    # Process until all jobs have runs calculated
+    max_iterations = 1000
+    for _ in range(max_iterations):
+        progress = False
+
+        for product_type_id, (bp_id, act_id, job_me, job_te, output_qty) in jobs.items():
+            job_key = (bp_id, act_id)
+
+            # Skip if already calculated
+            if job_key in job_runs:
+                continue
+
+            # Check if all consumers have been processed
+            consumers = graph.get(product_type_id, [])
+            all_consumers_ready = True
+            for consumer_bp_id, consumer_act_id, base_qty, consumer_me in consumers:
+                if (consumer_bp_id, consumer_act_id) not in job_runs:
+                    all_consumers_ready = False
+                    break
+
+            if not all_consumers_ready:
+                continue
+
+            # Calculate total consumption from all consumers
+            total_consumption = 0
+            for consumer_bp_id, consumer_act_id, base_qty, consumer_me in consumers:
+                consumer_runs = job_runs[(consumer_bp_id, consumer_act_id)]
+                # Apply consumer's ME to get per-run consumption
+                if consumer_act_id == 1:  # Manufacturing
+                    per_run = max(1, base_qty * (1 - consumer_me / 100))
+                else:
+                    per_run = base_qty
+                # Calculate consumption with ceiling
+                consumption = math.ceil(per_run * consumer_runs)
+                total_consumption += consumption
+
+            # Calculate runs needed to produce this consumption
+            runs_needed = math.ceil(total_consumption / output_qty)
+            job_runs[job_key] = runs_needed
+            progress = True
+
+        if not progress:
+            # Either done or stuck (cycle detection)
+            break
+
+    # Convert to materials_to_build format
+    for product_type_id, (bp_id, act_id, job_me, job_te, output_qty) in jobs.items():
+        job_key = (bp_id, act_id)
+        if job_key in job_runs:
+            materials_to_build[(bp_id, act_id, job_me, job_te)] = job_runs[job_key]
+
+    return materials_to_build
+
+
+def _recalculate_job_runs_v2(
+    top_blueprint_id: int,
+    top_activity_id: int,
+    top_me: int,
+    top_runs: int,
+    config: BuildConfig,
+    sde: SDELoader,
+    materials_to_build: dict,
+) -> None:
+    """
+    Recalculate runs using fractional consumption to avoid ceiling accumulation.
+
+    This version tracks fractional consumption and only applies ceiling when
+    determining runs, avoiding the ceiling-per-job accumulation issue.
+    """
+    materials_df = sde.load_activity_materials()
+    products_df = sde.load_activity_products()
+
+    # Build a mapping from product_type_id to job_key
+    product_to_job = {}
+    for job_key in materials_to_build:
+        bp_id, act_id, _, _ = job_key
+        prod_row = products_df[
+            (products_df["typeID"] == bp_id) & (products_df["activityID"] == act_id)
+        ]
+        if len(prod_row) > 0:
+            prod_type_id = int(prod_row.iloc[0]["productTypeID"])
+            product_to_job[prod_type_id] = job_key
+
+    # Iterate until runs stabilize
+    for _ in range(100):
+        changed = False
+
+        # Calculate fractional consumption for each product (no ceiling)
+        consumption = {}
+
+        # Consumption from top-level item
+        top_materials = materials_df[
+            (materials_df["typeID"] == top_blueprint_id)
+            & (materials_df["activityID"] == top_activity_id)
+        ]
+        for _, mat_row in top_materials.iterrows():
+            mat_type_id = int(mat_row["materialTypeID"])
+            base_qty = int(mat_row["quantity"])
+            per_run = _calculate_material_per_run(base_qty, top_me, top_activity_id)
+            # Use fractional consumption
+            total = per_run * top_runs
+            consumption[mat_type_id] = consumption.get(mat_type_id, 0) + total
+
+        # Consumption from all jobs in materials_to_build
+        for job_key, runs in materials_to_build.items():
+            bp_id, act_id, job_me, _ = job_key
+            job_materials = materials_df[
+                (materials_df["typeID"] == bp_id)
+                & (materials_df["activityID"] == act_id)
+            ]
+            for _, mat_row in job_materials.iterrows():
+                mat_type_id = int(mat_row["materialTypeID"])
+                base_qty = int(mat_row["quantity"])
+                per_run = _calculate_material_per_run(base_qty, job_me, act_id)
+                # Use fractional consumption
+                total = per_run * runs
+                consumption[mat_type_id] = consumption.get(mat_type_id, 0) + total
+
+        # Update runs for each job based on consumption
+        for prod_type_id, job_key in product_to_job.items():
+            if prod_type_id in consumption:
+                bp_id, act_id, _, _ = job_key
+                output_qty = _get_output_quantity(sde, bp_id, act_id)
+                # Apply ceiling here to get integer runs
+                needed_runs = math.ceil(consumption[prod_type_id] / output_qty)
+                if materials_to_build[job_key] != needed_runs:
+                    materials_to_build[job_key] = needed_runs
+                    changed = True
+
+        if not changed:
+            break
+
+
+def _recalculate_job_runs(
+    top_blueprint_id: int,
+    top_activity_id: int,
+    top_me: int,
+    top_runs: int,
+    config: BuildConfig,
+    sde: SDELoader,
+    materials_to_build: dict,
+) -> None:
+    """
+    Recalculate runs for all jobs based on actual consumption needs.
+
+    The initial collection pass may under-count when items are needed from
+    multiple paths. This function recalculates by computing total consumption
+    for each produced item.
+
+    Args:
+        top_blueprint_id: Top-level blueprint type ID
+        top_activity_id: Top-level activity ID
+        top_me: Top-level material efficiency
+        top_runs: Total runs of top-level item
+        config: Build configuration
+        sde: SDE loader
+        materials_to_build: Dict of {(bp_id, activity_id, me, te): runs} to update
+    """
+    materials_df = sde.load_activity_materials()
+    products_df = sde.load_activity_products()
+
+    # Build a mapping from product_type_id to job_key
+    product_to_job = {}
+    for job_key in materials_to_build:
+        bp_id, act_id, _, _ = job_key
+        prod_row = products_df[
+            (products_df["typeID"] == bp_id) & (products_df["activityID"] == act_id)
+        ]
+        if len(prod_row) > 0:
+            prod_type_id = int(prod_row.iloc[0]["productTypeID"])
+            product_to_job[prod_type_id] = job_key
+
+    # Iterate until runs stabilize (handles multi-level dependencies)
+    for _ in range(100):  # Max iterations to prevent infinite loop
+        changed = False
+
+        # Calculate total consumption for each product
+        consumption = {}
+
+        # Consumption from top-level item
+        top_materials = materials_df[
+            (materials_df["typeID"] == top_blueprint_id)
+            & (materials_df["activityID"] == top_activity_id)
+        ]
+        for _, mat_row in top_materials.iterrows():
+            mat_type_id = int(mat_row["materialTypeID"])
+            base_qty = int(mat_row["quantity"])
+            per_run = _calculate_material_per_run(base_qty, top_me, top_activity_id)
+            total = math.ceil(per_run * top_runs)
+            consumption[mat_type_id] = consumption.get(mat_type_id, 0) + total
+
+        # Consumption from all jobs in materials_to_build
+        for job_key, runs in materials_to_build.items():
+            bp_id, act_id, job_me, _ = job_key
+            job_materials = materials_df[
+                (materials_df["typeID"] == bp_id)
+                & (materials_df["activityID"] == act_id)
+            ]
+            for _, mat_row in job_materials.iterrows():
+                mat_type_id = int(mat_row["materialTypeID"])
+                base_qty = int(mat_row["quantity"])
+                per_run = _calculate_material_per_run(base_qty, job_me, act_id)
+                total = math.ceil(per_run * runs)
+                consumption[mat_type_id] = consumption.get(mat_type_id, 0) + total
+
+        # Update runs for each job based on how much its product is consumed
+        for prod_type_id, job_key in product_to_job.items():
+            if prod_type_id in consumption:
+                bp_id, act_id, _, _ = job_key
+                output_qty = _get_output_quantity(sde, bp_id, act_id)
+                needed_runs = math.ceil(consumption[prod_type_id] / output_qty)
+                if materials_to_build[job_key] != needed_runs:
+                    materials_to_build[job_key] = needed_runs
+                    changed = True
+
+        if not changed:
+            break
+
+
 def _get_output_quantity(
     sde: SDELoader, blueprint_type_id: int, activity_id: int
 ) -> int:
@@ -649,7 +1042,7 @@ def _collect_component_requirements(
 
         # Calculate per-run quantity with ME
         per_run = _calculate_material_per_run(base_quantity, me, activity_id)
-        total_needed = int(per_run * total_runs)
+        total_needed = math.ceil(per_run * total_runs)
 
         # Check if buildable
         is_buildable, mat_bp_id, mat_activity_id = _is_buildable(
@@ -721,7 +1114,7 @@ def _collect_requirements(
     materials_to_build[job_key] = prev_runs + total_runs
 
     # Only recurse if this is the first time we're processing this job
-    # (subsequent calls just add runs, recursion handles components once)
+    # (recalculation will fix any under-counting from multiple paths)
     if prev_runs > 0:
         return
 
@@ -736,9 +1129,9 @@ def _collect_requirements(
         mat_type_id = int(mat_row["materialTypeID"])
         base_quantity = int(mat_row["quantity"])
 
-        # Calculate per-run quantity with ME (using current total_runs)
+        # Calculate per-run quantity with ME
         per_run = _calculate_material_per_run(base_quantity, me, activity_id)
-        total_needed = int(per_run * total_runs)
+        total_needed = math.ceil(per_run * total_runs)
 
         # Check if buildable
         is_buildable, mat_bp_id, mat_activity_id = _is_buildable(

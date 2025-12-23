@@ -58,7 +58,7 @@ def normalize_and_bin(df, idx_col, num_bins=20):
 
 @callback(
     [Output("ra-test-bar", "figure"), Output("ra-test-evolution", "figure")],
-    Input("run-analysis-dropdown", "value")
+    Input("run-analysis-store", "data")
 )
 def update_tests(run_path):
     if not run_path:

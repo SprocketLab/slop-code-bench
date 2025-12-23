@@ -1,0 +1,27 @@
+# Tests character class [] matching in glob patterns
+# Spec: "Pattern syntax: glob with `*`, `?`, `**`, and character classes `[]`"
+# Pattern file[123].txt should match file1.txt, file2.txt, file3.txt but not file4.txt
+arguments: --now 2025-09-10T03:30:00Z --schedule schedule.yaml --duration 1 --mount mount
+input_files:
+- content:
+    version: 1
+    timezone: UTC
+    jobs:
+    - id: charclass-test
+      source: mount://
+      exclude:
+      - 'file[123].txt'
+      when:
+        kind: daily
+        at: '03:30'
+      destination: ignored://sink
+  file_type: yaml
+  path: schedule.yaml
+- content: "content"
+  path: mount/file1.txt
+- content: "content"
+  path: mount/file2.txt
+- content: "content"
+  path: mount/file3.txt
+- content: "content"
+  path: mount/file4.txt

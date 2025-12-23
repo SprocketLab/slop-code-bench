@@ -1,0 +1,84 @@
+{
+  "order": 2,
+  "input": {
+    "body": {
+      "materials": {
+        "Pyerite": 250000
+      },
+      "hubs": [
+        "dodixie",
+        "rens"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Compressed Mordunium": {
+          "quantity": 297200,
+          "cost": 5761767.8,
+          "volume": 297.2,
+          "category": "ore",
+          "purchases": {
+            "Dodixie IX - Moon 20 - Federation Navy Assembly Plant": {
+              "quantity": 297200,
+              "total": 5761767.8,
+              "avg_price": 19.39
+            }
+          }
+        },
+        "Compressed Condensed Scordite": {
+          "quantity": 13900,
+          "cost": 296556.45,
+          "volume": 20.85,
+          "category": "ore",
+          "purchases": {
+            "Rens VI - Moon 8 - Brutor Tribe Treasury": {
+              "quantity": 13900,
+              "total": 296556.45,
+              "avg_price": 21.33
+            }
+          }
+        }
+      },
+      "total": 6169641.75,
+      "shipping": 111317.5,
+      "collateral_tax": 0.0,
+      "items": 6058324.25,
+      "raw_ship": 875000.0,
+      "material_value": 6524796.07,
+      "excess_value": 71770.76,
+      "yields": {
+        "Tritanium": {
+          "target": null,
+          "actual": 19904,
+          "buy": 65285.12,
+          "sell": 71640.26
+        },
+        "Pyerite": {
+          "target": 250000,
+          "actual": 250005,
+          "buy": 5895117.9,
+          "sell": 6524926.57
+        }
+      }
+    }
+  }
+}

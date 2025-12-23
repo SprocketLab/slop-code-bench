@@ -112,6 +112,11 @@ def sidebar():
                                             active="exact"
                                         ),
                                         dbc.NavLink(
+                                            [html.I(className="fas fa-table me-2"), "Tables"],
+                                            href="/tables",
+                                            active="exact"
+                                        ),
+                                        dbc.NavLink(
                                             [html.I(className="fas fa-chart-scatter me-2"), "Scatter Plots"],
                                             href="/scatter",
                                             active="exact"

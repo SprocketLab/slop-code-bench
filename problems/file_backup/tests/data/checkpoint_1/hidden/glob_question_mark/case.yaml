@@ -1,0 +1,25 @@
+# Tests that ? matches exactly one character
+# Spec: "Pattern syntax: glob with `*`, `?`"
+# Pattern ?.txt should match a.txt but not ab.txt or abc.txt
+arguments: --now 2025-09-10T03:30:00Z --schedule schedule.yaml --duration 1 --mount mount
+input_files:
+- content:
+    version: 1
+    timezone: UTC
+    jobs:
+    - id: question-test
+      source: mount://
+      exclude:
+      - '?.txt'
+      when:
+        kind: daily
+        at: '03:30'
+      destination: ignored://sink
+  file_type: yaml
+  path: schedule.yaml
+- content: "content"
+  path: mount/a.txt
+- content: "content"
+  path: mount/ab.txt
+- content: "content"
+  path: mount/abc.txt

@@ -76,7 +76,7 @@ def build_scorecard(summary_row, checkpoints_df):
         Output("ra-scorecard", "children"),
         Output("ra-heatmap", "figure")
     ],
-    Input("run-analysis-dropdown", "value")
+    Input("run-analysis-store", "data")
 )
 def update_overview(run_path):
     if not run_path:

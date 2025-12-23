@@ -137,7 +137,7 @@ def build_problem_table(df):
 
 @callback(
     [Output("ra-problem-scatter", "figure"), Output("ra-problem-table", "children")],
-    Input("run-analysis-dropdown", "value")
+    Input("run-analysis-store", "data")
 )
 def update_problems(run_path):
     if not run_path:

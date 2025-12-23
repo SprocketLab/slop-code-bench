@@ -4101,6 +4101,273 @@
         },
         "status_code": 200
       }
+    },
+    "in_progress_assistant_at_end": {
+      "case": {
+        "id": "in_progress_assistant_at_end",
+        "method": "POST",
+        "path": "/trajectories",
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "in_progress",
+          "date": "2025-10-15T08:00:00Z",
+          "task": "test_assistant_end",
+          "environment": "test-env",
+          "model": "test-model",
+          "framework": "test-framework",
+          "metrics": {},
+          "trajectory": [
+            {
+              "role": "user",
+              "content": "Question",
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost": null
+            },
+            {
+              "role": "assistant",
+              "content": "Response at end",
+              "input_tokens": 10,
+              "output_tokens": 20,
+              "cost": 0.001
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status_code": 201,
+        "output": {
+          "type": "object",
+          "required": [
+            "id",
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "in_progress"
+            }
+          }
+        }
+      }
+    },
+    "in_progress_only_user_steps": {
+      "case": {
+        "id": "in_progress_only_user_steps",
+        "method": "POST",
+        "path": "/trajectories",
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "in_progress",
+          "date": "2025-10-15T09:00:00Z",
+          "task": "test_no_assistant",
+          "environment": "test-env",
+          "model": "test-model",
+          "framework": "test-framework",
+          "metrics": {},
+          "trajectory": [
+            {
+              "role": "user",
+              "content": "First question",
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status_code": 201,
+        "output": {
+          "type": "object",
+          "required": [
+            "id",
+            "status",
+            "final_output_tokens",
+            "final_cost"
+          ],
+          "properties": {
+            "status": {
+              "const": "in_progress"
+            },
+            "final_output_tokens": {
+              "const": 0
+            },
+            "final_cost": {
+              "const": 0.0
+            }
+          }
+        }
+      }
+    },
+    "finalize_rejects_assistant_at_end_base": {
+      "case": {
+        "id": "finalize_rejects_assistant_at_end_base",
+        "method": "POST",
+        "path": "/trajectories",
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "in_progress",
+          "date": "2025-10-16T11:00:00Z",
+          "task": "finalize_validation_test",
+          "environment": "test-env",
+          "model": "test-model",
+          "framework": "test-framework",
+          "metrics": {},
+          "trajectory": [
+            {
+              "role": "user",
+              "content": "Question",
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost": null
+            },
+            {
+              "role": "assistant",
+              "content": "Only response",
+              "input_tokens": 5,
+              "output_tokens": 10,
+              "cost": 0.001
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status_code": 201,
+        "output": {
+          "type": "object",
+          "required": [
+            "id",
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "in_progress"
+            }
+          }
+        }
+      }
+    },
+    "finalize_rejects_assistant_at_end": {
+      "case": {
+        "id": "finalize_rejects_assistant_at_end",
+        "method": "POST",
+        "path": "/trajectories/{{store.finalize_rejects_assistant_at_end_base}}/finalize",
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "if-match": "W/\"1\""
+        },
+        "body": {
+          "metrics": {}
+        }
+      },
+      "expected": {
+        "status_code": 422,
+        "output": {
+          "type": "object",
+          "required": [
+            "error"
+          ],
+          "properties": {
+            "error": {
+              "type": "object",
+              "required": [
+                "code"
+              ],
+              "properties": {
+                "code": {
+                  "const": "VALIDATION_FAILED"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "finalize_accepts_valid_base": {
+      "case": {
+        "id": "finalize_accepts_valid_base",
+        "method": "POST",
+        "path": "/trajectories",
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "body": {
+          "status": "in_progress",
+          "date": "2025-10-16T12:00:00Z",
+          "task": "finalize_valid_test",
+          "environment": "test-env",
+          "model": "test-model",
+          "framework": "test-framework",
+          "metrics": {},
+          "trajectory": [
+            {
+              "role": "user",
+              "content": "Question",
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost": null
+            },
+            {
+              "role": "assistant",
+              "content": "Response",
+              "input_tokens": 5,
+              "output_tokens": 10,
+              "cost": 0.001
+            },
+            {
+              "role": "user",
+              "content": "Follow-up",
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status_code": 201,
+        "output": {
+          "type": "object",
+          "required": [
+            "id"
+          ]
+        }
+      }
+    },
+    "finalize_accepts_valid_trajectory": {
+      "case": {
+        "id": "finalize_accepts_valid_trajectory",
+        "method": "POST",
+        "path": "/trajectories/{{store.finalize_accepts_valid_base}}/finalize",
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "if-match": "W/\"1\""
+        },
+        "body": {
+          "metrics": {}
+        }
+      },
+      "expected": {
+        "status_code": 200,
+        "output": {
+          "type": "object",
+          "required": [
+            "id",
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "finalized"
+            }
+          }
+        }
+      }
     }
   },
   "spec_cases": {

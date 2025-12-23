@@ -1,0 +1,83 @@
+{
+  "order": 26,
+  "input": {
+    "body": {
+      "materials": {
+        "Helium Isotopes": 30000
+      },
+      "hubs": [
+        "jita",
+        "amarr"
+      ],
+      "regions": [],
+      "cost_per_m3": 300.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.7,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Compressed Clear Icicle": {
+          "quantity": 80,
+          "cost": 24902000.0,
+          "volume": 8000.0,
+          "category": "ice",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 80,
+              "total": 24902000.0,
+              "avg_price": 311275.0
+            }
+          }
+        }
+      },
+      "total": 27302000.0,
+      "shipping": 2400000.0,
+      "collateral_tax": 0.0,
+      "items": 24902000.0,
+      "raw_ship": 270000.0,
+      "material_value": 27956057.3,
+      "excess_value": 1265966.89,
+      "yields": {
+        "Heavy Water": {
+          "target": null,
+          "actual": 5002,
+          "buy": 688855.08,
+          "sell": 604741.8
+        },
+        "Liquid Ozone": {
+          "target": null,
+          "actual": 2537,
+          "buy": 302398.1,
+          "sell": 293660.19
+        },
+        "Helium Isotopes": {
+          "target": 30000,
+          "actual": 30016,
+          "buy": 29225400.45,
+          "sell": 27970967.2
+        },
+        "Strontium Clathrates": {
+          "target": null,
+          "actual": 72,
+          "buy": 345391.75,
+          "sell": 352655.0
+        }
+      }
+    }
+  }
+}

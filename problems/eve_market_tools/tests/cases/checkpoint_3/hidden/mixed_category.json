@@ -1,0 +1,104 @@
+{
+  "order": 8,
+  "input": {
+    "body": {
+      "materials": {
+        "Pyerite": 100000,
+        "Zydrine": 5000
+      },
+      "hubs": [
+        "jita",
+        "amarr"
+      ],
+      "regions": [],
+      "cost_per_m3": 350.0,
+      "collateral_tax": 0.0,
+      "efficiencies": {
+        "ore": 0.9063,
+        "gas": 0.95,
+        "scrap": 0.55
+      },
+      "ore_variants": {
+        "base": true,
+        "plus5": true,
+        "plus10": true,
+        "plus15": true
+      }
+    },
+    "method": "POST",
+    "path": "/v1/compress"
+  },
+  "expected": {
+    "status_code": 200,
+    "output": {
+      "buy_list": {
+        "Compressed Boosted Eifyrium": {
+          "quantity": 1800,
+          "cost": 7526076.0,
+          "volume": 288.0,
+          "category": "ore",
+          "purchases": {
+            "Jita IV - Moon 4 - Caldari Navy Assembly Plant": {
+              "quantity": 1800,
+              "total": 7526076.0,
+              "avg_price": 4181.15
+            }
+          }
+        },
+        "Compressed Eifyrium": {
+          "quantity": 100,
+          "cost": 380000.0,
+          "volume": 16.0,
+          "category": "ore",
+          "purchases": {
+            "Jita IV - Moon 4 - Caldari Navy Assembly Plant": {
+              "quantity": 100,
+              "total": 380000.0,
+              "avg_price": 3800.0
+            }
+          }
+        },
+        "Batch Compressed Condensed Scordite": {
+          "quantity": 1072,
+          "cost": 2154.72,
+          "volume": 203.68,
+          "category": "ore",
+          "purchases": {
+            "Amarr VIII (Oris) - Emperor Family Academy": {
+              "quantity": 1072,
+              "total": 2154.72,
+              "avg_price": 2.01
+            }
+          }
+        }
+      },
+      "total": 8085918.72,
+      "shipping": 177688.0,
+      "collateral_tax": 0.0,
+      "items": 7908230.72,
+      "raw_ship": 367500.0,
+      "material_value": 9559695.05,
+      "excess_value": 536942.58,
+      "yields": {
+        "Tritanium": {
+          "target": null,
+          "actual": 153505,
+          "buy": 598337.24,
+          "sell": 506376.46
+        },
+        "Pyerite": {
+          "target": 100000,
+          "actual": 100070,
+          "buy": 2672767.34,
+          "sell": 2326678.8
+        },
+        "Zydrine": {
+          "target": 5000,
+          "actual": 5020,
+          "buy": 6889475.27,
+          "sell": 7263582.37
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+case:
+  arguments: --output out --key id --partition-by amount --schema schema.json data.csv
+  input_files:
+    - content: 'id,amount
+1,007
+2,+42
+3,003'
+      file_type: text
+      path: data.csv
+    - content:
+        columns:
+          - name: id
+            type: int
+          - name: amount
+            type: int
+      file_type: json
+      path: schema.json
+
+expected:
+  status_code: 0
+  files:
+    out/amount=3/part-00000.csv:
+      - id: 3
+        amount: 3
+    out/amount=7/part-00000.csv:
+      - id: 1
+        amount: 7
+    out/amount=42/part-00000.csv:
+      - id: 2
+        amount: 42

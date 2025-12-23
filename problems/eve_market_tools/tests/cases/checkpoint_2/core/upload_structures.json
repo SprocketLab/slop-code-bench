@@ -1,0 +1,18 @@
+{
+  "expected": {
+    "output": {
+      "status": "STATIONS_UPDATED",
+      "count": 5128
+    },
+    "status_code": 200
+  },
+  "input": {
+    "input_file": "stations.csv.gz",
+    "headers": {
+      "content-type": "application/octet-stream"
+    },
+    "method": "POST",
+    "path": "/v1/stations"
+  },
+  "order": 1
+}

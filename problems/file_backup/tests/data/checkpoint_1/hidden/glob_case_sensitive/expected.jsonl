@@ -1,0 +1,6 @@
+{"event":"SCHEDULE_PARSED","timezone":"UTC","jobs_total":1}
+{"event":"JOB_ELIGIBLE","job_id":"case-test","kind":"daily","now_local":"2025-09-10T03:30:00Z"}
+{"event":"JOB_STARTED","exclude_count":1,"job_id":"case-test"}
+{"event":"FILE_EXCLUDED","job_id":"case-test","path":"file.TXT","pattern":"*.TXT"}
+{"event":"FILE_SELECTED","job_id":"case-test","path":"file.txt"}
+{"event":"JOB_COMPLETED","job_id":"case-test","selected":1,"excluded":1}

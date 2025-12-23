@@ -1,0 +1,19 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json --on-type-error fail data.csv
+  input_files:
+    - content: 'id,active
+1,yes'
+      file_type: text
+      path: data.csv
+    - content:
+        columns:
+          - name: id
+            type: int
+          - name: active
+            type: bool
+      file_type: json
+      path: schema.json
+
+expected:
+  status_code: 4
+  stderr: ".*"

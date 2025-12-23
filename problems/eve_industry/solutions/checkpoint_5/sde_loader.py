@@ -281,3 +281,19 @@ class SDELoader:
         if len(matches) == 0:
             return None
         return int(matches.iloc[0]["activityID"])
+
+    def get_item_name_by_id(self, type_id: int) -> str:
+        """
+        Get the name of an item by its typeID.
+
+        Args:
+            type_id: The typeID to get the name of
+
+        Returns:
+            The name of the item or None if not found
+        """
+        types = self.load_types()
+        matches = types[types["typeID"] == type_id]
+        if len(matches) == 0:
+            raise ValueError(f"Item with typeID {type_id} not found")
+        return matches.iloc[0]["typeName"]

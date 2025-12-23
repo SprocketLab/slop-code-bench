@@ -41,7 +41,7 @@ def format_item_header(item: ItemInfo) -> None:
     """
     print(f"ITEM: {item.name} ({item.type_id})")
     print(f"Group: {item.group_hierarchy}")
-    print(f"Market Groups: {item.market_hierarchy}")
+    print(f"Market Group: {item.market_hierarchy}")
     print(f"Tech Level: {item.tech_level}")
 
 

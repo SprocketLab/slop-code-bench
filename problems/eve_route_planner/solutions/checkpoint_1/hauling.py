@@ -102,7 +102,7 @@ def parse_args() -> argparse.Namespace:
     if errors:
         for err in errors:
             print(err, file=sys.stderr)
-        sys.exit(1)
+        sys.exit(2)
     return args
 
 
@@ -480,7 +480,7 @@ def main() -> None:
         )
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
-        sys.exit(1)
+        sys.exit(2)
 
     start_display = (
         nodes_by_id[start_node_id].name

@@ -146,6 +146,99 @@ def build_hierarchical_run_selector(runs, selected_values, active_items=None):
     )
 
 
+def build_single_run_radio(runs, selected_value, id_key):
+    """Builds the leaf-node radio items of runs."""
+    options = []
+    for run in runs:
+        thinking = run.get("thinking_display", "disabled").title()
+        date = run.get("run_date", "Unknown Date")
+        problems = run.get("num_problems", 0)
+        label = f"{thinking} - {date} - {problems} problems"
+        options.append({"label": label, "value": run["value"]})
+
+    # For RadioItems, value is a single scalar
+    # Only set the value if it exists in this group's options
+    group_values = {o["value"] for o in options}
+    current_value = selected_value if selected_value in group_values else None
+
+    return dbc.RadioItems(
+        id={"type": "run-analysis-radio", "index": id_key},
+        options=options,
+        value=current_value,
+        className="run-selector-radio",
+        style={"lineHeight": "1.5"}
+    )
+
+
+def build_hierarchical_run_selector_single(runs, selected_value, active_items=None):
+    """
+    Builds a nested accordion structure for single selection:
+      - Level 1: Parent Directory (Model)
+      - Level 2: Prompt Template
+    """
+    if not runs:
+        return html.Div(
+            [
+                html.I(className="bi bi-exclamation-circle display-4 text-muted mb-3"),
+                html.H5("No runs available", className="text-muted"),
+            ],
+            className="text-center p-5"
+        )
+
+    # Group by Parent Directory (Model)
+    runs_by_parent = group_runs(runs, lambda r: Path(r["value"]).parent.name)
+
+    outer_accordion_items = []
+    for parent_dir in sorted(runs_by_parent.keys()):
+        model_runs = runs_by_parent[parent_dir]
+        runs_by_prompt = group_runs(model_runs, lambda r: r.get("prompt_template", "Unknown"))
+
+        inner_accordion_items = []
+        for prompt in sorted(runs_by_prompt.keys()):
+            prompt_runs = runs_by_prompt[prompt]
+            prompt_runs.sort(key=lambda r: r.get("label", "")) # Sort by label
+
+            # Unique ID for the checklist
+            checklist_id = f"{parent_dir}|{prompt}"
+
+            radio_group = build_single_run_radio(prompt_runs, selected_value, checklist_id)
+
+            inner_accordion_items.append(
+                dbc.AccordionItem(
+                    radio_group,
+                    title=f"{prompt} ({len(prompt_runs)})",
+                    item_id=checklist_id
+                )
+            )
+
+        # Build Inner Accordion
+        inner_accordion = dbc.Accordion(
+            inner_accordion_items,
+            always_open=True,
+            flush=True,
+            start_collapsed=True, # Default to collapsed to save space
+            className="mb-2"
+        )
+
+        outer_accordion_items.append(
+            dbc.AccordionItem(
+                inner_accordion,
+                title=f"{parent_dir}",
+                item_id=parent_dir
+            )
+        )
+
+    return dbc.Accordion(
+        outer_accordion_items,
+        always_open=True,
+        flush=True,
+        active_item=active_items,
+        id="run-analysis-accordion",
+        persistence=True,
+        persistence_type="session"
+    )
+
+
 def build_configuration_modal_content():
     """Builds the content for the global configuration modal."""
     return dbc.Container([
@@ -308,26 +401,13 @@ def build_run_analysis_modal_content():
         dbc.Card(
             [
                 dbc.CardHeader("Run Selection", className="fw-bold bg-light"),
-                dbc.CardBody(
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                [
-                                    html.Label("Run to Analyze", className="fw-bold small text-muted"),
-                                    dcc.Dropdown(
-                                        id="run-analysis-dropdown",
-                                        placeholder="Select Run...",
-                                        style={"fontSize": "0.9rem"},
-                                        persistence=True,
-                                        persistence_type="session",
-                                    ),
-                                ],
-                                width=12,
-                                className="mb-3"
-                            ),
-                        ]
+                dbc.CardBody([
+                    dcc.Loading(
+                        html.Div(id="run-analysis-selector-container"),
+                        type="dot",
+                        color="#0d6efd"
                     )
-                ),
+                ]),
             ],
             className="mb-4 shadow-sm border-0",
         )

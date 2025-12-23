@@ -195,12 +195,12 @@ def evaluate_snapshot(
             help="Name of the problem. If not provided, the name of the snapshot directory will be used. It must have a problem configuration file.",
         ),
     ],
-    checkpoint_num: Annotated[
-        int,
+    checkpoint: Annotated[
+        str,
         typer.Option(
             "-c",
-            "--checkpoint-num",
-            help="Number of the checkpoint.",
+            "--checkpoint",
+            help="Checkpoint index (e.g., '1') or name (e.g., 'checkpoint_1').",
         ),
     ],
     env_config: Annotated[
@@ -263,17 +263,36 @@ def evaluate_snapshot(
         raise typer.Exit(1)
 
     ordered_checkpoints = list(problem.iterate_checkpoint_items())
-    if checkpoint_num < 1 or checkpoint_num > len(ordered_checkpoints):
+    checkpoint_names = [name for name, _ in ordered_checkpoints]
+
+    # Resolve checkpoint: accept either index (e.g., "1") or name (e.g., "checkpoint_1")
+    if checkpoint.isdigit():
+        checkpoint_num = int(checkpoint)
+        if checkpoint_num < 1 or checkpoint_num > len(ordered_checkpoints):
+            typer.echo(
+                typer.style(
+                    f"Checkpoint index {checkpoint_num} is out of range for problem {problem_name}. "
+                    f"Must be between 1 and {len(ordered_checkpoints)}.",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            )
+            raise typer.Exit(1)
+        checkpoint_name, checkpoint_config = ordered_checkpoints[checkpoint_num - 1]
+    elif checkpoint in checkpoint_names:
+        checkpoint_idx = checkpoint_names.index(checkpoint)
+        checkpoint_num = checkpoint_idx + 1
+        checkpoint_name, checkpoint_config = ordered_checkpoints[checkpoint_idx]
+    else:
         typer.echo(
             typer.style(
-                f"Checkpoint number {checkpoint_num} is out of range for problem {problem_name}. Must be between 1 and {len(ordered_checkpoints)}.",
+                f"Invalid checkpoint '{checkpoint}' for problem {problem_name}. "
+                f"Must be an index (1-{len(ordered_checkpoints)}) or name ({', '.join(checkpoint_names)}).",
                 fg=typer.colors.RED,
                 bold=True,
             )
         )
         raise typer.Exit(1)
-
-    checkpoint_name, checkpoint = ordered_checkpoints[checkpoint_num - 1]
 
     save_dir = utils.ensure_dir_exists(save_dir, create=True)
     quiet = getattr(ctx.obj, "quiet", False)
@@ -297,7 +316,7 @@ def evaluate_snapshot(
     report = evaluate_checkpoint(
         snapshot=snapshot_dir,
         save_dir=save_dir,
-        checkpoint=checkpoint,
+        checkpoint=checkpoint_config,
         problem=problem,
         environment=environment,
         rubric_path=rubric_path,

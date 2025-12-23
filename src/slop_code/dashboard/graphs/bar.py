@@ -54,8 +54,13 @@ def build_bar_comparison(context: ChartContext) -> go.Figure:
 
     fig = make_subplots(
         rows=1,
-        cols=3,
-        subplot_titles=["Checkpoints Solved", "Problems Partial", "Net Cost"],
+        cols=4,
+        subplot_titles=[
+            "Checkpoints Solved",
+            "Checkpoint Iso Solved",
+            "Problems Partial",
+            "Net Cost",
+        ],
         horizontal_spacing=0.05,
     )
 
@@ -81,6 +86,20 @@ def build_bar_comparison(context: ChartContext) -> go.Figure:
         )
         fig.add_trace(
             go.Bar(
+                y=run_df["pct_checkpoints_iso_solved"],
+                name=info.variant,
+                legendgroup=info.model_name,
+                marker={"color": info.color},
+                text=[f"{v:.1f}" for v in run_df["pct_checkpoints_iso_solved"]],
+                textposition="inside",
+                textangle=0,
+                showlegend=False,
+            ),
+            row=1,
+            col=2,
+        )
+        fig.add_trace(
+            go.Bar(
                 y=run_df["pct_problems_partial"],
                 name=info.variant,
                 legendgroup=info.model_name,
@@ -91,7 +110,7 @@ def build_bar_comparison(context: ChartContext) -> go.Figure:
                 showlegend=False,
             ),
             row=1,
-            col=2,
+            col=3,
         )
         fig.add_trace(
             go.Bar(
@@ -105,16 +124,19 @@ def build_bar_comparison(context: ChartContext) -> go.Figure:
                 showlegend=False,
             ),
             row=1,
-            col=3,
+            col=4,
         )
 
     fig.update_yaxes(
         title_text="Solved (%)", row=1, col=1, gridcolor="lightgray"
     )
     fig.update_yaxes(
-        title_text="Partial (%)", row=1, col=2, gridcolor="lightgray"
+        title_text="Iso Solved (%)", row=1, col=2, gridcolor="lightgray"
     )
-    fig.update_yaxes(title_text="Cost ($)", row=1, col=3, gridcolor="lightgray")
+    fig.update_yaxes(
+        title_text="Partial (%)", row=1, col=3, gridcolor="lightgray"
+    )
+    fig.update_yaxes(title_text="Cost ($)", row=1, col=4, gridcolor="lightgray")
 
     for i in range(1, 4):
         fig.update_xaxes(row=1, col=i, showticklabels=False)

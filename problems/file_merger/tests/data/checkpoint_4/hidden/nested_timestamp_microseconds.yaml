@@ -1,0 +1,35 @@
+case:
+  arguments: --output out.csv --key id --schema schema.json data.jsonl
+  input_files:
+    - content:
+        - id: 1
+          metadata:
+            created: '2024-01-01T10:00:00.123456Z'
+            updated: '2024-01-01T11:00:00.654321Z'
+        - id: 2
+          metadata:
+            created: '2024-01-01T12:00:00.000001Z'
+            updated: null
+      file_type: jsonl
+      path: data.jsonl
+    - content:
+        columns:
+          - name: id
+            type: int
+          - name: metadata
+            type:
+              struct:
+                fields:
+                  - name: created
+                    type: timestamp
+                  - name: updated
+                    type: timestamp
+      file_type: json
+      path: schema.json
+
+expected:
+  status_code: 0
+  files:
+    out.csv: 'id,metadata
+1,"{""created"":""2024-01-01T10:00:00.123456Z"",""updated"":""2024-01-01T11:00:00.654321Z""}"
+2,"{""created"":""2024-01-01T12:00:00.000001Z"",""updated"":null}"'

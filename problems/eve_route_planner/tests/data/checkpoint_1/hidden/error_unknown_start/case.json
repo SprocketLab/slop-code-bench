@@ -1,0 +1,21 @@
+{
+    "case": {
+        "arguments": [
+            "NonexistentSystem12345",
+            "Tama",
+            "--align",
+            "2.1",
+            "--top-speed",
+            "250",
+            "--warp-speed",
+            "10.0",
+            "--dock-time",
+            "5",
+            "--gate-time",
+            "1"
+        ]
+    },
+    "expected": {
+        "status_code": 2
+    }
+}

@@ -95,7 +95,7 @@ def _process_problem(
     checkpoint_count = 0
     for idx, checkpoint in enumerate(problem_config.iterate_checkpoints()):
         is_continuation = idx > 0
-        spec_text = checkpoint.get_spec_text()
+        spec_text = problem_config.get_checkpoint_spec(checkpoint.name)
 
         rendered = _render_checkpoint_prompt(
             spec_text=spec_text,
@@ -188,7 +188,8 @@ def render_prompts(
     # Discover problems
     problem_path: Path = ctx.obj.problem_path
     all_problem_dirs = sorted(
-        d for d in problem_path.iterdir()
+        d
+        for d in problem_path.iterdir()
         if d.is_dir() and (d / "config.yaml").exists()
     )
 

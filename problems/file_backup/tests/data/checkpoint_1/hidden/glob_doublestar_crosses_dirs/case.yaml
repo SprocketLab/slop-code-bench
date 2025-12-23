@@ -1,0 +1,27 @@
+# Tests that ** crosses directory boundaries
+# Spec: "`**` may cross `/`"
+# Pattern **/*.log should match .log files at any depth
+arguments: --now 2025-09-10T03:30:00Z --schedule schedule.yaml --duration 1 --mount mount
+input_files:
+- content:
+    version: 1
+    timezone: UTC
+    jobs:
+    - id: glob-test
+      source: mount://
+      exclude:
+      - '**/*.log'
+      when:
+        kind: daily
+        at: '03:30'
+      destination: ignored://sink
+  file_type: yaml
+  path: schedule.yaml
+- content: "log content"
+  path: mount/a.log
+- content: "log content"
+  path: mount/dir/b.log
+- content: "log content"
+  path: mount/dir/sub/c.log
+- content: "keep me"
+  path: mount/keep.txt

@@ -1,0 +1,27 @@
+{
+  "expected": {
+    "output": {
+      "name": "Tritanium",
+      "buy": 4.0,
+      "sell": 3.09,
+      "buy_5pct": 3.87,
+      "sell_5pct": 3.82,
+      "buy_orders": 56,
+      "sell_orders": 137,
+      "buy_threshold": 0.4,
+      "sell_threshold": 30.9,
+      "buy_volume": 23597427736,
+      "sell_volume": 12725491285,
+      "total_value": 48.63
+    },
+    "status_code": 200
+  },
+  "input": {
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "method": "GET",
+    "path": "/v1/market/10000002/34"
+  },
+  "order": 4
+}
