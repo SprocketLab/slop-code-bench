@@ -24,7 +24,7 @@ Tests should verify spec-defined behavior, not invent requirements. This skill f
 Read the spec and test files for the specified problem/checkpoint:
 
 ```
-problems/{problem}/checkpoint_N.md          # Spec (could also be checkpoint_N/spec.md)
+problems/{problem}/checkpoint_N.md
 problems/{problem}/tests/test_checkpoint_N.py
 problems/{problem}/tests/conftest.py        # Fixtures and test setup
 ```

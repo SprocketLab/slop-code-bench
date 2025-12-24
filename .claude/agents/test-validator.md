@@ -89,11 +89,6 @@ ACTION ITEMS: (with actual code to copy-paste)
 problems/{problem}/checkpoint_N.md
 ```
 
-Or possibly:
-```
-problems/{problem}/checkpoint_N/spec.md
-```
-
 **DO NOT PROCEED** until you have read the entire spec. As you read:
 
 - Highlight explicit requirements ("MUST", "SHALL", specific values)

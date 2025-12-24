@@ -6,7 +6,6 @@ between consecutive checkpoints.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 # Metric keys for which to compute percentage deltas between checkpoints.
@@ -83,32 +82,3 @@ def compute_checkpoint_delta(
         result["delta.new_violations_per_loc"] = new_flags / curr_lines_loc
 
     return result
-
-
-def get_checkpoint_delta(
-    prev_checkpoint_dir: Path | None,
-    curr_checkpoint_dir: Path,
-) -> dict[str, float | None]:
-    """Load metrics from two checkpoint directories and compute deltas.
-
-    Convenience function that loads metrics from directories and computes
-    percentage delta metrics between consecutive checkpoints.
-
-    Args:
-        prev_checkpoint_dir: Path to checkpoint N directory, or None for first.
-        curr_checkpoint_dir: Path to checkpoint N+1 directory.
-
-    Returns:
-        Dict with delta.* keys containing percentage changes.
-        Returns empty dict if prev_checkpoint_dir is None.
-    """
-    if prev_checkpoint_dir is None:
-        return {}
-
-    # Import here to avoid circular import
-    from slop_code.metrics.checkpoint.facade import get_checkpoint_metrics
-
-    prev_metrics = get_checkpoint_metrics(prev_checkpoint_dir)
-    curr_metrics = get_checkpoint_metrics(curr_checkpoint_dir)
-
-    return compute_checkpoint_delta(prev_metrics, curr_metrics)

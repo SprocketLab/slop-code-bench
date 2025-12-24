@@ -35,6 +35,9 @@ class FakeSession:
     def __exit__(self, exc_type, exc, tb) -> None:
         self.closed = True
 
+    def materialize_assets(self) -> None:
+        pass
+
     def finish_checkpoint(self, snapshot_dir: Path) -> FakeDiff:
         snapshot_dir.mkdir(parents=True, exist_ok=True)
         self.finished_snapshots.append(snapshot_dir)

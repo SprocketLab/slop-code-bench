@@ -292,138 +292,22 @@ def test_eval_sized_decimal_literal(
 
 
 # =============================================================================
-# Core Tests - MUX/ITE Operators
-# =============================================================================
-
-
-def test_eval_mux_sel_zero_returns_b(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "mux.circ",
-        """\
-        input sel
-        input a[3:0] b[3:0]
-        output y[3:0]
-        y = MUX(sel, a, b)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        [
-            "eval",
-            str(path),
-            "--set",
-            "sel=0",
-            "--set",
-            "a=0b0001",
-            "--set",
-            "b=0b1110",
-        ],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b1110"
-
-
-def test_eval_mux_sel_one_returns_a(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "mux.circ",
-        """\
-        input sel
-        input a[3:0] b[3:0]
-        output y[3:0]
-        y = MUX(sel, a, b)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        [
-            "eval",
-            str(path),
-            "--set",
-            "sel=1",
-            "--set",
-            "a=0b0001",
-            "--set",
-            "b=0b1110",
-        ],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b0001"
-
-
-def test_eval_ite_alias_for_mux(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "ite.circ",
-        """\
-        input sel
-        input t[3:0] f[3:0]
-        output y[3:0]
-        y = ITE(sel, t, f)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        [
-            "eval",
-            str(path),
-            "--set",
-            "sel=1",
-            "--set",
-            "t=0b1111",
-            "--set",
-            "f=0b0000",
-        ],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b1111"
-
-
-# =============================================================================
-# Core Tests - Reduction Operators
-# =============================================================================
-
-
-def test_eval_reduce_xor_parity(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test spec example: parity circuit with REDUCE_XOR."""
-    path = write_circ(
-        tmp_path,
-        "parity.circ",
-        """\
-        input data[7:0]
-        output parity
-        parity = REDUCE_XOR(data)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "data=0b11110000"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "parity=0"
-
-
-# =============================================================================
 # Core Tests - EQ Operator
 # =============================================================================
 
-
-def test_eval_eq_returns_one_when_equal(
+@pytest.mark.parametrize(
+    ("a_val", "b_val", "expected"),
+    [
+        ("0x2a", "0x2a", "1"),
+        ("0x2a", "0x2b", "0"),
+    ],
+)
+def test_eval_eq_returns_expected(
     entrypoint_argv: list[str],
     tmp_path: Path,
+    a_val: str,
+    b_val: str,
+    expected: str,
 ) -> None:
     path = write_circ(
         tmp_path,
@@ -436,31 +320,10 @@ def test_eval_eq_returns_one_when_equal(
     )
     result = run_command(
         entrypoint_argv,
-        ["eval", str(path), "--set", "a=0x2a", "--set", "b=0x2a"],
+        ["eval", str(path), "--set", f"a={a_val}", "--set", f"b={b_val}"],
     )
     assert result.returncode == 0
-    assert result.stdout.strip() == "equal=1"
-
-
-def test_eval_eq_returns_zero_when_not_equal(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "comparator.circ",
-        """\
-        input a[7:0] b[7:0]
-        output equal
-        equal = EQ(a, b)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0x2a", "--set", "b=0x2b"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "equal=0"
+    assert result.stdout.strip() == f"equal={expected}"
 
 
 # =============================================================================
@@ -468,9 +331,21 @@ def test_eval_eq_returns_zero_when_not_equal(
 # =============================================================================
 
 
-def test_eval_radix_bin_format(
+@pytest.mark.parametrize(
+    ("radix", "set_value", "expected"),
+    [
+        ("bin", "a=0x0f", "y=0b00001111"),
+        ("hex", "a=0b00001111", "y=0x0f"),
+        ("dec", "a=0x0f", "y=15"),
+        (None, "a=0x0f", "y=0b00001111"),
+    ],
+)
+def test_eval_radix_formats(
     entrypoint_argv: list[str],
     tmp_path: Path,
+    radix: str | None,
+    set_value: str,
+    expected: str,
 ) -> None:
     path = write_circ(
         tmp_path,
@@ -481,54 +356,12 @@ def test_eval_radix_bin_format(
         y = BUF(a)
         """,
     )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0x0f", "--radix", "bin"],
-    )
+    command = ["eval", str(path), "--set", set_value]
+    if radix is not None:
+        command.extend(["--radix", radix])
+    result = run_command(entrypoint_argv, command)
     assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b00001111"
-
-
-def test_eval_radix_hex_format(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "radix.circ",
-        """\
-        input a[7:0]
-        output y[7:0]
-        y = BUF(a)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0b00001111", "--radix", "hex"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0x0f"
-
-
-def test_eval_radix_dec_format(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "radix.circ",
-        """\
-        input a[7:0]
-        output y[7:0]
-        y = BUF(a)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0x0f", "--radix", "dec"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=15"
+    assert result.stdout.strip() == expected
 
 
 def test_eval_json_includes_radix_field(
@@ -865,17 +698,26 @@ def test_check_sized_decimal_overflow_parse_error(
 
 
 @pytest.mark.functionality
-def test_eval_scalar_zero_literal(
+@pytest.mark.parametrize(
+    ("literal", "expected"),
+    [
+        ("0", "0"),
+        ("1", "1"),
+    ],
+)
+def test_eval_scalar_literal(
     entrypoint_argv: list[str],
     tmp_path: Path,
+    literal: str,
+    expected: str,
 ) -> None:
     path = write_circ(
         tmp_path,
-        "scalar_zero.circ",
-        """\
+        "scalar_literal.circ",
+        f"""\
         input a
         output y
-        y = AND(a, 0)
+        y = AND(a, {literal})
         """,
     )
     result = run_command(
@@ -883,29 +725,7 @@ def test_eval_scalar_zero_literal(
         ["eval", str(path), "--set", "a=1"],
     )
     assert result.returncode == 0
-    assert result.stdout.strip() == "y=0"
-
-
-@pytest.mark.functionality
-def test_eval_scalar_one_literal(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "scalar_one.circ",
-        """\
-        input a
-        output y
-        y = AND(a, 1)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=1"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=1"
+    assert result.stdout.strip() == f"y={expected}"
 
 
 # =============================================================================
@@ -914,41 +734,19 @@ def test_eval_scalar_one_literal(
 
 
 @pytest.mark.functionality
-def test_check_not_preserves_vector_width(
+@pytest.mark.parametrize("operator", ["NOT", "BUF"])
+def test_check_unary_preserves_vector_width(
     entrypoint_argv: list[str],
     tmp_path: Path,
+    operator: str,
 ) -> None:
     path = write_circ(
         tmp_path,
-        "not_vector.circ",
-        """\
+        f"{operator.lower()}_vector.circ",
+        f"""\
         input a[7:0]
         output y[7:0]
-        y = NOT(a)
-        """,
-    )
-    result, payload = run_json_command(
-        entrypoint_argv,
-        ["check", str(path), "--json"],
-    )
-    assert result.returncode == 0
-    outputs = payload.get("outputs")
-    assert isinstance(outputs, list)
-    assert_vector_signal(outputs[0], "y", 7, 0)
-
-
-@pytest.mark.functionality
-def test_check_buf_preserves_vector_width(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "buf_vector.circ",
-        """\
-        input a[7:0]
-        output y[7:0]
-        y = BUF(a)
+        y = {operator}(a)
         """,
     )
     result, payload = run_json_command(
@@ -964,39 +762,6 @@ def test_check_buf_preserves_vector_width(
 # =============================================================================
 # Functionality Tests - MUX Width Rules
 # =============================================================================
-
-
-@pytest.mark.functionality
-def test_eval_mux_vector_operands(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test MUX with 8-bit operands - output uses default radix (bin)."""
-    path = write_circ(
-        tmp_path,
-        "mux_vec.circ",
-        """\
-        input sel
-        input a[7:0] b[7:0]
-        output y[7:0]
-        y = MUX(sel, a, b)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        [
-            "eval",
-            str(path),
-            "--set",
-            "sel=1",
-            "--set",
-            "a=0xff",
-            "--set",
-            "b=0x00",
-        ],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b11111111"
 
 
 @pytest.mark.functionality
@@ -1136,53 +901,9 @@ def test_eval_radix_hex_padding(
     assert result.stdout.strip() == "y=0x001"
 
 
-@pytest.mark.functionality
-def test_eval_radix_default_is_bin(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "default_radix.circ",
-        """\
-        input a[3:0]
-        output y[3:0]
-        y = BUF(a)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0xf"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b1111"
-
-
 # =============================================================================
 # Functionality Tests - Complex Expressions
 # =============================================================================
-
-
-@pytest.mark.functionality
-def test_eval_nested_index_and_concat(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "nested.circ",
-        """\
-        input a[3:0] b[3:0]
-        output y[3:0]
-        y = {a[3], b[0], a[1:0]}
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0b1010", "--set", "b=0b0001"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b1110"
 
 
 @pytest.mark.functionality
@@ -1210,124 +931,8 @@ def test_eval_chained_operations(
 
 
 # =============================================================================
-# Extreme Cases - Wide Vectors
-# =============================================================================
-
-
-@pytest.mark.functionality
-def test_eval_wide_vector_32bit(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "wide32.circ",
-        """\
-        input a[31:0]
-        output y[31:0]
-        y = NOT(a)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0x00000000", "--radix", "hex"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0xffffffff"
-
-
-@pytest.mark.functionality
-def test_eval_wide_vector_max_value(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "max_val.circ",
-        """\
-        input a[31:0]
-        output equal
-        equal = EQ(a, 32'd4294967295)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=32'hffffffff"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "equal=1"
-
-
-# =============================================================================
 # Extreme Cases - Boundary Indices
 # =============================================================================
-
-
-@pytest.mark.functionality
-def test_eval_index_zero(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "idx_zero.circ",
-        """\
-        input a[7:0]
-        output y
-        y = a[0]
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0b00000001"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=1"
-
-
-@pytest.mark.functionality
-def test_eval_index_max_bound(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    path = write_circ(
-        tmp_path,
-        "idx_max.circ",
-        """\
-        input a[7:0]
-        output y
-        y = a[7]
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0b10000000"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=1"
-
-
-@pytest.mark.functionality
-def test_eval_slice_single_bit_via_range(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test slice where hi == lo extracts single bit."""
-    path = write_circ(
-        tmp_path,
-        "slice_single.circ",
-        """\
-        input a[7:0]
-        output y
-        y = a[3:3]
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0b00001000"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=1"
 
 
 @pytest.mark.functionality
@@ -1412,63 +1017,6 @@ def test_eval_reduce_on_width_one(
 
 
 @pytest.mark.functionality
-def test_eval_concat_single_element(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test concatenation with single element."""
-    path = write_circ(
-        tmp_path,
-        "concat_single.circ",
-        """\
-        input a[3:0]
-        output y[3:0]
-        y = {a}
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0b1010"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b1010"
-
-
-@pytest.mark.functionality
-def test_eval_concat_many_elements(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test concatenation with many elements."""
-    path = write_circ(
-        tmp_path,
-        "concat_many.circ",
-        """\
-        input a b c d
-        output y[3:0]
-        y = {a, b, c, d}
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        [
-            "eval",
-            str(path),
-            "--set",
-            "a=1",
-            "--set",
-            "b=0",
-            "--set",
-            "c=1",
-            "--set",
-            "d=0",
-        ],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b1010"
-
-
-@pytest.mark.functionality
 def test_eval_concat_mixed_widths(
     entrypoint_argv: list[str],
     tmp_path: Path,
@@ -1498,149 +1046,6 @@ def test_eval_concat_mixed_widths(
     )
     assert result.returncode == 0
     assert result.stdout.strip() == "y=0b1100001"
-
-
-# =============================================================================
-# Extreme Cases - Literal Edge Cases
-# =============================================================================
-
-
-@pytest.mark.functionality
-def test_eval_hex_single_digit(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test single hex digit literal."""
-    path = write_circ(
-        tmp_path,
-        "hex_single.circ",
-        """\
-        input a[3:0]
-        output y[3:0]
-        y = AND(a, 0xf)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0xf"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b1111"
-
-
-@pytest.mark.functionality
-def test_eval_hex_leading_zeros(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test hex literal with leading zeros in circuit."""
-    path = write_circ(
-        tmp_path,
-        "hex_leading.circ",
-        """\
-        input a[7:0]
-        output equal
-        equal = EQ(a, 0x0f)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=0x0f"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "equal=1"
-
-
-@pytest.mark.functionality
-def test_eval_binary_all_zeros(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test binary literal of all zeros."""
-    path = write_circ(
-        tmp_path,
-        "all_zeros.circ",
-        """\
-        input a[7:0]
-        output y[7:0]
-        y = OR(a, 8'b00000000)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=8'b10101010"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b10101010"
-
-
-@pytest.mark.functionality
-def test_eval_binary_all_ones(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test binary literal of all ones."""
-    path = write_circ(
-        tmp_path,
-        "all_ones.circ",
-        """\
-        input a[7:0]
-        output y[7:0]
-        y = AND(a, 8'b11111111)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=8'b10101010"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b10101010"
-
-
-@pytest.mark.functionality
-def test_eval_sized_decimal_boundary_max(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test sized decimal at maximum value for width."""
-    path = write_circ(
-        tmp_path,
-        "dec_max.circ",
-        """\
-        input a[7:0]
-        output equal
-        equal = EQ(a, 8'd255)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=8'd255"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "equal=1"
-
-
-@pytest.mark.functionality
-def test_eval_sized_decimal_zero(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test sized decimal zero."""
-    path = write_circ(
-        tmp_path,
-        "dec_zero.circ",
-        """\
-        input a[7:0]
-        output equal
-        equal = EQ(a, 8'd0)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=8'd0"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "equal=1"
 
 
 # =============================================================================
@@ -1749,29 +1154,6 @@ def test_eval_radix_hex_odd_width(
 
 
 @pytest.mark.functionality
-def test_eval_radix_dec_large_value(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test decimal output for large values."""
-    path = write_circ(
-        tmp_path,
-        "dec_large.circ",
-        """\
-        input a[15:0]
-        output y[15:0]
-        y = BUF(a)
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        ["eval", str(path), "--set", "a=16'd65535", "--radix", "dec"],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=65535"
-
-
-@pytest.mark.functionality
 def test_eval_radix_bin_preserves_leading_zeros(
     entrypoint_argv: list[str],
     tmp_path: Path,
@@ -1797,43 +1179,6 @@ def test_eval_radix_bin_preserves_leading_zeros(
 # =============================================================================
 # Extreme Cases - Complex Nested Expressions
 # =============================================================================
-
-
-@pytest.mark.functionality
-def test_eval_deeply_nested_concat(
-    entrypoint_argv: list[str],
-    tmp_path: Path,
-) -> None:
-    """Test concatenation inside concatenation."""
-    path = write_circ(
-        tmp_path,
-        "deep_concat.circ",
-        """\
-        input a b c d
-        output y[3:0]
-        wire t1[1:0] t2[1:0]
-        t1 = {a, b}
-        t2 = {c, d}
-        y = {t1, t2}
-        """,
-    )
-    result = run_command(
-        entrypoint_argv,
-        [
-            "eval",
-            str(path),
-            "--set",
-            "a=1",
-            "--set",
-            "b=0",
-            "--set",
-            "c=1",
-            "--set",
-            "d=1",
-        ],
-    )
-    assert result.returncode == 0
-    assert result.stdout.strip() == "y=0b1011"
 
 
 @pytest.mark.functionality

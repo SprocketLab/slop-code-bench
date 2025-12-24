@@ -124,6 +124,10 @@ class Session:
         logger.debug("Preparing session", verbose=True)
         self.workspace.prepare()
 
+    def materialize_assets(self) -> None:
+        """Materialize static assets into workspace."""
+        self.workspace.materialize_assets()
+
     def cleanup(self) -> None:
         """Clean up all session resources."""
         logger.debug(
@@ -190,7 +194,7 @@ class Session:
                 shutil.copy2(item, dest)
 
         # Re-materialize static assets (they may have been in snapshot ignores)
-        self.workspace._maybe_materialize_static_assets()
+        self.workspace.materialize_assets()
 
         logger.debug(
             "Snapshot restoration complete",

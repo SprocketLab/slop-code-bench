@@ -51,11 +51,11 @@ Ensure your problem works and submit a PR.
 
 | Component | Description |
 |-----------|-------------|
-| `config.yaml` | Problem metadata and adapter configuration |
-| `checkpoint_N/spec.md` | What agents must build at each checkpoint |
-| `checkpoint_N/core/` | Test case definitions |
-| `loader.py` | Discovers and loads test cases |
-| `verifier.py` | Validates outputs (optional) |
+| `config.yaml` | Problem configuration with inline checkpoint definitions |
+| `checkpoint_N.md` | Specification for each checkpoint |
+| `tests/test_checkpoint_N.py` | Pytest tests for each checkpoint |
+| `tests/conftest.py` | Shared pytest fixtures |
+| `tests/data/checkpoint_N/` | Test case data (core, hidden, errors) |
 
 ## Development
 

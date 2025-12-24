@@ -47,23 +47,6 @@ instructions.
   after writing tests or when reviewing test coverage. Invoke with
   `/edge-cases <problem> <checkpoint>`. (file:
   `/home/gabe/Coding/slop-code-bench/.codex/skills/edge-cases/SKILL.md`)
-- migrate-tests: Migrate SCBench problems from old loader/verifier style to new
-  pytest style, one checkpoint at a time. Use when porting problems that have
-  `loader.py` and `verifier.py` files, or when creating `tests/` directories
-  with `conftest.py` and `test_checkpoint_*.py` files. (file:
-  `/home/gabe/Coding/slop-code-bench/.codex/skills/migrate-tests/SKILL.md`)
-- plan-migration: Analyze SCBench problems before migration and create a
-  `migrate.md` plan. Use BEFORE migrate-tests to understand the problem
-  structure, map groups to types, identify regression handling, and document
-  special cases. Invoke with `/plan-migration <problem>`. (file:
-  `/home/gabe/Coding/slop-code-bench/.codex/skills/plan-migration/SKILL.md`)
-- validate-tests: Validate new-style pytest checkpoint tests against the
-  checkpoint spec for SCBench problems. Use when comparing
-  `problems/<problem>/tests/checkpoint_N.py` to
-  `problems/<problem>/checkpoint_N.md` (or when verifying any checkpoint test
-  expectations against the spec). Flag contradictions, out-of-scope tests,
-  missing coverage, and ambiguous spec assumptions. (file:
-  `/home/gabe/Coding/slop-code-bench/.codex/skills/validate-tests/SKILL.md`)
 - skill-creator: Guide for creating effective skills. This skill should be used
   when users want to create a new skill (or update an existing skill) that
   extends Codex's capabilities with specialized knowledge, workflows, or tool

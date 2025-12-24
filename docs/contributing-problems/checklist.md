@@ -60,15 +60,16 @@ Your PR should include:
 
 ```
 problems/your_problem/
-├── config.yaml           # Problem configuration
-├── loader.py             # Test case loader
-├── verifier.py           # Output verifier (if needed)
-├── checkpoint_1/
-│   ├── spec.md           # Checkpoint specification
-│   └── core/             # Test cases
-│       └── ...
-├── checkpoint_2/         # Additional checkpoints
-│   └── ...
+├── config.yaml           # Problem configuration (with inline checkpoints)
+├── checkpoint_1.md       # Checkpoint 1 specification
+├── checkpoint_2.md       # Checkpoint 2 specification
+├── tests/
+│   ├── conftest.py       # Pytest fixtures
+│   ├── test_checkpoint_1.py
+│   ├── test_checkpoint_2.py
+│   └── data/             # Test case data
+│       ├── checkpoint_1/
+│       └── checkpoint_2/
 └── files/                # Static assets (if needed)
 ```
 

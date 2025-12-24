@@ -19,7 +19,7 @@ You possess deep expertise in:
 ## Workflow
 
 ### Phase 1: Specification Analysis
-1. Read the specification file carefully (typically at `problems/{problem_name}/checkpoint_N/spec.md`)
+1. Read the specification file carefully (at `problems/{problem_name}/checkpoint_N.md`)
 2. Extract ALL requirements, both explicit and implicit
 3. For each requirement, systematically identify edge cases:
    - Boundary conditions (empty inputs, maximum values, off-by-one scenarios)
@@ -30,8 +30,8 @@ You possess deep expertise in:
    - Combination edge cases (multiple edge conditions occurring together)
 
 ### Phase 2: Test Coverage Audit
-1. Examine existing test cases in `problems/{problem_name}/checkpoint_N/{group_name}/`
-2. Understand the test structure by reading `problems/{problem_name}/loader.py`
+1. Examine existing test cases in `problems/{problem_name}/tests/test_checkpoint_N.py`
+2. Review test data in `problems/{problem_name}/tests/data/checkpoint_N/`
 3. Map each identified edge case to existing tests
 4. Document which edge cases are:
    - Fully covered
@@ -39,12 +39,12 @@ You possess deep expertise in:
    - Not covered at all
 
 ### Phase 3: Test Generation
-1. For missing edge cases, create new test case files following the existing pattern
-2. Place tests in appropriate group directories:
-   - `core/` - Critical functionality that must pass
-   - `functionality/` - Additional features
-   - `errors/` - Error handling cases
-3. Ensure test format matches the problem's loader expectations (check `loader.py`)
+1. For missing edge cases, add tests to `tests/test_checkpoint_N.py` following the existing pattern
+2. Use pytest markers to categorize tests:
+   - Unmarked tests - Core functionality that must pass
+   - `@pytest.mark.functionality` - Additional features
+   - `@pytest.mark.error` - Error handling cases
+3. Add any required test data to `tests/data/checkpoint_N/`
 
 ### Phase 4: Validation
 1. Run the evaluation command to test your new cases:
@@ -128,14 +128,14 @@ Provide a structured report:
 
 This project (SlopCodeBench) evaluates coding agents on iterative specification refinement. Problems have:
 - `config.yaml` - Problem configuration with inline checkpoint definitions
-- `checkpoint_N/spec.md` - Specification for each checkpoint
-- `checkpoint_N/{group}/` - Test case directories
-- `loader.py` - Defines how test cases are loaded (GroupLoader implementation)
-- `verifier.py` - Optional custom verification logic
+- `checkpoint_N.md` - Specification for each checkpoint
+- `tests/test_checkpoint_N.py` - Pytest tests for each checkpoint
+- `tests/conftest.py` - Shared fixtures (entrypoint, checkpoint, etc.)
+- `tests/data/checkpoint_N/` - Test case data (core, hidden, errors)
 
 Test groups use PassPolicy:
-- `Core` - Must all pass
-- `Functionality` - Additional validation
-- `Error` - Expected failure handling
+- `Core` (unmarked tests) - Must all pass
+- `Functionality` (`@pytest.mark.functionality`) - Additional validation
+- `Error` (`@pytest.mark.error`) - Expected failure handling
 
-Understand the loader pattern before creating tests to ensure proper format.
+Review `conftest.py` for fixtures like `entrypoint_argv` and `checkpoint_name` before creating tests.

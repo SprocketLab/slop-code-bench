@@ -16,7 +16,7 @@ This guide explains when and how to split problems into multiple checkpoints, wi
 
 A **checkpoint** is a milestone in problem progression. Each checkpoint has:
 
-- **Specification (`spec.md`)**: What to build at this stage
+- **Specification (`checkpoint_N.md`)**: What to build at this stage
 - **Test file (`test_checkpoint_N.py`)**: Pytest tests for this milestone
 - **Independent evaluation**: Pass/fail determined separately
 

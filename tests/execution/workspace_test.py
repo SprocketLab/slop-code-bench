@@ -84,10 +84,11 @@ class TestWorkspace:
         workspace: Workspace,
         resolved_static_assets: dict[str, ResolvedStaticAsset],
     ):
-        """Test that prepare copies static assets to working directory."""
+        """Test that materialize_assets copies static assets to working directory."""
         workspace._is_agent_infer = True
         try:
             workspace.prepare()
+            workspace.materialize_assets()
             working_dir = workspace.working_dir
             for f in resolved_static_assets.values():
                 assert (working_dir / f.save_path).exists(), (
@@ -106,11 +107,12 @@ class TestWorkspace:
         workspace: Workspace,
         resolved_directory_asset: dict[str, ResolvedStaticAsset],
     ):
-        """Test that prepare copies static assets to working directory."""
+        """Test that materialize_assets copies directory assets to working directory."""
         workspace._is_agent_infer = True
         workspace._static_assets = resolved_directory_asset
         try:
             workspace.prepare()
+            workspace.materialize_assets()
             working_dir = workspace.working_dir
             for f in resolved_directory_asset.values():
                 for sub_file in f.absolute_path.rglob("*"):

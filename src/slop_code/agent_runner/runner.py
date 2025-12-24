@@ -447,12 +447,14 @@ class AgentRunner:
         )
         self._session.__enter__()
 
-        # If resuming, restore snapshot and run resume commands
+        # Materialize assets: fresh runs do it explicitly, resume does it in restore_from_snapshot_dir
         if is_resuming and self.resume_info.last_snapshot_dir:
             self._session.restore_from_snapshot_dir(
                 self.resume_info.last_snapshot_dir
             )
             self._run_resume_commands()
+        else:
+            self._session.materialize_assets()
 
         # Start progress monitoring
         self.progress_thread = threading.Thread(

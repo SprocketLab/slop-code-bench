@@ -23,7 +23,7 @@ Analyze a checkpoint's spec and existing tests to identify and add missing edge 
 Read these files for the specified problem/checkpoint:
 
 ```
-problems/{problem}/checkpoint_N.md    # or checkpoint_N.md
+problems/{problem}/checkpoint_N.md
 problems/{problem}/tests/conftest.py
 problems/{problem}/tests/test_checkpoint_N.py
 ```

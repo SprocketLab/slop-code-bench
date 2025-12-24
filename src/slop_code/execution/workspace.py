@@ -189,7 +189,7 @@ class Workspace:
                     target=target_path,
                     verbose=True,
                 )
-                shutil.copytree(asset.absolute_path, target_path)
+                shutil.copytree(asset.absolute_path, target_path, dirs_exist_ok=True)
             else:
                 logger.debug(
                     "Copying file asset",
@@ -296,18 +296,28 @@ class Workspace:
         return old_snapshot
 
     def prepare(self) -> None:
-        """Prepare the workspace for use."""
+        """Prepare the workspace for use.
+
+        Does NOT materialize static assets - call materialize_assets() separately.
+        """
         if self._temp_dir is not None:
             raise WorkspaceError("Workspace already prepared")
         logger.debug("Preparing workspace", verbose=True)
         self._temp_dir = tempfile.TemporaryDirectory()
         self._prepare_initial_snapshot()
-        self._maybe_materialize_static_assets()
         logger.debug(
             "Workspace prepared",
             working_dir=self.working_dir,
             verbose=True,
         )
+
+    def materialize_assets(self) -> None:
+        """Materialize static assets into workspace.
+
+        Safe to call multiple times - handles existing assets gracefully.
+        Only materializes in agent infer mode.
+        """
+        self._maybe_materialize_static_assets()
 
     def cleanup(self) -> None:
         """Clean up workspace resources."""

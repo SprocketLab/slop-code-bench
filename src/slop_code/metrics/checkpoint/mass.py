@@ -61,27 +61,32 @@ def calc_mass(value: int, statements: int, baseline: int = 0) -> float:
     return excess * size_factor
 
 
-def _compute_top_n_distribution(masses: list[float]) -> dict[str, int]:
-    """Compute how many symbols account for top N% of mass.
+def _compute_top_n_distribution(masses: list[float]) -> dict[str, int | float]:
+    """Compute how many symbols and how much mass account for top N% of total.
 
-    Returns dict with mass.top50_count, mass.top75_count, mass.top90_count.
+    Returns dict with:
+    - mass.top{50,75,90}_count: number of symbols reaching threshold
+    - mass.top{50,75,90}_mass: actual mass in those symbols
     """
     if not masses or sum(masses) == 0:
         return {
             "mass.top50_count": 0,
+            "mass.top50_mass": 0.0,
             "mass.top75_count": 0,
+            "mass.top75_mass": 0.0,
             "mass.top90_count": 0,
+            "mass.top90_mass": 0.0,
         }
 
     # Sort descending
     sorted_masses = sorted(masses, reverse=True)
     total = sum(sorted_masses)
 
-    result = {}
-    for pct, key in [
-        (0.50, "mass.top50_count"),
-        (0.75, "mass.top75_count"),
-        (0.90, "mass.top90_count"),
+    result: dict[str, int | float] = {}
+    for pct, count_key, mass_key in [
+        (0.50, "mass.top50_count", "mass.top50_mass"),
+        (0.75, "mass.top75_count", "mass.top75_mass"),
+        (0.90, "mass.top90_count", "mass.top90_mass"),
     ]:
         threshold = total * pct
         cumsum = 0.0
@@ -91,7 +96,8 @@ def _compute_top_n_distribution(masses: list[float]) -> dict[str, int]:
             count += 1
             if cumsum >= threshold:
                 break
-        result[key] = count
+        result[count_key] = count
+        result[mass_key] = round(cumsum, 2)
 
     return result
 
@@ -262,6 +268,7 @@ def compute_mass_delta(
     Returns:
         Dict with delta metrics:
         - delta.mass.{metric}: Change in mass for each metric type
+        - delta.mass.top{50,75,90}_count: Change in top N% symbol counts
         - delta.symbols_added: Count of new functions/methods
         - delta.symbols_removed: Count of deleted functions/methods
         - delta.symbols_modified: Count of changed functions/methods
@@ -281,6 +288,10 @@ def compute_mass_delta(
     matched_pairs, added, removed = _match_symbols(before, after)
 
     result: dict[str, Any] = {}
+
+    # Track complexity masses for top N% distribution
+    before_complexity_masses: list[float] = []
+    after_complexity_masses: list[float] = []
 
     # Compute mass delta for each metric
     for metric in MASS_METRICS:
@@ -314,6 +325,34 @@ def compute_mass_delta(
 
         key = KEY_NAMES[metric]
         result[f"delta.mass.{key}"] = round(delta, 2)
+
+        # Collect complexity masses for top N% computation
+        if metric == "complexity":
+            for s, _ in matched_pairs:
+                before_complexity_masses.append(
+                    calc_mass(s.get(metric, 0), s.get("statements", 0), baseline)
+                )
+            for _, s in matched_pairs:
+                after_complexity_masses.append(
+                    calc_mass(s.get(metric, 0), s.get("statements", 0), baseline)
+                )
+            for s in removed:
+                before_complexity_masses.append(
+                    calc_mass(s.get(metric, 0), s.get("statements", 0), baseline)
+                )
+            for s in added:
+                after_complexity_masses.append(
+                    calc_mass(s.get(metric, 0), s.get("statements", 0), baseline)
+                )
+
+    # Compute top N% distribution deltas (raw difference)
+    before_top_n = _compute_top_n_distribution(before_complexity_masses)
+    after_top_n = _compute_top_n_distribution(after_complexity_masses)
+    for pct in ["50", "75", "90"]:
+        count_key = f"mass.top{pct}_count"
+        mass_key = f"mass.top{pct}_mass"
+        result[f"delta.{count_key}"] = after_top_n[count_key] - before_top_n[count_key]
+        result[f"delta.{mass_key}"] = round(after_top_n[mass_key] - before_top_n[mass_key], 2)
 
     # Count symbol changes
     result["delta.symbols_added"] = len(added)

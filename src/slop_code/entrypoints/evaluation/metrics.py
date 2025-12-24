@@ -145,6 +145,7 @@ def create_problem_reports(
     out = []
     errors: list[tuple[str, str]] = []
     prior_metrics = None
+    prior_checkpoint_dir = None
     for idx, checkpoint_name in enumerate(
         sorted(
             problem.checkpoints.keys(),
@@ -155,6 +156,7 @@ def create_problem_reports(
         metrics = get_checkpoint_metrics(
             checkpoint_dir,
             prior_metrics=prior_metrics,
+            prior_checkpoint_dir=prior_checkpoint_dir,
             is_first=idx == 0,
             is_last=idx == len(problem.checkpoints) - 1,
         )
@@ -171,6 +173,7 @@ def create_problem_reports(
             }
         )
         prior_metrics = metrics
+        prior_checkpoint_dir = checkpoint_dir
 
     return out, errors
 
