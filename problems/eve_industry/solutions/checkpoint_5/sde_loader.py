@@ -162,6 +162,31 @@ class SDELoader:
         """
         return self._load_csv("industryActivitySkills.csv.bz2")
 
+    def load_blueprints(self) -> pd.DataFrame:
+        """
+        Load blueprint limits from industryBlueprints.csv.bz2.
+
+        Returns:
+            DataFrame with typeID, maxProductionLimit
+        """
+        return self._load_csv("industryBlueprints.csv.bz2")
+
+    def get_max_production_limit(self, blueprint_type_id: int) -> int:
+        """
+        Get the max production limit for a blueprint.
+
+        Args:
+            blueprint_type_id: The blueprint type ID
+
+        Returns:
+            Max runs per job for this blueprint
+        """
+        blueprints = self.load_blueprints()
+        row = blueprints[blueprints["typeID"] == blueprint_type_id]
+        if len(row) == 0:
+            return 1  # Default if not found
+        return int(row.iloc[0]["maxProductionLimit"])
+
     def load_ship_volumes(self) -> dict[str, float]:
         """
         Load packaged ship volumes from ship_volumes.yaml.
@@ -282,18 +307,41 @@ class SDELoader:
             return None
         return int(matches.iloc[0]["activityID"])
 
-    def get_item_name_by_id(self, type_id: int) -> str:
+    def get_item_name_by_id(self, type_id: int, fallback: str | None = None) -> str:
         """
         Get the name of an item by its typeID.
 
         Args:
             type_id: The typeID to get the name of
+            fallback: Optional fallback name if not found
 
         Returns:
-            The name of the item or None if not found
+            The name of the item, or fallback if provided, or raises ValueError
         """
         types = self.load_types()
         matches = types[types["typeID"] == type_id]
         if len(matches) == 0:
+            if fallback is not None:
+                return fallback
             raise ValueError(f"Item with typeID {type_id} not found")
         return matches.iloc[0]["typeName"]
+
+    def get_output_quantity(self, blueprint_type_id: int, activity_id: int) -> int:
+        """
+        Get the output quantity per run for a blueprint/activity.
+
+        Args:
+            blueprint_type_id: The typeID of the blueprint
+            activity_id: The activity ID
+
+        Returns:
+            The quantity produced per run (defaults to 1 if not found)
+        """
+        products = self.load_activity_products()
+        matches = products[
+            (products["typeID"] == blueprint_type_id)
+            & (products["activityID"] == activity_id)
+        ]
+        if len(matches) == 0:
+            return 1
+        return int(matches.iloc[0]["quantity"])

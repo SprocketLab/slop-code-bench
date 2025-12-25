@@ -1,0 +1,21 @@
+{
+  "test_id": "redeemer",
+  "marker": "functionality",
+  "item_name": "Redeemer",
+  "tech_level": "t2",
+  "base_prob": 0.22,
+  "base_runs": 1,
+  "num_science_skills": 2,
+  "skill_levels": [1],
+  "expected_base": {
+    "item": "Redeemer (22428)",
+    "group": "Ship > Black Ops",
+    "market_group": "Ships > Battleships > Advanced Battleships > Black Ops > Amarr",
+    "tech_level": "Tech II",
+    "base": "Armageddon Blueprint (997)",
+    "datacores": "Datacore - Amarrian Starship Engineering, Datacore - Mechanical Engineering",
+    "required_per_run": 32,
+    "skills": "Amarr Encryption Methods, Amarr Starship Engineering, Mechanical Engineering",
+    "time": 3200
+  }
+}

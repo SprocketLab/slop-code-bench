@@ -26,6 +26,14 @@ def run_command(
     )
 
 
+def parse_outputs(stdout: str) -> dict[str, str]:
+    outputs: dict[str, str] = {}
+    for line in stdout.strip().splitlines():
+        name, value = line.split("=", 1)
+        outputs[name] = value
+    return outputs
+
+
 def parse_json_output(stdout: str) -> dict[str, object]:
     payload = json.loads(stdout.strip())
     assert isinstance(payload, dict)

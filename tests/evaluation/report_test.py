@@ -444,9 +444,222 @@ class TestCorrectnessResults:
 
             assert data["problem_name"] == "test"
             assert data["checkpoint_name"] == "checkpoint_1"
-            assert len(data["tests"]) == 1
+            # tests is now a grouped dict, not a list
+            assert isinstance(data["tests"], dict)
+            assert "checkpoint_1-Core" in data["tests"]
+            assert data["tests"]["checkpoint_1-Core"]["passed"] == ["test_1"]
             assert "pytest_stdout" not in data
             assert "pytest_stderr" not in data
+
+    def test_save_creates_grouped_tests_format(self):
+        """save() creates tests as grouped dict with passed/failed arrays."""
+        results = CorrectnessResults(
+            problem_name="test",
+            problem_version=1,
+            checkpoint_name="checkpoint_1",
+            checkpoint_version=1,
+            duration=5.0,
+            entrypoint="python main.py",
+            pytest_exit_code=1,
+            pytest_collected=3,
+        )
+
+        # Add tests from different groups with different statuses
+        results.add_test_result(
+            EvalTestResult(
+                id="test_core_pass",
+                checkpoint="checkpoint_1",
+                group_type=GroupType.CORE,
+                status="passed",
+                duration_ms=100.0,
+                file_path="tests/test.py",
+            )
+        )
+        results.add_test_result(
+            EvalTestResult(
+                id="test_core_fail",
+                checkpoint="checkpoint_1",
+                group_type=GroupType.CORE,
+                status="failed",
+                duration_ms=50.0,
+                file_path="tests/test.py",
+            )
+        )
+        results.add_test_result(
+            EvalTestResult(
+                id="test_func_pass",
+                checkpoint="checkpoint_1",
+                group_type=GroupType.FUNCTIONALITY,
+                status="passed",
+                duration_ms=75.0,
+                file_path="tests/test.py",
+            )
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            save_path = Path(tmpdir)
+            results.save(save_path)
+
+            with (save_path / "evaluation.json").open() as f:
+                data = json.load(f)
+
+        # tests should be a dict, not a list
+        assert isinstance(data["tests"], dict)
+
+        # Check structure for Core tests
+        assert "checkpoint_1-Core" in data["tests"]
+        assert data["tests"]["checkpoint_1-Core"]["passed"] == ["test_core_pass"]
+        assert data["tests"]["checkpoint_1-Core"]["failed"] == ["test_core_fail"]
+
+        # Check structure for Functionality tests
+        assert "checkpoint_1-Functionality" in data["tests"]
+        assert data["tests"]["checkpoint_1-Functionality"]["passed"] == [
+            "test_func_pass"
+        ]
+        assert data["tests"]["checkpoint_1-Functionality"]["failed"] == []
+
+    def test_save_grouped_tests_multiple_checkpoints(self):
+        """Grouped tests correctly separate different checkpoints."""
+        results = CorrectnessResults(
+            problem_name="test",
+            problem_version=1,
+            checkpoint_name="checkpoint_2",
+            checkpoint_version=1,
+            duration=5.0,
+            entrypoint="python main.py",
+            pytest_exit_code=0,
+            pytest_collected=2,
+        )
+
+        # Add test from checkpoint_1 (regression)
+        results.add_test_result(
+            EvalTestResult(
+                id="test_old",
+                checkpoint="checkpoint_1",
+                group_type=GroupType.REGRESSION,
+                status="passed",
+                duration_ms=50.0,
+                file_path="tests/test.py",
+            )
+        )
+
+        # Add test from checkpoint_2 (current)
+        results.add_test_result(
+            EvalTestResult(
+                id="test_new",
+                checkpoint="checkpoint_2",
+                group_type=GroupType.CORE,
+                status="passed",
+                duration_ms=100.0,
+                file_path="tests/test.py",
+            )
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            save_path = Path(tmpdir)
+            results.save(save_path)
+
+            with (save_path / "evaluation.json").open() as f:
+                data = json.load(f)
+
+        # Both checkpoints should appear as separate keys
+        assert "checkpoint_1-Regression" in data["tests"]
+        assert "checkpoint_2-Core" in data["tests"]
+        assert data["tests"]["checkpoint_1-Regression"]["passed"] == ["test_old"]
+        assert data["tests"]["checkpoint_2-Core"]["passed"] == ["test_new"]
+
+    def test_save_grouped_tests_all_group_types(self):
+        """All group types (Core, Functionality, Regression, Error) are handled."""
+        results = CorrectnessResults(
+            problem_name="test",
+            problem_version=1,
+            checkpoint_name="checkpoint_1",
+            checkpoint_version=1,
+            duration=5.0,
+            entrypoint="python main.py",
+            pytest_exit_code=0,
+            pytest_collected=4,
+        )
+
+        # Add one test of each group type
+        for group_type in GroupType:
+            results.add_test_result(
+                EvalTestResult(
+                    id=f"test_{group_type.value.lower()}",
+                    checkpoint="checkpoint_1",
+                    group_type=group_type,
+                    status="passed",
+                    duration_ms=50.0,
+                    file_path="tests/test.py",
+                )
+            )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            save_path = Path(tmpdir)
+            results.save(save_path)
+
+            with (save_path / "evaluation.json").open() as f:
+                data = json.load(f)
+
+        # All group types should have their own key
+        assert "checkpoint_1-Core" in data["tests"]
+        assert "checkpoint_1-Functionality" in data["tests"]
+        assert "checkpoint_1-Regression" in data["tests"]
+        assert "checkpoint_1-Error" in data["tests"]
+
+        # Each should have the correct test ID
+        assert data["tests"]["checkpoint_1-Core"]["passed"] == ["test_core"]
+        assert data["tests"]["checkpoint_1-Functionality"]["passed"] == [
+            "test_functionality"
+        ]
+        assert data["tests"]["checkpoint_1-Regression"]["passed"] == ["test_regression"]
+        assert data["tests"]["checkpoint_1-Error"]["passed"] == ["test_error"]
+
+    def test_to_output_dict_returns_grouped_format(self):
+        """to_output_dict() returns dict with grouped tests format."""
+        results = CorrectnessResults(
+            problem_name="test",
+            problem_version=1,
+            checkpoint_name="checkpoint_1",
+            checkpoint_version=1,
+            duration=5.0,
+            entrypoint="python main.py",
+            pytest_exit_code=0,
+            pytest_collected=2,
+        )
+
+        results.add_test_result(
+            EvalTestResult(
+                id="test_pass",
+                checkpoint="checkpoint_1",
+                group_type=GroupType.CORE,
+                status="passed",
+                duration_ms=100.0,
+                file_path="tests/test.py",
+            )
+        )
+        results.add_test_result(
+            EvalTestResult(
+                id="test_fail",
+                checkpoint="checkpoint_1",
+                group_type=GroupType.CORE,
+                status="failed",
+                duration_ms=50.0,
+                file_path="tests/test.py",
+            )
+        )
+
+        data = results.to_output_dict()
+
+        # Should have grouped tests format
+        assert isinstance(data["tests"], dict)
+        assert "checkpoint_1-Core" in data["tests"]
+        assert data["tests"]["checkpoint_1-Core"]["passed"] == ["test_pass"]
+        assert data["tests"]["checkpoint_1-Core"]["failed"] == ["test_fail"]
+
+        # Should still have other fields
+        assert data["problem_name"] == "test"
+        assert data["checkpoint_name"] == "checkpoint_1"
 
     def test_save_creates_directory(self):
         """save() creates directory if it doesn't exist."""

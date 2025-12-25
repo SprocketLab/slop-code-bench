@@ -17,6 +17,13 @@ from typing import Any
 import pytest
 
 
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line(
+        "markers", "timeout(seconds): fail test after N seconds"
+    )
+
+
 def pytest_addoption(parser):
     """Register required CLI options for SCBench evaluation."""
     parser.addoption(
@@ -107,7 +114,9 @@ def run_transform_test(
     lang: str,
     tmp_path: Path,
     run_scripts: dict[str, Path],
-    timeout: int = 120,
+    gen_timeout: int = 10,
+    compile_timeout: int = 60,
+    run_timeout: int = 30,
 ) -> None:
     """Run a transform test case.
 
@@ -117,7 +126,9 @@ def run_transform_test(
         lang: Language to test ("python", "javascript", "cpp", or "rust")
         tmp_path: Temporary directory for test files (sample, data, output)
         run_scripts: Dict mapping language to run script path
-        timeout: Timeout in seconds for each subprocess
+        gen_timeout: Timeout in seconds for module generation
+        compile_timeout: Timeout in seconds for compilation (C++/Rust)
+        run_timeout: Timeout in seconds for execution
     """
     # 1. Setup sample directory in tmp_path
     sample_dir = tmp_path / "sample"
@@ -210,13 +221,16 @@ def run_transform_test(
         raise ValueError(f"Unsupported language: {lang}")
 
     # 4. Generate module (run from workspace where submission code lives)
-    gen_result = subprocess.run(
-        gen_cmd,
-        cwd=workspace,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
+    try:
+        gen_result = subprocess.run(
+            gen_cmd,
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=gen_timeout,
+        )
+    except subprocess.TimeoutExpired:
+        pytest.fail(f"TIMEOUT (generation): exceeded {gen_timeout}s - {' '.join(gen_cmd)}")
     assert gen_result.returncode == 0, (
         f"Module generation failed:\nstdout: {gen_result.stdout}\nstderr: {gen_result.stderr}"
     )
@@ -229,25 +243,31 @@ def run_transform_test(
         else:
             compile_cwd = tmp_path
 
-        compile_result = subprocess.run(
-            compile_cmd,
-            cwd=compile_cwd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
+        try:
+            compile_result = subprocess.run(
+                compile_cmd,
+                cwd=compile_cwd,
+                capture_output=True,
+                text=True,
+                timeout=compile_timeout,
+            )
+        except subprocess.TimeoutExpired:
+            pytest.fail(f"TIMEOUT (compilation step {i + 1}): exceeded {compile_timeout}s - {' '.join(compile_cmd)}")
         assert compile_result.returncode == 0, (
             f"Compilation failed (step {i + 1}):\nstdout: {compile_result.stdout}\nstderr: {compile_result.stderr}"
         )
 
     # 6. Run and capture output (run from tmp_path where generated module is)
-    run_result = subprocess.run(
-        run_cmd,
-        cwd=tmp_path,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
+    try:
+        run_result = subprocess.run(
+            run_cmd,
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+            timeout=run_timeout,
+        )
+    except subprocess.TimeoutExpired:
+        pytest.fail(f"TIMEOUT (execution): exceeded {run_timeout}s - {' '.join(run_cmd)}")
     assert run_result.returncode == 0, (
         f"Execution failed:\nstdout: {run_result.stdout}\nstderr: {run_result.stderr}"
     )

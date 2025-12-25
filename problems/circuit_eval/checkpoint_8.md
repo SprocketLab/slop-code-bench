@@ -77,12 +77,12 @@ If `--passes` is provided, use that comma-separated list.
 
 Otherwise, select from `--pipeline` (default is `default`):
 
-| Pipeline | Passes |
-|----------|--------|
-| `default` | normalize, constfold, algebra, cse, dce |
-| `clean` | normalize, cse, dce |
-| `area` | normalize, constfold, algebra, cse, dce, fanin, normalize, constfold, dce |
-| `depth` | (same as area) |
+| Pipeline | Goal |
+|----------|------|
+| `default` | Standard optimization |
+| `clean` | Minimal normalization and cleanup |
+| `area` | Minimize gate count (includes fanin decomposition) |
+| `depth` | Minimize critical path length |
 
 ### Iteration
 
@@ -98,17 +98,13 @@ The final output circuit must satisfy ALL of these:
 
 ### 1. No non-canonical operators
 
-The output must not contain:
-* `ITE(` — must be converted to `MUX(`
-* `NAND(` — must be converted to `NOT(AND(...))`
-* `NOR(` — must be converted to `NOT(OR(...))`
-* `XNOR(` — must be converted to `NOT(XOR(...))`
+The output must use only canonical operators: `NOT`, `AND`, `OR`, `XOR`, `MUX`, `BUF`, and literals. Non-canonical operators (`ITE`, `NAND`, `NOR`, `XNOR`) must be rewritten to equivalent canonical forms.
 
 ### 2. Flattened and sorted associative ops
 
 Every `AND`, `OR`, `XOR` must be:
 * **Flattened**: no direct nested same-op (e.g., no `AND(AND(a,b),c)`)
-* **Sorted**: arguments sorted lexicographically by their printed form
+* **Sorted**: arguments in deterministic sorted order
 
 ### 3. No trivial constant operations
 
@@ -123,19 +119,15 @@ Must not contain:
 ### 4. No duplicate arguments
 
 * `AND` and `OR`: no duplicate identical arguments
-* `XOR`: duplicates are canceled (pairs eliminate); if reduced to 0 args → all-zero literal; if 1 arg → that arg
+* `XOR`: duplicate arguments cancel pairwise (since `x XOR x = 0`)
 
 ### 5. Absorption
 
-* No `OR` contains both `x` and an `AND` containing `x`
-* No `AND` contains both `x` and an `OR` containing `x`
-
-(Where `x` means identical printed subexpressions)
+Boolean absorption laws are applied where applicable.
 
 ### 6. Common subexpression elimination (CSE)
 
-Among assignments whose RHS is **not** a BUF-form (identifier, index, slice, or literal):
-* No two assignments have identical RHS expression strings
+No two assignments compute the same non-trivial expression.
 
 ### 7. Dead code elimination (DCE)
 
@@ -172,44 +164,9 @@ If verification fails (non-equivalent):
 
 ## `--report` flag
 
-If provided, write a JSON report file:
-
-```json
-{
-  "input_stats": {
-    "inputs_count": 3,
-    "outputs_count": 2,
-    "wires_count": 5,
-    "assignments_count": 7,
-    "edges_count": 15,
-    "depth": 4,
-    "op_histogram": {...}
-  },
-  "output_stats": {
-    "inputs_count": 3,
-    "outputs_count": 2,
-    "wires_count": 3,
-    "assignments_count": 5,
-    "edges_count": 10,
-    "depth": 3,
-    "op_histogram": {...}
-  },
-  "passes": [
-    {"name": "normalize", "changed": true},
-    {"name": "constfold", "changed": true},
-    {"name": "algebra", "changed": false},
-    {"name": "cse", "changed": true},
-    {"name": "dce", "changed": true},
-    {"name": "normalize", "changed": false},
-    {"name": "constfold", "changed": false},
-    {"name": "algebra", "changed": false},
-    {"name": "cse", "changed": false},
-    {"name": "dce", "changed": false}
-  ]
-}
-```
-
-`passes` lists every pass invocation in order, including repeated iterations.
+If provided, write a JSON report file containing:
+* `input_stats` and `output_stats` objects with fields: `inputs_count`, `outputs_count`, `wires_count`, `assignments_count`, `edges_count`, `depth`, `op_histogram`
+* `passes`: list of objects with `name` (string) and `changed` (boolean) for every pass invocation in order, including repeated iterations
 
 ---
 
@@ -237,10 +194,9 @@ cout = OR(n1,n2)
 ```
 
 Rules:
-* INPUT lines sorted by name
-* OUTPUT lines sorted by name
-* Assignments in dependency order; ties by LHS name
-* Operators uppercase, no spaces inside calls
+* INPUT/OUTPUT declarations sorted by name
+* Assignments in dependency order (deterministic)
+* Operators uppercase, no spaces inside parentheses
 
 ---
 
@@ -315,59 +271,4 @@ $ %%%ENTRYPOINT:entry_command%%% opt buggy.circ -o out.circ --verify --max-input
 # exit 10
 ```
 
-### Example: postcondition - no NAND in output
-
-Input `circuit.circ`:
-```text
-input a b
-output y
-y = NAND(a, b)
-```
-
-After `opt`:
-```text
-input a b
-output y
-wire n0
-
-n0 = AND(a, b)
-y = NOT(n0)
-```
-
-### Example: postcondition - flattened AND
-
-Input:
-```text
-input a b c
-output y
-wire t
-t = AND(a, b)
-y = AND(t, c)
-```
-
-After `opt`:
-```text
-input a b c
-output y
-
-y = AND(a, b, c)
-```
-
-### Example: postcondition - absorption
-
-Input:
-```text
-input a b
-output y
-wire t
-t = AND(a, b)
-y = OR(a, t)
-```
-
-After `opt` (absorption: `a OR (a AND b) = a`):
-```text
-input a b
-output y
-
-y = a
-```
+Note: `ok` indicates command execution success; `equivalent: false` indicates verification found a counterexample.

@@ -1,0 +1,21 @@
+{
+  "test_id": "valravn",
+  "marker": "functionality",
+  "item_name": "Valravn",
+  "tech_level": "t2",
+  "base_prob": 0.18,
+  "base_runs": 1,
+  "num_science_skills": 2,
+  "skill_levels": [5],
+  "expected_base": {
+    "item": "Valravn (77288)",
+    "group": "Ship > Lancer Dreadnought",
+    "market_group": "Ships > Capital Ships > Dreadnoughts > Advanced Dreadnoughts > Lancer Dreadnoughts > Minmatar",
+    "tech_level": "Tech II",
+    "base": "Naglfar Blueprint (19723)",
+    "datacores": "Datacore - High Energy Physics, Datacore - Minmatar Starship Engineering",
+    "required_per_run": 85,
+    "skills": "High Energy Physics, Minmatar Encryption Methods, Minmatar Starship Engineering",
+    "time": 33000
+  }
+}

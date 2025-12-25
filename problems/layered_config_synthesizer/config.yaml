@@ -9,7 +9,7 @@ description: |
   conflict resolution. Adds fragment expansion, env var interpolation,
   multi-run manifest processing, and JSON Schema validation. Outputs canonical
   JSON with sorted keys.
-category: NOT_SET
+category: data-processing
 difficulty: Hard
 author: "Changho Shin"
 entry_file: synth_configs

@@ -90,10 +90,11 @@ def measure_files(
     for file_path in dir_path.rglob("*"):
         if file_path.is_dir():
             continue
+        rel_parts = file_path.relative_to(dir_path).parts
         matched = [
             pattern
             for pattern in exclude_patterns
-            if fnmatch.fnmatch(file_path.name, pattern)
+            if any(fnmatch.fnmatch(part, pattern) for part in rel_parts)
         ]
         if matched:
             logger.debug(
@@ -451,7 +452,18 @@ def measure_snapshot_quality(
 
     files_metrics: dict[str, FileMetrics] = {}
 
-    exclude_patterns = {"__pycache__", ".pyc", "venv", ".venv", ".git"}
+    exclude_patterns = {
+        "__pycache__",
+        "*.pyc",
+        "venv",
+        ".venv",
+        "virtualenv",
+        ".virtualenv",
+        ".git",
+        "node_modules",
+        ".tox",
+        ".nox",
+    }
 
     # Track totals in case the entry file is missing
     total_lines = 0

@@ -112,10 +112,7 @@ def test_drop_unknown_keys(entrypoint_argv):
 
 
 def test_preserve_column_names_no_trimming(entrypoint_argv):
-    """Core: Column names with spaces are preserved exactly (not trimmed).
-
-    From spec example 4: Column names like " price " should NOT be trimmed.
-    """
+    """Core: Column names with spaces are preserved exactly (not trimmed)."""
     input_data = {
         "pipeline": {
             "steps": [
@@ -142,10 +139,7 @@ def test_preserve_column_names_no_trimming(entrypoint_argv):
 
 
 def test_consistent_key_ordering(entrypoint_argv):
-    """Core: Output keys are in consistent order (op first) regardless of input order.
-
-    From spec example 5: Keys should be reordered with "op" first.
-    """
+    """Core: Output keys are in consistent order (op first) regardless of input order."""
     input_data = {
         "pipeline": {
             "steps": [
@@ -166,10 +160,7 @@ def test_consistent_key_ordering(entrypoint_argv):
 
 
 def test_empty_pipeline_is_valid(entrypoint_argv):
-    """Core: Empty pipeline with no steps is valid.
-
-    From spec example 10: Empty steps array should succeed.
-    """
+    """Core: Empty pipeline with no steps is valid."""
     input_data = {
         "pipeline": {"steps": []},
         "dataset": [],
@@ -739,10 +730,7 @@ def test_unknown_op_aggregate_error(entrypoint_argv):
 
 @pytest.mark.error
 def test_malformed_step_missing_op(entrypoint_argv):
-    """Error: Step without 'op' field is malformed.
-
-    From spec: Error code MALFORMED_STEP should be used for malformed steps.
-    """
+    """Error: Step without 'op' field is malformed."""
     input_data = {
         "pipeline": {"steps": [{"columns": ["id"]}]},
         "dataset": [],
@@ -753,8 +741,7 @@ def test_malformed_step_missing_op(entrypoint_argv):
 
     output = json.loads(result.stdout)
     assert output["status"] == "error"
-    # Could be MALFORMED_STEP or SCHEMA_VALIDATION_FAILED
-    assert output["error_code"] in ("MALFORMED_STEP", "SCHEMA_VALIDATION_FAILED")
+    assert output["error_code"] == "SCHEMA_VALIDATION_FAILED"
     assert "pipeline.steps[0]" in output["path"]
 
 
@@ -771,7 +758,7 @@ def test_step_not_an_object(entrypoint_argv):
 
     output = json.loads(result.stdout)
     assert output["status"] == "error"
-    assert output["error_code"] in ("MALFORMED_STEP", "SCHEMA_VALIDATION_FAILED")
+    assert output["error_code"] == "SCHEMA_VALIDATION_FAILED"
 
 
 @pytest.mark.error

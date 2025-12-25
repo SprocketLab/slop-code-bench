@@ -1,0 +1,19 @@
+{
+  "test_id": "jackdaw",
+  "marker": "functionality",
+  "item_name": "Jackdaw",
+  "tech_level": "t3",
+  "num_science_skills": 2,
+  "skill_levels": [5],
+  "relic_name_template": "Small {quality} Hull Section",
+  "expected_base": {
+    "item": "Jackdaw (34828)",
+    "group": "Ship > Tactical Destroyer",
+    "market_group": "Ships > Destroyers > Advanced Destroyers > Tactical Destroyers > Caldari",
+    "tech_level": "Tech III",
+    "datacores": "Datacore - Mechanical Engineering, Datacore - Plasma Physics",
+    "required_per_run": 3,
+    "skills": "Mechanical Engineering, Plasma Physics, Sleeper Encryption Methods",
+    "time": 60
+  }
+}

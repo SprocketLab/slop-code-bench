@@ -10,6 +10,8 @@ from slop_code.entrypoints.commands import eval_run_dir
 from slop_code.entrypoints.commands import infer_problem
 from slop_code.entrypoints.commands import inject_canary
 from slop_code.entrypoints.commands import judge
+from slop_code.entrypoints.commands import make_registry
+from slop_code.entrypoints.commands import migrate_evaluation_format
 from slop_code.entrypoints.commands import problems
 from slop_code.entrypoints.commands import render_prompts
 from slop_code.entrypoints.commands import repopulate_diffs

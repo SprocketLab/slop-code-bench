@@ -325,7 +325,7 @@ def evaluate_snapshot(
         rubric_provider=rubric_provider,
     )
     if json_output:
-        typer.echo(json.dumps(report.report.model_dump(mode="json"), indent=2))
+        typer.echo(json.dumps(report.report.to_output_dict(), indent=2))
     else:
         console = Console()
         render_pytest_results(console, report.report, ctx.obj.verbosity)

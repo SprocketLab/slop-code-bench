@@ -15,10 +15,12 @@ import re
 import tarfile
 from abc import ABC, abstractmethod
 from collections import Counter
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Annotated, Any
 
+import tiktoken
 import typer
 import yaml
 from pydantic import BaseModel, Field, computed_field
@@ -28,6 +30,28 @@ from rich.table import Table
 app = typer.Typer()
 console = Console()
 err_console = Console(stderr=True)
+
+# =============================================================================
+# Token Counting
+# =============================================================================
+
+# Cache encoder at module level for performance
+_ENCODER_CACHE: dict[str, tiktoken.Encoding] = {}
+
+
+def get_encoder(model: str = "cl100k_base") -> tiktoken.Encoding:
+    """Get cached tiktoken encoder."""
+    if model not in _ENCODER_CACHE:
+        _ENCODER_CACHE[model] = tiktoken.get_encoding(model)
+    return _ENCODER_CACHE[model]
+
+
+def count_tokens(text: str, model: str = "cl100k_base") -> int:
+    """Accurate token count using tiktoken."""
+    if not text:
+        return 0
+    encoder = get_encoder(model)
+    return len(encoder.encode(text))
 
 
 # =============================================================================
@@ -149,6 +173,160 @@ class SequenceMetrics(BaseModel):
     exploration_run_count: int = 0  # Glob -> Read+
 
 
+class BugFixMetrics(BaseModel):
+    """Detailed bug fix analysis."""
+
+    # Cycle counts by type
+    test_fix_retest: int = 0  # pytest/test command fail → edit → retest
+    run_fix_rerun: int = 0  # python script fail → edit → rerun
+    lint_fix_relint: int = 0  # ruff/mypy fail → edit → relint
+
+    # Efficiency metrics
+    total_test_runs: int = 0
+    failed_test_runs: int = 0
+    edits_after_failure: int = 0  # Edits that followed a failure
+
+
+@dataclass
+class ToolEvent:
+    """Rich context for a single tool invocation."""
+
+    name: str
+    index: int
+
+    # For Bash commands
+    command: str | None = None
+    exit_code: int | None = None
+    is_test_command: bool = False
+    is_lint_command: bool = False
+    has_error_output: bool = False
+
+    # For classification
+    activity_type: ActivityType = ActivityType.UNKNOWN
+
+
+# Test command patterns
+TEST_COMMAND_PATTERNS = [
+    r"\bpytest\b",
+    r"\bpython\s+-m\s+pytest\b",
+    r"\buv\s+run\s+pytest\b",
+    r"\bnpm\s+test\b",
+    r"\bnpm\s+run\s+test\b",
+    r"\bcargo\s+test\b",
+    r"\bgo\s+test\b",
+    r"\bmake\s+test\b",
+    r"\bpython\s+.*test.*\.py\b",
+]
+
+LINT_COMMAND_PATTERNS = [
+    r"\bruff\b",
+    r"\bmypy\b",
+    r"\bpylint\b",
+    r"\bflake8\b",
+    r"\beslint\b",
+    r"\btsc\b",  # TypeScript compiler
+    r"\bcargo\s+clippy\b",
+]
+
+ERROR_OUTPUT_PATTERNS = [
+    r"FAILED",
+    r"ERROR",
+    r"ERRORS",
+    r"AssertionError",
+    r"Exception",
+    r"Traceback",
+    r"error\[E\d+\]",  # Rust errors
+    r"npm ERR!",
+    r"SyntaxError",
+    r"TypeError",
+    r"NameError",
+    r"AttributeError",
+    r"ModuleNotFoundError",
+]
+
+
+def is_test_command(command: str) -> bool:
+    """Check if command is a test runner."""
+    return any(re.search(pattern, command, re.IGNORECASE) for pattern in TEST_COMMAND_PATTERNS)
+
+
+def is_lint_command(command: str) -> bool:
+    """Check if command is a linter."""
+    return any(re.search(pattern, command, re.IGNORECASE) for pattern in LINT_COMMAND_PATTERNS)
+
+
+def has_error_indicators(output: str) -> bool:
+    """Check if output indicates errors/failures."""
+    if not output:
+        return False
+    return any(re.search(p, output) for p in ERROR_OUTPUT_PATTERNS)
+
+
+def detect_bug_fix_cycles(events: list[ToolEvent]) -> BugFixMetrics:
+    """Detect test→fix→retest cycles with validation."""
+    metrics = BugFixMetrics()
+
+    for i, event in enumerate(events):
+        # Track test/lint runs
+        if event.name == "Bash":
+            if event.is_test_command:
+                metrics.total_test_runs += 1
+                if event.exit_code != 0 or event.has_error_output:
+                    metrics.failed_test_runs += 1
+
+    for i in range(len(events) - 2):
+        e1, e2, e3 = events[i], events[i + 1], events[i + 2]
+
+        # Pattern: Failed test → Edit → Test again
+        if (
+            e1.name == "Bash"
+            and e1.is_test_command
+            and (e1.exit_code != 0 or e1.has_error_output)
+            and e2.name in ("Edit", "Write")
+            and e3.name == "Bash"
+            and e3.is_test_command
+        ):
+            metrics.test_fix_retest += 1
+
+        # Pattern: Failed python run → Edit → Run again
+        if (
+            e1.name == "Bash"
+            and e1.command
+            and "python" in e1.command.lower()
+            and not e1.is_test_command
+            and (e1.exit_code != 0 or e1.has_error_output)
+            and e2.name in ("Edit", "Write")
+            and e3.name == "Bash"
+            and e3.command
+            and "python" in e3.command.lower()
+        ):
+            metrics.run_fix_rerun += 1
+
+        # Pattern: Failed lint → Edit → Lint again
+        if (
+            e1.name == "Bash"
+            and e1.is_lint_command
+            and (e1.exit_code != 0 or e1.has_error_output)
+            and e2.name in ("Edit", "Write")
+            and e3.name == "Bash"
+            and e3.is_lint_command
+        ):
+            metrics.lint_fix_relint += 1
+
+    # Count edits after any failure
+    last_was_failure = False
+    for event in events:
+        if event.name == "Bash" and (event.exit_code != 0 or event.has_error_output):
+            last_was_failure = True
+        elif event.name in ("Edit", "Write") and last_was_failure:
+            metrics.edits_after_failure += 1
+            last_was_failure = False
+        elif event.name == "Bash":
+            last_was_failure = False
+
+    return metrics
+
+
 class CheckpointMetrics(BaseModel):
     """Complete metrics for a single checkpoint."""
 
@@ -161,6 +339,7 @@ class CheckpointMetrics(BaseModel):
     activity: ActivityMetrics = Field(default_factory=ActivityMetrics)
     tokens: TokenUsageMetrics = Field(default_factory=TokenUsageMetrics)
     sequences: SequenceMetrics = Field(default_factory=SequenceMetrics)
+    bug_fixes: BugFixMetrics = Field(default_factory=BugFixMetrics)
 
     turn_count: int = 0
     step_count: int = 0
@@ -202,11 +381,6 @@ def count_keywords(text: str) -> tuple[int, int, int]:
     debugging = sum(text_lower.count(word) for word in DEBUGGING_WORDS)
     exploration = sum(text_lower.count(word) for word in EXPLORATION_WORDS)
     return planning, debugging, exploration
-
-
-def estimate_tokens(text: str) -> int:
-    """Rough token estimation (~4 chars per token)."""
-    return len(text) // 4
 
 
 class TrajectoryParser(ABC):
@@ -363,7 +537,8 @@ class ClaudeCodeParser(TrajectoryParser):
         )
 
         tool_sequence: list[str] = []
-        pending_tool_uses: dict[str, str] = {}  # tool_use_id -> tool_name
+        tool_events: list[ToolEvent] = []
+        pending_tool_events: dict[str, ToolEvent] = {}  # tool_use_id -> ToolEvent
 
         with open(jsonl_path) as f:
             for line in f:
@@ -371,12 +546,17 @@ class ClaudeCodeParser(TrajectoryParser):
                     continue
                 try:
                     data = json.loads(line)
-                    self._process_event(data, metrics, tool_sequence, pending_tool_uses)
+                    self._process_event(
+                        data, metrics, tool_sequence, tool_events, pending_tool_events
+                    )
                 except json.JSONDecodeError:
                     continue
 
-        # Analyze sequences
+        # Analyze sequences (simple name-based)
         self.analyze_sequences(tool_sequence, metrics)
+
+        # Analyze bug fix cycles (rich context-based)
+        metrics.bug_fixes = detect_bug_fix_cycles(tool_events)
 
         return metrics
 
@@ -385,21 +565,25 @@ class ClaudeCodeParser(TrajectoryParser):
         data: dict[str, Any],
         metrics: CheckpointMetrics,
         tool_sequence: list[str],
-        pending_tool_uses: dict[str, str],
+        tool_events: list[ToolEvent],
+        pending_tool_events: dict[str, ToolEvent],
     ) -> None:
         msg_type = data.get("type")
 
         if msg_type == "assistant":
-            self._process_assistant_message(data, metrics, tool_sequence, pending_tool_uses)
+            self._process_assistant_message(
+                data, metrics, tool_sequence, tool_events, pending_tool_events
+            )
         elif msg_type == "user":
-            self._process_user_response(data, metrics, pending_tool_uses)
+            self._process_user_response(data, metrics, pending_tool_events)
 
     def _process_assistant_message(
         self,
         data: dict[str, Any],
         metrics: CheckpointMetrics,
         tool_sequence: list[str],
-        pending_tool_uses: dict[str, str],
+        tool_events: list[ToolEvent],
+        pending_tool_events: dict[str, ToolEvent],
     ) -> None:
         message = data.get("message", {})
         content = message.get("content", [])
@@ -418,7 +602,9 @@ class ClaudeCodeParser(TrajectoryParser):
             if block_type == "thinking":
                 self._process_thinking(block, metrics)
             elif block_type == "tool_use":
-                self._process_tool_use(block, metrics, tool_sequence, pending_tool_uses)
+                self._process_tool_use(
+                    block, metrics, tool_sequence, tool_events, pending_tool_events
+                )
 
         # Track turns
         if message.get("stop_reason") in ("end_turn", "tool_use"):
@@ -426,9 +612,9 @@ class ClaudeCodeParser(TrajectoryParser):
 
     def _process_thinking(self, block: dict[str, Any], metrics: CheckpointMetrics) -> None:
         thinking_text = block.get("thinking", "")
-        token_estimate = estimate_tokens(thinking_text)
+        token_count = count_tokens(thinking_text)
 
-        metrics.thinking.total_tokens += token_estimate
+        metrics.thinking.total_tokens += token_count
         metrics.thinking.block_count += 1
         metrics.thinking.total_chars += len(thinking_text)
 
@@ -443,7 +629,8 @@ class ClaudeCodeParser(TrajectoryParser):
         block: dict[str, Any],
         metrics: CheckpointMetrics,
         tool_sequence: list[str],
-        pending_tool_uses: dict[str, str],
+        tool_events: list[ToolEvent],
+        pending_tool_events: dict[str, ToolEvent],
     ) -> None:
         tool_name = block.get("name", "unknown")
         tool_id = block.get("id", "")
@@ -453,11 +640,21 @@ class ClaudeCodeParser(TrajectoryParser):
         metrics.tools.counts[tool_name] = metrics.tools.counts.get(tool_name, 0) + 1
         tool_sequence.append(tool_name)
 
-        # Track pending tool use for success/failure tracking
-        pending_tool_uses[tool_id] = tool_name
+        # Create rich tool event
+        command = tool_input.get("command", "") if tool_name == "Bash" else None
+        event = ToolEvent(
+            name=tool_name,
+            index=len(tool_events),
+            command=command,
+            is_test_command=is_test_command(command) if command else False,
+            is_lint_command=is_lint_command(command) if command else False,
+        )
+        tool_events.append(event)
+        pending_tool_events[tool_id] = event
 
         # Classify activity
         activity = self._classify_tool(tool_name, tool_input)
+        event.activity_type = activity
         self.update_activity(metrics, activity)
 
     def _classify_tool(self, tool_name: str, tool_input: dict[str, Any]) -> ActivityType:
@@ -487,7 +684,7 @@ class ClaudeCodeParser(TrajectoryParser):
         self,
         data: dict[str, Any],
         metrics: CheckpointMetrics,
-        pending_tool_uses: dict[str, str],
+        pending_tool_events: dict[str, ToolEvent],
     ) -> None:
         """Process user messages (tool results)."""
         message = data.get("message", {})
@@ -498,25 +695,32 @@ class ClaudeCodeParser(TrajectoryParser):
             if block.get("type") == "tool_result":
                 tool_id = block.get("tool_use_id", "")
                 is_error = block.get("is_error", False)
-                tool_name = pending_tool_uses.get(tool_id, "unknown")
+                event = pending_tool_events.get(tool_id)
+                tool_name = event.name if event else "unknown"
 
                 if is_error:
                     metrics.tools.failure_counts[tool_name] = (
                         metrics.tools.failure_counts.get(tool_name, 0) + 1
                     )
+                    if event:
+                        event.has_error_output = True
                 else:
                     metrics.tools.success_counts[tool_name] = (
                         metrics.tools.success_counts.get(tool_name, 0) + 1
                     )
 
-                # Check for bash failures in result
-                if tool_name == "Bash" and tool_use_result:
-                    stderr = ""
+                # Update event with result details
+                if event and tool_name == "Bash" and tool_use_result:
                     if isinstance(tool_use_result, dict):
                         stderr = tool_use_result.get("stderr", "")
-                    if stderr and "error" in stderr.lower():
-                        # Retroactively mark as bug fixing context
-                        pass
+                        stdout = tool_use_result.get("stdout", "")
+                        if has_error_indicators(stderr) or has_error_indicators(stdout):
+                            event.has_error_output = True
+                        # Try to extract exit code from interpretation
+                        interp = tool_use_result.get("returnCodeInterpretation", "")
+                        if "exit code" in interp.lower():
+                            # Try to parse exit code from message
+                            pass
 
 
 class CodexParser(TrajectoryParser):
@@ -530,6 +734,7 @@ class CodexParser(TrajectoryParser):
         )
 
         tool_sequence: list[str] = []
+        tool_events: list[ToolEvent] = []
 
         with open(jsonl_path) as f:
             for line in f:
@@ -537,17 +742,24 @@ class CodexParser(TrajectoryParser):
                     continue
                 try:
                     data = json.loads(line)
-                    self._process_event(data, metrics, tool_sequence)
+                    self._process_event(data, metrics, tool_sequence, tool_events)
                 except json.JSONDecodeError:
                     continue
 
-        # Analyze sequences
+        # Analyze sequences (simple name-based)
         self.analyze_sequences(tool_sequence, metrics)
+
+        # Analyze bug fix cycles (rich context-based)
+        metrics.bug_fixes = detect_bug_fix_cycles(tool_events)
 
         return metrics
 
     def _process_event(
-        self, data: dict[str, Any], metrics: CheckpointMetrics, tool_sequence: list[str]
+        self,
+        data: dict[str, Any],
+        metrics: CheckpointMetrics,
+        tool_sequence: list[str],
+        tool_events: list[ToolEvent],
     ) -> None:
         event_type = data.get("type")
 
@@ -562,18 +774,22 @@ class CodexParser(TrajectoryParser):
 
         elif event_type == "item.completed":
             item = data.get("item", {})
-            self._process_item(item, metrics, tool_sequence)
+            self._process_item(item, metrics, tool_sequence, tool_events)
 
     def _process_item(
-        self, item: dict[str, Any], metrics: CheckpointMetrics, tool_sequence: list[str]
+        self,
+        item: dict[str, Any],
+        metrics: CheckpointMetrics,
+        tool_sequence: list[str],
+        tool_events: list[ToolEvent],
     ) -> None:
         item_type = item.get("type")
 
         if item_type == "reasoning":
             text = item.get("text", "")
-            token_estimate = estimate_tokens(text)
+            token_count = count_tokens(text)
 
-            metrics.thinking.total_tokens += token_estimate
+            metrics.thinking.total_tokens += token_count
             metrics.thinking.block_count += 1
             metrics.thinking.total_chars += len(text)
 
@@ -587,11 +803,26 @@ class CodexParser(TrajectoryParser):
             command = item.get("command", "")
             exit_code = item.get("exit_code")
             status = item.get("status", "")
+            output = item.get("aggregated_output", "")
 
             # Extract tool name from command
             tool_name = self._extract_tool_from_command(command)
             metrics.tools.counts[tool_name] = metrics.tools.counts.get(tool_name, 0) + 1
             tool_sequence.append(tool_name)
+
+            # Create rich tool event
+            # Unwrap the command for analysis
+            unwrapped_cmd = self._unwrap_bash_command(command)
+            event = ToolEvent(
+                name="Bash",
+                index=len(tool_events),
+                command=unwrapped_cmd,
+                exit_code=exit_code,
+                is_test_command=is_test_command(unwrapped_cmd),
+                is_lint_command=is_lint_command(unwrapped_cmd),
+                has_error_output=has_error_indicators(output) if output else False,
+            )
+            tool_events.append(event)
 
             # Track success/failure
             success = exit_code == 0 or status == "completed"
@@ -606,6 +837,7 @@ class CodexParser(TrajectoryParser):
 
             # Classify activity
             activity = self.classify_bash_command(command)
+            event.activity_type = activity
             self.update_activity(metrics, activity)
 
         elif item_type == "file_change":
@@ -613,10 +845,27 @@ class CodexParser(TrajectoryParser):
             # Map to Edit for sequence tracking
             metrics.tools.counts["Edit"] = metrics.tools.counts.get("Edit", 0) + 1
             tool_sequence.append("Edit")
+
+            # Create tool event for file change
+            event = ToolEvent(
+                name="Edit",
+                index=len(tool_events),
+                activity_type=ActivityType.IMPLEMENTATION,
+            )
+            tool_events.append(event)
             self.update_activity(metrics, ActivityType.IMPLEMENTATION)
 
         elif item_type == "todo_list":
             metrics.thinking.planning_words += 1
+
+    def _unwrap_bash_command(self, command: str) -> str:
+        """Unwrap /bin/bash -lc wrapper from command."""
+        if command.startswith("/bin/bash"):
+            match = re.search(r"-[lc]+\s+['\"](.+)", command, re.DOTALL)
+            if match:
+                return match.group(1).rstrip("'\"")
+            return re.sub(r"^/bin/bash\s+-[lc]+\s+", "", command)
+        return command
 
     def _extract_tool_from_command(self, command: str) -> str:
         """Extract primary tool name from bash command."""
@@ -707,6 +956,14 @@ def aggregate_checkpoints(checkpoints: list[CheckpointMetrics]) -> dict[str, Any
             "bug_fix_cycle": sum(c.sequences.bug_fix_cycle_count for c in checkpoints),
             "exploration_run": sum(c.sequences.exploration_run_count for c in checkpoints),
         },
+        "bug_fixes": {
+            "test_fix_retest": sum(c.bug_fixes.test_fix_retest for c in checkpoints),
+            "run_fix_rerun": sum(c.bug_fixes.run_fix_rerun for c in checkpoints),
+            "lint_fix_relint": sum(c.bug_fixes.lint_fix_relint for c in checkpoints),
+            "total_test_runs": sum(c.bug_fixes.total_test_runs for c in checkpoints),
+            "failed_test_runs": sum(c.bug_fixes.failed_test_runs for c in checkpoints),
+            "edits_after_failure": sum(c.bug_fixes.edits_after_failure for c in checkpoints),
+        },
     }
 
 
@@ -760,6 +1017,14 @@ def aggregate_problems(problems: dict[str, dict[str, Any]]) -> dict[str, Any]:
             "exploratory_edit": sum(p["sequences"]["exploratory_edit"] for p in problems.values()),
             "bug_fix_cycle": sum(p["sequences"]["bug_fix_cycle"] for p in problems.values()),
             "exploration_run": sum(p["sequences"]["exploration_run"] for p in problems.values()),
+        },
+        "bug_fixes": {
+            "test_fix_retest": sum(p["bug_fixes"]["test_fix_retest"] for p in problems.values()),
+            "run_fix_rerun": sum(p["bug_fixes"]["run_fix_rerun"] for p in problems.values()),
+            "lint_fix_relint": sum(p["bug_fixes"]["lint_fix_relint"] for p in problems.values()),
+            "total_test_runs": sum(p["bug_fixes"]["total_test_runs"] for p in problems.values()),
+            "failed_test_runs": sum(p["bug_fixes"]["failed_test_runs"] for p in problems.values()),
+            "edits_after_failure": sum(p["bug_fixes"]["edits_after_failure"] for p in problems.values()),
         },
     }
 
@@ -822,14 +1087,21 @@ def discover_trajectories(run_dir: Path) -> dict[str, dict[str, Path]]:
             checkpoint_name = checkpoint_dir.name
             agent_dir = checkpoint_dir / "agent"
 
-            # Check for stdout.jsonl or agent.tar.gz
+            # Check for stdout.jsonl in agent/ subdirectory
             jsonl_path = agent_dir / "stdout.jsonl"
-            tar_path = agent_dir / "agent.tar.gz"
+
+            # Check for agent.tar.gz in both locations
+            tar_path_in_agent = agent_dir / "agent.tar.gz"
+            tar_path_in_checkpoint = checkpoint_dir / "agent.tar.gz"
 
             if jsonl_path.exists():
                 trajectories[problem_name][checkpoint_name] = jsonl_path
-            elif tar_path.exists():
-                extracted = extract_from_tar(tar_path)
+            elif tar_path_in_agent.exists():
+                extracted = extract_from_tar(tar_path_in_agent)
+                if extracted:
+                    trajectories[problem_name][checkpoint_name] = extracted
+            elif tar_path_in_checkpoint.exists():
+                extracted = extract_from_tar(tar_path_in_checkpoint)
                 if extracted:
                     trajectories[problem_name][checkpoint_name] = extracted
 
@@ -902,12 +1174,26 @@ def render_summary_table(summary: dict[str, Any], title: str) -> Table:
 
     table.add_section()
 
-    # Sequence patterns
+    # Bug fix analysis (smart detection)
+    bug_fixes = summary.get("bug_fixes", {})
+    if bug_fixes:
+        total_tests = bug_fixes.get("total_test_runs", 0)
+        failed_tests = bug_fixes.get("failed_test_runs", 0)
+        test_fix_cycles = bug_fixes.get("test_fix_retest", 0)
+
+        table.add_row("Test Runs (total)", str(total_tests))
+        table.add_row("Test Failures", str(failed_tests))
+        table.add_row("Test→Fix→Retest Cycles", str(test_fix_cycles))
+        if bug_fixes.get("run_fix_rerun", 0) > 0:
+            table.add_row("Run→Fix→Rerun Cycles", str(bug_fixes["run_fix_rerun"]))
+        table.add_row("Edits After Failure", str(bug_fixes.get("edits_after_failure", 0)))
+
+    table.add_section()
+
+    # Sequence patterns (simple detection)
     seqs = summary["sequences"]
     table.add_row("Quick Fix (Read→Edit)", str(seqs["quick_fix"]))
     table.add_row("Exploratory Edit", str(seqs["exploratory_edit"]))
-    table.add_row("Bug Fix Cycles", str(seqs["bug_fix_cycle"]))
-    table.add_row("Exploration Runs", str(seqs["exploration_run"]))
 
     table.add_section()
 
@@ -929,19 +1215,56 @@ def render_comparison_table(runs: dict[str, dict[str, Any]]) -> Table:
         short_name = run_name[:20] + "..." if len(run_name) > 23 else run_name
         table.add_column(short_name, justify="right", width=18)
 
-    def add_metric_row(label: str, key_path: list[str], fmt: str = "{}"):
-        values = []
+    # Metrics where higher is better (will be green for max, red for min)
+    higher_is_better = {"pass_rate", "avg_pass_rate"}
+    # Metrics where lower is better (will be green for min, red for max)
+    lower_is_better = {
+        "total_steps",
+        "mean_steps_per_checkpoint",
+        "failed_test_runs",
+        "test_fix_retest",
+        "edits_after_failure",
+        "_bug_pct",
+    }
+
+    def add_metric_row(
+        label: str, key_path: list[str], fmt: str = "{}", metric_key: str | None = None
+    ):
+        raw_values = []
         for summary in runs.values():
             val = summary
             for k in key_path:
                 val = val.get(k, 0) if isinstance(val, dict) else 0
+            raw_values.append(val)
+
+        # Determine best/worst for highlighting
+        numeric_values = [v for v in raw_values if v is not None and v != 0]
+        best_val = worst_val = None
+        if len(numeric_values) > 1:
+            key = metric_key or key_path[-1]
+            if key in higher_is_better:
+                best_val, worst_val = max(numeric_values), min(numeric_values)
+            elif key in lower_is_better:
+                best_val, worst_val = min(numeric_values), max(numeric_values)
+
+        formatted = []
+        for val in raw_values:
             if fmt == "pct":
-                values.append(f"{100 * val:.1f}%" if val else "-")
+                text = f"{100 * val:.1f}%" if val else "-"
             elif fmt == "float":
-                values.append(f"{val:.1f}" if val else "-")
+                text = f"{val:.1f}" if val else "-"
             else:
-                values.append(str(val) if val else "-")
-        table.add_row(label, *values)
+                text = str(val) if val else "-"
+
+            # Apply highlighting
+            if val is not None and val != 0 and best_val is not None:
+                if val == best_val and best_val != worst_val:
+                    text = f"[green]{text}[/green]"
+                elif val == worst_val and best_val != worst_val:
+                    text = f"[red]{text}[/red]"
+            formatted.append(text)
+
+        table.add_row(label, *formatted)
 
     add_metric_row("Problems", ["problem_count"])
     add_metric_row("Checkpoints", ["checkpoint_count"])
@@ -971,15 +1294,47 @@ def render_comparison_table(runs: dict[str, dict[str, Any]]) -> Table:
 
     table.add_section()
 
-    # Sequences
-    add_metric_row("Quick Fix", ["sequences", "quick_fix"])
-    add_metric_row("Bug Fix Cycles", ["sequences", "bug_fix_cycle"])
+    # Bug fix metrics (smart detection)
+    add_metric_row("Test Runs", ["bug_fixes", "total_test_runs"])
+    add_metric_row("Test Failures", ["bug_fixes", "failed_test_runs"])
+    add_metric_row("Test→Fix→Retest", ["bug_fixes", "test_fix_retest"])
+    add_metric_row("Edits After Failure", ["bug_fixes", "edits_after_failure"])
+
+    table.add_section()
+
+    # Sequence patterns
+    add_metric_row("Read→Edit (quick fix)", ["sequences", "quick_fix"])
+    add_metric_row("Read→Read→Edit", ["sequences", "exploratory_edit"])
+    add_metric_row("Bash→Edit→Bash", ["sequences", "bug_fix_cycle"])
+    add_metric_row("Glob→Read+ (explore)", ["sequences", "exploration_run"])
 
     table.add_section()
 
     # Token usage
     add_metric_row("Thinking Tokens", ["tokens", "thinking"])
     add_metric_row("Output Tokens", ["tokens", "output"])
+
+    table.add_section()
+
+    # Tool usage - find top tools across all runs
+    all_tools: set[str] = set()
+    for summary in runs.values():
+        all_tools.update(summary.get("tool_counts", {}).keys())
+
+    # Sort by total usage across all runs
+    tool_totals = {
+        tool: sum(s.get("tool_counts", {}).get(tool, 0) for s in runs.values())
+        for tool in all_tools
+    }
+    top_tools = sorted(tool_totals.keys(), key=lambda t: -tool_totals[t])[:10]
+
+    for tool in top_tools:
+        # Get raw values for this tool
+        raw_values = [s.get("tool_counts", {}).get(tool, 0) for s in runs.values()]
+        formatted = []
+        for val in raw_values:
+            formatted.append(str(val) if val else "-")
+        table.add_row(f"  {tool}", *formatted)
 
     return table
 
@@ -1028,8 +1383,8 @@ def main(
     problems: Annotated[
         list[str] | None, typer.Option("--problem", help="Filter to specific problems")
     ] = None,
-    compare: Annotated[
-        bool, typer.Option("--compare", help="Show side-by-side comparison")
+    no_compare: Annotated[
+        bool, typer.Option("--no-compare", help="Show individual tables instead of comparison")
     ] = False,
 ):
     """Analyze agent trajectories from slop-code-bench runs.
@@ -1129,7 +1484,8 @@ def main(
         err_console.print("[yellow]No trajectories found to analyze[/yellow]")
         raise typer.Exit(1)
 
-    if len(all_summaries) > 1 and compare:
+    if len(all_summaries) > 1 and not no_compare:
+        # Auto-compare when multiple runs (use --no-compare to disable)
         console.print(render_comparison_table(all_summaries))
     else:
         for run_name, results in all_results.items():

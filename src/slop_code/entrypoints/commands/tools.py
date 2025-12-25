@@ -137,7 +137,7 @@ def run_case(
 
     if full or json_output:
         payload = (
-            results.model_dump(mode="json")
+            results.to_output_dict()
             if full
             else [test.model_dump(mode="json") for test in results.tests]
         )

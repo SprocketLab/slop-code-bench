@@ -270,6 +270,14 @@ class TestPytestRunner:
         assert "--ctrf=.scbench/ctrf-report.json" in cmd
         assert "--json-report" in cmd
         assert "--json-report-file=.scbench/pytest-report.json" in cmd
+        # Verify omit flags for reducing report size
+        assert "--json-report-omit=traceback" in cmd
+        assert "--json-report-omit=streams" in cmd
+        assert "--json-report-omit=log" in cmd
+        assert "--json-report-omit=collectors" in cmd
+        assert "--json-report-omit=warnings" in cmd
+        # keywords should NOT be omitted (contains markers/tags)
+        assert "--json-report-omit=keywords" not in cmd
         assert "-v" in cmd
 
     def test_build_pytest_command_no_timeout(self, pytest_runner):

@@ -9,8 +9,8 @@ description: |
   circuits in .circ, .json, and .bench formats. Evaluates circuits with 2-valued and
   3-valued logic, generates truth tables, checks equivalence between circuits, and
   optimizes circuits with configurable passes (constant folding, CSE, DCE, etc.).
-category: NOT_SET
-difficulty: Medium
+category: simulation
+difficulty: Hard
 author: "Gabriel Orlanski"
 entry_file: circopt
 timeout: 30

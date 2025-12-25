@@ -1,0 +1,19 @@
+{
+  "test_id": "proteus",
+  "marker": null,
+  "item_name": "Proteus",
+  "tech_level": "t3",
+  "num_science_skills": 2,
+  "skill_levels": [1, 5],
+  "relic_name_template": "{quality} Hull Section",
+  "expected_base": {
+    "item": "Proteus (29988)",
+    "group": "Ship > Strategic Cruiser",
+    "market_group": "Ships > Cruisers > Advanced Cruisers > Strategic Cruisers > Gallente",
+    "tech_level": "Tech III",
+    "datacores": "Datacore - Mechanical Engineering, Datacore - Plasma Physics",
+    "required_per_run": 3,
+    "skills": "Mechanical Engineering, Plasma Physics, Sleeper Encryption Methods",
+    "time": 60
+  }
+}

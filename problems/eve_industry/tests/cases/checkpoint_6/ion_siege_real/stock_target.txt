@@ -1,0 +1,42 @@
+Caesarium Cadmide 67424
+Carbon Fiber 72912
+Carbon Polymers 179536
+Ceramic Powder 337120
+Crystalline Carbonide 13600212
+Crystallite Alloy 176008
+Dysporite 25480
+Fermionic Condensates 37648
+Fernite Alloy 176008
+Fernite Carbide 13600212
+Ferrofluid 72520
+Ferrogel 122016
+Fluxed Condensates 18816
+Fullerides 919568
+Hexite 233632
+Hyperflurite 30184
+Hypersynaptic Fibers 50176
+Nanotransistors 465200
+Neo Mercurite 72912
+Nonlinear Metamaterials 129572
+Oxy-Organic Solvents 452
+Phenolic Composites 1084624
+Photonic Metamaterials 129572
+Plasmonic Metamaterials 129572
+Platinum Technite 60760
+Pressurized Oxidizers 15240
+Promethium Mercurite 42336
+Prometium 49000
+Reinforced Carbon Fiber 74216
+Rolled Tungsten Alloy 176008
+Silicon Diborite 182280
+Solerium 6664
+Sulfuric Acid 179928
+Sylramic Fibers 12445744
+Terahertz Metamaterials 129572
+Thermosetting Polymer 72912
+Thulium Hafnite 42336
+Titanium Carbide 13600212
+Titanium Chromide 176008
+Tritanium 10584
+Tungsten Carbide 13600212
+Vanadium Hafnite 55272

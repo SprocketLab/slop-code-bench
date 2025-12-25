@@ -130,6 +130,7 @@ DECRYPTORS = [
     Decryptor(name="Symmetry Decryptor", prob_mult=0, runs=2, me=1, te=8),
 ]
 
+
 # T3 relic baselines
 T3_RELICS = {
     "Intact": T3Relic(name="Intact", base_prob=0.26, base_runs=20),
@@ -141,10 +142,61 @@ T3_RELICS = {
 
 
 @dataclass
-class BuildConfig:
-    """Build configuration from YAML file."""
+class BuildSpec:
+    """Represents a parsed build string specification."""
+
+    item_name: str
+    runs_per_job: int
+    count: int
+    format_type: str  # "item", "normal", "invention", "reverse_engineering"
+    me: int = 0
+    te: int = 0
+    decryptor: str | None = None
+    relic: str | None = None
+
+
+@dataclass
+class ComponentBpoDefaults:
+    """Default ME/TE for component blueprints."""
+
+    me: int = 10
+    te: int = 20
+
+
+@dataclass
+class PlanConfig:
+    """Configuration for build planning."""
 
     te_bonus: int
-    split_days: float
-    component_me: int
-    component_te: int
+    invention_skill: int
+    split_days: float = 3.0
+    component_bpo_defaults: ComponentBpoDefaults | None = None
+
+
+@dataclass
+class MaterialRow:
+    """Represents a row in materials.csv."""
+
+    name: str
+    to_buy: int
+    buy_volume: float
+    start_amount: int = 0
+    end_amount: int = 0
+
+
+@dataclass
+class JobRow:
+    """Represents a row in jobs.csv."""
+
+    name: str
+    runs: int
+    days: float
+    count: int
+
+
+@dataclass
+class BuildPlan:
+    """Complete build plan with materials and jobs."""
+
+    materials: list[MaterialRow]
+    jobs: list[JobRow]

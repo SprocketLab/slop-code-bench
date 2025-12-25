@@ -1,0 +1,21 @@
+{
+  "test_id": "barrage_l",
+  "marker": null,
+  "item_name": "Barrage L Blueprint",
+  "tech_level": "t2",
+  "base_prob": 0.34,
+  "base_runs": 10,
+  "num_science_skills": 2,
+  "skill_levels": [1, 2, 3, 4, 5],
+  "expected_base": {
+    "item": "Barrage L (12775)",
+    "group": "Charge > Advanced Autocannon Ammo",
+    "market_group": "Ammunition & Charges > Projectile Ammo > Advanced Autocannon Ammo > Large",
+    "tech_level": "Tech II",
+    "base": "Nuclear L Blueprint (896)",
+    "datacores": "Datacore - Mechanical Engineering, Datacore - Nuclear Physics",
+    "required_per_run": 1,
+    "skills": "Mechanical Engineering, Minmatar Encryption Methods, Nuclear Physics",
+    "time": 1135
+  }
+}

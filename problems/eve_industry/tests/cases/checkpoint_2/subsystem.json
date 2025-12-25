@@ -1,0 +1,19 @@
+{
+  "test_id": "subsystem",
+  "marker": "functionality",
+  "item_name": "Proteus Defensive - Covert Reconfiguration",
+  "tech_level": "t3",
+  "num_science_skills": 2,
+  "skill_levels": [5],
+  "relic_name_template": "{quality} Armor Nanobot",
+  "expected_base": {
+    "item": "Proteus Defensive - Covert Reconfiguration (45592)",
+    "group": "Subsystem > Defensive Subsystem",
+    "market_group": "Ship and Module Modifications > Subsystems > Gallente Subsystems > Gallente Defensive Subsystems",
+    "tech_level": "Tech III",
+    "datacores": "Datacore - Defensive Subsystems Engineering, Datacore - Hydromagnetic Physics",
+    "required_per_run": 3,
+    "skills": "Defensive Subsystem Technology, Hydromagnetic Physics, Sleeper Encryption Methods",
+    "time": 60
+  }
+}

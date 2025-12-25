@@ -15,6 +15,9 @@ author: "Gabriel Orlanski"
 entry_file: dynamic_buffer
 timeout: 60
 
+test_dependencies:
+  - pytest-timeout
+
 tags:
   - code-generation
   - metaprogramming

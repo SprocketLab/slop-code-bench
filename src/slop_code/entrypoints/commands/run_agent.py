@@ -614,6 +614,245 @@ def _prepare_run_artifacts(
     return ""
 
 
+def _load_and_validate_run_config(
+    config: Path | None,
+    cli_flags: dict[str, object],
+    overrides: list[str] | None,
+) -> ResolvedRunConfig:
+    """Load and validate run configuration from file, flags, and overrides.
+
+    Args:
+        config: Path to config file, or None for defaults
+        cli_flags: CLI flag overrides
+        overrides: Key=value override strings
+
+    Returns:
+        Validated and resolved run configuration
+
+    Raises:
+        typer.Exit: If config file not found or validation fails
+    """
+    try:
+        return load_run_config(
+            config_path=config,
+            cli_flags=cli_flags,
+            cli_overrides=overrides or [],
+        )
+    except FileNotFoundError as exc:
+        typer.echo(typer.style(str(exc), fg=typer.colors.RED, bold=True))
+        raise typer.Exit(1) from exc
+    except ValueError as exc:
+        typer.echo(
+            typer.style(f"Config error: {exc}", fg=typer.colors.RED, bold=True)
+        )
+        raise typer.Exit(1) from exc
+
+
+def _resolve_problem_names(
+    cli_problem_names: list[str],
+    config_problems: list[str],
+) -> list[str]:
+    """Resolve problem names from CLI and config sources.
+
+    CLI problem names take precedence. If CLI is empty, use config problems.
+
+    Args:
+        cli_problem_names: Problems specified on command line
+        config_problems: Problems specified in config file
+
+    Returns:
+        Final list of problem names (may be empty for discovery)
+    """
+    if cli_problem_names:
+        return cli_problem_names
+    if config_problems:
+        typer.echo(
+            typer.style(
+                f"Using problems from config: {', '.join(config_problems)}",
+                fg=typer.colors.CYAN,
+            )
+        )
+        return list(config_problems)
+    return []
+
+
+def _resolve_output_directory(
+    output_path_override: str | None,
+    config_output_path: str,
+    debug: bool,
+) -> tuple[Path, bool]:
+    """Resolve and prepare output directory.
+
+    Args:
+        output_path_override: CLI override for output path
+        config_output_path: Output path from config
+        debug: If True, prepend DEBUG_ prefix
+
+    Returns:
+        Tuple of (run_dir, preexisted) where preexisted indicates
+        if the directory existed before creation.
+    """
+    output_path_str = (
+        output_path_override if output_path_override is not None else config_output_path
+    )
+    if debug:
+        # Prepend DEBUG_ to the last path component
+        parts = output_path_str.rsplit("/", 1)
+        if len(parts) == 2:
+            output_path_str = f"{parts[0]}/DEBUG_{parts[1]}"
+        else:
+            output_path_str = f"DEBUG_{output_path_str}"
+
+    run_dir = Path(output_path_str)
+    preexisted = run_dir.exists()
+    typer.echo(
+        typer.style(
+            f"Output directory: {run_dir}", fg=typer.colors.GREEN, bold=True
+        )
+    )
+    run_dir = utils.ensure_dir_exists(run_dir, create=True)
+    return run_dir, preexisted
+
+
+def _handle_resume_validation(
+    run_dir: Path,
+    run_cfg: ResolvedRunConfig,
+    env_spec: EnvironmentSpecType,
+    resume: bool,
+    overwrite: bool,
+) -> None:
+    """Validate configuration for resume mode.
+
+    Args:
+        run_dir: Path to existing run directory
+        run_cfg: Current resolved run configuration
+        env_spec: Current environment specification
+        resume: Whether resume mode is enabled
+        overwrite: Whether overwrite mode is enabled
+
+    Raises:
+        typer.Exit: If configuration mismatches detected during resume
+    """
+    if not resume or overwrite:
+        return
+
+    mismatches = _validate_resume_config(run_dir, run_cfg, env_spec)
+    if mismatches:
+        typer.echo(
+            typer.style(
+                "Cannot resume with different configuration:",
+                fg=typer.colors.RED,
+                bold=True,
+            )
+        )
+        for field, saved, current in mismatches:
+            typer.echo(f"  {field}: saved='{saved}' vs current='{current}'")
+        typer.echo(
+            "\nUse --overwrite to start fresh with new configuration."
+        )
+        raise typer.Exit(1)
+
+
+def _handle_early_completion(
+    problem_names: list[str],
+    run_dir: Path,
+    problems_base_path: Path,
+    console: Console,
+    evaluate: bool,
+    requested: list[str],
+) -> bool:
+    """Handle case when all problems are already completed.
+
+    Args:
+        problem_names: List of problems still needing execution
+        run_dir: The run output directory
+        problems_base_path: Base path to problem definitions
+        console: Rich console for output
+        evaluate: Whether evaluation is enabled
+        requested: Original list of requested problems
+
+    Returns:
+        True if caller should return (nothing to do), False to continue.
+    """
+    if problem_names:
+        return False
+
+    typer.echo(
+        typer.style(
+            "Nothing to do: all requested problems are already completed.",
+            fg=typer.colors.GREEN,
+            bold=True,
+        )
+    )
+    if evaluate:
+        _create_checkpoint_results_and_summary(
+            run_dir=run_dir,
+            problems_base_path=problems_base_path,
+            problem_names=requested,
+            console=console,
+        )
+    return True
+
+
+def _create_task_config(
+    problem_base_path: Path,
+    run_dir: Path,
+    env_spec: EnvironmentSpecType,
+    agent_config: AgentConfigBase,
+    model_def: ModelDefinition,
+    credential: ProviderCredential,
+    run_cfg: ResolvedRunConfig,
+    seed: int | None,
+    verbosity: int,
+    debug: bool,
+    evaluate: bool,
+    live_progress: bool,
+    image_name: str,
+    resume: bool,
+) -> problem_runner.RunTaskConfig:
+    """Create task configuration for problem execution.
+
+    Args:
+        problem_base_path: Base path to problem definitions
+        run_dir: The run output directory
+        env_spec: Environment specification
+        agent_config: Agent configuration
+        model_def: Model definition from catalog
+        credential: Provider credential
+        run_cfg: Resolved run configuration
+        seed: Random seed
+        verbosity: Verbosity level
+        debug: Debug mode flag
+        evaluate: Whether to run evaluation
+        live_progress: Whether to show live progress
+        image_name: Docker image name
+        resume: Whether to resume from checkpoints
+
+    Returns:
+        Configured RunTaskConfig
+    """
+    return problem_runner.RunTaskConfig(
+        problem_base_path=problem_base_path,
+        run_dir=run_dir,
+        env_spec=env_spec,
+        agent_config=agent_config,
+        model_def=model_def,
+        credential=credential,
+        thinking_preset=run_cfg.thinking,
+        thinking_max_tokens=run_cfg.thinking_max_tokens,
+        prompt_template=run_cfg.prompt_content,
+        pass_policy=run_cfg.pass_policy,
+        seed=seed,
+        verbosity=verbosity,
+        debug=debug,
+        disable_evaluation=not evaluate,
+        live_progress=live_progress,
+        image=image_name,
+        resume=resume,
+        one_shot=run_cfg.one_shot,
+    )
+
+
 def register(app: typer.Typer, name: str) -> None:
     app.command(
         name,
@@ -839,125 +1078,42 @@ def run_agent(
         # Mix of flags and overrides
         slop-code run --model anthropic/sonnet-4.5 thinking=medium pass_policy=ALL_CASES
     """
-    # Build CLI flags dict for config loading
-    cli_flags: dict[str, object] = {}
-
-    if agent_config_path is not None:
-        cli_flags["agent"] = agent_config_path
-
-    if environment_config_path is not None:
-        cli_flags["environment"] = environment_config_path
-
-    if prompt_template_path is not None:
-        cli_flags["prompt"] = prompt_template_path
-
-    # Parse model override into config format if provided
-    if model_override is not None:
-        try:
-            parsed = utils.parse_model_override(model_override)
-            cli_flags["model"] = {
-                "provider": parsed.provider,
-                "name": parsed.name,
-            }
-        except ValueError as exc:
-            typer.echo(typer.style(str(exc), fg=typer.colors.RED, bold=True))
-            raise typer.Exit(1) from exc
-
-    # Load unified config with priority merging
+    # 1. Build CLI flags
     try:
-        run_cfg = load_run_config(
-            config_path=config,
-            cli_flags=cli_flags,
-            cli_overrides=overrides or [],
+        cli_flags = _build_cli_flags(
+            agent_config_path, environment_config_path, prompt_template_path, model_override
         )
-    except FileNotFoundError as exc:
+    except ValueError as exc:
         typer.echo(typer.style(str(exc), fg=typer.colors.RED, bold=True))
         raise typer.Exit(1) from exc
-    except ValueError as exc:
-        typer.echo(
-            typer.style(f"Config error: {exc}", fg=typer.colors.RED, bold=True)
-        )
-        raise typer.Exit(1) from exc
 
-    # Resolve environment spec from loaded config
-    env_spec = config_loader.resolve_environment(
-        run_cfg.environment_config_path or run_cfg.environment
+    # 2. Load and validate config
+    run_cfg = _load_and_validate_run_config(config, cli_flags, overrides)
+
+    # 3. Resolve environment, model, and credentials
+    env_spec, model_def, credential = _resolve_environment_and_credentials(
+        run_cfg, provider_api_key_env
     )
-    env_spec_typed = cast("EnvironmentSpecType", env_spec)
 
-    # Look up ModelDefinition from catalog
-    model_def = ModelCatalog.get(run_cfg.model.name)
-    if model_def is None:
-        typer.echo(
-            typer.style(
-                f"Model '{run_cfg.model.name}' not found in catalog",
-                fg=typer.colors.RED,
-                bold=True,
-            )
-        )
-        raise typer.Exit(1)
+    # 4. Build agent config
+    agent_config = _build_agent_config(run_cfg)
 
-    # Resolve credential for the provider
-    try:
-        credential = API_KEY_STORE.resolve(
-            run_cfg.model.provider,
-            env_var_override=provider_api_key_env,
-        )
-    except CredentialNotFoundError as e:
-        typer.echo(
-            typer.style(
-                f"Credential error: {e}", fg=typer.colors.RED, bold=True
-            )
-        )
-        raise typer.Exit(1) from e
-
-    # Build agent config (no model injection - model passed separately)
-    if run_cfg.agent_config_path is not None:
-        _, agent_data = config_loader.load_agent_config(
-            run_cfg.agent_config_path
-        )
-        agent_config = build_agent_config(agent_data)
-    else:
-        # Inline agent config
-        agent_config = build_agent_config(run_cfg.agent)
-
+    # 5. Echo model info
     typer.echo(f"Using model: {run_cfg.model.provider}/{run_cfg.model.name}")
     if provider_api_key_env:
-        typer.echo(
-            f"Using provider API key env override: {provider_api_key_env}"
-        )
+        typer.echo(f"Using provider API key env override: {provider_api_key_env}")
 
-    cli_problem_names = list(problem_names)
-    problem_names = cli_problem_names or list(run_cfg.problems)
-    if run_cfg.problems and not cli_problem_names:
-        typer.echo(
-            typer.style(
-                f"Using problems from config: {', '.join(run_cfg.problems)}",
-                fg=typer.colors.CYAN,
-            )
-        )
-
-    # Determine output directory
-    output_path_str = (
-        output_path if output_path is not None else run_cfg.output_path
+    # 6. Resolve problem names from CLI and config
+    problem_names_resolved = _resolve_problem_names(
+        list(problem_names), list(run_cfg.problems)
     )
-    if ctx.obj.debug:
-        # Prepend DEBUG_ to the last path component
-        parts = output_path_str.rsplit("/", 1)
-        if len(parts) == 2:
-            output_path_str = f"{parts[0]}/DEBUG_{parts[1]}"
-        else:
-            output_path_str = f"DEBUG_{output_path_str}"
 
-    run_dir = Path(output_path_str)
-    run_dir_preexisted = run_dir.exists()
-    typer.echo(
-        typer.style(
-            f"Output directory: {run_dir}", fg=typer.colors.GREEN, bold=True
-        )
+    # 7. Resolve output directory
+    run_dir, run_dir_preexisted = _resolve_output_directory(
+        output_path, run_cfg.output_path, ctx.obj.debug
     )
-    run_dir = utils.ensure_dir_exists(run_dir, create=True)
 
+    # 8. Setup logging
     console = Console()
     common.setup_command_logging(
         log_dir=run_dir,
@@ -966,8 +1122,8 @@ def run_agent(
         console=console,
         add_multiproc_info=num_workers > 1,
     )
-    logger = get_logger(__name__)
-    logger.info(
+    run_logger = get_logger(__name__)
+    run_logger.info(
         "Starting agent run",
         agent_config=str(run_cfg.agent_config_path or "inline"),
         environment_config=str(run_cfg.environment_config_path or "inline"),
@@ -975,54 +1131,26 @@ def run_agent(
         model=f"{run_cfg.model.provider}/{run_cfg.model.name}",
         thinking=run_cfg.thinking,
         pass_policy=run_cfg.pass_policy.value,
-        problem_names=problem_names,
+        problem_names=problem_names_resolved,
         one_shot=run_cfg.one_shot.enabled,
     )
 
-    # Discover problems if not specified
-    if not problem_names:
-        for problem in sorted(
-            ctx.obj.problem_path.iterdir(), key=lambda x: x.name
-        ):
-            if not problem.exists():
-                continue
-            try:
-                cfg = ProblemConfig.from_yaml(problem)
-            except Exception as exc:  # noqa: BLE001
-                logger.error(
-                    "Problem config not valid",
-                    problem=problem.name,
-                    error=str(exc),
-                )
-                continue
-
-            if cfg.category == "NOT_SET":
-                continue
-
-            checkpoints = [cp for _, cp in cfg.iterate_checkpoint_items()]
-            if not checkpoints:
-                typer.echo(
-                    typer.style(
-                        f"Problem '{problem}' has no checkpoints",
-                        fg=typer.colors.RED,
-                        bold=True,
-                    )
-                )
-                continue
-            problem_names.append(problem.name)
+    # 9. Discover problems if not specified
+    if not problem_names_resolved:
+        problem_names_resolved = _discover_problems(ctx.obj.problem_path)
         typer.echo(
             typer.style(
-                f"Found {len(problem_names):,} problems",
+                f"Found {len(problem_names_resolved):,} problems",
                 fg=typer.colors.GREEN,
                 bold=True,
             )
         )
 
-    # Validate problem paths exist
-    _validate_problem_paths(problem_names, ctx.obj.problem_path)
+    # 10. Validate problem paths exist
+    _validate_problem_paths(problem_names_resolved, ctx.obj.problem_path)
 
-    # If the run directory already exists, filter based on completion and prompt changes
-    requested = list(problem_names)
+    # 11. Handle pre-existing run directory
+    requested = list(problem_names_resolved)
     if run_dir_preexisted:
         if ctx.obj.overwrite:
             typer.echo(
@@ -1034,26 +1162,11 @@ def run_agent(
             )
 
         # Validate config matches saved config when resuming
-        if resume and not ctx.obj.overwrite:
-            mismatches = _validate_resume_config(run_dir, run_cfg, env_spec_typed)
-            if mismatches:
-                typer.echo(
-                    typer.style(
-                        "Cannot resume with different configuration:",
-                        fg=typer.colors.RED,
-                        bold=True,
-                    )
-                )
-                for field, saved, current in mismatches:
-                    typer.echo(f"  {field}: saved='{saved}' vs current='{current}'")
-                typer.echo(
-                    "\nUse --overwrite to start fresh with new configuration."
-                )
-                raise typer.Exit(1)
+        _handle_resume_validation(run_dir, run_cfg, env_spec, resume, ctx.obj.overwrite)
 
         to_run, skipped, rerun_reasons = _filter_problems_for_execution(
             run_dir,
-            problem_names,
+            problem_names_resolved,
             ctx.obj.problem_path,
             run_cfg.prompt_content,
             env_spec,
@@ -1064,7 +1177,6 @@ def run_agent(
         if not ctx.obj.overwrite:
             # Log why problems are being rerun
             spec_changed = [p for p, r in rerun_reasons.items() if "spec_changed" in r]
-
             if spec_changed:
                 typer.echo(
                     typer.style(
@@ -1073,7 +1185,6 @@ def run_agent(
                         bold=True,
                     )
                 )
-
             typer.echo(
                 typer.style(
                     f"Output directory exists: {len(skipped):,} done, {len(to_run):,} to run.",
@@ -1082,29 +1193,18 @@ def run_agent(
                 )
             )
 
-        problem_names = to_run
+        problem_names_resolved = to_run
 
-        if not problem_names:
-            typer.echo(
-                typer.style(
-                    "Nothing to do: all requested problems are already completed.",
-                    fg=typer.colors.GREEN,
-                    bold=True,
-                )
-            )
-            if evaluate:
-                _create_checkpoint_results_and_summary(
-                    run_dir=run_dir,
-                    problems_base_path=ctx.obj.problem_path,
-                    problem_names=requested,
-                    console=console,
-                )
+        # Check if nothing to do
+        if _handle_early_completion(
+            problem_names_resolved, run_dir, ctx.obj.problem_path, console, evaluate, requested
+        ):
             return
 
-    # Handle dry-run mode
+    # 12. Handle dry-run mode
     if dry_run:
         _preview_dry_run(
-            problem_names,
+            problem_names_resolved,
             run_dir,
             ctx.obj.problem_path,
             run_cfg.prompt_content,
@@ -1112,55 +1212,53 @@ def run_agent(
         )
         return
 
-    # Save environment and config to run directory, build docker image if needed
-    image_name = _prepare_run_artifacts(run_dir, env_spec_typed, agent_config, run_cfg)
-    logger.info(
+    # 13. Save environment and config to run directory, build docker image if needed
+    image_name = _prepare_run_artifacts(run_dir, env_spec, agent_config, run_cfg)
+    run_logger.info(
         "Starting agent runs",
-        num_problems=len(problem_names),
+        num_problems=len(problem_names_resolved),
         num_workers=num_workers,
     )
 
-    task_config = problem_runner.RunTaskConfig(
+    # 14. Create task config
+    task_config = _create_task_config(
         problem_base_path=ctx.obj.problem_path,
         run_dir=run_dir,
-        env_spec=env_spec_typed,
+        env_spec=env_spec,
         agent_config=agent_config,
         model_def=model_def,
         credential=credential,
-        thinking_preset=run_cfg.thinking,
-        thinking_max_tokens=run_cfg.thinking_max_tokens,
-        prompt_template=run_cfg.prompt_content,
-        pass_policy=run_cfg.pass_policy,
+        run_cfg=run_cfg,
         seed=ctx.obj.seed,
         verbosity=ctx.obj.verbosity,
         debug=ctx.obj.debug,
-        disable_evaluation=not evaluate,
+        evaluate=evaluate,
         live_progress=live_progress,
-        image=image_name,
+        image_name=image_name,
         resume=resume,
-        one_shot=run_cfg.one_shot,
     )
 
-    # Run problems using the run_task module
+    # 15. Run problems
     results = problem_runner.run_problems(
-        problem_names=problem_names,
+        problem_names=problem_names_resolved,
         config=task_config,
         num_workers=num_workers,
         console=console,
     )
 
-    # Report results
+    # 16. Report results
     _report_results(results)
 
+    # 17. Create summary if evaluating
     if evaluate:
         _create_checkpoint_results_and_summary(
             run_dir=run_dir,
             problems_base_path=ctx.obj.problem_path,
-            problem_names=problem_names,
+            problem_names=problem_names_resolved,
             console=console,
         )
     else:
-        logger.info(
+        run_logger.info(
             "Evaluation disabled; skipping checkpoint result generation",
             run_directory=str(run_dir),
         )

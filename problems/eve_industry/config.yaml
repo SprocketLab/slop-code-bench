@@ -15,6 +15,9 @@ author: "Gabriel Orlanski"
 entry_file: industry
 timeout: 180
 
+test_dependencies:
+  - pyyaml
+
 tags:
   - data-processing
   - cli-tools
@@ -53,4 +56,9 @@ checkpoints:
   checkpoint_5:
     version: 1
     order: 5
+    state: Core Tests
+
+  checkpoint_6:
+    version: 1
+    order: 6
     state: Core Tests

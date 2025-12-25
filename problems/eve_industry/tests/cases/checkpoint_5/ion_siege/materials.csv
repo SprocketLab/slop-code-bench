@@ -1,0 +1,45 @@
+name,to_buy,buy_volume,start_amount,end_amount
+Cadmium,1800,90.0,0,0
+Caesium,900,45.0,0,0
+Carbon Polymers,0,0.0,0,100
+Chromium,900,45.0,0,0
+Cobalt,1800,90.0,0,0
+Coolant,229,171.75,0,0
+Crystalline Carbonide,0,0.0,0,3577
+Datacore - Plasma Physics,24,2.4,0,0
+Datacore - Quantum Physics,24,2.4,0,0
+Dysprosium,900,45.0,0,0
+Enriched Uranium,103,77.25,0,0
+Fullerides,0,0.0,0,2527
+Hafnium,900,45.0,0,0
+Heavy Water,4284,1713.6,0,0
+Helium Fuel Block,0,0.0,0,5
+Helium Isotopes,5265,157.95,0,0
+Hydrocarbons,4000,200.0,0,0
+Hydrogen Fuel Block,0,0.0,0,35
+Hydrogen Isotopes,810,24.3,0,0
+Hypersynaptic Fibers,0,0.0,0,725
+Isogen,118348,1183.48,0,0
+Liquid Ozone,8820,3528.0,0,0
+Mechanical Parts,103,77.25,0,0
+Megacyte,8307,83.07,0,0
+Mercury,900,45.0,0,0
+Mexallon,830977,8309.77,0,0
+Morphite,4915,49.15,0,0
+Nitrogen Fuel Block,0,0.0,0,35
+Nitrogen Isotopes,3645,109.35,0,0
+Nocxium,33707,337.07,0,0
+Oxygen,557,105.83,0,0
+Oxygen Fuel Block,0,0.0,0,25
+Oxygen Isotopes,1620,48.6,0,0
+Platinum,2200,110.0,0,0
+Platinum Technite,0,0.0,0,100
+Pyerite,2435607,24356.07,0,0
+R.A.M.- Weapon Tech,0,0.0,0,85
+Robotics,3101,9303.0,0,0
+Silicates,4000,200.0,0,0
+Strontium Clathrates,504,1512.0,0,0
+Technetium,2200,110.0,0,0
+Tritanium,29528453,295284.53,0,0
+Vanadium,900,45.0,0,0
+Zydrine,9657,96.57,0,0

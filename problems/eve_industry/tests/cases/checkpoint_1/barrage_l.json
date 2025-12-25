@@ -1,0 +1,24 @@
+{
+  "test_id": "barrage_l",
+  "marker": null,
+  "input": {
+    "command": "recipe",
+    "args": ["Barrage L Blueprint"]
+  },
+  "expected": {
+    "item": "Barrage L (12775)",
+    "group": "Charge > Advanced Autocannon Ammo",
+    "market_group": "Ammunition & Charges > Projectile Ammo > Advanced Autocannon Ammo > Large",
+    "tech_level": "Tech II",
+    "volume": 0.025,
+    "activity": "Manufacturing",
+    "output_quantity": 5000,
+    "run_time": 240,
+    "materials": {
+      "Fernite Carbide": {"Quantity": 3000, "Buildable": "Yes"},
+      "Fullerides": {"Quantity": 1200, "Buildable": "Yes"},
+      "Morphite": {"Quantity": 15, "Buildable": "No"},
+      "R.A.M.- Ammunition Tech": {"Quantity": 1, "Buildable": "Yes"}
+    }
+  }
+}

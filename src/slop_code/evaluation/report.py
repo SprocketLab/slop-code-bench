@@ -247,6 +247,27 @@ class CorrectnessResults(BaseModel):
         exclude=True,
         description="Raw CTRF JSON report (not stored in evaluation.json)",
     )
+    pytest_json_report: dict[str, Any] | None = Field(
+        default=None,
+        exclude=True,
+        description="Slimmed pytest-json-report output (saved as report.json)",
+    )
+
+    def _group_tests_for_serialization(self) -> dict[str, dict[str, list[str]]]:
+        """Group tests by checkpoint-GroupType for compact JSON serialization.
+
+        Returns:
+            Dict with keys like "checkpoint_1-Core" and values like
+            {"passed": ["test_id1", ...], "failed": ["test_id2", ...]}
+        """
+        grouped: dict[str, dict[str, list[str]]] = {}
+        for test in self.tests:
+            key = f"{test.checkpoint}-{test.group_type.value}"
+            if key not in grouped:
+                grouped[key] = {"passed": [], "failed": []}
+            bucket = "passed" if test.status == "passed" else "failed"
+            grouped[key][bucket].append(test.id)
+        return grouped
 
     def add_test_result(self, result: TestResult) -> None:
         """Add a test result and update aggregated counts.
@@ -322,6 +343,19 @@ class CorrectnessResults(BaseModel):
 
         raise ValueError(f"Unknown policy: {policy}")
 
+    def to_output_dict(self) -> dict[str, Any]:
+        """Return dict representation with grouped tests format.
+
+        This is the canonical output format for JSON serialization.
+        Uses the compact grouped tests format instead of the internal list.
+
+        Returns:
+            Dict suitable for JSON serialization with grouped tests.
+        """
+        data = self.model_dump(mode="json")
+        data["tests"] = self._group_tests_for_serialization()
+        return data
+
     def save(self, save_dir: Path) -> None:
         """Save results to evaluation.json in the specified directory.
 
@@ -335,7 +369,7 @@ class CorrectnessResults(BaseModel):
         save_path = save_dir / "evaluation.json"
 
         with save_path.open("w") as f:
-            json.dump(self.model_dump(mode="json"), f, indent=2)
+            json.dump(self.to_output_dict(), f, indent=2)
 
         evaluation_dir = save_dir / "evaluation"
         evaluation_dir.mkdir(parents=True, exist_ok=True)
@@ -348,7 +382,7 @@ class CorrectnessResults(BaseModel):
             (evaluation_dir / "stderr.txt").write_text(
                 self.stderr, encoding="utf-8"
             )
-        if self.pytest_ctrf_report is not None:
+        if self.pytest_json_report is not None:
             report_path = evaluation_dir / "report.json"
             with report_path.open("w", encoding="utf-8") as f:
-                json.dump(self.pytest_ctrf_report, f, indent=2)
+                json.dump(self.pytest_json_report, f, indent=2)

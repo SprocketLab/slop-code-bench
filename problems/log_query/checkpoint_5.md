@@ -8,7 +8,7 @@ Add nested queries as expressions with uncommon keywords:
 - **Scalar subquery:** `POCKET(<query>)`
 - **Table subquery:** `POCKET[<query>]`
 - **Predicates built on tables:** `BEHOLDS` (EXISTS), `AMONGST` (IN), `EITHERWISE` (ANY), `EVERYWISE` (ALL)
-- **Correlation:** `UPTREE.<alias>...` reads fields from the **immediately enclosing** query block.
+- **Correlation:** `UPTREE.<alias>...` reads fields from any enclosing query where that alias is bound.
 
 All features from Parts **1–4** work inside subqueries. Ordering and determinism stay precise.
 
@@ -67,12 +67,12 @@ All other tokens / precedence / case rules are as in prior parts (AND binds tigh
 - `POCKET[<query>]` (table): only as the right operand of `BEHOLDS`, `AMONGST`, `EITHERWISE`, `EVERYWISE` inside `WHERE`.
 - `GLOSS` may appear inside subqueries; its labels are **local to that subquery**.
 
-## Subquery rules
+## Semantics
 
-- POCKET subqueries must return exactly one column. Scalar POCKET must return at most one row.
-- UPTREE references outer query fields. See examples for usage and scope rules.
-- New predicates: BEHOLDS (EXISTS), AMONGST (IN), EITHERWISE (ANY), EVERYWISE (ALL). See examples for behavior.
-- Subqueries use declared sources only. SELECT * is invalid in scalar POCKET.
+- EITHERWISE over an empty set evaluates to false. EVERYWISE over an empty set evaluates to true.
+- AMONGST and comparisons use deep structural equality. `null` equals `null`.
+- Scalar POCKET without AS uses the query text as the output key.
+- Ordered operators (`<`, `<=`, `>`, `>=`) use lexicographic ordering for strings.
 
 ## Error handling (unchanged envelope)
 
@@ -86,12 +86,12 @@ On any error, write **one** line to `stderr`, exit non-zero, and write nothing t
 
 ---
 
-# Examples (10)
+# Examples
 
 Unless noted, bind:
 
 ```
---source a=a.ndjson --source b=b.ndjson --source c=c.ndjson --source d=d.ndjson
+--source a=a.ndjson --source b=b.ndjson --source c=c.ndjson
 ```
 
 **a.ndjson**
@@ -121,14 +121,6 @@ Unless noted, bind:
 {"route":"/a","slo_ms":25,"limit":80}
 ```
 
-**d.ndjson**
-
-```
-{"user":"u1","tags":["x","y"]}
-{"user":"u3","tags":["y"]}
-{"user":"u5","tags":["x"]}
-```
-
 ---
 
 ## 1) Scalar `POCKET` enrichment (correlated count)
@@ -153,41 +145,7 @@ FROM a
 
 ---
 
-## 2) Scalar `POCKET` with zero rows → `null`
-
-**Query**
-
-```
-SELECT POCKET(SELECT b.rid FROM b WHERE b.rid = "none") AS rid
-FROM a WHERE a.id = 1
-```
-
-**Output**
-
-```json
-[{ "rid": null }]
-```
-
----
-
-## 2′) Scalar `POCKET` without `AS` (output key is query text)
-
-**Query**
-
-```
-SELECT a.id, POCKET(SELECT b.status FROM b WHERE b.rid = UPTREE.a.req)
-FROM a WHERE a.id = 1
-```
-
-**Output**
-
-```json
-[{ "a.id": 1, "POCKET(SELECT b.status FROM b WHERE b.rid = UPTREE.a.req)": 200 }]
-```
-
----
-
-## 3) `BEHOLDS` (EXISTS) with correlation
+## 2) `BEHOLDS` (EXISTS) with correlation
 
 **Query**
 
@@ -205,43 +163,7 @@ WHERE BEHOLDS POCKET[SELECT b.rid FROM b WHERE b.rid = UPTREE.a.req AND b.status
 
 ---
 
-## 4) `AMONGST` (IN) with deep equality (arrays)
-
-**Query**
-
-```
-SELECT a.id
-FROM a
-WHERE a.tags AMONGST POCKET[SELECT d.tags FROM d WHERE d.user = UPTREE.a.user]
-```
-
-**Output**
-
-```json
-[{ "a.id": 1 }]
-```
-
----
-
-## 5) `EITHERWISE` (ANY) with `<`
-
-**Query**
-
-```
-SELECT a.id
-FROM a
-WHERE a.latency_ms < EITHERWISE POCKET[SELECT b.p95 FROM b WHERE b.rid = UPTREE.a.req]
-```
-
-**Output**
-
-```json
-[{ "a.id": 1 }, { "a.id": 2 }, { "a.id": 3 }]
-```
-
----
-
-## 6) `EVERYWISE` (ALL) with `<=` and empty-set truth
+## 3) `EVERYWISE` (ALL)
 
 **Query**
 
@@ -258,7 +180,7 @@ WHERE a.latency_ms <= EVERYWISE POCKET[SELECT c.slo_ms FROM c WHERE c.route = UP
 ```
 
 
-## 9) `GLOSS` scope: outer `CANON` not visible inside subquery
+## 4) `GLOSS` scope inside subqueries
 
 **Query**
 

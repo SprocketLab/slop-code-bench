@@ -165,7 +165,7 @@ class TestMeasureFiles:
     def test_measure_files_respects_exclude_patterns(self, tmp_path):
         """Test that measure_files respects exclusion patterns.
 
-        Note: Patterns match against file names, not paths or directories.
+        Patterns match against any path component (file or directory name).
         """
         (tmp_path / "keep.py").write_text("# keep")
         (tmp_path / "test_skip.py").write_text("# skip")  # Matches test_*
@@ -209,6 +209,104 @@ class TestMeasureFiles:
         results = list(measure_files(tmp_path, exclude_patterns=set()))
 
         assert len(results) == 0
+
+    def test_measure_files_excludes_venv_directories(self, tmp_path):
+        """Test that files inside virtual environment directories are excluded."""
+        # Create files in various venv-like directories
+        (tmp_path / "keep.py").write_text("# keep")
+
+        for venv_dir in [".venv", "venv", "virtualenv", ".virtualenv"]:
+            venv_path = tmp_path / venv_dir / "lib" / "site-packages"
+            venv_path.mkdir(parents=True)
+            (venv_path / "installed_package.py").write_text("# from venv")
+
+        exclude_patterns = {".venv", "venv", "virtualenv", ".virtualenv"}
+        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+
+        # Should only find keep.py, not any files inside venv directories
+        assert len(results) == 1
+        assert results[0][0].name == "keep.py"
+
+    def test_measure_files_excludes_pycache_directories(self, tmp_path):
+        """Test that files inside __pycache__ directories are excluded."""
+        (tmp_path / "module.py").write_text("# module")
+        pycache = tmp_path / "__pycache__"
+        pycache.mkdir()
+        (pycache / "module.cpython-312.pyc").write_text("compiled")
+
+        exclude_patterns = {"__pycache__", "*.pyc"}
+        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+
+        assert len(results) == 1
+        assert results[0][0].name == "module.py"
+
+    def test_measure_files_excludes_git_directory(self, tmp_path):
+        """Test that files inside .git directory are excluded."""
+        (tmp_path / "code.py").write_text("# code")
+        git_dir = tmp_path / ".git" / "objects"
+        git_dir.mkdir(parents=True)
+        (git_dir / "abc123").write_text("git object")
+
+        exclude_patterns = {".git"}
+        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+
+        assert len(results) == 1
+        assert results[0][0].name == "code.py"
+
+    def test_measure_files_excludes_node_modules(self, tmp_path):
+        """Test that files inside node_modules are excluded."""
+        (tmp_path / "app.py").write_text("# app")
+        node_modules = tmp_path / "node_modules" / "some-package"
+        node_modules.mkdir(parents=True)
+        (node_modules / "index.py").write_text("# package")
+
+        exclude_patterns = {"node_modules"}
+        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+
+        assert len(results) == 1
+        assert results[0][0].name == "app.py"
+
+    def test_measure_files_excludes_tox_nox_directories(self, tmp_path):
+        """Test that files inside .tox and .nox directories are excluded."""
+        (tmp_path / "tests.py").write_text("# tests")
+
+        for tool_dir in [".tox", ".nox"]:
+            env_path = tmp_path / tool_dir / "py312" / "lib"
+            env_path.mkdir(parents=True)
+            (env_path / "cached.py").write_text("# cached")
+
+        exclude_patterns = {".tox", ".nox"}
+        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+
+        assert len(results) == 1
+        assert results[0][0].name == "tests.py"
+
+    def test_measure_files_excludes_pyc_files_with_glob(self, tmp_path):
+        """Test that *.pyc glob pattern excludes .pyc files anywhere."""
+        (tmp_path / "module.py").write_text("# module")
+        (tmp_path / "module.pyc").write_text("compiled")
+        (tmp_path / "other.cpython-312.pyc").write_text("compiled")
+
+        exclude_patterns = {"*.pyc"}
+        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+
+        assert len(results) == 1
+        assert results[0][0].name == "module.py"
+
+    def test_measure_files_deeply_nested_venv_excluded(self, tmp_path):
+        """Test that deeply nested files in venv are still excluded."""
+        (tmp_path / "main.py").write_text("# main")
+
+        # Create deeply nested structure inside .venv
+        deep_path = tmp_path / ".venv" / "lib" / "python3.12" / "site-packages" / "requests" / "adapters"
+        deep_path.mkdir(parents=True)
+        (deep_path / "base.py").write_text("# adapter base")
+
+        exclude_patterns = {".venv"}
+        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+
+        assert len(results) == 1
+        assert results[0][0].name == "main.py"
 
 
 class TestMeasureSnapshotQuality:
@@ -304,7 +402,7 @@ class TestMeasureSnapshotQuality:
     def test_measure_snapshot_quality_excludes_patterns(self, tmp_path):
         """Test that default exclude patterns are applied.
 
-        Note: Default patterns match filenames like '.pyc', not directory names.
+        Patterns match any path component including directory names like '.venv'.
         """
         (tmp_path / "keep.py").write_text("# keep")
         (tmp_path / "skip.pyc").write_text("# compiled")  # Matches .pyc pattern

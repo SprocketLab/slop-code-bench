@@ -1,0 +1,28 @@
+{
+  "test_id": "athanor",
+  "marker": "functionality",
+  "input": {
+    "command": "recipe",
+    "args": ["Athanor"]
+  },
+  "expected": {
+    "item": "Athanor (35835)",
+    "group": "Structure > Refinery",
+    "market_group": "Structures > Refineries",
+    "tech_level": "Tech I",
+    "volume": 8000.0,
+    "activity": "Manufacturing",
+    "output_quantity": 1,
+    "run_time": 10000,
+    "materials": {
+      "Structure Acceleration Coils": {"Quantity": 1, "Buildable": "Yes"},
+      "Structure Construction Parts": {"Quantity": 1, "Buildable": "Yes"},
+      "Structure Docking Bay": {"Quantity": 1, "Buildable": "Yes"},
+      "Structure Electromagnetic Sensor": {"Quantity": 1, "Buildable": "Yes"},
+      "Structure Hangar Array": {"Quantity": 1, "Buildable": "Yes"},
+      "Structure Repair Facility": {"Quantity": 1, "Buildable": "Yes"},
+      "Structure Reprocessing Plant": {"Quantity": 3, "Buildable": "Yes"},
+      "Structure Storage Bay": {"Quantity": 1, "Buildable": "Yes"}
+    }
+  }
+}

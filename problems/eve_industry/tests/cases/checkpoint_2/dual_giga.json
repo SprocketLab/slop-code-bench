@@ -1,0 +1,21 @@
+{
+  "test_id": "dual_giga",
+  "marker": "functionality",
+  "item_name": "Dual Giga Pulse Laser II",
+  "tech_level": "t2",
+  "base_prob": 0.34,
+  "base_runs": 5,
+  "num_science_skills": 3,
+  "skill_levels": [1, 5],
+  "expected_base": {
+    "item": "Dual Giga Pulse Laser II (37298)",
+    "group": "Module > Energy Weapon",
+    "market_group": "Ship Equipment > Turrets & Launchers > Energy Turrets > Pulse Lasers > Extra Large",
+    "tech_level": "Tech II",
+    "base": "Dual Giga Pulse Laser I Blueprint (20445)",
+    "datacores": "Datacore - High Energy Physics, Datacore - Laser Physics",
+    "required_per_run": 8,
+    "skills": "Amarr Encryption Methods, Capital Ship Construction, High Energy Physics, Laser Physics",
+    "time": 1200
+  }
+}

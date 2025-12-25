@@ -378,6 +378,11 @@ markers =
             "--ctrf=.scbench/ctrf-report.json",  # CTRF report output path
             "--json-report",
             "--json-report-file=.scbench/pytest-report.json",
+            "--json-report-omit=traceback",
+            "--json-report-omit=streams",
+            "--json-report-omit=log",
+            "--json-report-omit=collectors",
+            "--json-report-omit=warnings",
             "-vv",  # Verbose output
             *quoted_extra_args,
             WORKSPACE_TEST_DIR,
@@ -1130,6 +1135,7 @@ markers =
                 stdout=exec_result.stdout,
                 stderr=exec_result.stderr,
                 pytest_ctrf_report=ctrf_report,
+                pytest_json_report=pytest_report,
             )
 
             # STEP 9: Convert test entries to TestResults

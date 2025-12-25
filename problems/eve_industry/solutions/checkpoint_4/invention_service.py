@@ -381,7 +381,6 @@ def get_t3_invention_data(
         (products["productTypeID"] == item_info.type_id)
         & (products["activityID"] == manufacturing_id)
     ]
-
     if len(t3_bp_rows) == 0:
         sys.stderr.write(f"ERROR: {item_info.name} not inventable\n")
         sys.exit(2)

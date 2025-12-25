@@ -1,0 +1,319 @@
+10MN Y-S8 Compact Afterburner 1
+200mm AutoCannon I 162
+50MN Microwarpdrive II 3
+800mm Steel Plates II 6
+Accelerant Decryptor 669
+AG-Composite Molecular Condenser 1
+Agency 'Hardshell' TB7 Dose III 1
+Agency 'Overclocker' SB3 Dose I 8
+Agency 'Pyrolancea' DB9 Dose IV 1
+Amber Cytoserocin 204
+Amber Mykoserocin 304
+Antimatter Charge S 2600
+Armor Command Burst I 150
+Armor Plates 65
+Artificial Neural Network 4
+Atmospheric Gases 2484383
+Aurora M 3
+Auto-Integrity Preservation Seal 10
+AV-Composite Molecular Condenser 27
+Axosomatic Neurolink Enhancer 14
+Azure Cytoserocin 20
+Azure Mykoserocin 2914
+Bacteria 30583
+Biocells 922
+Blackbird 2
+Broadcast Node 98
+Broken Drone Transceiver 3
+Burned Logic Circuit 107
+C3-FTM Acid 76
+Cadmium 19698
+Caesarium Cadmide 54216
+Caesium 26496
+Cap Booster 3200 10000
+Cap Booster 800 10000
+Capital Cargo Bay 45
+Capital Infectious Scoped Energy Neutralizer 2
+Capital Singularity Radiation Convertor 797
+Capital Trinary State Processor 562
+Capital Zero-Point Field Manipulator 216
+Carbon Fiber 52148
+Carbon Polymers 371319
+Carbon-86 Epoxy Resin 109
+Celadon Cytoserocin 494
+Celadon Mykoserocin 1059
+Ceramic Powder 359821
+Charred Micro Circuit 15604
+Chiral Structures 35745
+Chromium 26124
+Chromodynamic Tricarboxyls 25
+Cobalt 17248
+Cogni-Emotive Neurolink Enhancer 12
+Compact Interdiction Nullifier 1
+Conductive Polymer 14
+Construction Blocks 1945
+Consumer Electronics 46
+Contaminated Lorentz Fluid 4
+Contaminated Nanite Compound 19
+Coolant 9832
+Core Scanner Probe I 44
+Core Temperature Regulator 4
+Covetor 4
+Crystalline Carbonide 12409557
+Crystalline Carbonide Armor Plate 45105
+Crystalline Isogen-10 14316
+Crystallite Alloy 176020
+CV-Composite Molecular Condenser 27
+Cybernetic Subprocessor - Basic 1
+Damage Control II 1
+Damaged Artificial Neural Network 86
+Damavik 1
+Data Sheets 72000
+Datacore - Amarrian Starship Engineering 776
+Datacore - Caldari Starship Engineering 1040
+Datacore - Electromagnetic Physics 1000
+Datacore - Electronic Engineering 1289
+Datacore - Gallentean Starship Engineering 660
+Datacore - Graviton Physics 1000
+Datacore - High Energy Physics 900
+Datacore - Hydromagnetic Physics 1035
+Datacore - Laser Physics 2033
+Datacore - Mechanical Engineering 1149
+Datacore - Minmatar Starship Engineering 880
+Datacore - Molecular Engineering 1977
+Datacore - Nanite Engineering 1000
+Datacore - Nuclear Physics 2016
+Datacore - Plasma Physics 1030
+Datacore - Quantum Physics 1000
+Datacore - Rocket Science 925
+Defective Current Pump 48
+Device 1
+Drone Synaptic Relay Wiring 61
+Dysporite 18980
+Dysprosium 23520
+Elite Drone AI 3
+EM Pulse Generator 292
+Enriched Uranium 775
+Entropic Radiation Sink II 6
+Evaporite Deposits 57194
+Fermionic Condensates 37678
+Fernite Alloy 176594
+Fernite Carbide 13605143
+Ferrofluid 55199
+Ferrogel 122059
+Fluxed Condensates 12572
+Fried Interface Circuit 17399
+Fullerene Intercalated Graphite 8
+Fullerides 920664
+Fullerite-C28 29891
+Fullerite-C32 1
+Fullerite-C320 1372
+Fullerite-C50 1
+Fullerite-C60 29988
+Fullerite-C70 29890
+Fullerite-C72 24625
+Fullerite-C84 29988
+Fulleroferrocene 807
+Fusion Reactor Unit 555
+Garbage 772
+Goal-Orienting Neurolink Stabilizer 3
+Golden Cytoserocin 204
+Golden Mykoserocin 1006
+Graphene Nanoribbons 64
+Gravimetric ECM I 100
+Gravimetric Sensor Cluster 666
+Graviton Pulse Generator 1168
+Graviton Reactor Unit 113
+Guidance Systems 16
+Gyrostabilizer I 70
+Hafnium 16856
+Heavy Missile Launcher I 80
+Heavy Neutron Blaster I 500
+Heavy Water 657645
+Helium Fuel Block 42370
+Helium Isotopes 554901
+Hermetic Membranes 1161
+Hexite 211083
+High-Tech Scanner 50
+Hydrocarbons 2522189
+Hydrogen Batteries 20404
+Hydrogen Fuel Block 45081
+Hydrogen Isotopes 130429
+Hyperflurite 24640
+Hypersynaptic Fibers 50304
+Hypnagogic Neurolink Enhancer 339
+Improved Cloaking Device II 1
+Inertial Stabilizers II 1
+Inferno Fury Heavy Missile 1940
+Infiltrator I 10
+Intact Shield Emitter 1
+Integrity Response Drones 289
+Interface Circuit 1
+Ion Thruster 2490
+Isogen 5942634
+Isotropic Neofullerene Alpha-3 5
+Isotropic Neofullerene Beta-6 12
+Isotropic Neofullerene Gamma-9 6
+Kestrel 12
+Kinetic Armor Hardener I 1
+Ladar ECM I 100
+Lanthanum Metallofullerene 118
+Large Shield Extender I 30
+Large Shield Extender II 1
+Laser Focusing Crystals 958
+Lattice Locked Dekaisogen 468
+Life Support Backup Unit 6
+Light Neutron Blaster I 606
+Lime Cytoserocin 275
+Lime Mykoserocin 3745
+Liquid Ozone 289497
+LM-Composite Molecular Condenser 31
+Logic Circuit 5
+Magnetometric ECM I 10
+Magnetometric Sensor Cluster 4632
+Magpulse Thruster 333
+Malachite Cytoserocin 196
+Malachite Mykoserocin 5857
+Malfunctioning Shield Emitter 19
+Mechanical Parts 768
+Medium Energy Neutralizer I 4
+Medium F-S9 Regolith Compact Shield Extender 4
+Megacyte 51204
+Melted Capacitor Console 3
+Memory Augmentation - Basic 1
+Mercenary Den Management 1
+Mercury 5000
+Meta-Molecular Combiner 4
+Meta-Operant Neurolink Enhancer 7
+Methanofullerene 71
+Mexallon 3406280
+Micro Circuit 1
+Miniature Electronics 2940
+Moa 14
+Morphite 2900
+Multispectrum Shield Hardener II 2
+Nanites 1943
+Nanotransistors 427181
+Neo Mercurite 69651
+Neodymium 6111
+Nitrogen Fuel Block 42581
+Nitrogen Isotopes 74436
+Nocxium 109692
+Nonlinear Metamaterials 129863
+Nuclear Pulse Generator 876
+Optimized Augmentation Decryptor 37
+Organic Mortar Applicators 180
+Oscillator Capacitor Unit 6080
+Oxy-Organic Solvents 296
+Oxygen 4262
+Oxygen Fuel Block 45324
+Oxygen Isotopes 256887
+Parity Decryptor 312
+Phenolic Composites 827592
+Photon Microprocessor 19235
+Photonic Metamaterials 106745
+Plasma Pulse Generator 1168
+Plasmonic Metamaterials 142165
+Platinum 90748
+Platinum Technite 28352
+Power Circuit 3
+PPD Fullerene Fibers 246
+Pressurized Oxidizers 10212
+Process Decryptor 400
+Promethium 16711
+Promethium Mercurite 42467
+Prometium 37112
+Proteins 15793
+Pulse Shield Emitter 2435
+Pure Improved Drop Booster 7
+Pure Standard Drop Booster 11
+Pure Standard Mindflood Booster 11
+Pure Synth Crash Booster 27
+Pure Synth Exile Booster 27
+Pyerite 92160144
+Quantum Microprocessor 1998
+R-O Trigger Neurolink Conduit 1
+R.A.M.- Ammunition Tech 2674
+R.A.M.- Armor/Hull Tech 4738
+R.A.M.- Electronics 7533
+R.A.M.- Energy Tech 6270
+R.A.M.- Robotics 2037
+R.A.M.- Shield Tech 290
+R.A.M.- Starship Tech 1396
+R.A.M.- Weapon Tech 7332
+R.Db - CreoDron 3600
+R.Db - Ishukone 3600
+Radiation Absorption Thruster 98
+Rash Compact Burst Jammer 1
+Reaction-Orienting Neurolink Stabilizer 231
+Recursive Computing Module 155
+Redeemer 8
+Reinforced Carbon Fiber 59044
+Robotics 2179
+Rocket Fuel 4240
+Rolled Tungsten Alloy 173861
+Rupture 13
+Scalar Capacitor Unit 666
+Scandium 7039
+Scandium Metallofullerene 82
+Sense-Heuristic Neurolink Enhancer 12
+Sensor Booster I 2
+Silicates 569696
+Silicon Diborite 191515
+Singularity Radiation Convertor 258
+Skirmish Command Burst I 60
+Smashed Trigger Unit 40
+Solerium 8774
+Squall 1
+Standard Crash Booster 1
+Stasis Webifier I 180
+Station Container 21
+Stress-Responding Neurolink Stabilizer 208
+Strip Miner I 2
+Strontium Clathrates 25577
+Sulfuric Acid 250192
+Supercomputers 143
+Superconductor Rails 5714
+Superconductors 7032
+Superionic Ice 15474
+Supertensile Plastics 1316
+Sustained Shield Emitter 415
+Sylramic Fibers 10823397
+Synthetic Synapses 1604
+Tangled Power Conduit 947
+Technetium 31948
+Terahertz Metamaterials 22595
+Test Cultures 2319
+Thermonuclear Trigger Unit 7663
+Thermosetting Polymer 52252
+Thorax 14
+Thruster Console 21
+Thulium 6272
+Thulium Hafnite 42505
+Titanium Carbide 13600483
+Titanium Chromide 176021
+Titanium Diborite Armor Plate 4356
+Tracking Computer I 100
+Transmitter 13429
+Tripped Power Circuit 1601
+Tritanium 22039519
+Tungsten 3247
+Tungsten Carbide 7094781
+Tungsten Carbide Armor Plate 1
+Ultradian-Cycling Neurolink Stabilizer 7
+Unstable Medium EMP Smartbomb Mutaplasmid 25
+Valkyrie I 320
+Vanadium 111635
+Vanadium Hafnite 48090
+Venture 80
+Vermillion Cytoserocin 70
+Vermillion Mykoserocin 6414
+Viral Agent 1319
+Ward Console 25
+Warp Core Stabilizer I 1
+Warrior I 300
+Water 35745
+Wetware Mainframe 106
+Zero-Point Condensate 13904
+Zydrine 910466
+Rhea 1

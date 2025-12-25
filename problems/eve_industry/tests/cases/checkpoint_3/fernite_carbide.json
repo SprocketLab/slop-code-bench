@@ -1,0 +1,50 @@
+{
+  "test_id": "fernite_carbide",
+  "item_name": "Fernite Carbide",
+  "cases": [
+    {
+      "case_id": "te10",
+      "marker": "functionality",
+      "me": 0,
+      "te": 10,
+      "display_waste": false,
+      "expected": {
+        "item": "Fernite Carbide (16673)",
+        "group": "Material > Composite",
+        "market_group": "Manufacture & Research > Materials > Reaction Materials > Advanced Moon Materials",
+        "tech_level": "Tech I",
+        "volume": 0.01,
+        "activity": "Reactions",
+        "output_quantity": 10000,
+        "run_time": 162,
+        "materials": {
+          "Ceramic Powder": {"Quantity": 100, "Buildable": "Yes"},
+          "Fernite Alloy": {"Quantity": 100, "Buildable": "Yes"},
+          "Hydrogen Fuel Block": {"Quantity": 5, "Buildable": "Yes"}
+        }
+      }
+    },
+    {
+      "case_id": "me10_ignores",
+      "marker": "functionality",
+      "me": 10,
+      "te": 0,
+      "display_waste": false,
+      "expected": {
+        "item": "Fernite Carbide (16673)",
+        "group": "Material > Composite",
+        "market_group": "Manufacture & Research > Materials > Reaction Materials > Advanced Moon Materials",
+        "tech_level": "Tech I",
+        "volume": 0.01,
+        "activity": "Reactions",
+        "output_quantity": 10000,
+        "run_time": 180,
+        "materials": {
+          "Ceramic Powder": {"Quantity": 100, "Buildable": "Yes"},
+          "Fernite Alloy": {"Quantity": 100, "Buildable": "Yes"},
+          "Hydrogen Fuel Block": {"Quantity": 5, "Buildable": "Yes"}
+        }
+      }
+    }
+  ]
+}

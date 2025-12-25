@@ -1,0 +1,136 @@
+{
+  "test_id": "naga",
+  "item_name": "Naga",
+  "cases": [
+    {
+      "case_id": "me10",
+      "marker": null,
+      "me": 10,
+      "te": 0,
+      "display_waste": false,
+      "expected": {
+        "item": "Naga (4306)",
+        "group": "Ship > Attack Battlecruiser",
+        "market_group": "Ships > Battlecruisers > Standard Battlecruisers > Caldari",
+        "tech_level": "Tech I",
+        "volume": 15000.0,
+        "activity": "Manufacturing",
+        "output_quantity": 1,
+        "run_time": 250,
+        "materials": {
+          "Isogen": {"Quantity": 23400, "Buildable": "No"},
+          "Megacyte": {"Quantity": 468, "Buildable": "No"},
+          "Mexallon": {"Quantity": 210600, "Buildable": "No"},
+          "Nocxium": {"Quantity": 9360, "Buildable": "No"},
+          "Pyerite": {"Quantity": 1170000, "Buildable": "No"},
+          "Tritanium": {"Quantity": 3276000, "Buildable": "No"},
+          "Zydrine": {"Quantity": 2340, "Buildable": "No"}
+        }
+      }
+    },
+    {
+      "case_id": "me5",
+      "marker": null,
+      "me": 5,
+      "te": 0,
+      "display_waste": false,
+      "expected": {
+        "item": "Naga (4306)",
+        "group": "Ship > Attack Battlecruiser",
+        "market_group": "Ships > Battlecruisers > Standard Battlecruisers > Caldari",
+        "tech_level": "Tech I",
+        "volume": 15000.0,
+        "activity": "Manufacturing",
+        "output_quantity": 1,
+        "run_time": 250,
+        "materials": {
+          "Isogen": {"Quantity": 24700, "Buildable": "No"},
+          "Megacyte": {"Quantity": 494, "Buildable": "No"},
+          "Mexallon": {"Quantity": 222300, "Buildable": "No"},
+          "Nocxium": {"Quantity": 9880, "Buildable": "No"},
+          "Pyerite": {"Quantity": 1235000, "Buildable": "No"},
+          "Tritanium": {"Quantity": 3458000, "Buildable": "No"},
+          "Zydrine": {"Quantity": 2470, "Buildable": "No"}
+        }
+      }
+    },
+    {
+      "case_id": "te20",
+      "marker": null,
+      "me": 0,
+      "te": 20,
+      "display_waste": false,
+      "expected": {
+        "item": "Naga (4306)",
+        "group": "Ship > Attack Battlecruiser",
+        "market_group": "Ships > Battlecruisers > Standard Battlecruisers > Caldari",
+        "tech_level": "Tech I",
+        "volume": 15000.0,
+        "activity": "Manufacturing",
+        "output_quantity": 1,
+        "run_time": 200,
+        "materials": {
+          "Isogen": {"Quantity": 26000, "Buildable": "No"},
+          "Megacyte": {"Quantity": 520, "Buildable": "No"},
+          "Mexallon": {"Quantity": 234000, "Buildable": "No"},
+          "Nocxium": {"Quantity": 10400, "Buildable": "No"},
+          "Pyerite": {"Quantity": 1300000, "Buildable": "No"},
+          "Tritanium": {"Quantity": 3640000, "Buildable": "No"},
+          "Zydrine": {"Quantity": 2600, "Buildable": "No"}
+        }
+      }
+    },
+    {
+      "case_id": "me5_waste",
+      "marker": null,
+      "me": 5,
+      "te": 0,
+      "display_waste": true,
+      "expected": {
+        "item": "Naga (4306)",
+        "group": "Ship > Attack Battlecruiser",
+        "market_group": "Ships > Battlecruisers > Standard Battlecruisers > Caldari",
+        "tech_level": "Tech I",
+        "volume": 15000.0,
+        "activity": "Manufacturing",
+        "output_quantity": 1,
+        "run_time": 250,
+        "materials": {
+          "Isogen": {"Quantity": 24700, "Waste": 1300, "Buildable": "No"},
+          "Megacyte": {"Quantity": 494, "Waste": 26, "Buildable": "No"},
+          "Mexallon": {"Quantity": 222300, "Waste": 11700, "Buildable": "No"},
+          "Nocxium": {"Quantity": 9880, "Waste": 520, "Buildable": "No"},
+          "Pyerite": {"Quantity": 1235000, "Waste": 65000, "Buildable": "No"},
+          "Tritanium": {"Quantity": 3458000, "Waste": 182000, "Buildable": "No"},
+          "Zydrine": {"Quantity": 2470, "Waste": 130, "Buildable": "No"}
+        }
+      }
+    },
+    {
+      "case_id": "me10_te20",
+      "marker": null,
+      "me": 10,
+      "te": 20,
+      "display_waste": false,
+      "expected": {
+        "item": "Naga (4306)",
+        "group": "Ship > Attack Battlecruiser",
+        "market_group": "Ships > Battlecruisers > Standard Battlecruisers > Caldari",
+        "tech_level": "Tech I",
+        "volume": 15000.0,
+        "activity": "Manufacturing",
+        "output_quantity": 1,
+        "run_time": 200,
+        "materials": {
+          "Isogen": {"Quantity": 23400, "Buildable": "No"},
+          "Megacyte": {"Quantity": 468, "Buildable": "No"},
+          "Mexallon": {"Quantity": 210600, "Buildable": "No"},
+          "Nocxium": {"Quantity": 9360, "Buildable": "No"},
+          "Pyerite": {"Quantity": 1170000, "Buildable": "No"},
+          "Tritanium": {"Quantity": 3276000, "Buildable": "No"},
+          "Zydrine": {"Quantity": 2340, "Buildable": "No"}
+        }
+      }
+    }
+  ]
+}
