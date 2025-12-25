@@ -386,3 +386,25 @@ class CorrectnessResults(BaseModel):
             report_path = evaluation_dir / "report.json"
             with report_path.open("w", encoding="utf-8") as f:
                 json.dump(self.pytest_json_report, f, indent=2)
+
+    @classmethod
+    def from_dir(cls, dir_path: Path) -> "CorrectnessResults":
+        """Load results from evaluation.json in the specified directory.
+
+        Args:
+            dir_path: Directory containing evaluation.json
+
+        Returns:
+            CorrectnessResults loaded from the saved file
+
+        Raises:
+            FileNotFoundError: If evaluation.json doesn't exist
+            json.JSONDecodeError: If the file contains invalid JSON
+
+        Example:
+            >>> results = CorrectnessResults.from_dir(Path("outputs/checkpoint_1"))
+        """
+        eval_path = dir_path / "evaluation.json"
+        with eval_path.open() as f:
+            data = json.load(f)
+        return cls(**data)
