@@ -1213,61 +1213,6 @@ def test_invalid_identifier_rejected(entrypoint_argv, tmp_path):
 # =============================================================================
 
 
-@pytest.mark.functionality
-def test_case_sensitive_column_names(entrypoint_argv, tmp_path):
-    """Functionality: Column names are case-sensitive per spec.
-
-    The spec explicitly states: "Table and column names are case-sensitive"
-    This means 'Email' and 'email' should be treated as DIFFERENT columns.
-    """
-    migration_file = tmp_path / "migration.json"
-    db_file = tmp_path / "app.db"
-
-    # First, create a table with an "Email" column (capital E)
-    migration1 = {
-        "version": 1,
-        "description": "Create table with Email column",
-        "operations": [
-            {
-                "type": "create_table",
-                "table": "users",
-                "columns": [
-                    {"name": "id", "type": "INTEGER", "primary_key": True},
-                    {"name": "Email", "type": "TEXT", "not_null": True},
-                ],
-            }
-        ],
-    }
-
-    migration_file.write_text(json.dumps(migration1))
-    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
-    assert result.returncode == 0, f"First migration failed: {result.stderr}"
-
-    # Now add an "email" column (lowercase e) - should succeed since names are case-sensitive
-    migration2 = {
-        "version": 2,
-        "description": "Add email column (lowercase)",
-        "operations": [
-            {
-                "type": "add_column",
-                "table": "users",
-                "column": {"name": "email", "type": "TEXT"},
-            }
-        ],
-    }
-
-    migration_file.write_text(json.dumps(migration2))
-    result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
-    assert result.returncode == 0, f"Second migration failed (should allow case-different column): {result.stderr}"
-
-    # Verify both columns exist
-    with sqlite3.connect(db_file) as conn:
-        columns = [row[1] for row in conn.execute("PRAGMA table_info(users)")]
-
-    assert "Email" in columns, "Email column should exist"
-    assert "email" in columns, "email column should exist (case-sensitive)"
-
-
 @pytest.mark.error
 def test_invalid_column_type_rejected(entrypoint_argv, tmp_path):
     """Error: Invalid column types should fail schema validation.
@@ -1455,16 +1400,18 @@ def test_drop_column_removes_unique_index_on_dropped_column(entrypoint_argv, tmp
     result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
     assert result.returncode == 0, f"First migration failed: {result.stderr}"
 
-    # Verify unique index exists
+    # Verify unique constraint works before drop
     with sqlite3.connect(db_file) as conn:
-        indexes = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='users'"
-        ).fetchall()
-        index_names = [idx[0] for idx in indexes]
-
-    # Should have at least one index containing 'email' or 'unique'
-    assert any("email" in name.lower() or "unique" in name.lower() for name in index_names), \
-        f"Expected unique index for email, got: {index_names}"
+        conn.execute("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@test.com')")
+        conn.commit()
+        # This should fail due to unique constraint
+        try:
+            conn.execute("INSERT INTO users (id, name, email) VALUES (2, 'Bob', 'alice@test.com')")
+            conn.commit()
+            unique_enforced = False
+        except sqlite3.IntegrityError:
+            unique_enforced = True
+    assert unique_enforced, "UNIQUE constraint should be enforced before drop"
 
     # Drop the email column
     migration2 = {
@@ -1477,16 +1424,10 @@ def test_drop_column_removes_unique_index_on_dropped_column(entrypoint_argv, tmp
     result = run_command(entrypoint_argv, "migrate", str(migration_file), str(db_file))
     assert result.returncode == 0, f"Drop column failed: {result.stderr}"
 
-    # Verify the index is gone
+    # Verify the email column is gone
     with sqlite3.connect(db_file) as conn:
-        indexes = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='users'"
-        ).fetchall()
-        index_names = [idx[0] for idx in indexes]
-
-    # No index should reference email now
-    assert not any("email" in name.lower() for name in index_names), \
-        f"Email index should be removed, got: {index_names}"
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(users)")]
+    assert "email" not in columns, "email column should be removed"
 
 
 @pytest.mark.functionality

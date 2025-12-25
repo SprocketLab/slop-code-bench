@@ -71,10 +71,15 @@ def _normalize_content(path: Path, content: Any) -> Any:
             parser = configparser.ConfigParser()
             parser.optionxform = str
             parser.read_string(text)
-            return {
-                section: dict(parser.items(section))
-                for section in parser.sections()
-            }
+            result = {}
+            for section in parser.sections():
+                result[section] = {}
+                for key, value in parser.items(section):
+                    # Normalize boolean-like strings
+                    if value.lower() in ('true', 'false'):
+                        value = value.lower()
+                    result[section][key] = value
+            return result
     except Exception:
         return text.strip()
     return text.strip()

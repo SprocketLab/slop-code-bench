@@ -276,10 +276,8 @@ def test_create_unique_index(entrypoint_argv, tmp_path):
     assert unique_idx[2] == 1
 
 
-def test_drop_index(entrypoint_argv, tmp_path, checkpoint_name):
+def test_drop_index(entrypoint_argv, tmp_path):
     """Core: Drop an index from a table."""
-    if checkpoint_name not in ("checkpoint_1", "checkpoint_2"):
-        pytest.skip("Applies only to checkpoints 1-2")
     migration_v1_file = tmp_path / "migration_v1.json"
     migration_v2_file = tmp_path / "migration_v2.json"
     db_file = tmp_path / "app.db"
@@ -744,10 +742,9 @@ def test_drop_check_constraint_missing(entrypoint_argv, tmp_path):
 # =============================================================================
 
 
-@pytest.mark.error
+@pytest.mark.functionality
 def test_foreign_key_with_restrict(entrypoint_argv, seeds_dir, tmp_path):
-    """Error: Create posts table with RESTRICT foreign key (tests FK creation works)."""
-    # Note: Despite being in errors folder, original case expected success (expected_status: 0)
+    """Functionality: Create posts table with RESTRICT foreign key action."""
     migration_file = tmp_path / "migration.json"
     db_file = tmp_path / "app.db"
     shutil.copy(seeds_dir / "checkpoint_3_users_for_fk.db", db_file)
@@ -983,12 +980,8 @@ def test_foreign_key_column_count_mismatch(entrypoint_argv, tmp_path):
 
 
 @pytest.mark.error
-def test_circular_foreign_key_dependencies(
-    entrypoint_argv, tmp_path, checkpoint_name
-):
+def test_circular_foreign_key_dependencies(entrypoint_argv, tmp_path):
     """Error: Circular foreign key dependencies should fail."""
-    if checkpoint_name not in ("checkpoint_1", "checkpoint_2"):
-        pytest.skip("Applies only to checkpoints 1-2")
     migration_file = tmp_path / "migration.json"
     db_file = tmp_path / "app.db"
 
