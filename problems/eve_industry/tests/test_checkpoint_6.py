@@ -117,6 +117,7 @@ FUNCTIONALITY_CASES = [
     # (case_name, split_days, invention_skill, timeout)
     ("megathron", 30, 3, 120),
     ("kronos", 30, 3, 120),
+    ("ion_siege_real", 30, 3, 120),
 ]
 
 
