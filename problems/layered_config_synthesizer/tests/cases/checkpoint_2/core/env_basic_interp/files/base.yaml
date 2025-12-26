@@ -5,4 +5,4 @@ training:
 resources:
   profile: ${PROFILE}
   world_size: 4
-metadata: "{{static:meta_fragment}}"
+metadata: "{{fragment:meta_fragment}}"

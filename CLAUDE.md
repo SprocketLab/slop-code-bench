@@ -323,10 +323,24 @@ Skills are invoked with `/skill-name <args>`. See `.claude/skills/` for full doc
 
 ## Key Files to Reference
 
+### Core Implementation
 - `src/slop_code/agent_runner/agent.py` - Agent protocol definition
 - `src/slop_code/execution/session.py` - Execution session management
 - `src/slop_code/evaluation/pytest_runner.py` - Pytest execution orchestration
 - `src/slop_code/entrypoints/problem_runner/driver.py` - Problem execution driver
+
+### Documentation
 - `docs/execution/README.md` - Execution architecture deep dive
 - `docs/evaluation/README.md` - Evaluation system guide
 - `docs/problems/tutorial.md` - Problem creation tutorial
+
+### Pytest Documentation
+- `docs/evaluation-tests/README.md` - How pytest evaluation works
+- `docs/evaluation-tests/conftest-patterns.md` - Fixture patterns (session, module, factory)
+- `docs/evaluation-tests/markers.md` - Test categorization (CORE, FUNCTIONALITY, ERROR, REGRESSION)
+- `docs/evaluation-tests/test-data.md` - Organizing test data (inline vs external)
+- `docs/evaluation-tests/runner-internals.md` - Technical reference for PytestRunner
+- `docs/evaluation-tests/fixtures-advanced.md` - Advanced patterns (expensive resources, composition)
+- `docs/evaluation-tests/stateful-testing.md` - State across checkpoints and modules
+- `docs/evaluation-tests/complex-parametrization.md` - Loading cases from JSON, YAML, directories
+- `docs/evaluation-tests/debugging-workflows.md` - Debugging test failures and workflows

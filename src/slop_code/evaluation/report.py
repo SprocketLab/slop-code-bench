@@ -388,7 +388,7 @@ class CorrectnessResults(BaseModel):
                 json.dump(self.pytest_json_report, f, indent=2)
 
     @classmethod
-    def from_dir(cls, dir_path: Path) -> "CorrectnessResults":
+    def from_dir(cls, dir_path: Path) -> CorrectnessResults:
         """Load results from evaluation.json in the specified directory.
 
         Args:

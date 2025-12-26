@@ -1,4 +1,0 @@
-interval: 120
-sinks:
-  - type: pull
-    target: eval-metrics

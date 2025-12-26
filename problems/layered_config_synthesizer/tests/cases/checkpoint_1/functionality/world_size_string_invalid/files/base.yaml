@@ -1,0 +1,8 @@
+experiment_name: world-size-string
+training:
+  optimizer: adam
+resources:
+  accelerators:
+    - type: t4
+      count: 1
+  world_size: "8"

@@ -309,7 +309,7 @@ AST-grep pattern violations, one per line:
 
 Delta metrics measure how quality changes between consecutive checkpoints. They're included in the checkpoint-level metrics.
 
-**Computed metrics:**
+### Percentage-Based Deltas
 
 | Metric | Formula | Interpretation |
 |--------|---------|-----------------|
@@ -325,10 +325,103 @@ Delta metrics measure how quality changes between consecutive checkpoints. They'
 - Positive: Metric increased (often worse)
 - Negative: Metric decreased (often better)
 
-**Examples:**
-- `delta.loc = 25`: Code grew 25% from prior checkpoint
-- `delta.lint_errors = -50`: Lint errors reduced by 50%
-- `delta.cc_high_count = inf`: First complex function appeared
+### Mass Delta Metrics
+
+Mass tracks "cognitive load" using the formula: `mass = max(0, metric - baseline) * sqrt(statements)`. Mass delta metrics separately track added vs removed complexity to distinguish between growth and refactoring.
+
+#### Understanding Added vs Removed Mass
+
+- **Added Mass**: Functions where complexity increased between checkpoints
+- **Removed Mass**: Functions where complexity decreased (reported as absolute value)
+
+| Scenario | Added | Removed | Interpretation |
+|----------|-------|---------|----------------|
+| `added = 150, removed = 10` | High | Low | Pure growth - new complexity added |
+| `added = 80, removed = 70` | High | High | Heavy refactoring / restructuring |
+| `added = 10, removed = 100` | Low | High | Code simplification / cleanup |
+
+#### Complexity Mass (Full Suite)
+
+| Metric | Description |
+|--------|-------------|
+| `delta.mass.complexity` | Net change (added - removed) - **backward compatible** |
+| `delta.mass.complexity_added` | Total mass added (sum of positive deltas) |
+| `delta.mass.complexity_added_count` | # functions with mass increases |
+| `delta.mass.complexity_added_concentration` | Gini coefficient (0 = even, 1 = concentrated) |
+| `delta.mass.complexity_added_top50_count` | # functions accounting for 50% of added mass |
+| `delta.mass.complexity_added_top50_mass` | Actual mass in top 50% functions |
+| `delta.mass.complexity_added_top75_count` | # functions accounting for 75% of added mass |
+| `delta.mass.complexity_added_top75_mass` | Actual mass in top 75% functions |
+| `delta.mass.complexity_added_top90_count` | # functions accounting for 90% of added mass |
+| `delta.mass.complexity_added_top90_mass` | Actual mass in top 90% functions |
+| `delta.mass.complexity_removed` | Total mass removed (sum of negative deltas, as positive) |
+| `delta.mass.complexity_removed_count` | # functions with mass decreases |
+| `delta.mass.complexity_removed_concentration` | Gini coefficient for removed mass |
+| `delta.mass.complexity_gross` | Total churn (added + removed) |
+| `delta.mass.complexity_net_to_gross_ratio` | (added - removed) / gross |
+
+#### Interpreting Concentration Metrics
+
+**Gini Coefficient (`_concentration`)**:
+- `0.0` = Mass spread evenly across all functions
+- `0.5` = Moderate concentration
+- `0.8+` = Highly concentrated in a few functions
+- `1.0` = All mass in a single function
+
+**Top N% Distribution (`_top{50,75,90}_count`)**:
+- If `top90_count = 1`: 90% of added mass went to a single function
+- If `top90_count = 10` and 50 functions changed: Relatively spread out
+
+**Net-to-Gross Ratio (`_net_to_gross_ratio`)**:
+- `1.0` = Pure growth (all added, nothing removed)
+- `0.0` = Balanced churn (equal add/remove)
+- `-1.0` = Pure simplification (all removed, nothing added)
+
+#### Other Mass Metrics (Top 90% Only)
+
+For non-complexity mass metrics, only top 90% is tracked to minimize output keys:
+
+| Metric | Description |
+|--------|-------------|
+| `delta.mass.branches_added_top90_count` | # functions for 90% of added branches mass |
+| `delta.mass.branches_added_top90_mass` | Actual mass in those functions |
+| `delta.mass.comparisons_added_top90_count` | # functions for 90% of added comparisons mass |
+| `delta.mass.comparisons_added_top90_mass` | Actual mass in those functions |
+| `delta.mass.vars_used_added_top90_count` | # functions for 90% of added vars_used mass |
+| `delta.mass.vars_used_added_top90_mass` | Actual mass in those functions |
+| `delta.mass.vars_defined_added_top90_count` | # functions for 90% of added vars_defined mass |
+| `delta.mass.vars_defined_added_top90_mass` | Actual mass in those functions |
+| `delta.mass.try_scaffold_added_top90_count` | # functions for 90% of added try_scaffold mass |
+| `delta.mass.try_scaffold_added_top90_mass` | Actual mass in those functions |
+
+### Example Analysis
+
+**Example 1: Concentrated Growth**
+```
+delta.mass.complexity_added = 150.0
+delta.mass.complexity_added_count = 5
+delta.mass.complexity_added_concentration = 0.85
+delta.mass.complexity_added_top90_count = 1
+```
+**Interpretation**: 90% of added complexity is in 1 of 5 modified functions. Consider reviewing that function.
+
+**Example 2: Healthy Refactoring**
+```
+delta.mass.complexity_added = 80.0
+delta.mass.complexity_removed = 70.0
+delta.mass.complexity_gross = 150.0
+delta.mass.complexity_net_to_gross_ratio = 0.067
+```
+**Interpretation**: Significant churn but low net change. Likely refactoring - complexity was moved around, not just added.
+
+**Example 3: Distributed Growth**
+```
+delta.mass.complexity_added = 100.0
+delta.mass.complexity_added_count = 20
+delta.mass.complexity_added_concentration = 0.2
+delta.mass.complexity_added_top90_count = 15
+```
+**Interpretation**: Growth is spread across many functions. Less risky than concentrated growth.
 
 ## Directory Structure
 

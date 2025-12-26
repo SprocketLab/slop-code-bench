@@ -103,7 +103,7 @@ Edge cases are additional coverage beyond the core tests - they should not block
 
 ## After Adding Tests
 
-1. Run eval-snapshot to verify:
+1. ALWAYS Run eval-snapshot to verify:
    ```bash
    slop-code --quiet eval-snapshot problems/{problem}/solutions/checkpoint_N \
        -p {problem} -o /tmp/eval -c N \

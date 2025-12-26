@@ -153,6 +153,15 @@ def create_problem_reports(
         )
     ):
         checkpoint_dir = submission_dir / checkpoint_name
+        if not checkpoint_dir.exists():
+            logger.warning(
+                "Checkpoint directory not found",
+                checkpoint_dir=str(checkpoint_dir),
+            )
+            errors.append(
+                (checkpoint_name, f"File not found: {checkpoint_dir}")
+            )
+            continue
         metrics = get_checkpoint_metrics(
             checkpoint_dir,
             prior_metrics=prior_metrics,

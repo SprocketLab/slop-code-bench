@@ -223,8 +223,8 @@ def evaluate_agent_run(
 
     valid_problems = get_available_problems(ctx.obj.problem_path)
     problems_to_eval = []
-    # Only auto-skip when no explicit problems specified and overwrite=False
-    auto_skip_evaluated = not problem_names and not overwrite
+    # Auto-skip evaluated problems unless overwrite requested
+    auto_skip_evaluated = not overwrite
     skipped_count = 0
     for problem_name in problem_names or valid_problems.keys():
         if problem_name not in valid_problems:

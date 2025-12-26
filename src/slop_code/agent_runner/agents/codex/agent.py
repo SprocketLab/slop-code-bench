@@ -409,6 +409,8 @@ class CodexAgent(Agent):
         ]
         if self.model:
             command.extend(["--model", self.model])
+            if self.model == "gpt-5.2-codex":
+                command.extend(["--config", "model_verbosity='medium'"])
 
         # Handle thinking configuration
         if self.thinking in {"disabled", "none"}:
@@ -422,6 +424,7 @@ class CodexAgent(Agent):
                     f'model_reasoning_effort="{self.thinking}"',
                 ]
             )
+
         elif self.max_thinking_tokens is not None:
             # Explicit token limit
             command.extend(
@@ -430,6 +433,7 @@ class CodexAgent(Agent):
                     f"model_max_output_tokens={self.max_thinking_tokens}",
                 ]
             )
+
         command.extend(self.extra_args)
         return command
 

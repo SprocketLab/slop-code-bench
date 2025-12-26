@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pytest
 from rich.console import Console as RichConsole
 
 from slop_code.entrypoints.commands.eval_checkpoint import evaluate_snapshot
@@ -14,7 +15,10 @@ from slop_code.evaluation.report import GroupType
 from slop_code.evaluation.report import TestResult as EvalTestResult
 
 
-def test_eval_snapshot_renders_pytest_results(tmp_path: Path) -> None:
+@pytest.mark.parametrize("checkpoint_name", ["checkpoint_1", 1])
+def test_eval_snapshot_renders_pytest_results(
+    tmp_path: Path, checkpoint_name: str | int
+) -> None:
     snapshot_dir = tmp_path / "snapshot"
     snapshot_dir.mkdir()
     save_dir = tmp_path / "output"
@@ -28,7 +32,9 @@ def test_eval_snapshot_renders_pytest_results(tmp_path: Path) -> None:
     )
 
     problem = MagicMock()
-    problem.iterate_checkpoint_items.return_value = [("checkpoint_1", checkpoint)]
+    problem.iterate_checkpoint_items.return_value = [
+        ("checkpoint_1", checkpoint)
+    ]
 
     results = CorrectnessResults(
         problem_name="problem",
@@ -107,7 +113,7 @@ def test_eval_snapshot_renders_pytest_results(tmp_path: Path) -> None:
             snapshot_dir=snapshot_dir,
             save_dir=save_dir,
             problem_name="problem",
-            checkpoint_num=1,
+            checkpoint=str(checkpoint_name),
             env_config=tmp_path / "env.yaml",
             rubric_path=None,
             rubric_model=None,

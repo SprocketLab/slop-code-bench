@@ -4,4 +4,4 @@ training:
 resources:
   profile: invalid
   world_size: 2
-logging: "{{static:bad-name}}"
+logging: "{{fragment:bad-name}}"

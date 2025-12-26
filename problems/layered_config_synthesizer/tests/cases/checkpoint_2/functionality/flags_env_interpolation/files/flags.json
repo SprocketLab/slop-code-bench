@@ -1,0 +1,1 @@
+{"experiment_name":"run-${TAG}","training":{"note":"deploy-${TAG}","optimizer":"adamw"}}

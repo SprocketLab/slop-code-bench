@@ -27,6 +27,7 @@ from slop_code.entrypoints.commands import common
 from slop_code.entrypoints.config import ResolvedRunConfig
 from slop_code.entrypoints.config import load_run_config
 from slop_code.entrypoints.config import loader as config_loader
+from slop_code.entrypoints.config.loader import load_config_from_run_dir
 from slop_code.entrypoints.evaluation.metrics import update_results_jsonl
 from slop_code.entrypoints.utils import display_and_save_summary
 from slop_code.evaluation import ProblemConfig
@@ -400,12 +401,11 @@ def _build_agent_config(run_cfg: ResolvedRunConfig) -> AgentConfigBase:
 
     Returns:
         Built agent configuration
+
+    Note:
+        Always uses run_cfg.agent which already has CLI overrides applied,
+        rather than re-loading from the file path.
     """
-    if run_cfg.agent_config_path is not None:
-        _, agent_data = config_loader.load_agent_config(
-            run_cfg.agent_config_path
-        )
-        return build_agent_config(agent_data)
     return build_agent_config(run_cfg.agent)
 
 
@@ -677,14 +677,12 @@ def _resolve_problem_names(
 
 
 def _resolve_output_directory(
-    output_path_override: str | None,
     config_output_path: str,
     debug: bool,
 ) -> tuple[Path, bool]:
     """Resolve and prepare output directory.
 
     Args:
-        output_path_override: CLI override for output path
         config_output_path: Output path from config
         debug: If True, prepend DEBUG_ prefix
 
@@ -692,9 +690,7 @@ def _resolve_output_directory(
         Tuple of (run_dir, preexisted) where preexisted indicates
         if the directory existed before creation.
     """
-    output_path_str = (
-        output_path_override if output_path_override is not None else config_output_path
-    )
+    output_path_str = config_output_path
     if debug:
         # Prepend DEBUG_ to the last path component
         parts = output_path_str.rsplit("/", 1)
@@ -792,6 +788,59 @@ def _handle_early_completion(
             console=console,
         )
     return True
+
+
+def _validate_resume_flags(
+    resume: Path | None,
+    config: Path | None,
+    agent_config_path: str | None,
+    environment_config_path: str | None,
+    prompt_template_path: str | None,
+    model_override: str | None,
+    overrides: list[str] | None,
+) -> None:
+    """Validate that --resume is not combined with conflicting options.
+
+    Args:
+        resume: The --resume path (None if not specified)
+        config: The --config path
+        agent_config_path: The --agent flag
+        environment_config_path: The --environment flag
+        prompt_template_path: The --prompt flag
+        model_override: The --model flag
+        overrides: Positional config overrides
+
+    Raises:
+        typer.Exit: If conflicting options are specified with --resume
+    """
+    if resume is None:
+        return
+
+    conflicts: list[str] = []
+
+    if config is not None:
+        conflicts.append("--config")
+    if agent_config_path is not None:
+        conflicts.append("--agent")
+    if environment_config_path is not None:
+        conflicts.append("--environment")
+    if prompt_template_path is not None:
+        conflicts.append("--prompt")
+    if model_override is not None:
+        conflicts.append("--model")
+    if overrides:
+        conflicts.append(f"config overrides ({', '.join(overrides[:3])}{'...' if len(overrides) > 3 else ''})")
+
+    if conflicts:
+        typer.echo(
+            typer.style(
+                f"Cannot use {', '.join(conflicts)} with --resume.\n"
+                "--resume loads the saved configuration from the run directory.",
+                fg=typer.colors.RED,
+                bold=True,
+            )
+        )
+        raise typer.Exit(1)
 
 
 def _create_task_config(
@@ -1041,21 +1090,16 @@ def run_agent(
         "--live-progress/--no-live-progress",
         help="Whether to show live progress",
     ),
-    resume: bool = typer.Option(  # noqa: FBT001, FBT002
-        False,  # noqa: FBT003
+    resume: Path | None = typer.Option(
+        None,
         "--resume",
-        help="Resume from the first incomplete checkpoint of an existing run",
+        help="Resume from an existing run directory (loads saved config). "
+        "Cannot be used with --config, --agent, --environment, --prompt, --model, or config overrides.",
     ),
     dry_run: bool = typer.Option(  # noqa: FBT001, FBT002
         False,  # noqa: FBT003
         "--dry-run",
         help="Preview what would be done without making changes (use with --resume)",
-    ),
-    output_path: str | None = typer.Option(
-        None,
-        "--output-path",
-        "-o",
-        help="Override output path from config",
     ),
     # Config overrides via positional arguments
     overrides: list[str] | None = typer.Argument(
@@ -1077,43 +1121,96 @@ def run_agent(
 
         # Mix of flags and overrides
         slop-code run --model anthropic/sonnet-4.5 thinking=medium pass_policy=ALL_CASES
+
+        # Resume from an existing run directory (loads saved config)
+        slop-code run --resume outputs/sonnet-4/my-run/
+
+        # Resume with different worker count
+        slop-code run --resume outputs/my-run/ --num-workers 4
     """
-    # 1. Build CLI flags
-    try:
-        cli_flags = _build_cli_flags(
-            agent_config_path, environment_config_path, prompt_template_path, model_override
+    # 0. Validate --resume is not combined with conflicting options
+    _validate_resume_flags(
+        resume=resume,
+        config=config,
+        agent_config_path=agent_config_path,
+        environment_config_path=environment_config_path,
+        prompt_template_path=prompt_template_path,
+        model_override=model_override,
+        overrides=overrides,
+    )
+
+    # Track if we're in resume mode for later use
+    is_resuming = resume is not None
+
+    # 1. Load config - either from run directory or via normal config loading
+    if resume is not None:
+        # Validate run directory exists
+        if not resume.exists():
+            typer.echo(
+                typer.style(
+                    f"Run directory not found: {resume}",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            )
+            raise typer.Exit(1)
+
+        # Load saved config from run directory
+        try:
+            run_cfg = load_config_from_run_dir(resume)
+        except (FileNotFoundError, ValueError) as exc:
+            typer.echo(
+                typer.style(str(exc), fg=typer.colors.RED, bold=True)
+            )
+            raise typer.Exit(1) from exc
+
+        # Use the run directory as output path (preexisted is always True)
+        run_dir = resume
+        run_dir_preexisted = True
+
+        typer.echo(
+            typer.style(
+                f"Resuming from: {resume}",
+                fg=typer.colors.CYAN,
+                bold=True,
+            )
         )
-    except ValueError as exc:
-        typer.echo(typer.style(str(exc), fg=typer.colors.RED, bold=True))
-        raise typer.Exit(1) from exc
+    else:
+        # Normal config loading path
+        try:
+            cli_flags = _build_cli_flags(
+                agent_config_path, environment_config_path, prompt_template_path, model_override
+            )
+        except ValueError as exc:
+            typer.echo(typer.style(str(exc), fg=typer.colors.RED, bold=True))
+            raise typer.Exit(1) from exc
 
-    # 2. Load and validate config
-    run_cfg = _load_and_validate_run_config(config, cli_flags, overrides)
+        run_cfg = _load_and_validate_run_config(config, cli_flags, overrides)
 
-    # 3. Resolve environment, model, and credentials
+        # Resolve output directory
+        run_dir, run_dir_preexisted = _resolve_output_directory(
+            run_cfg.output_path, ctx.obj.debug
+        )
+
+    # 2. Resolve environment, model, and credentials
     env_spec, model_def, credential = _resolve_environment_and_credentials(
         run_cfg, provider_api_key_env
     )
 
-    # 4. Build agent config
+    # 3. Build agent config
     agent_config = _build_agent_config(run_cfg)
 
-    # 5. Echo model info
+    # 4. Echo model info
     typer.echo(f"Using model: {run_cfg.model.provider}/{run_cfg.model.name}")
     if provider_api_key_env:
         typer.echo(f"Using provider API key env override: {provider_api_key_env}")
 
-    # 6. Resolve problem names from CLI and config
+    # 5. Resolve problem names from CLI and config
     problem_names_resolved = _resolve_problem_names(
         list(problem_names), list(run_cfg.problems)
     )
 
-    # 7. Resolve output directory
-    run_dir, run_dir_preexisted = _resolve_output_directory(
-        output_path, run_cfg.output_path, ctx.obj.debug
-    )
-
-    # 8. Setup logging
+    # 6. Setup logging
     console = Console()
     common.setup_command_logging(
         log_dir=run_dir,
@@ -1135,7 +1232,7 @@ def run_agent(
         one_shot=run_cfg.one_shot.enabled,
     )
 
-    # 9. Discover problems if not specified
+    # 7. Discover problems if not specified
     if not problem_names_resolved:
         problem_names_resolved = _discover_problems(ctx.obj.problem_path)
         typer.echo(
@@ -1146,10 +1243,10 @@ def run_agent(
             )
         )
 
-    # 10. Validate problem paths exist
+    # 8. Validate problem paths exist
     _validate_problem_paths(problem_names_resolved, ctx.obj.problem_path)
 
-    # 11. Handle pre-existing run directory
+    # 9. Handle pre-existing run directory
     requested = list(problem_names_resolved)
     if run_dir_preexisted:
         if ctx.obj.overwrite:
@@ -1162,7 +1259,7 @@ def run_agent(
             )
 
         # Validate config matches saved config when resuming
-        _handle_resume_validation(run_dir, run_cfg, env_spec, resume, ctx.obj.overwrite)
+        _handle_resume_validation(run_dir, run_cfg, env_spec, is_resuming, ctx.obj.overwrite)
 
         to_run, skipped, rerun_reasons = _filter_problems_for_execution(
             run_dir,
@@ -1171,7 +1268,7 @@ def run_agent(
             run_cfg.prompt_content,
             env_spec,
             overwrite=ctx.obj.overwrite,
-            resume=resume,
+            resume=is_resuming,
         )
 
         if not ctx.obj.overwrite:
@@ -1201,7 +1298,7 @@ def run_agent(
         ):
             return
 
-    # 12. Handle dry-run mode
+    # 10. Handle dry-run mode
     if dry_run:
         _preview_dry_run(
             problem_names_resolved,
@@ -1212,7 +1309,7 @@ def run_agent(
         )
         return
 
-    # 13. Save environment and config to run directory, build docker image if needed
+    # 11. Save environment and config to run directory, build docker image if needed
     image_name = _prepare_run_artifacts(run_dir, env_spec, agent_config, run_cfg)
     run_logger.info(
         "Starting agent runs",
@@ -1220,7 +1317,7 @@ def run_agent(
         num_workers=num_workers,
     )
 
-    # 14. Create task config
+    # 12. Create task config
     task_config = _create_task_config(
         problem_base_path=ctx.obj.problem_path,
         run_dir=run_dir,
@@ -1235,10 +1332,10 @@ def run_agent(
         evaluate=evaluate,
         live_progress=live_progress,
         image_name=image_name,
-        resume=resume,
+        resume=is_resuming,
     )
 
-    # 15. Run problems
+    # 13. Run problems
     results = problem_runner.run_problems(
         problem_names=problem_names_resolved,
         config=task_config,
@@ -1246,10 +1343,10 @@ def run_agent(
         console=console,
     )
 
-    # 16. Report results
+    # 14. Report results
     _report_results(results)
 
-    # 17. Create summary if evaluating
+    # 15. Create summary if evaluating
     if evaluate:
         _create_checkpoint_results_and_summary(
             run_dir=run_dir,

@@ -92,6 +92,7 @@ class ClaudeCodeConfig(AgentConfigBase):
     max_turns: int | None = None
     permission_mode: str | None = None
     settings: dict[str, JsonValue] = Field(default_factory=dict)
+    max_output_tokens: int | None = None
     base_url: str | None = None
     docker_template: Path = Path(__file__).parent / "docker.j2"
 
@@ -130,6 +131,7 @@ class ClaudeCodeAgent(Agent):
         base_url: str | None,
         thinking: ThinkingPreset | None,
         max_thinking_tokens: int | None,
+        max_output_tokens: int | None,
     ) -> None:
         super().__init__(
             agent_name="claude_code",
@@ -154,7 +156,7 @@ class ClaudeCodeAgent(Agent):
         self.base_url = base_url
         self.thinking = thinking
         self.max_thinking_tokens = max_thinking_tokens
-
+        self.max_output_tokens = max_output_tokens
         self._session: Session | None = None
         self._environment: EnvironmentSpec | None = None
         self._runtime: SubmissionRuntime | None = None
@@ -238,6 +240,7 @@ class ClaudeCodeAgent(Agent):
             base_url=base_url,
             thinking=thinking,
             max_thinking_tokens=max_thinking_tokens,
+            max_output_tokens=config.max_output_tokens,
         )
 
     @property
@@ -517,6 +520,10 @@ class ClaudeCodeAgent(Agent):
 
         # Set credential in environment
         env_overrides[self.credential.destination_key] = self.credential.value
+        if self.max_output_tokens is not None:
+            env_overrides["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] = str(
+                self.max_output_tokens
+            )
 
         env_overrides["FORCE_AUTO_BACKGROUND_TASKS"] = "1"
         env_overrides["ENABLE_BACKGROUND_TASKS"] = "1"

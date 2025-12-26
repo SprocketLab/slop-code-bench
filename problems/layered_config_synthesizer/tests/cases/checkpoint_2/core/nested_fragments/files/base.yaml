@@ -4,4 +4,4 @@ training:
 resources:
   profile: nested
   world_size: 3
-monitoring: "{{static:monitoring_stack}}"
+monitoring: "{{fragment:monitoring_stack}}"

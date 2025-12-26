@@ -1,0 +1,1 @@
+{"experiment_name":"ignore-unknown","logging":{"format":"json","level":"INFO"},"resources":{"profile":"standard","world_size":2},"training":{"optimizer":"adam"}}

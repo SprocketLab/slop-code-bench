@@ -344,7 +344,7 @@ class FragmentResolver:
             if match:
                 name = match.group(1)
                 return self._expand_fragment(name, path, stack, parent_kind)
-            if value.startswith("{{static:") and value.endswith("}}"):
+            if value.startswith("{{fragment:") and value.endswith("}}"):
                 pointer = format_json_pointer(path)
                 raise SynthConfigError(
                     "INVALID_TEMPLATE",

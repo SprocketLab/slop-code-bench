@@ -1,0 +1,3 @@
+experiment_name: should-not-read
+training:
+  optimizer: sgd

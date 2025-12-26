@@ -4,4 +4,4 @@ training:
 resources:
   profile: conflict
   world_size: 1
-tracing: "{{static:trace_defaults}}"
+tracing: "{{fragment:trace_defaults}}"

@@ -196,7 +196,8 @@ model:
   name: gpt-4.1
 thinking: medium
 pass_policy: all-cases
-output_path: custom/output/path
+save_dir: custom
+save_template: output/path
 """
         )
 
@@ -206,6 +207,8 @@ output_path: custom/output/path
         assert config.model.name == "gpt-4.1"
         assert config.thinking == "medium"
         assert config.pass_policy == PassPolicy.ALL_CASES
+        assert config.save_dir == "custom"
+        assert config.save_template == "output/path"
         assert config.output_path == "custom/output/path"
         assert config.problems == []
 
@@ -342,3 +345,95 @@ problems:
         assert config.one_shot.enabled is True
         assert config.one_shot.prefix == "--NEXT--"
         assert config.one_shot.include_first_prefix is True
+
+    def test_version_override_shorthand(self):
+        """Test that version=X is applied to agent config."""
+        config = load_run_config(cli_overrides=["version=3.0.0"])
+
+        assert config.agent["version"] == "3.0.0"
+
+    def test_version_override_with_prefix(self):
+        """Test that agent.version=X is applied to agent config."""
+        config = load_run_config(cli_overrides=["agent.version=4.0.0"])
+
+        assert config.agent["version"] == "4.0.0"
+
+    def test_cost_limits_override(self):
+        """Test that cost_limits.step_limit=X is applied to agent config."""
+        config = load_run_config(cli_overrides=["cost_limits.step_limit=200"])
+
+        assert config.agent["cost_limits"]["step_limit"] == 200
+
+    def test_agent_override_with_explicit_prefix(self):
+        """Test that agent.cost_limits.step_limit=X is applied to agent config."""
+        config = load_run_config(cli_overrides=["agent.cost_limits.net_cost_limit=50"])
+
+        assert config.agent["cost_limits"]["net_cost_limit"] == 50
+
+    def test_save_dir_and_template_defaults(self):
+        """Test that save_dir and save_template are set with defaults."""
+        config = load_run_config()
+
+        assert config.save_dir == "outputs"
+        # Template should be resolved (no ${} remaining)
+        assert "${" not in config.save_template
+        assert config.output_path.startswith("outputs/")
+
+    def test_agent_version_in_output_path(self):
+        """Test that agent version appears in output path when present."""
+        config = load_run_config(cli_overrides=["version=2.0.51"])
+
+        # Version should appear in the output path
+        assert "2.0.51" in config.output_path
+
+    def test_agent_version_omitted_when_missing(self, tmp_path):
+        """Test that version is cleanly omitted when not in agent config."""
+        config_file = tmp_path / "run.yaml"
+        config_file.write_text(
+            """
+agent:
+  type: miniswe
+  binary: miniswe
+"""
+        )
+        config = load_run_config(config_path=config_file)
+
+        # Should not have version artifacts like "-None" or double underscores
+        assert "-None" not in config.output_path
+        assert "None_" not in config.output_path
+        assert "__" not in config.output_path
+
+    def test_custom_save_dir(self, tmp_path):
+        """Test overriding save_dir via config."""
+        config_file = tmp_path / "run.yaml"
+        config_file.write_text("save_dir: /custom/runs\n")
+        config = load_run_config(config_path=config_file)
+
+        assert config.save_dir == "/custom/runs"
+        assert config.output_path.startswith("/custom/runs/")
+
+    def test_custom_save_template(self, tmp_path):
+        """Test overriding save_template via config."""
+        config_file = tmp_path / "run.yaml"
+        config_file.write_text("save_template: simple/${model.name}\n")
+        config = load_run_config(config_path=config_file)
+
+        assert "simple/" in config.output_path
+        assert "sonnet-4.5" in config.output_path
+
+    def test_save_dir_cli_override(self):
+        """Test overriding save_dir via CLI override."""
+        config = load_run_config(cli_overrides=["save_dir=/tmp/test"])
+
+        assert config.save_dir == "/tmp/test"
+        assert config.output_path.startswith("/tmp/test/")
+
+    def test_empty_save_dir(self, tmp_path):
+        """Test that empty save_dir produces path without leading slash."""
+        config_file = tmp_path / "run.yaml"
+        config_file.write_text("save_dir: \"\"\n")
+        config = load_run_config(config_path=config_file)
+
+        assert config.save_dir == ""
+        # Path should not start with "/" (would mean double slash from empty root)
+        assert not config.output_path.startswith("/")

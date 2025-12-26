@@ -1,0 +1,5 @@
+experiment_name: bad-flag
+training:
+  optimizer: adam
+resources:
+  profile: standard

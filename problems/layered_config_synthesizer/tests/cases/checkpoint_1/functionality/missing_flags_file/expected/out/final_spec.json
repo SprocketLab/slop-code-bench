@@ -1,0 +1,1 @@
+{"experiment_name":"flags-missing","resources":{"accelerators":[{"count":2,"type":"t4"}],"world_size":2},"training":{"batch_size":16,"optimizer":"adam"}}

@@ -795,5 +795,498 @@
       ],
       "status_code": 0
     }
+  },
+  "31_null_equality_three_way_chain": {
+    "case": {
+      "arguments": "--source s1=s1.ndjson --source s2=s2.ndjson --source s3=s3.ndjson --query 'SELECT s1.id, s2.id, s3.id FROM s1 CONFLATE INTERSECTING s2 UPON s1.key = s2.key CONFLATE INTERSECTING s3 UPON s2.key = s3.key'",
+      "input_files": [
+        {
+          "path": "s1.ndjson",
+          "content": [
+            {"id": 1, "key": null},
+            {"id": 2, "key": "k1"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "s2.ndjson",
+          "content": [
+            {"id": 10, "key": null},
+            {"id": 20, "key": "k1"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "s3.ndjson",
+          "content": [
+            {"id": 100, "key": null},
+            {"id": 200, "key": "k2"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"s1.id": 1, "s2.id": 10, "s3.id": 100}
+      ],
+      "status_code": 0
+    }
+  },
+  "32_missing_field_vs_explicit_null": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.name, b.age FROM a CONFLATE INTERSECTING b UPON a.id = b.id'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"name": "Alice"},
+            {"name": "Bob", "id": "x1"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"age": 30, "id": null},
+            {"age": 25, "id": "x1"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.name": "Alice", "b.age": 30},
+        {"a.name": "Bob", "b.age": 25}
+      ],
+      "status_code": 0
+    }
+  },
+  "33_boolean_vs_integer_no_coercion": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.id FROM a CONFLATE INTERSECTING b UPON a.active = b.flag'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "active": true},
+            {"id": 2, "active": false}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"id": 10, "flag": 1},
+            {"id": 20, "flag": 0}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "34_deeply_nested_path_predicates": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.id FROM a CONFLATE INTERSECTING b UPON a.meta.user.profile.settings.theme = b.config.app.display.ui.theme'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "meta": {"user": {"profile": {"settings": {"theme": "dark"}}}}},
+            {"id": 2, "meta": {"user": {"profile": {"settings": {"theme": "light"}}}}}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"id": 10, "config": {"app": {"display": {"ui": {"theme": "dark"}}}}},
+            {"id": 20, "config": {"app": {"display": {"ui": {"theme": "blue"}}}}}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.id": 10}
+      ],
+      "status_code": 0
+    }
+  },
+  "35_nested_array_structural_equality": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.id FROM a CONFLATE INTERSECTING b UPON a.tags = b.tags'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "tags": [{"name": "A", "priority": 1}, {"name": "B", "priority": 2}]}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"id": 10, "tags": [{"name": "A", "priority": 1}, {"name": "B", "priority": 2}]},
+            {"id": 20, "tags": [{"name": "B", "priority": 2}, {"name": "A", "priority": 1}]},
+            {"id": 30, "tags": [{"priority": 1, "name": "A"}, {"priority": 2, "name": "B"}]}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.id": 10},
+        {"a.id": 1, "b.id": 30}
+      ],
+      "status_code": 0
+    }
+  },
+  "36_large_cartesian_product_stress": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.id FROM a CONFLATE INTERSECTING b UPON a.key = b.key'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 0, "key": 0}, {"id": 1, "key": 1}, {"id": 2, "key": 2}, {"id": 3, "key": 3}, {"id": 4, "key": 4},
+            {"id": 5, "key": 5}, {"id": 6, "key": 6}, {"id": 7, "key": 7}, {"id": 8, "key": 8}, {"id": 9, "key": 9},
+            {"id": 10, "key": 10}, {"id": 11, "key": 11}, {"id": 12, "key": 12}, {"id": 13, "key": 13}, {"id": 14, "key": 14},
+            {"id": 15, "key": 15}, {"id": 16, "key": 16}, {"id": 17, "key": 17}, {"id": 18, "key": 18}, {"id": 19, "key": 19},
+            {"id": 20, "key": 20}, {"id": 21, "key": 21}, {"id": 22, "key": 22}, {"id": 23, "key": 23}, {"id": 24, "key": 24},
+            {"id": 25, "key": 25}, {"id": 26, "key": 26}, {"id": 27, "key": 27}, {"id": 28, "key": 28}, {"id": 29, "key": 29},
+            {"id": 30, "key": 30}, {"id": 31, "key": 31}, {"id": 32, "key": 32}, {"id": 33, "key": 33}, {"id": 34, "key": 34},
+            {"id": 35, "key": 35}, {"id": 36, "key": 36}, {"id": 37, "key": 37}, {"id": 38, "key": 38}, {"id": 39, "key": 39},
+            {"id": 40, "key": 40}, {"id": 41, "key": 41}, {"id": 42, "key": 42}, {"id": 43, "key": 43}, {"id": 44, "key": 44},
+            {"id": 45, "key": 45}, {"id": 46, "key": 46}, {"id": 47, "key": 47}, {"id": 48, "key": 48}, {"id": 49, "key": 49}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"id": 100, "key": 100}, {"id": 101, "key": 101}, {"id": 102, "key": 102}, {"id": 103, "key": 103}, {"id": 104, "key": 104},
+            {"id": 105, "key": 105}, {"id": 106, "key": 106}, {"id": 107, "key": 107}, {"id": 108, "key": 108}, {"id": 109, "key": 109},
+            {"id": 110, "key": 110}, {"id": 111, "key": 111}, {"id": 112, "key": 112}, {"id": 113, "key": 113}, {"id": 114, "key": 114},
+            {"id": 115, "key": 115}, {"id": 116, "key": 116}, {"id": 117, "key": 117}, {"id": 118, "key": 118}, {"id": 119, "key": 119},
+            {"id": 120, "key": 120}, {"id": 121, "key": 121}, {"id": 122, "key": 122}, {"id": 123, "key": 123}, {"id": 124, "key": 124},
+            {"id": 125, "key": 125}, {"id": 126, "key": 126}, {"id": 127, "key": 127}, {"id": 128, "key": 128}, {"id": 129, "key": 129},
+            {"id": 130, "key": 130}, {"id": 131, "key": 131}, {"id": 132, "key": 132}, {"id": 133, "key": 133}, {"id": 134, "key": 134},
+            {"id": 135, "key": 135}, {"id": 136, "key": 136}, {"id": 137, "key": 137}, {"id": 138, "key": 138}, {"id": 139, "key": 139},
+            {"id": 140, "key": 140}, {"id": 141, "key": 141}, {"id": 142, "key": 142}, {"id": 143, "key": 143}, {"id": 144, "key": 144},
+            {"id": 145, "key": 145}, {"id": 146, "key": 146}, {"id": 147, "key": 147}, {"id": 148, "key": 148}, {"id": 149, "key": 149}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "37_conflate_with_complex_where_filter": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.status FROM a WHERE a.priority > 5 CONFLATE INTERSECTING b UPON a.req = b.req'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "req": "r1", "priority": 10},
+            {"id": 2, "req": "r2", "priority": 3},
+            {"id": 3, "req": "r3", "priority": 8}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"req": "r1", "status": 200},
+            {"req": "r2", "status": 200},
+            {"req": "r3", "status": 500}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.status": 200},
+        {"a.id": 3, "b.status": 500}
+      ],
+      "status_code": 0
+    }
+  },
+  "38_three_way_mixed_join_types": {
+    "case": {
+      "arguments": "--source s1=s1.ndjson --source s2=s2.ndjson --source s3=s3.ndjson --query 'SELECT s1.id, s2.id, s3.id FROM s1 CONFLATE PRESERVING LEFT s2 UPON s1.key = s2.key CONFLATE INTERSECTING s3 UPON s2.key = s3.key'",
+      "input_files": [
+        {
+          "path": "s1.ndjson",
+          "content": [
+            {"id": 1, "key": "k1"},
+            {"id": 2, "key": "k2"},
+            {"id": 3, "key": "k3"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "s2.ndjson",
+          "content": [
+            {"id": 10, "key": "k1"},
+            {"id": 20, "key": "k2"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "s3.ndjson",
+          "content": [
+            {"id": 100, "key": "k1"},
+            {"id": 200, "key": "k4"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"s1.id": 1, "s2.id": 10, "s3.id": 100}
+      ],
+      "status_code": 0
+    }
+  },
+  "39_preserving_both_partial_matches": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.name, b.tag FROM a CONFLATE PRESERVING BOTH b UPON a.key = b.key'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"name": "A", "key": "k1"},
+            {"name": "B", "key": "k2"},
+            {"name": "C", "key": "k3"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"tag": "X", "key": "k4"},
+            {"tag": "B-match", "key": "k2"},
+            {"tag": "Y", "key": "k5"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.name": "A", "b.tag": null},
+        {"a.name": "B", "b.tag": "B-match"},
+        {"a.name": "C", "b.tag": null},
+        {"a.name": null, "b.tag": "X"},
+        {"a.name": null, "b.tag": "Y"}
+      ],
+      "status_code": 0
+    }
+  },
+  "40_aggregate_with_qualified_fields": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.category, COUNT(*) AS total, SUM(b.amount) AS sum_amount, AVG(b.amount) AS avg_amount FROM a CONFLATE INTERSECTING b UPON a.id = b.id GROUP BY a.category'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "category": "electronics"},
+            {"id": 2, "category": "electronics"},
+            {"id": 3, "category": "books"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"id": 1, "amount": 100},
+            {"id": 2, "amount": 200},
+            {"id": 3, "amount": 30}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.category": "electronics", "total": 2, "sum_amount": 300, "avg_amount": 150},
+        {"a.category": "books", "total": 1, "sum_amount": 30, "avg_amount": 30}
+      ],
+      "status_code": 0
+    }
+  },
+  "41_empty_source_in_chain": {
+    "case": {
+      "arguments": "--source s1=s1.ndjson --source s2=s2.ndjson --source s3=s3.ndjson --query 'SELECT s1.id, s2.id, s3.id FROM s1 CONFLATE INTERSECTING s2 UPON s1.key = s2.key CONFLATE INTERSECTING s3 UPON s2.key = s3.key'",
+      "input_files": [
+        {
+          "path": "s1.ndjson",
+          "content": [
+            {"id": 1, "key": "k1"},
+            {"id": 2, "key": "k2"},
+            {"id": 3, "key": "k3"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "s2.ndjson",
+          "content": [],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "s3.ndjson",
+          "content": [
+            {"id": 100, "key": "k1"},
+            {"id": 200, "key": "k2"}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [],
+      "status_code": 0
+    }
+  },
+  "42_alias_star_with_field_conflicts": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.*, b.* FROM a CONFLATE INTERSECTING b UPON a.id = b.id'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "value": "A", "name": "Alice"}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"id": 1, "value": "B", "status": 200}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "a.value": "A", "a.name": "Alice", "b.id": 1, "b.value": "B", "b.status": 200}
+      ],
+      "status_code": 0
+    }
+  },
+  "43_multi_field_compound_predicate": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.id FROM a CONFLATE INTERSECTING b UPON a.year = b.year AND a.month = b.month AND a.day = b.day'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "year": 2024, "month": 12, "day": 25},
+            {"id": 2, "year": 2024, "month": 12, "day": 26},
+            {"id": 3, "year": 2024, "month": 12, "day": 25}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"id": 10, "year": 2024, "month": 12, "day": 25},
+            {"id": 20, "year": 2024, "month": 12, "day": 27},
+            {"id": 30, "year": 2024, "month": 11, "day": 25}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.id": 10},
+        {"a.id": 3, "b.id": 10}
+      ],
+      "status_code": 0
+    }
+  },
+  "44_mixed_null_nonnull_join_column": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.name, b.tag FROM a CONFLATE INTERSECTING b UPON a.id = b.id'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"name": "A1", "id": 1},
+            {"name": "A2", "id": null},
+            {"name": "A3", "id": 2},
+            {"name": "A4", "id": null}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"tag": "B1", "id": 1},
+            {"tag": "B2", "id": null},
+            {"tag": "B3", "id": 3},
+            {"tag": "B4", "id": null}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.name": "A1", "b.tag": "B1"},
+        {"a.name": "A2", "b.tag": "B2"},
+        {"a.name": "A2", "b.tag": "B4"},
+        {"a.name": "A4", "b.tag": "B2"},
+        {"a.name": "A4", "b.tag": "B4"}
+      ],
+      "status_code": 0
+    }
+  },
+  "45_where_filters_single_source_after_join": {
+    "case": {
+      "arguments": "--source a=a.ndjson --source b=b.ndjson --query 'SELECT a.id, b.status FROM a WHERE a.priority > 5 CONFLATE PRESERVING LEFT b UPON a.key = b.key'",
+      "input_files": [
+        {
+          "path": "a.ndjson",
+          "content": [
+            {"id": 1, "key": "k1", "priority": 10},
+            {"id": 2, "key": "k2", "priority": 3},
+            {"id": 3, "key": "k3", "priority": 8}
+          ],
+          "file_type": "jsonl"
+        },
+        {
+          "path": "b.ndjson",
+          "content": [
+            {"key": "k1", "status": 200},
+            {"key": "k4", "status": 404}
+          ],
+          "file_type": "jsonl"
+        }
+      ]
+    },
+    "expected": {
+      "output": [
+        {"a.id": 1, "b.status": 200},
+        {"a.id": 3, "b.status": null}
+      ],
+      "status_code": 0
+    }
   }
 }

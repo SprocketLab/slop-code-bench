@@ -1,0 +1,7 @@
+experiment_name: ignore-unknown
+training:
+  optimizer: adam
+resources:
+  profile: standard
+  world_size: 2
+logging: "{{fragment:logger}}"

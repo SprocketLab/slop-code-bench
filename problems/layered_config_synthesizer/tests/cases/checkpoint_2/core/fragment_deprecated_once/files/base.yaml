@@ -5,5 +5,5 @@ resources:
   profile: legacy
   world_size: 2
 logging:
-  realtime: "{{static:legacy_logger}}"
-  batch: "{{static:legacy_logger}}"
+  realtime: "{{fragment:legacy_logger}}"
+  batch: "{{fragment:legacy_logger}}"

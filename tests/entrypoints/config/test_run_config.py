@@ -52,8 +52,9 @@ class TestRunConfig:
         assert config.model.name == "sonnet-4.5"
         assert config.thinking == "none"
         assert config.pass_policy == PassPolicy.ANY
-        assert "${model.name}" in config.output_path
-        assert "${now:" in config.output_path
+        assert config.save_dir == "outputs"
+        assert "${model.name}" in config.save_template
+        assert "${now:" in config.save_template
 
     def test_custom_values(self):
         config = RunConfig(
@@ -63,7 +64,8 @@ class TestRunConfig:
             model=ModelConfig(provider="openai", name="gpt-4.1"),
             thinking="high",
             pass_policy=PassPolicy.ALL_CASES,
-            output_path="custom/path",
+            save_dir="custom",
+            save_template="path",
         )
         assert config.agent == "./custom_agent.yaml"
         assert config.environment == "local-py"
@@ -72,7 +74,8 @@ class TestRunConfig:
         assert config.model.name == "gpt-4.1"
         assert config.thinking == "high"
         assert config.pass_policy == PassPolicy.ALL_CASES
-        assert config.output_path == "custom/path"
+        assert config.save_dir == "custom"
+        assert config.save_template == "path"
 
     def test_inline_agent_config(self):
         config = RunConfig(

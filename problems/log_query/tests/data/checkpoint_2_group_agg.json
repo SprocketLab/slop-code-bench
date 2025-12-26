@@ -186,7 +186,7 @@
       "output": [
         {
           "service": "api",
-          "n": 3
+          "n": 1
         },
         {
           "service": "web",

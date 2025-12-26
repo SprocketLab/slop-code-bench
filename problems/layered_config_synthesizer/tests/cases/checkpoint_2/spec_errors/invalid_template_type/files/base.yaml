@@ -7,4 +7,4 @@ resources:
   accelerators:
     - type: h100
       count: 8
-    - "{{static:array_frag}}"
+    - "{{fragment:array_frag}}"

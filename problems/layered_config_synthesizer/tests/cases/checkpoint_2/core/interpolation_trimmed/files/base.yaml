@@ -5,4 +5,4 @@ training:
 resources:
   profile: ${STAGE}
   world_size: 5
-banner: "{{static:announce}}"
+banner: "{{fragment:announce}}"

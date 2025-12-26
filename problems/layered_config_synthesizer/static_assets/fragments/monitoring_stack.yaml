@@ -1,4 +1,0 @@
-pipelines:
-  training: "{{static:pipeline_common}}"
-  eval: "{{static:pipeline_eval}}"
-alerts: "{{static:alerting_rules}}"

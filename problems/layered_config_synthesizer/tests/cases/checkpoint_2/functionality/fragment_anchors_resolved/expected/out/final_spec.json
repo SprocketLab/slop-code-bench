@@ -1,0 +1,1 @@
+{"experiment_name":"anchor-fragment","logging":{"defaults":{"format":"json","level":"INFO"},"nested":{"format":"json","level":"INFO"}},"resources":{"profile":"standard","world_size":1},"training":{"optimizer":"adam"}}

@@ -66,7 +66,6 @@ def compute_checkpoint_delta(
             prev_metrics.get(key), curr_metrics.get(key)
         )
 
-    # churn_ratio: curr.lines.churn / prev.lines.total
     churn = curr_metrics["lines_added"] + curr_metrics["lines_removed"]
     result["delta.churn_ratio"] = (
         churn / prev_metrics["total_lines"]

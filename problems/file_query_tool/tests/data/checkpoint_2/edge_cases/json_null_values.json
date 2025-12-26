@@ -1,0 +1,22 @@
+{
+  "expected": "| name | country |\n|------|--------|\n| A    | AR     |\n| B    | NULL   |\n| NULL | AR     |",
+  "query": "SELECT name, country FROM data ORDER BY name",
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/data.json",
+      "content": [
+        {"name": "A", "country": "AR"},
+        {"name": "B", "country": null},
+        {"name": null, "country": "AR"}
+      ],
+      "file_type": "json",
+      "compression": "none"
+    }
+  ]
+}

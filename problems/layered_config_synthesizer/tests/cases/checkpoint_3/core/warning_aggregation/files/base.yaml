@@ -4,5 +4,5 @@ training:
 resources:
   profile: shared
   world_size: 2
-logging: "{{static:legacy_logger}}"
+logging: "{{fragment:legacy_logger}}"
 metadata: general

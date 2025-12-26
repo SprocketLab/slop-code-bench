@@ -4,4 +4,4 @@ training:
 resources:
   profile: base
   world_size: 2
-logging: "{{static:json_logger}}"
+logging: "{{fragment:json_logger}}"

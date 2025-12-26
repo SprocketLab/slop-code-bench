@@ -1,4 +1,4 @@
 experiment_name: multi_a
-logging: "{{static:logger}}"
+logging: "{{fragment:logger}}"
 resources:
   world_size: 4

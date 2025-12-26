@@ -27,10 +27,6 @@ tags:
   - error-handling
   - data-processing
 
-static_assets:
-  bad-name:
-    path: static_assets/fragments/bad-name.yaml
-    save_path: fragments/bad-name.yaml
 
 checkpoints:
   checkpoint_1:

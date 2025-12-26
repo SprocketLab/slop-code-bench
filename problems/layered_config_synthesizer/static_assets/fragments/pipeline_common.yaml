@@ -1,4 +1,0 @@
-interval: 60
-sinks:
-  - type: push
-    target: metrics-gateway

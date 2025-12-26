@@ -1,0 +1,6 @@
+experiment_name: base-run
+training:
+  optimizer: adam
+resources:
+  profile: standard
+  world_size: 4

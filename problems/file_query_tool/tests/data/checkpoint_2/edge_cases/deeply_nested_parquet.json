@@ -1,0 +1,21 @@
+{
+  "expected": "| product | price |\n|---------|-------|\n| Widget  | 19.99 |\n| Gadget  | 29.99 |",
+  "query": "SELECT product, price FROM inventory.warehouse.products ORDER BY price",
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/inventory/warehouse/products.parquet",
+      "content": [
+        {"product": "Widget", "price": 19.99, "stock": 100},
+        {"product": "Gadget", "price": 29.99, "stock": 50}
+      ],
+      "file_type": "parquet",
+      "compression": "none"
+    }
+  ]
+}

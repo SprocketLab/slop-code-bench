@@ -4,4 +4,4 @@ training:
 resources:
   profile: frag
   world_size: 2
-logging: "{{static:broken}}"
+logging: "{{fragment:broken}}"

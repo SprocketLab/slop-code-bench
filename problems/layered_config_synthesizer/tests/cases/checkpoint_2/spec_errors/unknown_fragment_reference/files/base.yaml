@@ -4,4 +4,4 @@ training:
 resources:
   profile: missing
   world_size: 2
-logging: "{{static:nope}}"
+logging: "{{fragment:nope}}"

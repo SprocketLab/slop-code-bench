@@ -80,7 +80,8 @@ class RunConfig(BaseModel):
         thinking: Thinking budget as preset string or ThinkingConfig object
         pass_policy: Policy for determining checkpoint pass/fail
         problems: Optional list of specific problems to run
-        output_path: Output path with OmegaConf interpolation support
+        save_dir: Base directory for run outputs
+        save_template: Output path template with OmegaConf interpolation support
         one_shot: Whether to run the problem as a single checkpoint with a
             combined specification.
     """
@@ -107,11 +108,13 @@ class RunConfig(BaseModel):
 
     one_shot: OneShotConfig = Field(default_factory=OneShotConfig)
 
-    # Output path with interpolation support
+    # Output path configuration with interpolation support
     # Available variables: ${model.name}, ${model.provider}, ${agent.type},
-    # ${prompt}, ${thinking}, ${env.name}, ${now:FORMAT}
-    output_path: str = (
-        "outputs/${model.name}/${agent.type}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}"
+    # ${agent.version}, ${prompt}, ${thinking}, ${env.name}, ${now:FORMAT}
+    # Note: ${agent.version} is cleanly omitted if the agent has no version
+    save_dir: str = "outputs"
+    save_template: str = (
+        "${model.name}/${agent.type}-${agent.version}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}"
     )
 
     def get_thinking_preset(self) -> ThinkingPresetType | None:
@@ -146,7 +149,9 @@ class ResolvedRunConfig(BaseModel):
         thinking_max_tokens: Resolved max thinking tokens (or None)
         pass_policy: Policy for checkpoint evaluation
         problems: List of specific problems to run (empty -> auto-discover)
-        output_path: Resolved output path (interpolations applied)
+        save_dir: Base directory for run outputs
+        save_template: Resolved output path template (interpolations applied)
+        output_path: Full output path (save_dir/save_template)
         one_shot: One-shot execution configuration.
     """
 
@@ -163,5 +168,7 @@ class ResolvedRunConfig(BaseModel):
     thinking_max_tokens: int | None
     pass_policy: PassPolicy
     problems: list[str]
+    save_dir: str
+    save_template: str
     output_path: str
     one_shot: OneShotConfig

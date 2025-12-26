@@ -1,0 +1,6 @@
+experiment_name: size-run
+training:
+  optimizer: adam
+resources:
+  profile: standard
+  world_size: "${SIZE}"

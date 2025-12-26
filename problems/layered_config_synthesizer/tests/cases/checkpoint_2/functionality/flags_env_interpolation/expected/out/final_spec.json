@@ -1,0 +1,1 @@
+{"experiment_name":"run-beta","resources":{"profile":"standard","world_size":4},"training":{"note":"deploy-beta","optimizer":"adamw"}}

@@ -1,0 +1,5 @@
+experiment_name: first-run
+training:
+  optimizer: sgd
+resources:
+  profile: standard

@@ -59,13 +59,13 @@ Object/array merge behavior matches Part 1: deep merge maps, replace arrays whol
 
 ### Fragment Resolution
 
-Before applying defaults/overrides, scan the partially merged document for fragment placeholders. Expansion must be deterministic, support nested `{{static:...}}` chains, and fail-fast with explicit error codes when references are missing or cyclical.
+Before applying defaults/overrides, scan the partially merged document for fragment placeholders. Expansion must be deterministic, support nested `{{fragment:...}}` chains, and fail-fast with explicit error codes when references are missing or cyclical.
 
 ### Placeholder syntax
 
-- Any scalar value equal to `{{static:<name>}}` must be replaced with the parsed YAML content of `fragments/<name>.yaml`.
+- Any scalar value equal to `{{fragment:<name>}}` must be replaced with the parsed YAML content of `fragments/<name>.yaml`.
 - `<name>` may include lowercase letters, numbers, and underscores. Other characters should trigger `INVALID_TEMPLATE`.
-- Fragments can themselves contain `{{static:...}}`. Resolve recursively before merging with other layers.
+- Fragments can themselves contain `{{fragment:...}}`. Resolve recursively before merging with other layers.
 
 ### Metadata & warnings
 
@@ -78,7 +78,7 @@ Before applying defaults/overrides, scan the partially merged document for fragm
 
 ### Missing fragments
 
-- Referencing `{{static:foo}}` when `fragments/foo.yaml` does not exist must raise `code="UNKNOWN_FRAGMENT"`.
+- Referencing `{{fragment:foo}}` when `fragments/foo.yaml` does not exist must raise `code="UNKNOWN_FRAGMENT"`.
 
 ### Environment Variable Interpolation
 
@@ -129,7 +129,7 @@ training:
 resources:
   profile: standard
   world_size: 4
-logging: "{{static:json_logger}}"
+logging: "{{fragment:json_logger}}"
 ```
 
 `fragments/json_logger.yaml`

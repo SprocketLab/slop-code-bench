@@ -75,9 +75,10 @@ def load_diff_metrics(checkpoint_dir: Path) -> dict | None:
     """Load diff.json and return as dict, or None if missing/invalid."""
     diff_file = checkpoint_dir / DIFF_FILENAME
     if not diff_file.exists():
-        logger.debug(
+        logger.warning(
             "diff.json not found, skipping diff metrics",
             checkpoint_dir=str(checkpoint_dir),
+            diff_file=str(diff_file),
         )
         return None
     try:
@@ -86,6 +87,7 @@ def load_diff_metrics(checkpoint_dir: Path) -> dict | None:
         logger.warning(
             "Failed to parse diff.json, skipping diff metrics",
             checkpoint_dir=str(checkpoint_dir),
+            diff_file=str(diff_file),
             error=str(e),
         )
         return None

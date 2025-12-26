@@ -26,6 +26,7 @@ from .runtime import RowContext
 from .runtime import resolve_field_value
 from .values import is_number
 from .values import structural_equal
+from .values import structural_signature
 
 
 @dataclass
@@ -305,7 +306,8 @@ class AggregationEngine:
     def run(self, rows: Iterable[RowContext]) -> list[dict]:
         for context in rows:
             key = self._group_key(context)
-            state = self._get_or_create_state(key)
+            raw_values = self._raw_group_values(context)
+            state = self._get_or_create_state(key, raw_values)
             for agg_state in state["aggregates"].values():
                 agg_state.add(context)
         results: list[dict] = []
@@ -315,27 +317,40 @@ class AggregationEngine:
             results.append(self._build_row(()))
         return results
 
-    def _group_key(self, context: RowContext) -> tuple[Any, ...]:
+    def _group_key(self, context: RowContext) -> tuple[tuple[Any, ...], ...]:
+        if not self.group_by:
+            return ()
+        return tuple(
+            structural_signature(resolve_group_value(field, context))
+            for field in self.group_by
+        )
+
+    def _raw_group_values(self, context: RowContext) -> tuple[Any, ...]:
         if not self.group_by:
             return ()
         return tuple(
             resolve_group_value(field, context) for field in self.group_by
         )
 
-    def _get_or_create_state(self, key: tuple[Any, ...]) -> dict[str, Any]:
+    def _get_or_create_state(
+        self, key: tuple[tuple[Any, ...], ...], raw_values: tuple[Any, ...]
+    ) -> dict[str, Any]:
         if key not in self.groups:
-            self.groups[key] = self._create_group_state()
+            self.groups[key] = self._create_group_state(raw_values)
             self.order.append(key)
         return self.groups[key]
 
-    def _create_group_state(self) -> dict[str, Any]:
+    def _create_group_state(
+        self, raw_values: tuple[Any, ...] = ()
+    ) -> dict[str, Any]:
         return {
+            "values": raw_values,
             "aggregates": {
                 idx: create_aggregate_state(
                     self.query.select_items[idx].aggregate
                 )
                 for idx in self.aggregate_indices
-            }
+            },
         }
 
     def _build_row(self, key: tuple[Any, ...]) -> dict:
@@ -351,14 +366,17 @@ class AggregationEngine:
         return row
 
     def _group_value_for_field(
-        self, key_values: tuple[Any, ...], field: FieldRef
+        self, key: tuple[Any, ...], field: FieldRef
     ) -> Any:
         lookup = (field.alias, field.parts)
         if lookup not in self.group_index:
             raise RuntimeExecutionError(
                 f"field '{field.text}' missing from GROUP BY"
             )
-        return key_values[self.group_index[lookup]]
+        state = self.groups.get(key)
+        if state is None:
+            return None
+        return state["values"][self.group_index[lookup]]
 
 
 def _raise_invalid_constant(value: str) -> None:

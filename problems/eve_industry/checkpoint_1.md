@@ -10,7 +10,7 @@ The SDE directory contains these files:
 
 All CSVs are UTF-8, comma-separated, with headers. Compressed files use BZ2 format. Only items with `published == 1` are valid.
 
-**Ship Volume Rule:** In EVE, ships can be packaged or unpackaged. The `volume` field in `invTypes` represents the unpackaged size, but industry outputs are always packaged. For ships, use the packaged volume from `ship_volumes.yaml` (keyed by group name). Non-ship items use `invTypes.volume` directly.
+**Ship Volume Rule:** In EVE, ships can be _packaged_ or unpackaged. The `volume` field in `invTypes` represents the unpackaged size, but industry outputs are always packaged. For ships, use the packaged volume from `ship_volumes.yaml` (keyed by group name). Non-ship items use `invTypes.volume` directly.
 
 ---
 

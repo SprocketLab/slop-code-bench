@@ -320,6 +320,10 @@ def is_all_one_literal(token: str) -> bool:
     return bool(digits) and set(digits) == {"1"}
 
 
+def normalize_sort_key(expr: str) -> str:
+    return "".join(expr.split())
+
+
 # =============================================================================
 # Core Example Tests
 # =============================================================================
@@ -712,7 +716,7 @@ def test_opt_postcondition_associative_ops_flattened_sorted(
     seen_ops = {op for op, _ in calls}
     assert {"AND", "OR", "XOR"}.issubset(seen_ops)
     for op, args in calls:
-        assert args == sorted(args)
+        assert args == sorted(args, key=normalize_sort_key)
         for arg in args:
             assert not arg.startswith(f"{op}(")
 
@@ -1094,6 +1098,33 @@ def test_opt_fanin_limit_enforced(
 
 
 @pytest.mark.functionality
+def test_opt_fanin_limit_equivalent_to_input(
+    entrypoint_argv: list[str],
+    tmp_path: Path,
+) -> None:
+    path = write_circ(tmp_path, "fanin.circ", FANIN_FUNC_CIRC)
+    out_path = tmp_path / "out.circ"
+    result = run_command(
+        entrypoint_argv,
+        ["opt", str(path), "-o", str(out_path), "--fanin-limit", "2"],
+    )
+    assert result.returncode == 0
+    equiv_result, equiv_payload = run_json_command(
+        entrypoint_argv,
+        [
+            "equiv",
+            str(path),
+            str(out_path),
+            "--max-input-bits",
+            "5",
+            "--json",
+        ],
+    )
+    assert equiv_result.returncode == 0
+    assert equiv_payload.get("equivalent") is True
+
+
+@pytest.mark.functionality
 def test_opt_fanin_limit_none_accepts_value(
     entrypoint_argv: list[str],
     tmp_path: Path,
@@ -1154,9 +1185,11 @@ def test_opt_bench_output_ordering_and_format(
         rhs = rhs.strip()
         if "(" not in rhs:
             continue
-        op = rhs.split("(", 1)[0]
+        op, rest = rhs.split("(", 1)
+        op = op.strip()
+        inner = rest.rsplit(")", 1)[0]
         assert op.isupper()
-        assert " " not in rhs
+        assert not any(ch.isspace() for ch in inner)
     # Determinism: running again produces identical output
     out_path2 = tmp_path / "out2.bench"
     result2 = run_command(

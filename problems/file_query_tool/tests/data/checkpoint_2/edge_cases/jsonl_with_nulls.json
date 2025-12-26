@@ -1,0 +1,22 @@
+{
+  "expected": "| id | status  |\n|----|--------|\n| 1  | active |\n| 2  | NULL   |\n| 3  | active |",
+  "query": "SELECT id, status FROM records ORDER BY id",
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/records.jsonl",
+      "content": [
+        {"id": 1, "status": "active"},
+        {"id": 2, "status": null},
+        {"id": 3, "status": "active"}
+      ],
+      "file_type": "jsonl",
+      "compression": "none"
+    }
+  ]
+}

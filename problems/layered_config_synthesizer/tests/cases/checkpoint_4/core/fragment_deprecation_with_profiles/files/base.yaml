@@ -3,4 +3,4 @@ training:
   optimizer: adam
 resources:
   profile: train_l4
-logging: "{{static:legacy_logger}}"
+logging: "{{fragment:legacy_logger}}"

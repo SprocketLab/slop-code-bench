@@ -143,6 +143,24 @@ def is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def _normalize_group_value(value: Any) -> tuple[str, Any]:
+    """Create a type-aware key for grouping.
+
+    This ensures that 1 and True are distinct group keys, since Python's
+    default equality treats them as equal (1 == True).
+    """
+    if value is None:
+        return ("null", None)
+    if isinstance(value, bool):
+        return ("bool", value)
+    if is_number(value):
+        return ("number", value)
+    if isinstance(value, str):
+        return ("string", value)
+    # Arrays/objects should have been coerced to null by resolve_group_value
+    return ("null", None)  # pragma: no cover
+
+
 class AggregationEngine:
     def __init__(self, query: SelectQuery) -> None:
         self.query = query
@@ -155,16 +173,17 @@ class AggregationEngine:
             for idx, item in enumerate(query.select_items)
             if item.aggregate is not None
         ]
-        self.groups: dict[tuple[Any, ...], dict[str, Any]] = {}
-        self.order: list[tuple[Any, ...]] = []
+        # Use normalized keys for dict lookup to distinguish 1 vs True
+        self.groups: dict[tuple[tuple[str, Any], ...], dict[str, Any]] = {}
+        self.order: list[tuple[tuple[str, Any], ...]] = []
         if not self.group_by:
-            key = ()
-            self.groups[key] = self._create_group_state(key)
+            key: tuple[tuple[str, Any], ...] = ()
+            self.groups[key] = self._create_group_state(())
             self.order.append(key)
 
     def add_record(self, record: dict) -> None:
-        key = self._resolve_group_key(record)
-        state = self._get_or_create_group_state(key)
+        original_key, normalized_key = self._resolve_group_key(record)
+        state = self._get_or_create_group_state(original_key, normalized_key)
         for select_index, _ in self.aggregate_specs:
             state["aggregates"][select_index].add(record)
 
@@ -178,27 +197,34 @@ class AggregationEngine:
             rows.append(self._build_row(state))
         return rows
 
-    def _resolve_group_key(self, record: dict) -> tuple[Any, ...]:
+    def _resolve_group_key(
+        self, record: dict
+    ) -> tuple[tuple[Any, ...], tuple[tuple[str, Any], ...]]:
+        """Return (original_values, normalized_key) for grouping."""
         if not self.group_by:
-            return ()
-        return tuple(
+            return (), ()
+        original = tuple(
             resolve_group_value(field, record) for field in self.group_by
         )
+        normalized = tuple(_normalize_group_value(v) for v in original)
+        return original, normalized
 
     def _get_or_create_group_state(
-        self, key: tuple[Any, ...]
+        self,
+        original_key: tuple[Any, ...],
+        normalized_key: tuple[tuple[str, Any], ...],
     ) -> dict[str, Any]:
-        if key not in self.groups:
-            self.groups[key] = self._create_group_state(key)
-            self.order.append(key)
-        return self.groups[key]
+        if normalized_key not in self.groups:
+            self.groups[normalized_key] = self._create_group_state(original_key)
+            self.order.append(normalized_key)
+        return self.groups[normalized_key]
 
-    def _create_group_state(self, key: tuple[Any, ...]) -> dict[str, Any]:
+    def _create_group_state(self, original_key: tuple[Any, ...]) -> dict[str, Any]:
         aggregates = {
             select_index: create_aggregate_state(call)
             for select_index, call in self.aggregate_specs
         }
-        return {"key": key, "aggregates": aggregates}
+        return {"key": original_key, "aggregates": aggregates}
 
     def _build_row(self, state: dict[str, Any]) -> dict:
         row = {}

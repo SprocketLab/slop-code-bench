@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import json
-import tempfile
-from pathlib import Path
-
-import pytest
 
 from slop_code.entrypoints.commands.migrate_evaluation_format import (
     _convert_tests_to_grouped_format,
+)
+from slop_code.entrypoints.commands.migrate_evaluation_format import (
     _migrate_single_file,
 )
 

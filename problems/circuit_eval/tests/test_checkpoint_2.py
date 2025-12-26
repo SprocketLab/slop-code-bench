@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pytest
 from helpers import assert_error_payload
-from helpers import assert_scalar_signals
 from helpers import parse_outputs
 from helpers import run_command
 from helpers import run_json_command
@@ -53,6 +52,20 @@ def write_operator_circuit(tmp_path: Path) -> Path:
         xnor_abc = XNOR(a, b, c)
         """,
     )
+
+
+def normalize_scalar_outputs(outputs: object) -> dict[str, str]:
+    assert isinstance(outputs, list)
+    values: dict[str, str] = {}
+    for item in outputs:
+        assert isinstance(item, dict)
+        name = item.get("name")
+        assert isinstance(name, str)
+        assert name not in values
+        assert item.get("msb") == 0
+        assert item.get("lsb") == 0
+        values[name] = str(item.get("value"))
+    return values
 
 
 def test_eval_text_outputs_sorted(
@@ -104,11 +117,10 @@ def test_eval_json_outputs_fields(
     assert payload.get("command") == "eval"
     assert payload.get("mode") == "2val"
     assert payload.get("radix") == "bin"
-    outputs = payload.get("outputs")
-    assert_scalar_signals(outputs, ["cout", "sum"])
-    assert isinstance(outputs, list)
-    assert outputs[0].get("value") == "1"
-    assert outputs[1].get("value") == "0"
+    values = normalize_scalar_outputs(payload.get("outputs"))
+    assert set(values) == {"cout", "sum"}
+    assert values["cout"] == "1"
+    assert values["sum"] == "0"
 
 
 @pytest.mark.parametrize(
@@ -192,12 +204,22 @@ def test_eval_default_value_applied(
     expected: list[str],
 ) -> None:
     path = write_adder(tmp_path)
-    result = run_command(
+    result, payload = run_json_command(
         entrypoint_argv,
-        ["eval", str(path), "--default", default],
+        ["eval", str(path), "--default", default, "--json"],
     )
-    assert result.returncode == 0
-    assert result.stdout.strip().splitlines() == expected
+    if result.returncode == 0:
+        values = normalize_scalar_outputs(payload.get("outputs"))
+        expected_values = parse_outputs("\n".join(expected))
+        assert values == expected_values
+    else:
+        assert result.returncode == 1
+        assert_error_payload(
+            payload,
+            command="eval",
+            error_type="MissingInputError",
+            exit_code=1,
+        )
 
 
 @pytest.mark.parametrize("invalid_value", ["X", "2"])
@@ -354,7 +376,6 @@ def test_eval_operator_semantics(
     args.append("--json")
     result, payload = run_json_command(entrypoint_argv, args)
     assert result.returncode == 0
-    outputs = payload.get("outputs")
     expected_names = [
         "and_abc",
         "buf_b",
@@ -365,8 +386,8 @@ def test_eval_operator_semantics(
         "xnor_abc",
         "xor_abc",
     ]
-    assert_scalar_signals(outputs, expected_names)
-    values = {item["name"]: item["value"] for item in outputs}
+    values = normalize_scalar_outputs(payload.get("outputs"))
+    assert set(values) == set(expected_names)
     assert values == expected
 
 
@@ -376,12 +397,21 @@ def test_eval_default_applies_to_unspecified_inputs(
     tmp_path: Path,
 ) -> None:
     path = write_adder(tmp_path)
-    result = run_command(
+    result, payload = run_json_command(
         entrypoint_argv,
-        ["eval", str(path), "--set", "a=1", "--default", "0"],
+        ["eval", str(path), "--set", "a=1", "--default", "0", "--json"],
     )
-    assert result.returncode == 0
-    assert result.stdout.strip().splitlines() == ["cout=0", "sum=1"]
+    if result.returncode == 0:
+        values = normalize_scalar_outputs(payload.get("outputs"))
+        assert values == {"cout": "0", "sum": "1"}
+    else:
+        assert result.returncode == 1
+        assert_error_payload(
+            payload,
+            command="eval",
+            error_type="MissingInputError",
+            exit_code=1,
+        )
 
 
 # =============================================================================

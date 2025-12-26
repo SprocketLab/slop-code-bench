@@ -4,4 +4,4 @@ training:
 resources:
   profile: cyc
   world_size: 2
-logging: "{{static:a}}"
+logging: "{{fragment:a}}"

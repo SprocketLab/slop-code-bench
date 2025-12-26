@@ -10,6 +10,7 @@ import yaml
 from omegaconf import OmegaConf
 from pydantic import ValidationError
 
+from slop_code.common import CONFIG_FILENAME
 from slop_code.entrypoints.config.resolvers import register_resolvers
 from slop_code.entrypoints.config.run_config import ModelConfig
 from slop_code.entrypoints.config.run_config import OneShotConfig
@@ -257,6 +258,7 @@ def _build_interpolation_context(
     return {
         "agent": {
             "type": agent_data.get("type", "unknown"),
+            "version": agent_data.get("version"),  # Can be None
         },
         "env": {
             "name": env_data.get("name", "unknown"),
@@ -270,26 +272,42 @@ def _build_interpolation_context(
     }
 
 
-def _resolve_output_path(
-    output_path_template: str,
+def _resolve_save_template(
+    save_template: str,
     context: dict[str, Any],
 ) -> str:
     """Resolve output path template with interpolation.
 
+    Handles the case where agent.version is None by cleaning up
+    artifacts like "-None" or "None_" from the resolved string.
+
     Args:
-        output_path_template: The output path with ${...} placeholders
+        save_template: The output path template with ${...} placeholders
         context: The interpolation context dict
 
     Returns:
-        Resolved output path string
+        Resolved output path string with clean version handling
     """
-    # Create OmegaConf config with context + output_path
-    cfg = OmegaConf.create({**context, "output_path": output_path_template})
+    # Create OmegaConf config with context + save_template
+    cfg = OmegaConf.create({**context, "save_template": save_template})
 
     # Resolve interpolations
     OmegaConf.resolve(cfg)
 
-    return str(cfg.output_path)
+    resolved = str(cfg.save_template)
+
+    # Clean up version artifacts when version is None
+    # OmegaConf renders None as the string "None"
+    resolved = resolved.replace("-None", "").replace("None_", "")
+
+    # Clean up any resulting double underscores or trailing underscores
+    while "__" in resolved:
+        resolved = resolved.replace("__", "_")
+
+    # Clean up any trailing underscore before path separator or at end
+    resolved = resolved.replace("_/", "/").rstrip("_")
+
+    return resolved
 
 
 def _get_default_config() -> dict[str, Any]:
@@ -307,7 +325,8 @@ def _get_default_config() -> dict[str, Any]:
             "prefix": "",
             "include_first_prefix": False,
         },
-        "output_path": "outputs/${model.name}/${agent.type}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}",
+        "save_dir": "outputs",
+        "save_template": "${model.name}/${agent.type}-${agent.version}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}",
     }
 
 
@@ -387,8 +406,27 @@ def load_run_config(
         flags_cfg = OmegaConf.create(flags_to_merge)
         cfg = OmegaConf.merge(cfg, flags_cfg)
 
-    # 4. Apply CLI overrides
+    # 4. Separate agent-specific overrides from top-level overrides
+    # Agent overrides can be specified as either "agent.key=value" or just "key=value"
+    # where key is a known agent config field (version, cost_limits, etc.)
+    agent_config_fields = {"version", "cost_limits", "binary", "permission_mode"}
+    agent_overrides: dict[str, Any] = {}
+    top_level_overrides: list[str] = []
+
     for override in cli_overrides:
+        key, value = parse_override(override)
+        if key.startswith("agent."):
+            # Explicit agent prefix - strip it and store
+            agent_key = key[6:]  # Remove "agent." prefix
+            agent_overrides[agent_key] = value
+        elif key.split(".")[0] in agent_config_fields:
+            # Shorthand: version=X -> agent.version=X
+            agent_overrides[key] = value
+        else:
+            top_level_overrides.append(override)
+
+    # 5. Apply top-level CLI overrides
+    for override in top_level_overrides:
         key, value = parse_override(override)
         OmegaConf.update(cfg, key, value, merge=True)
 
@@ -397,24 +435,40 @@ def load_run_config(
     if not isinstance(cfg_dict, dict):
         raise ValueError("Expected config to be a dict")
 
-    # 5. Resolve references and load configs
+    # 6. Resolve references and load configs
     agent_path, agent_data = _resolve_agent_config(cfg_dict["agent"])
+
+    # 7. Merge agent overrides into loaded agent data
+    if agent_overrides:
+        for key, value in agent_overrides.items():
+            # Handle nested keys like "cost_limits.step_limit"
+            parts = key.split(".")
+            target = agent_data
+            for part in parts[:-1]:
+                if part not in target:
+                    target[part] = {}
+                target = target[part]
+            target[parts[-1]] = value
+        logger.debug(
+            "Applied agent config overrides",
+            overrides=agent_overrides,
+        )
     env_path, env_data = _resolve_environment_config(cfg_dict["environment"])
     prompt_path, prompt_content = _resolve_prompt(cfg_dict["prompt"])
 
-    # 6. Handle model config
+    # 8. Handle model config
     model_data = cfg_dict["model"]
     if isinstance(model_data, dict):
         model = ModelConfig(**model_data)
     else:
         raise ValueError(f"Invalid model config: {model_data}")
 
-    # 7. Handle thinking config
+    # 9. Handle thinking config
     thinking_preset, thinking_max_tokens = _get_thinking_values(
         cfg_dict["thinking"]
     )
 
-    # 8. Handle pass_policy
+    # 10. Handle pass_policy
     pass_policy_value = cfg_dict["pass_policy"]
     if isinstance(pass_policy_value, str):
         pass_policy = PassPolicy(pass_policy_value)
@@ -423,13 +477,13 @@ def load_run_config(
     else:
         raise ValueError(f"Invalid pass_policy: {pass_policy_value}")
 
-    # 9. Normalize problems list (optional)
+    # 11. Normalize problems list (optional)
     try:
         problems = _normalize_problems(cfg_dict.get("problems", []))
     except ValueError as exc:
         raise ValueError(f"Invalid problems configuration: {exc}") from exc
 
-    # 10. Handle one_shot config
+    # 12. Handle one_shot config
     try:
         one_shot_raw = cfg_dict.get("one_shot", {})
         if isinstance(one_shot_raw, OneShotConfig):
@@ -445,7 +499,7 @@ def load_run_config(
     except ValidationError as exc:
         raise ValueError(f"Invalid one_shot configuration: {exc}") from exc
 
-    # 11. Build interpolation context and resolve output_path
+    # 13. Build interpolation context and resolve output_path
     context = _build_interpolation_context(
         agent_data=agent_data,
         env_data=env_data,
@@ -453,7 +507,20 @@ def load_run_config(
         model=model,
         thinking_preset=thinking_preset,
     )
-    output_path = _resolve_output_path(cfg_dict["output_path"], context)
+
+    # 14. Resolve output path from root and template
+    save_dir = cfg_dict.get("save_dir", "outputs")
+    save_template_raw = cfg_dict.get(
+        "save_template",
+        "${model.name}/${agent.type}-${agent.version}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}",
+    )
+    save_template = _resolve_save_template(save_template_raw, context)
+
+    # Combine root and template, handling empty root case
+    if save_dir:
+        output_path = f"{save_dir}/{save_template}"
+    else:
+        output_path = save_template
 
     logger.debug(
         "Loaded run config",
@@ -462,6 +529,8 @@ def load_run_config(
         prompt_path=str(prompt_path),
         model=f"{model.provider}/{model.name}",
         thinking=thinking_preset,
+        save_dir=save_dir,
+        save_template=save_template,
         output_path=output_path,
         problems=len(problems),
         one_shot=one_shot.enabled,
@@ -479,6 +548,8 @@ def load_run_config(
         thinking_max_tokens=thinking_max_tokens,
         pass_policy=pass_policy,
         problems=problems,
+        save_dir=save_dir,
+        save_template=save_template,
         output_path=output_path,
         one_shot=one_shot,
     )
@@ -591,3 +662,72 @@ def resolve_environment(
             )
         )
         raise typer.Exit(1) from e
+
+
+def load_config_from_run_dir(run_dir: Path) -> ResolvedRunConfig:
+    """Load ResolvedRunConfig from a saved run directory.
+
+    Loads the config.yaml file that was saved during a previous run,
+    reconstructs the ResolvedRunConfig with proper Path objects, and
+    returns it ready for resuming.
+
+    Args:
+        run_dir: Path to existing run directory containing config.yaml
+
+    Returns:
+        ResolvedRunConfig loaded from saved config
+
+    Raises:
+        FileNotFoundError: If config.yaml doesn't exist in run_dir
+        ValueError: If config is invalid or corrupt
+    """
+    config_path = run_dir / CONFIG_FILENAME
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"No config.yaml found in {run_dir}. "
+            "This directory may not be a valid run directory."
+        )
+
+    try:
+        with config_path.open() as f:
+            config_dict = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        raise ValueError(f"Failed to parse config.yaml: {e}") from e
+
+    if config_dict is None:
+        raise ValueError("config.yaml is empty")
+
+    if not isinstance(config_dict, dict):
+        raise ValueError(
+            f"Expected config.yaml to contain a mapping, got {type(config_dict).__name__}"
+        )
+
+    # Convert string paths back to Path objects where needed
+    path_fields = ["agent_config_path", "environment_config_path", "prompt_path"]
+    for field in path_fields:
+        if field in config_dict and config_dict[field] is not None:
+            config_dict[field] = Path(config_dict[field])
+
+    # Handle model as a nested dict -> ModelConfig
+    if "model" in config_dict and isinstance(config_dict["model"], dict):
+        config_dict["model"] = ModelConfig(**config_dict["model"])
+
+    # Handle pass_policy as string -> enum
+    if "pass_policy" in config_dict and isinstance(config_dict["pass_policy"], str):
+        config_dict["pass_policy"] = PassPolicy(config_dict["pass_policy"])
+
+    # Handle one_shot as dict -> OneShotConfig
+    if "one_shot" in config_dict and isinstance(config_dict["one_shot"], dict):
+        config_dict["one_shot"] = OneShotConfig(**config_dict["one_shot"])
+
+    # Backward compatibility: handle old configs with only output_path
+    # New configs have save_dir and save_template
+    if "output_path" in config_dict and "save_dir" not in config_dict:
+        # Old format - set empty strings for root/template since output_path is the full path
+        config_dict["save_dir"] = ""
+        config_dict["save_template"] = ""
+
+    try:
+        return ResolvedRunConfig.model_validate(config_dict)
+    except ValidationError as e:
+        raise ValueError(f"Invalid config.yaml: {e}") from e

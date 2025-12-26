@@ -1,6 +1,6 @@
 experiment_name: listy
 training:
   optimizer: adam
-  augmentations: "{{static:augments}}"
+  augmentations: "{{fragment:augments}}"
 resources:
   profile: train_l4

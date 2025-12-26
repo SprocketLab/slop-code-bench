@@ -36,6 +36,7 @@ from .runtime import RowContext
 from .runtime import resolve_value_ref
 from .values import is_number
 from .values import structural_equal
+from .values import structural_signature
 
 
 @dataclass
@@ -428,12 +429,13 @@ class AggregationEngine:
             results.append(self._build_row(()))
         return results
 
-    def _group_key(self, context: EvalContext) -> tuple[Any, ...]:
+    def _group_key(self, context: EvalContext) -> tuple[tuple[Any, ...], ...]:
         if not self.group_by:
             return ()
-        values: list[Any] = []
+        values: list[tuple[Any, ...]] = []
         for field in self.group_by:
-            values.append(resolve_group_value(field, context, self.gloss))
+            raw_value = resolve_group_value(field, context, self.gloss)
+            values.append(structural_signature(raw_value))
         return tuple(values)
 
     def _get_or_create_state(

@@ -1,0 +1,8 @@
+case:
+  arguments: build --base base.yaml --overrides overrides --fragments fragments --flags
+    flags.json --env env.list --out out
+  input_roots:
+  - files
+expected:
+  status_code: 1
+  stderr: expected/stderr.json

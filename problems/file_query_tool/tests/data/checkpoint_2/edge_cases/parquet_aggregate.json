@@ -1,0 +1,23 @@
+{
+  "expected": "| category   | total_price | item_count |\n|------------|-------------|------------|\n| Electronics | 149.97      | 3          |\n| Furniture  | 499.99      | 1          |",
+  "query": "SELECT category, SUM(price) AS total_price, COUNT(*) AS item_count FROM products GROUP BY category ORDER BY category",
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/products.parquet",
+      "content": [
+        {"id": 1, "category": "Electronics", "product": "Phone", "price": 99.99},
+        {"id": 2, "category": "Furniture", "product": "Chair", "price": 499.99},
+        {"id": 3, "category": "Electronics", "product": "Charger", "price": 24.99},
+        {"id": 4, "category": "Electronics", "product": "Cable", "price": 24.99}
+      ],
+      "file_type": "parquet",
+      "compression": "none"
+    }
+  ]
+}

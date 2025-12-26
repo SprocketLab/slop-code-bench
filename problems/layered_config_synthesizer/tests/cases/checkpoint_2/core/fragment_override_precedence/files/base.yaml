@@ -4,4 +4,4 @@ training:
 resources:
   profile: override
   world_size: 1
-logging: "{{static:logging_defaults}}"
+logging: "{{fragment:logging_defaults}}"

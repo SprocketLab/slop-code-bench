@@ -1,4 +1,0 @@
-text: "Running ${STAGE} in ${REGION}"
-audience:
-  - sre
-  - ml

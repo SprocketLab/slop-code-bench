@@ -30,7 +30,7 @@ def build_problem_comparison_chart(
     df = df.sort_values(sort_col)
 
     fig = make_subplots(
-        rows=5,
+        rows=6,
         cols=3,
         subplot_titles=(
             "LOC",
@@ -46,6 +46,11 @@ def build_problem_comparison_chart(
             "Pass Rate: Functionality (%)",
             "Pass Rate: Regression (%)",
             "Pass Rate: Error (%)",
+            "Mass: Top 90% (% of Func)",
+            "Mass: Complexity",
+            "Δ Mass: Top 75% (# Func)",
+            "Δ Mass: Top 75%/ Total Complexity",
+            "Δ Mass: Percent Change",
         ),
         shared_xaxes=True,
         vertical_spacing=0.06,
@@ -112,7 +117,6 @@ def build_problem_comparison_chart(
 
         # Test Pass Rates
         pass_rate_total = (run_df["passed_tests"] / run_df["total_tests"]) * 100
-        pass_rate_total = calc_pass_rate("total")
         pass_rate_core = calc_pass_rate("core")
         pass_rate_func = calc_pass_rate("functionality")
         pass_rate_regr = calc_pass_rate("regression")
@@ -183,6 +187,33 @@ def build_problem_comparison_chart(
 
         # Row 5
         add_trace(pass_rate_error, 5, 1)
+        add_trace(
+            run_df["mass.top90_count"]
+            / run_df[["functions", "methods"]].sum(axis=1)
+            * 100,
+            5,
+            2,
+        )
+        add_trace(run_df["mass.complexity"], 5, 3)
+
+        # Row 6
+        add_trace(
+            run_df["delta.mass.top75_count"]
+            / run_df[["functions", "methods"]].sum(axis=1)
+            * 100,
+            6,
+            1,
+        )
+        add_trace(
+            run_df["delta.mass.top75_mass"] / run_df["mass.complexity"] * 100,
+            6,
+            2,
+        )
+        add_trace(
+            run_df["delta.mass.complexity"] / run_df["mass.complexity"] * 100,
+            6,
+            3,
+        )
 
     # Update y-axes titles
     fig.update_yaxes(title_text="Lines", row=1, col=1, gridcolor="lightgray")

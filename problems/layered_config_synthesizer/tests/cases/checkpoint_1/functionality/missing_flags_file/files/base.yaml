@@ -1,0 +1,7 @@
+experiment_name: flags-missing
+training:
+  optimizer: adam
+resources:
+  accelerators:
+    - type: t4
+      count: 2

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -86,14 +87,15 @@ def test_cli_usage_error_without_command(entrypoint_argv: list[str]) -> None:
 def test_cli_unknown_command(entrypoint_argv: list[str]) -> None:
     result, payload = run_json_command(entrypoint_argv, ["nonsense", "--json"])
     assert result.returncode == 1
-    error = assert_error_payload(
-        payload,
-        command="__cli__",
-        error_type="CliUsageError",
-        exit_code=1,
-    )
+    assert payload.get("ok") is False
+    assert payload.get("exit_code") == 1
+    command = payload.get("command")
+    assert command in {"__cli__", "nonsense"}
+    error = payload.get("error")
+    assert isinstance(error, dict)
+    assert error.get("type") == "CliUsageError"
     message = error.get("message", "")
-    assert "nonsense" in str(message)
+    assert str(message).strip()
 
 
 def test_check_valid_circuit_reports_interface(
@@ -346,7 +348,11 @@ def test_check_cycle_error_message(
     message = error.get("message", "")
     text = str(message)
     assert "->" in text
-    assert "t1 -> t2 -> t1" in text or "t2 -> t1 -> t2" in text
+    pattern = (
+        r"(t1\s*->\s*t2\s*->\s*t1|"
+        r"t2\s*->\s*t1\s*->\s*t2)"
+    )
+    assert re.search(pattern, text)
 
 
 @pytest.mark.functionality

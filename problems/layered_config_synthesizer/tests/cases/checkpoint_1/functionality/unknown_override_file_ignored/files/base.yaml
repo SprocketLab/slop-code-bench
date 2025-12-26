@@ -1,0 +1,5 @@
+experiment_name: ignore-unknown
+training:
+  optimizer: adam
+resources:
+  profile: standard

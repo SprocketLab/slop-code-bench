@@ -1,0 +1,1 @@
+{"experiment_name":"anchor-run","resources":{"accelerators":[{"count":1,"type":"l4"},{"count":1,"type":"l4"}]},"training":{"optimizer":"adam"}}

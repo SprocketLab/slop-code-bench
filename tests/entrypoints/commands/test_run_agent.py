@@ -1,25 +1,26 @@
 """Tests for run_agent command helper functions."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 import typer
 import yaml
 
+from slop_code.entrypoints.commands.run_agent import _build_cli_flags
+from slop_code.entrypoints.commands.run_agent import _create_task_config
+from slop_code.entrypoints.commands.run_agent import _discover_problems
+from slop_code.entrypoints.commands.run_agent import _get_nested
+from slop_code.entrypoints.commands.run_agent import _handle_early_completion
+from slop_code.entrypoints.commands.run_agent import _handle_resume_validation
 from slop_code.entrypoints.commands.run_agent import (
-    _build_cli_flags,
-    _create_task_config,
-    _discover_problems,
-    _get_nested,
-    _handle_early_completion,
-    _handle_resume_validation,
     _load_and_validate_run_config,
-    _resolve_output_directory,
-    _resolve_problem_names,
-    _validate_problem_paths,
-    _validate_resume_config,
 )
+from slop_code.entrypoints.commands.run_agent import _resolve_output_directory
+from slop_code.entrypoints.commands.run_agent import _resolve_problem_names
+from slop_code.entrypoints.commands.run_agent import _validate_problem_paths
+from slop_code.entrypoints.commands.run_agent import _validate_resume_config
 
 
 class TestGetNested:
@@ -184,59 +185,47 @@ class TestResolveProblemNames:
 class TestResolveOutputDirectory:
     """Tests for _resolve_output_directory helper function."""
 
-    def test_cli_override_takes_precedence(self, tmp_path):
-        """Test CLI output path overrides config."""
-        cli_path = str(tmp_path / "cli_out")
-        result, existed = _resolve_output_directory(cli_path, "config_out", debug=False)
-        assert result == Path(cli_path)
-
-    def test_config_used_when_no_cli(self, tmp_path):
-        """Test config output path used when no CLI override."""
+    def test_config_path_used(self, tmp_path):
+        """Test config output path is used."""
         config_path = str(tmp_path / "config_out")
-        result, existed = _resolve_output_directory(None, config_path, debug=False)
+        result, existed = _resolve_output_directory(config_path, debug=False)
         assert result == Path(config_path)
 
     def test_debug_prefix_added(self, tmp_path):
         """Test DEBUG_ prefix in debug mode."""
         result, existed = _resolve_output_directory(
-            None, str(tmp_path / "run_123"), debug=True
+            str(tmp_path / "run_123"), debug=True
         )
         assert "DEBUG_" in str(result)
 
     def test_debug_prefix_with_nested_path(self):
         """Test DEBUG_ prefix with nested path."""
-        result, existed = _resolve_output_directory(
-            None, "outputs/run_123", debug=True
-        )
+        result, existed = _resolve_output_directory("outputs/run_123", debug=True)
         assert "outputs/DEBUG_run_123" in str(result)
 
     def test_debug_prefix_with_simple_path(self):
         """Test DEBUG_ prefix with simple path."""
-        result, existed = _resolve_output_directory(None, "run_123", debug=True)
+        result, existed = _resolve_output_directory("run_123", debug=True)
         assert str(result) == "DEBUG_run_123"
 
     def test_preexisted_flag_true(self, tmp_path):
         """Test preexisted flag correctly set when directory exists."""
         existing_dir = tmp_path / "exists"
         existing_dir.mkdir()
-        result, existed = _resolve_output_directory(
-            str(existing_dir), "default", debug=False
-        )
+        result, existed = _resolve_output_directory(str(existing_dir), debug=False)
         assert existed is True
 
     def test_preexisted_flag_false(self, tmp_path):
         """Test preexisted flag correctly set when directory doesn't exist."""
         result, existed = _resolve_output_directory(
-            str(tmp_path / "new"), "default", debug=False
+            str(tmp_path / "new"), debug=False
         )
         assert existed is False
 
     def test_directory_created(self, tmp_path):
         """Test that directory is created."""
         new_path = tmp_path / "new_dir"
-        result, existed = _resolve_output_directory(
-            str(new_path), "default", debug=False
-        )
+        result, existed = _resolve_output_directory(str(new_path), debug=False)
         assert result.exists()
 
 

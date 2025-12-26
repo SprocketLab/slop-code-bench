@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import re
 import textwrap
 from pathlib import Path
 
@@ -92,6 +93,12 @@ NESTED_CIRC = """\
 input a b c
 output y
 y = OR(a, AND(b, c))
+"""
+
+INDEX_SLICE_CIRC = """\
+input v[3:0]
+output y[1:0]
+y = AND(v[3:2], v[1:0])
 """
 
 # Lint edge cases
@@ -241,6 +248,10 @@ def test_stats_basic_structure(
         ("nested", NESTED_CIRC, {
             "inputs_count": 3, "outputs_count": 1, "wires_count": 0,
             "assignments_count": 1, "edges_count": 3, "depth": 1,
+        }),
+        ("index_slice", INDEX_SLICE_CIRC, {
+            "inputs_count": 1, "outputs_count": 1, "wires_count": 0,
+            "assignments_count": 1, "edges_count": 2, "depth": 1,
         }),
     ],
 )
@@ -675,9 +686,16 @@ def test_dot_node_ids_and_labels(
     assert "op:y" in content
 
     # Labels
-    assert '[label="a"]' in content or "[label='a']" in content
-    assert '[label="b"]' in content or "[label='b']" in content
-    assert '[label="AND"]' in content or "[label='AND']" in content
+    def has_label(label: str) -> bool:
+        return re.search(
+            rf'label\s*=\s*(?:"{re.escape(label)}"|'
+            rf"'{re.escape(label)}'|{re.escape(label)})",
+            content,
+        ) is not None
+
+    assert has_label("a")
+    assert has_label("b")
+    assert has_label("AND")
 
 
 @pytest.mark.functionality
@@ -698,9 +716,13 @@ def test_dot_edges(
     content = dot_path.read_text()
 
     # Edges: in:a -> op:y, in:b -> op:y, op:y -> sig:y
-    assert "in:a -> op:y" in content
-    assert "in:b -> op:y" in content
-    assert "op:y -> sig:y" in content
+    edge_patterns = [
+        r'"?in:a"?\s*->\s*"?op:y"?',
+        r'"?in:b"?\s*->\s*"?op:y"?',
+        r'"?op:y"?\s*->\s*"?sig:y"?',
+    ]
+    for pattern in edge_patterns:
+        assert re.search(pattern, content), f"Missing edge: {pattern}"
 
 
 @pytest.mark.functionality
@@ -722,7 +744,8 @@ def test_dot_no_duplicate_edges(
     lines = content.splitlines()
 
     # Count edges from in:a to op:y
-    edge_count = sum(1 for line in lines if "in:a -> op:y" in line)
+    edge_re = re.compile(r'"?in:a"?\s*->\s*"?op:y"?')
+    edge_count = sum(1 for line in lines if edge_re.search(line))
     assert edge_count == 1, "Should have exactly one edge from in:a to op:y (no duplicates)"
 
 

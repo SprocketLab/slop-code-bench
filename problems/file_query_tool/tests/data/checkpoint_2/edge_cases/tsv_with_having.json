@@ -1,0 +1,25 @@
+{
+  "expected": "| department | headcount |\n|------------|----------|\n| Sales      | 3        |\n| Engineering | 2        |",
+  "query": "SELECT department, COUNT(*) AS headcount FROM employees GROUP BY department HAVING COUNT(*) >= 2 ORDER BY headcount DESC",
+  "arguments": [
+    "--sql",
+    "query.sql",
+    "--data",
+    "test_data"
+  ],
+  "input_files": [
+    {
+      "path": "test_data/employees.tsv",
+      "content": [
+        {"id": "1", "name": "Alice", "department": "Sales"},
+        {"id": "2", "name": "Bob", "department": "Engineering"},
+        {"id": "3", "name": "Carol", "department": "Sales"},
+        {"id": "4", "name": "Dave", "department": "HR"},
+        {"id": "5", "name": "Eve", "department": "Engineering"},
+        {"id": "6", "name": "Frank", "department": "Sales"}
+      ],
+      "file_type": "tsv",
+      "compression": "none"
+    }
+  ]
+}
