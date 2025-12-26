@@ -153,17 +153,42 @@ agent_specific:
 | `openrouter` | Uses OpenRouter API (default) |
 | `litellm` | Uses LiteLLM for various providers |
 
-## Environment Support
+## Environment Configuration
+
+Unlike other agents (Claude Code, Codex, OpenCode) that use custom Docker templates, **MiniSWE manages its own execution environment** directly via the `minisweagent` library.
+
+### Environment Types
 
 MiniSWE supports both Docker and local execution:
 
-**Docker:**
-- Mounts workspace into container
-- Executes commands via `DockerEnvironment`
+**Docker Execution:**
+- Uses `DockerEnvironment` from minisweagent
+- Automatically handles container setup and command execution
+- Mounts workspace into container at the configured workdir
+- **No custom docker_template needed** - environment is managed by minisweagent
 
-**Local:**
-- Runs commands in local shell
-- Uses `LocalEnvironment`
+**Local Execution:**
+- Uses `LocalEnvironment` for direct shell access
+- Runs commands in the current shell without containers
+- Useful for development and testing
+
+### How MiniSWE Differs
+
+- **No docker_template field**: Unlike Claude Code, Codex, and OpenCode which require a docker_template, MiniSWE doesn't use this mechanism
+- **No version field**: MiniSWE doesn't need a version field - it uses the installed `minisweagent` package directly
+- **Environment auto-selection**: The agent automatically chooses between Docker and Local based on the environment specification passed to `setup()`
+
+### Choosing an Environment
+
+When running MiniSWE, specify the environment in your run configuration:
+
+```yaml
+# Use Docker environment (recommended for consistency)
+environment: configs/environments/docker-python3.12-uv.yaml
+
+# Or use local environment (faster for development)
+environment: configs/environments/local.yaml
+```
 
 ## Complete Example
 

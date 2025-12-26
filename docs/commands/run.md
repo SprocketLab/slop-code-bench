@@ -1,6 +1,6 @@
 ---
 version: 1.0
-last_updated: 2025-12-17
+last_updated: 2025-12-26
 ---
 
 # Run Configuration Guide
@@ -113,7 +113,8 @@ The result is:
 | `pass_policy` | string | `any` | Checkpoint pass policy |
 | `one_shot` | object | disabled | Collapse checkpoints; prefix is a Jinja template with `idx` |
 | `problems` | list<string> | `[]` | Specific problems to run (otherwise auto-discover) |
-| `output_path` | string | (template) | Output directory path |
+| `save_dir` | string | `outputs` | Base directory for run outputs |
+| `save_template` | string | (template) | Output path template with interpolation |
 
 ### agent
 
@@ -257,13 +258,35 @@ problems:
   - trajectory_api
 ```
 
-### output_path
+### save_dir
 
-Output directory path with interpolation support:
+Base directory for run outputs:
 
 ```yaml
-output_path: outputs/${model.name}/${agent.type}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}
+# Default
+save_dir: outputs
+
+# Custom directory
+save_dir: /data/experiments
+save_dir: ~/runs
 ```
+
+### save_template
+
+Output path template with interpolation support. The template is appended to `save_dir`:
+
+```yaml
+# Default template (includes agent version when available)
+save_template: ${model.name}/${agent.type}-${agent.version}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}
+
+# Simple template
+save_template: ${model.name}/${now:%Y%m%d}
+
+# Custom structure
+save_template: ${agent.type}/${model.name}/${prompt}_${now:%Y%m%dT%H%M}
+```
+
+The final output path is `{save_dir}/{save_template}`.
 
 See [Output Path Interpolation](#output-path-interpolation) for available variables.
 
@@ -308,17 +331,20 @@ Config 'my_agent' not found. Searched:
 
 ## Output Path Interpolation
 
-The `output_path` field supports OmegaConf interpolation with these variables:
+The `save_template` field supports OmegaConf interpolation with these variables:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `${model.name}` | Model name | `sonnet-4.5` |
 | `${model.provider}` | Model provider | `anthropic` |
 | `${agent.type}` | Agent type from config | `claude_code` |
+| `${agent.version}` | Agent version (cleanly omitted if not set) | `2.0.51` |
 | `${prompt}` | Prompt template stem | `just-solve` |
 | `${thinking}` | Thinking preset | `medium` |
 | `${env.name}` | Environment name | `python3.12` |
 | `${now:FORMAT}` | Timestamp with strftime | `20251210T1430` |
+
+**Note:** When `${agent.version}` is not set in the agent config, it is cleanly removed from the path along with any surrounding `-` or `_` characters. For example, `${agent.type}-${agent.version}_${prompt}` becomes `${agent.type}_${prompt}` when version is missing.
 
 ### Timestamp Format
 
@@ -326,20 +352,23 @@ The `${now:FORMAT}` resolver uses Python strftime format:
 
 ```yaml
 # Default format (%Y%m%dT%H%M)
-output_path: outputs/${now}  # -> outputs/20251210T1430
+save_template: ${model.name}/${now}  # -> sonnet-4.5/20251210T1430
 
 # Custom format
-output_path: outputs/${now:%Y-%m-%d}  # -> outputs/2025-12-10
-output_path: outputs/${now:%Y%m%d_%H%M%S}  # -> outputs/20251210_143022
+save_template: ${model.name}/${now:%Y-%m-%d}  # -> sonnet-4.5/2025-12-10
+save_template: ${now:%Y%m%d_%H%M%S}/${model.name}  # -> 20251210_143022/sonnet-4.5
 ```
 
 ### Default Output Path
 
 ```yaml
-outputs/${model.name}/${agent.type}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}
+save_dir: outputs
+save_template: ${model.name}/${agent.type}-${agent.version}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}
 ```
 
-Produces paths like: `outputs/sonnet-4.5/claude_code_just-solve_none_20251210T1430`
+Produces paths like:
+- With version: `outputs/sonnet-4.5/claude_code-2.0.51_just-solve_none_20251210T1430`
+- Without version: `outputs/sonnet-4.5/claude_code_just-solve_none_20251210T1430`
 
 ## CLI Usage
 
@@ -362,6 +391,9 @@ slop-code run [OPTIONS] [OVERRIDES]...
 | `--num-workers N` | Number of parallel workers |
 | `--evaluate/--no-evaluate` | Run evaluation after agent |
 | `--provider-api-key-env VAR` | Override API key environment variable (see [Credentials Guide](../agents/credentials.md)) |
+| `--resume PATH` | Resume from an existing run directory (loads saved config; mutually exclusive with `--config`, `--agent`, `--environment`, `--prompt`, `--model`, and overrides) |
+| `--dry-run` | Preview what would be done without making changes |
+| `--live-progress/--no-live-progress` | Control live progress display (default: enabled) |
 
 ### CLI Overrides
 
@@ -393,6 +425,33 @@ Use dot notation for nested values:
 slop-code run model.name=opus-4.5 model.provider=anthropic
 ```
 
+### Resume Mode
+
+Use `--resume` to continue an interrupted run from a previous checkpoint:
+
+```bash
+# Resume from a previous run directory
+slop-code run --resume outputs/my_run/opus-4.5/claude_code-2.0.51_just-solve_none_20251210T1430
+```
+
+**Key behaviors:**
+- Loads the saved configuration from the run directory
+- Detects the last completed checkpoint and resumes from the next one
+- Validates that current config matches saved config for critical fields (model, agent, thinking, prompt, environment)
+- Cannot be combined with `--config`, `--agent`, `--environment`, `--prompt`, `--model`, or config overrides
+- Useful for recovering from network interruptions or timeout issues
+
+### Dry Run Mode
+
+Use `--dry-run` to preview what would be done without actually running agents:
+
+```bash
+# Preview run without executing
+slop-code run --config my_run.yaml --dry-run --problem file_backup
+```
+
+Shows the resolved configuration and planned execution without consuming resources or API tokens.
+
 ## Example Configurations
 
 ### Minimal Configuration
@@ -419,7 +478,8 @@ model:
 thinking: medium
 pass_policy: all-cases
 
-output_path: outputs/${model.name}/${agent.type}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}
+save_dir: outputs
+save_template: ${model.name}/${agent.type}-${agent.version}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}
 ```
 
 ### Configuration with Inline Agent
@@ -465,7 +525,12 @@ slop-code run --config base.yaml pass_policy=all-cases --problem file_backup
 **Custom output directory:**
 ```bash
 slop-code run --config base.yaml \
-  output_path=experiments/${now:%Y%m%d}/run_${model.name} \
+  save_dir=/experiments \
+  --problem file_backup
+
+# Or customize the template:
+slop-code run --config base.yaml \
+  save_template=${now:%Y%m%d}/run_${model.name} \
   --problem file_backup
 ```
 
@@ -500,7 +565,8 @@ class RunConfig(BaseModel):
     thinking: ThinkingPresetType | ThinkingConfig = "none"
     pass_policy: PassPolicy = PassPolicy.ANY
     problems: list[str] = []
-    output_path: str = "..."
+    save_dir: str = "outputs"
+    save_template: str = "..."
 ```
 
 ### ResolvedRunConfig
@@ -522,7 +588,9 @@ class ResolvedRunConfig(BaseModel):
     thinking_max_tokens: int | None
     pass_policy: PassPolicy
     problems: list[str]
-    output_path: str  # Fully interpolated
+    save_dir: str
+    save_template: str  # Resolved template
+    output_path: str  # Combined: save_dir/save_template
 ```
 
 ### ModelConfig

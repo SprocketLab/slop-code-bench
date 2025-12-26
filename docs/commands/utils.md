@@ -1,6 +1,6 @@
 ---
 version: 1.0
-last_updated: 2025-12-22
+last_updated: 2025-12-26
 ---
 
 # utils
@@ -18,6 +18,8 @@ Utility commands for maintenance and data processing.
 | [`combine-results`](#combine-results) | Combine results from multiple runs |
 | [`inject-canary`](#inject-canary) | Inject canary strings |
 | [`render-prompts`](#render-prompts) | Render prompt templates |
+| [`migrate-eval-format`](#migrate-eval-format) | Migrate evaluation.json format |
+| [`make-registry`](#make-registry) | Generate problem registry JSONL |
 
 ---
 
@@ -374,6 +376,142 @@ slop-code utils render-prompts \
   -o outputs/rendered_prompts \
   --problem file_backup \
   --problem etl_pipeline
+```
+
+---
+
+## migrate-eval-format
+
+Migrate `evaluation.json` files from the old list-based tests format to the new grouped format.
+
+### Usage
+
+```bash
+slop-code utils migrate-eval-format [OPTIONS] RESULTS_DIR
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `RESULTS_DIR` | Yes | Path to results directory or collection directory |
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-t, --type` | enum | `run` | Path type: `run` for single run, `collection` for multiple runs |
+| `-n, --dry-run` | flag | false | Show what would be migrated without making changes |
+
+### Behavior
+
+Converts the old tests format (list of test objects) to the new grouped format (dict with checkpoint-GroupType keys):
+
+**Old format:**
+```json
+"tests": [
+  {"id": "test_foo", "checkpoint": "checkpoint_1", "group_type": "Core", "status": "passed"},
+  {"id": "test_bar", "checkpoint": "checkpoint_1", "group_type": "Core", "status": "failed"}
+]
+```
+
+**New format:**
+```json
+"tests": {
+  "checkpoint_1-Core": {
+    "passed": ["test_foo"],
+    "failed": ["test_bar"]
+  }
+}
+```
+
+When run on a collection, processes all discovered run directories in sequence.
+
+### Output
+
+Displays a summary table with:
+- Number of files found
+- Number of files migrated
+- Number of files already migrated
+- Number of failed migrations
+
+### Examples
+
+```bash
+# Migrate a single run directory
+slop-code utils migrate-eval-format outputs/my_run
+
+# Preview migration on a collection (dry run)
+slop-code utils migrate-eval-format --type collection --dry-run outputs/
+
+# Migrate all runs in a collection
+slop-code utils migrate-eval-format --type collection outputs/
+```
+
+---
+
+## make-registry
+
+Generate a registry JSONL file containing metadata for all problems. This is used by the slopcodebench.github.io website.
+
+### Usage
+
+```bash
+slop-code utils make-registry [OPTIONS]
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `-o, --output` | path | **required** | Output JSONL file path |
+| `--problem` | string | - | Problem name(s) to include (repeatable) |
+
+### Behavior
+
+Scans the problems directory and generates a registry entry for each problem. Each line in the output file is a complete JSON object containing:
+- Problem name, tags, version, author, category
+- Difficulty, description, entry point
+- List of all checkpoints with their specs
+
+When `--problem` is specified, only those problems are included in the registry. Useful for testing specific problems before full registry generation.
+
+### Output Format
+
+Each line is a JSON object with structure:
+```json
+{
+  "problem_name": "file_backup",
+  "tags": ["filesystem", "backup"],
+  "version": 1,
+  "author": "author_name",
+  "category": "category_name",
+  "entry_point": "main.py",
+  "adapter_type": "cli",
+  "difficulty": "medium",
+  "description": "Problem description",
+  "checkpoints": [
+    {
+      "checkpoint_name": "checkpoint_1",
+      "spec": "Full spec text...",
+      "version": 1,
+      "state": "Core Tests"
+    }
+  ]
+}
+```
+
+### Examples
+
+```bash
+# Generate registry for all problems
+slop-code utils make-registry -o registry.jsonl
+
+# Generate registry for specific problems only
+slop-code utils make-registry -o registry.jsonl --problem file_backup --problem code_search
+
+# Generate to custom location
+slop-code utils make-registry --output /path/to/registry.jsonl
 ```
 
 ## See Also

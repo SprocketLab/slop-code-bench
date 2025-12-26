@@ -130,11 +130,15 @@ Prior checkpoint tests automatically become REGRESSION tests.
 - [Checkpoints](checkpoints.md) - Designing checkpoint progression
 
 ### Pytest System
-- [Overview](pytest/README.md) - How the pytest evaluation works
-- [conftest Patterns](pytest/conftest-patterns.md) - Fixture patterns
-- [Markers](pytest/markers.md) - Built-in and custom markers
-- [Test Data](pytest/test-data.md) - Organizing test data
-- [Runner Internals](pytest/runner-internals.md) - Technical reference
+- [Overview](../pytest/README.md) - How the pytest evaluation works
+- [conftest Patterns](../pytest/conftest-patterns.md) - Fixture patterns
+- [Markers](../pytest/markers.md) - Built-in and custom markers
+- [Test Data](../pytest/test-data.md) - Organizing test data
+- [Runner Internals](../pytest/runner-internals.md) - Technical reference
+- [Advanced Fixtures](../pytest/fixtures-advanced.md) - Advanced fixture patterns
+- [Stateful Testing](../pytest/stateful-testing.md) - State across checkpoints
+- [Complex Parametrization](../pytest/complex-parametrization.md) - Advanced case loading
+- [Debugging Workflows](../pytest/debugging-workflows.md) - Test debugging and troubleshooting
 
 ### Testing Patterns
 - [CLI Testing](patterns/cli-testing.md) - Testing command-line tools

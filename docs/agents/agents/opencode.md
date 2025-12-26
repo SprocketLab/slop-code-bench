@@ -32,13 +32,13 @@ slop-code run --agent configs/agents/opencode-1.0.134.yaml \
 | Field | Type | Description |
 |-------|------|-------------|
 | `type` | `"opencode"` | Must be `opencode` |
+| `version` | string | OpenCode CLI version to install (e.g., `"1.0.134"`). Required because OpenCode uses a custom Docker template. |
 | `cost_limits` | AgentCostLimits | Cost and step limits |
 
 ### Optional Fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `version` | string | `"1.0.134"` | OpenCode CLI version |
 | `config` | dict | `{}` | OpenCode configuration JSON |
 | `env` | dict[str, str] | `{}` | Environment variable overrides |
 
