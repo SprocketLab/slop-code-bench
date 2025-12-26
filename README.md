@@ -5,7 +5,7 @@
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
   [![GitHub stars](https://img.shields.io/github/stars/SprocketLab/slop-code-bench)](https://github.com/SprocketLab/slop-code-bench/stargazers)
 
-  [🌐 Website](https://www.scbench.ai) | [📝 Blog Post](https://gabeorlanski.github.io/posts/slop-code-bench) | [📄 Paper](#citing-us)
+  [🌐 Website](https://www.scbench.ai) | [📝 Blog Post](https://gabeorlanski.github.io/posts/slop-code-bench)
 </div>
 
 ![](assets/overview.png)
