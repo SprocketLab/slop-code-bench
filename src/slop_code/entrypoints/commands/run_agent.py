@@ -651,19 +651,39 @@ def _load_and_validate_run_config(
 def _resolve_problem_names(
     cli_problem_names: list[str],
     config_problems: list[str],
+    *,
+    is_resuming: bool = False,
 ) -> list[str]:
     """Resolve problem names from CLI and config sources.
 
-    CLI problem names take precedence. If CLI is empty, use config problems.
+    On fresh runs, CLI problem names take precedence (replace config).
+    On resume, CLI problem names are ADDED to config problems (merge).
+    If both are empty, returns empty list for auto-discovery.
 
     Args:
         cli_problem_names: Problems specified on command line
         config_problems: Problems specified in config file
+        is_resuming: If True, merge CLI with config instead of replacing
 
     Returns:
         Final list of problem names (may be empty for discovery)
     """
     if cli_problem_names:
+        if is_resuming:
+            # When resuming, merge CLI problems with saved config
+            merged = list(config_problems)
+            for p in cli_problem_names:
+                if p not in merged:
+                    merged.append(p)
+            if merged != list(config_problems):
+                typer.echo(
+                    typer.style(
+                        f"Adding problems to resume: {', '.join(cli_problem_names)}",
+                        fg=typer.colors.CYAN,
+                    )
+                )
+            return merged
+        # Fresh run: CLI replaces config
         return cli_problem_names
     if config_problems:
         typer.echo(
@@ -1207,7 +1227,7 @@ def run_agent(
 
     # 5. Resolve problem names from CLI and config
     problem_names_resolved = _resolve_problem_names(
-        list(problem_names), list(run_cfg.problems)
+        list(problem_names), list(run_cfg.problems), is_resuming=is_resuming
     )
 
     # 6. Setup logging
@@ -1245,6 +1265,9 @@ def run_agent(
 
     # 8. Validate problem paths exist
     _validate_problem_paths(problem_names_resolved, ctx.obj.problem_path)
+
+    # Capture full resolved problem list before any filtering (for saving to config)
+    full_problem_list = list(problem_names_resolved)
 
     # 9. Handle pre-existing run directory
     requested = list(problem_names_resolved)
@@ -1309,7 +1332,10 @@ def run_agent(
         )
         return
 
-    # 11. Save environment and config to run directory, build docker image if needed
+    # 11. Update config with resolved/merged problems for future resumes
+    run_cfg.problems = full_problem_list
+
+    # 12. Save environment and config to run directory, build docker image if needed
     image_name = _prepare_run_artifacts(run_dir, env_spec, agent_config, run_cfg)
     run_logger.info(
         "Starting agent runs",
@@ -1317,7 +1343,7 @@ def run_agent(
         num_workers=num_workers,
     )
 
-    # 12. Create task config
+    # 13. Create task config
     task_config = _create_task_config(
         problem_base_path=ctx.obj.problem_path,
         run_dir=run_dir,
@@ -1335,7 +1361,7 @@ def run_agent(
         resume=is_resuming,
     )
 
-    # 13. Run problems
+    # 14. Run problems
     results = problem_runner.run_problems(
         problem_names=problem_names_resolved,
         config=task_config,
@@ -1343,10 +1369,10 @@ def run_agent(
         console=console,
     )
 
-    # 14. Report results
+    # 15. Report results
     _report_results(results)
 
-    # 15. Create summary if evaluating
+    # 16. Create summary if evaluating
     if evaluate:
         _create_checkpoint_results_and_summary(
             run_dir=run_dir,

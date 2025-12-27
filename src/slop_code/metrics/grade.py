@@ -95,7 +95,7 @@ def _build_spec_and_files(
     entry_file = environment.format_entry_file(problem.entry_file)
     entry_cmd = environment.get_command(problem.entry_file, is_agent_run=True)
     spec = replace_spec_placeholders(
-        chkpt.get_spec_text(), entry_file, entry_cmd
+        problem.get_checkpoint_spec(checkpoint_name), entry_file, entry_cmd
     )
 
     pattern = (

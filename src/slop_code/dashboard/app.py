@@ -95,6 +95,7 @@ for run_path in available_run_paths:
             "value": val,
             "model_name": model_name,
             "agent_type": metadata.get("agent_type", "Unknown Agent"),
+            "agent_version": metadata.get("agent_version", ""),
             "prompt_template": metadata.get("prompt_template", "Unknown Prompt"),
             "thinking_display": thinking_display,
             "run_date": date,

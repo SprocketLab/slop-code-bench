@@ -61,6 +61,7 @@ class ModelVariationInfo:
     thinking_varies: bool
     prompt_varies: bool
     agent_varies: bool
+    version_varies: bool
     date_varies: bool
 
 
@@ -180,6 +181,17 @@ def _format_prompt_display(prompt_template: str) -> str:
     return "".join(word.title() for word in words)
 
 
+def _format_agent_display(agent_type: str, agent_version: str = "") -> str:
+    """Convert agent type to display string."""
+    if not agent_type:
+        return "Default"
+    words = re.split(r"[_-]", agent_type)
+    display = "".join(word.title() for word in words)
+    if agent_version and str(agent_version).lower() not in ("none", "", "null"):
+        display += f" v{agent_version}"
+    return display
+
+
 def _is_thinking_enabled(row: pd.Series | dict[str, Any]) -> tuple[bool, str]:
     """Check if thinking is enabled and return (enabled, display_value)."""
     thinking = str(row.get("thinking", "")).lower()
@@ -203,8 +215,11 @@ def get_display_annotation(row: pd.Series | dict[str, Any]) -> str:
     """Construct display annotation from model, thinking, and prompt template."""
     model_name = row["model_name"]
     prompt_template = str(row.get("prompt_template", ""))
+    agent_type = str(row.get("agent_type", ""))
+    agent_version = str(row.get("agent_version", ""))
     thinking_enabled, thinking_display = _is_thinking_enabled(row)
     prompt_display = _format_prompt_display(prompt_template)
+    agent_display = _format_agent_display(agent_type, agent_version)
 
     # Use full timestamp if available, otherwise fall back to date
     run_timestamp = str(row.get("run_timestamp", ""))
@@ -214,7 +229,26 @@ def get_display_annotation(row: pd.Series | dict[str, Any]) -> str:
     annotation = model_name
     if thinking_enabled:
         annotation = f"{annotation} {thinking_display}"
-    annotation = f"{annotation} ({prompt_display})"
+    
+    # Include agent if not default/empty, similar to prompt
+    extras = []
+    if agent_display != "Default":
+        extras.append(agent_display)
+    if prompt_display != "Default":
+        extras.append(prompt_display)
+    
+    # If both are default, maybe show nothing? Or keep prompt display?
+    # Original logic always showed prompt display even if "Default".
+    # Let's keep existing behavior for prompt but add agent.
+    if not extras and prompt_display == "Default":
+        extras.append(prompt_display)
+    
+    # If we have extras, append them
+    if extras:
+        annotation = f"{annotation} ({', '.join(extras)})"
+    elif prompt_display == "Default": # Should be covered above but safe fallback
+         annotation = f"{annotation} ({prompt_display})"
+
 
     if time_display:
         annotation = f"{annotation} [{time_display}]"
@@ -227,15 +261,21 @@ def get_short_annotation(
 ) -> str:
     """Get short annotation with just prompt and thinking (no model name)."""
     prompt_template = str(row.get("prompt_template", ""))
+    agent_type = str(row.get("agent_type", ""))
+    agent_version = str(row.get("agent_version", ""))
     thinking_enabled, thinking_display = _is_thinking_enabled(row)
     prompt_display = _format_prompt_display(prompt_template)
+    agent_display = _format_agent_display(agent_type, agent_version)
     run_date = str(row.get("run_date", ""))
 
     parts = []
     if thinking_enabled:
-        parts.append(f"{prompt_display} - {thinking_display}")
-    else:
-        parts.append(prompt_display)
+        parts.append(thinking_display)
+    
+    if agent_display != "Default":
+        parts.append(agent_display)
+    
+    parts.append(prompt_display)
 
     if run_date:
         if use_html:
@@ -245,44 +285,64 @@ def get_short_annotation(
         else:
             parts.append(f"[{run_date}]")
 
-    return " ".join(parts)
+    # If parts has multiple items (thinking, agent, prompt), join with " - "
+    # Original logic was: "{prompt} - {thinking}" or "{prompt}"
+    # New logic: "{thinking} - {agent} - {prompt}" (if present)
+    
+    # Reconstruct to match previous ordering preference if possible?
+    # Original: thinking first if enabled, then prompt.
+    # Let's stick to simple join.
+    return " - ".join(parts)
 
 
 def get_variant_annotation(row: pd.Series | dict[str, Any]) -> str:
     """Get variant annotation without model name (for grouped legends)."""
     prompt_template = str(row.get("prompt_template", ""))
+    agent_type = str(row.get("agent_type", ""))
+    agent_version = str(row.get("agent_version", ""))
     thinking_enabled, thinking_display = _is_thinking_enabled(row)
     prompt_display = _format_prompt_display(prompt_template)
+    agent_display = _format_agent_display(agent_type, agent_version)
 
+    parts = []
     if thinking_enabled:
-        return f"{thinking_display} - {prompt_display}"
-    return prompt_display
+        parts.append(thinking_display)
+    
+    if agent_display != "Default":
+        parts.append(agent_display)
+        
+    parts.append(prompt_display)
+    
+    return " - ".join(parts)
 
 
 def analyze_model_variations(
     df: pd.DataFrame,
 ) -> dict[str, ModelVariationInfo]:
     """Analyze what varies within each model's runs."""
-    model_variants: dict[str, set[tuple[str, str, str, str]]] = defaultdict(set)
+    model_variants: dict[str, set[tuple[str, str, str, str, str]]] = defaultdict(set)
 
     for _, row in df.iterrows():
         model_name = row["model_name"]
         thinking = str(row.get("thinking", "")).lower()
         prompt = str(row.get("prompt_template", ""))
         agent = str(row.get("agent_type", ""))
+        version = str(row.get("agent_version", ""))
         run_date = str(row.get("run_date", ""))
-        model_variants[model_name].add((thinking, prompt, agent, run_date))
+        model_variants[model_name].add((thinking, prompt, agent, version, run_date))
 
     result = {}
     for model_name, variants in model_variants.items():
-        thinkings = {t for t, _, _, _ in variants}
-        prompts = {p for _, p, _, _ in variants}
-        agents = {a for _, _, a, _ in variants}
-        dates = {d for _, _, _, d in variants}
+        thinkings = {t for t, _, _, _, _ in variants}
+        prompts = {p for _, p, _, _, _ in variants}
+        agents = {a for _, _, a, _, _ in variants}
+        versions = {v for _, _, _, v, _ in variants}
+        dates = {d for _, _, _, _, d in variants}
         result[model_name] = ModelVariationInfo(
             thinking_varies=len(thinkings) > 1,
             prompt_varies=len(prompts) > 1,
             agent_varies=len(agents) > 1,
+            version_varies=len(versions) > 1,
             date_varies=len(dates) > 1,
         )
     return result
@@ -296,7 +356,9 @@ def get_dynamic_variant_annotation(
     """Get variant annotation based on what actually varies for this model."""
     thinking_enabled, thinking_display = _is_thinking_enabled(row)
     prompt_display = _format_prompt_display(str(row.get("prompt_template", "")))
-    agent_display = str(row.get("agent_type", "")).replace("_", " ").title()
+    agent_display = _format_agent_display(
+        str(row.get("agent_type", "")), str(row.get("agent_version", ""))
+    )
     run_date = str(row.get("run_date", ""))
 
     def _fmt_date(d: str) -> str:
@@ -309,8 +371,9 @@ def get_dynamic_variant_annotation(
         parts = []
         if thinking_enabled:
             parts.append(thinking_display)
+        if agent_display != "Default":
+            parts.append(agent_display)
         parts.append(prompt_display)
-        parts.append(agent_display)
         if run_date:
             parts.append(_fmt_date(run_date))
         return " - ".join(parts) if parts else "Base"
@@ -318,10 +381,10 @@ def get_dynamic_variant_annotation(
     parts = []
     if variation_info.thinking_varies and thinking_enabled:
         parts.append(thinking_display)
+    if variation_info.agent_varies or variation_info.version_varies:
+        parts.append(agent_display)
     if variation_info.prompt_varies:
         parts.append(prompt_display)
-    if variation_info.agent_varies:
-        parts.append(agent_display)
     if variation_info.date_varies and run_date:
         parts.append(_fmt_date(run_date))
 
@@ -399,6 +462,7 @@ def load_config_metadata(run_dir: Path) -> dict[str, Any]:
 
     return {
         "agent_type": agent_cfg["type"],
+        "agent_version": str(agent_cfg.get("version", "")),
         "model_name": get_readable_model(model),
         "thinking": str(thinking),
         "prompt_template": Path(config.get("prompt_path", "unknown")).stem,
