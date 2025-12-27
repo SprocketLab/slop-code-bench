@@ -6,6 +6,10 @@ progress in the terminal.
 
 from __future__ import annotations
 
+from datetime import datetime
+from pathlib import Path
+
+from rich.panel import Panel
 from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
@@ -35,6 +39,25 @@ _ACTIVE_SPINNER_STATES = frozenset(
     }
 )
 
+# States shown in the problem list (hide pending/completed/error/failed)
+_ACTIVE_DISPLAY_STATES = frozenset(
+    {
+        AgentStateEnum.INITIALIZED,
+        AgentStateEnum.RUNNING,
+        AgentStateEnum.EVALUATING,
+    }
+)
+
+# Terminal states that count as "done"
+_TERMINAL_STATES = frozenset(
+    {
+        AgentStateEnum.COMPLETED,
+        AgentStateEnum.FAILED,
+        AgentStateEnum.ERROR,
+        AgentStateEnum.HIT_RATE_LIMITED,
+    }
+)
+
 
 class ProblemProgressRenderer:
     """Render problem progress rows for live display."""
@@ -43,24 +66,107 @@ class ProblemProgressRenderer:
     PROGRESS_BAR_WIDTH = 10
     PROBLEM_NAME_WIDTH = 30
 
-    def __init__(self, state: ProblemStateTracker) -> None:
-        """Initialize renderer with state tracker.
+    def __init__(
+        self,
+        state: ProblemStateTracker,
+        run_dir: Path,
+        start_time: datetime,
+        total_problems: int,
+        total_checkpoints: int,
+    ) -> None:
+        """Initialize renderer with state tracker and run metadata.
 
         Args:
             state: Tracker containing problem states to render
+            run_dir: Output directory path for display
+            start_time: When the run started for elapsed time
+            total_problems: Total number of problems in the run
+            total_checkpoints: Total number of checkpoints across all problems
         """
         self._state = state
+        self._run_dir = run_dir
+        self._start_time = start_time
+        self._total_problems = total_problems
+        self._total_checkpoints = total_checkpoints
         self._spinners: dict[str, Spinner] = {}
         self.placeholder = Text("Waiting for progress updates...", style="dim")
 
-    def render(self) -> list[Table]:
-        """Render all problem rows as Rich tables."""
-        rows: list[Table] = []
+    def _build_header(self) -> Panel:
+        """Build header panel with run status summary."""
+        total_cost = 0.0
+        problems_done = 0
+        total_evaluated = 0
+        total_passed = 0
+        total_iso_passed = 0
+
+        for _, state in self._state.problems():
+            if state.overall_usage:
+                total_cost += state.overall_usage.cost
+            if state.agent_usage:
+                total_cost += state.agent_usage.cost
+            if state.state in _TERMINAL_STATES:
+                problems_done += 1
+            total_evaluated += state.total_checkpoints_evaluated
+            total_passed += state.checkpoints_passed
+            total_iso_passed += state.checkpoints_iso_passed
+
+        # Format elapsed time
+        elapsed = datetime.now() - self._start_time
+        hours, remainder = divmod(int(elapsed.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        elapsed_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+        # Calculate percentages
+        pct_solved = (
+            (total_passed / total_evaluated * 100) if total_evaluated > 0 else 0.0
+        )
+        pct_iso = (
+            (total_iso_passed / total_evaluated * 100) if total_evaluated > 0 else 0.0
+        )
+
+        # Build layout: output dir on its own line, then stats
+        content = Table.grid(padding=(0, 0))
+        content.add_column()
+
+        # Row 1: Output directory (full width, can be long)
+        content.add_row(
+            Text.assemble(("Output: ", "dim"), (str(self._run_dir), "cyan")),
+        )
+
+        # Row 2: Stats in a horizontal grid
+        stats_row = Table.grid(padding=(0, 3))
+        stats_row.add_column()
+        stats_row.add_column()
+        stats_row.add_column()
+        stats_row.add_column()
+        stats_row.add_column()
+        stats_row.add_row(
+            Text.assemble(
+                ("Done: ", "dim"),
+                (f"{problems_done}/{self._total_problems}", "bold green"),
+            ),
+            Text.assemble(("Elapsed: ", "dim"), (elapsed_str, "green")),
+            Text.assemble(("Spend: ", "dim"), (f"${total_cost:.2f}", "bold cyan")),
+            Text.assemble(("Solved: ", "dim"), (f"{pct_solved:.1f}%", "bold green")),
+            Text.assemble(
+                ("Iso Solved: ", "dim"), (f"{pct_iso:.1f}%", "bold green")
+            ),
+        )
+        content.add_row(stats_row)
+
+        return Panel(content, title="[bold cyan]Run Status[/]", border_style="dim")
+
+    def render(self) -> list[Table | Panel]:
+        """Render header and actively running problem rows."""
+        result: list[Table | Panel] = [self._build_header()]
         for problem, state in self._state.problems():
+            # Only show actively running problems
+            if state.state not in _ACTIVE_DISPLAY_STATES:
+                continue
             row = self._build_problem_row(problem, state)
             if row is not None:
-                rows.append(row)
-        return rows
+                result.append(row)
+        return result
 
     def _render_progress_bar(self, completed: int, total: int) -> str:
         """Render a text progress bar."""

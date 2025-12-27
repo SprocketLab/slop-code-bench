@@ -95,7 +95,9 @@ class RunConfig(BaseModel):
 
     # Model is required but has a sensible default
     model: ModelConfig = Field(
-        default_factory=lambda: ModelConfig(provider="anthropic", name="sonnet-4.5")
+        default_factory=lambda: ModelConfig(
+            provider="anthropic", name="sonnet-4.5"
+        )
     )
 
     # Thinking - either preset string or ThinkingConfig object
@@ -113,9 +115,7 @@ class RunConfig(BaseModel):
     # ${agent.version}, ${prompt}, ${thinking}, ${env.name}, ${now:FORMAT}
     # Note: ${agent.version} is cleanly omitted if the agent has no version
     save_dir: str = "outputs"
-    save_template: str = (
-        "${model.name}/${agent.type}-${agent.version}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}"
-    )
+    save_template: str = "${model.name}/${agent.type}-${agent.version}_${prompt}_${thinking}_${now:%Y%m%dT%H%M}"
 
     def get_thinking_preset(self) -> ThinkingPresetType | None:
         """Get the thinking preset value, handling both string and object forms."""
@@ -171,4 +171,4 @@ class ResolvedRunConfig(BaseModel):
     save_dir: str
     save_template: str
     output_path: str
-    one_shot: OneShotConfig
+    one_shot: OneShotConfig = Field(default_factory=OneShotConfig)

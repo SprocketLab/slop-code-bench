@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import tarfile
 import tempfile
 from datetime import datetime
@@ -10,6 +11,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import Field
 from pydantic import field_validator
 
 from slop_code import common
@@ -20,6 +22,7 @@ from slop_code.agent_runner.models import UsageTracker
 from slop_code.agent_runner.state import AgentStateEnum
 from slop_code.evaluation import CheckpointConfig
 from slop_code.evaluation import CorrectnessResults
+from slop_code.evaluation import GroupType
 from slop_code.evaluation import PassPolicy
 from slop_code.execution import SnapshotDiff
 from slop_code.logging import get_logger
@@ -154,6 +157,24 @@ class RunSummary(BaseModel):
         return v
 
 
+class CheckpointEvalResult(BaseModel):
+    """Result of a single checkpoint evaluation for progress tracking.
+
+    Attributes:
+        name: Checkpoint name
+        passed: Whether pass_rate == 1.0 (all tests including regression passed)
+        iso_passed: Whether checkpoint_pass_rate == 1.0 (all non-regression tests passed)
+        pass_rate: Overall pass rate (0.0 to 1.0)
+        checkpoint_pass_rate: Isolated pass rate excluding regression tests
+    """
+
+    name: str
+    passed: bool
+    iso_passed: bool
+    pass_rate: float = 0.0
+    checkpoint_pass_rate: float = 0.0
+
+
 class MetricsTracker(BaseModel):
     """Tracks metrics and state during agent execution.
 
@@ -163,6 +184,7 @@ class MetricsTracker(BaseModel):
         usage: Usage tracker for cost and tokens
         started: Timestamp when execution started
         checkpoint_started: Timestamp when current checkpoint started
+        checkpoint_results: List of evaluation results for completed checkpoints
     """
 
     model_config = ConfigDict(extra="forbid", use_enum_values=True)
@@ -174,6 +196,7 @@ class MetricsTracker(BaseModel):
     error_type: str | None = None
     error_message: str | None = None
     error_traceback: str | None = None
+    checkpoint_results: list[CheckpointEvalResult] = Field(default_factory=list)
 
     def finish_checkpoint(self, usage: UsageTracker) -> None:
         """Update usage metrics after checkpoint completion.
@@ -206,6 +229,52 @@ class MetricsTracker(BaseModel):
         self.error_type = type(error).__name__
         self.error_message = str(error)
         self.error_traceback = traceback_text
+
+    def record_checkpoint_result(
+        self,
+        name: str,
+        evaluation_result: CorrectnessResults | None,
+    ) -> None:
+        """Record evaluation result for a checkpoint.
+
+        Calculates pass rates and stores the result for progress tracking.
+
+        Args:
+            name: Checkpoint name
+            evaluation_result: Evaluation results, or None if evaluation was skipped
+        """
+        if evaluation_result is None:
+            self.checkpoint_results.append(
+                CheckpointEvalResult(name=name, passed=False, iso_passed=False)
+            )
+            return
+
+        # Calculate pass rates
+        pass_counts = evaluation_result.pass_counts
+        total_counts = evaluation_result.total_counts
+
+        total_passed = sum(pass_counts.values())
+        total_total = sum(total_counts.values())
+        pass_rate = total_passed / total_total if total_total > 0 else 0.0
+
+        # Checkpoint pass rate excludes regression tests
+        regression_passed = pass_counts.get(GroupType.REGRESSION, 0)
+        regression_total = total_counts.get(GroupType.REGRESSION, 0)
+        checkpoint_passed = total_passed - regression_passed
+        checkpoint_total = total_total - regression_total
+        checkpoint_pass_rate = (
+            checkpoint_passed / checkpoint_total if checkpoint_total > 0 else 0.0
+        )
+
+        self.checkpoint_results.append(
+            CheckpointEvalResult(
+                name=name,
+                passed=math.isclose(pass_rate, 1.0),
+                iso_passed=math.isclose(checkpoint_pass_rate, 1.0),
+                pass_rate=pass_rate,
+                checkpoint_pass_rate=checkpoint_pass_rate,
+            )
+        )
 
 
 def setup_run_output_directory(

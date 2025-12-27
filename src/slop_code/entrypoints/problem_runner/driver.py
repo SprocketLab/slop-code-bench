@@ -249,8 +249,14 @@ def run_problems(
         ]
         checkpoint_map[problem_name] = checkpoint_names
 
+    # Calculate total checkpoints across all problems
+    total_checkpoints = sum(len(cps) for cps in checkpoint_map.values())
+
+    start_time = datetime.now()
     states = ProblemStateTracker(problem_names, checkpoint_map)
-    renderer = ProblemProgressRenderer(states)
+    renderer = ProblemProgressRenderer(
+        states, config.run_dir, start_time, len(problem_names), total_checkpoints
+    )
 
     with maybe_live_progress(
         enabled=config.live_progress,

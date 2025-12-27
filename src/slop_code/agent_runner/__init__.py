@@ -11,6 +11,7 @@ from slop_code.agent_runner.models import AgentRunSpec
 from slop_code.agent_runner.models import UsageTracker
 from slop_code.agent_runner.registry import build_agent_config
 from slop_code.agent_runner.reporting import AgentCheckpointSummary
+from slop_code.agent_runner.reporting import CheckpointEvalResult
 from slop_code.agent_runner.reporting import MetricsTracker
 from slop_code.agent_runner.reporting import save_results
 from slop_code.agent_runner.runner import AgentStateEnum
@@ -27,6 +28,7 @@ __all__ = [
     "AgentCostLimits",
     "AgentRunSpec",
     "AgentStateEnum",
+    "CheckpointEvalResult",
     "MetricsTracker",
     "ModelCatalog",
     "ModelDefinition",

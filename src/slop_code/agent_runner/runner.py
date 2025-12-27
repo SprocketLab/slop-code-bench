@@ -664,6 +664,8 @@ class AgentRunner:
             self.metrics_tracker.state = AgentStateEnum.HIT_RATE_LIMITED
             rate_limited = True
         if self.run_spec.skip_evaluation or result is None:
+            # Record checkpoint with no evaluation for progress tracking
+            self.metrics_tracker.record_checkpoint_result(checkpoint.name, None)
             return AgentCheckpointSummary.from_results(
                 checkpoint_name=checkpoint.name,
                 path=checkpoint_save_dir,
@@ -690,6 +692,8 @@ class AgentRunner:
             problem=self.run_spec.problem,
             environment=self.run_spec.environment,
         )
+        # Record checkpoint evaluation result for progress tracking
+        self.metrics_tracker.record_checkpoint_result(checkpoint.name, report)
         return AgentCheckpointSummary.from_results(
             checkpoint_name=checkpoint.name,
             path=checkpoint_save_dir,
@@ -772,6 +776,10 @@ class AgentRunner:
 
         artifacts_path = get_artifacts_path(
             checkpoint_save_dir, compress=self.run_spec.compress_artifacts
+        )
+        # Record checkpoint result for progress tracking when resuming
+        self.metrics_tracker.record_checkpoint_result(
+            checkpoint.name, evaluation_result
         )
         return AgentCheckpointSummary.from_results(
             checkpoint_name=checkpoint.name,

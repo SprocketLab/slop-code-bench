@@ -129,6 +129,16 @@ class ProblemState(BaseModel):
     error_type: str | None = Field(default=None, description="Exception type")
     error_message: str | None = Field(default=None, description="Error message")
     error_traceback: str | None = Field(default=None, description="Traceback")
+    # Checkpoint evaluation stats for progress tracking
+    checkpoints_passed: int = Field(
+        default=0, description="Checkpoints with pass_rate == 1.0"
+    )
+    checkpoints_iso_passed: int = Field(
+        default=0, description="Checkpoints with checkpoint_pass_rate == 1.0"
+    )
+    total_checkpoints_evaluated: int = Field(
+        default=0, description="Number of checkpoints evaluated so far"
+    )
 
     def set_checkpoints(self, checkpoints: Sequence[str]) -> None:
         """Initialize checkpoint ordering."""
@@ -157,6 +167,17 @@ class ProblemState(BaseModel):
         # Record when the checkpoint ended for terminal states
         if self.state in _TERMINAL_STATES and self.checkpoint_ended is None:
             self.checkpoint_ended = datetime.now()
+        # Update checkpoint evaluation stats from metrics tracker
+        if metrics_tracker.checkpoint_results:
+            self.total_checkpoints_evaluated = len(
+                metrics_tracker.checkpoint_results
+            )
+            self.checkpoints_passed = sum(
+                1 for r in metrics_tracker.checkpoint_results if r.passed
+            )
+            self.checkpoints_iso_passed = sum(
+                1 for r in metrics_tracker.checkpoint_results if r.iso_passed
+            )
 
     def get_elapsed_time(self) -> float:
         """Get elapsed time since execution started."""
