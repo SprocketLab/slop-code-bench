@@ -229,20 +229,20 @@ def get_display_annotation(row: pd.Series | dict[str, Any]) -> str:
     annotation = model_name
     if thinking_enabled:
         annotation = f"{annotation} {thinking_display}"
-    
+
     # Include agent if not default/empty, similar to prompt
     extras = []
     if agent_display != "Default":
         extras.append(agent_display)
     if prompt_display != "Default":
         extras.append(prompt_display)
-    
+
     # If both are default, maybe show nothing? Or keep prompt display?
     # Original logic always showed prompt display even if "Default".
     # Let's keep existing behavior for prompt but add agent.
     if not extras and prompt_display == "Default":
         extras.append(prompt_display)
-    
+
     # If we have extras, append them
     if extras:
         annotation = f"{annotation} ({', '.join(extras)})"
@@ -271,10 +271,10 @@ def get_short_annotation(
     parts = []
     if thinking_enabled:
         parts.append(thinking_display)
-    
+
     if agent_display != "Default":
         parts.append(agent_display)
-    
+
     parts.append(prompt_display)
 
     if run_date:
@@ -288,7 +288,7 @@ def get_short_annotation(
     # If parts has multiple items (thinking, agent, prompt), join with " - "
     # Original logic was: "{prompt} - {thinking}" or "{prompt}"
     # New logic: "{thinking} - {agent} - {prompt}" (if present)
-    
+
     # Reconstruct to match previous ordering preference if possible?
     # Original: thinking first if enabled, then prompt.
     # Let's stick to simple join.
@@ -307,12 +307,12 @@ def get_variant_annotation(row: pd.Series | dict[str, Any]) -> str:
     parts = []
     if thinking_enabled:
         parts.append(thinking_display)
-    
+
     if agent_display != "Default":
         parts.append(agent_display)
-        
+
     parts.append(prompt_display)
-    
+
     return " - ".join(parts)
 
 

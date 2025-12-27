@@ -25,10 +25,10 @@ def build_run_checklist(runs, selected_values, id_key):
         version = str(run.get("agent_version", ""))
         if version and version.lower() not in ("none", "", "null"):
             agent = f"{agent} v{version}"
-            
+
         date = run.get("run_date", "Unknown Date")
         problems = run.get("num_problems", 0)
-        
+
         # Include agent in label to differentiate
         label = f"{thinking} - {agent} - {date} - {problems} problems"
         options.append({"label": label, "value": run["value"]})
@@ -165,7 +165,7 @@ def build_single_run_radio(runs, selected_value, id_key):
 
         date = run.get("run_date", "Unknown Date")
         problems = run.get("num_problems", 0)
-        
+
         # Include agent in label to differentiate
         label = f"{thinking} - {agent} - {date} - {problems} problems"
         options.append({"label": label, "value": run["value"]})
