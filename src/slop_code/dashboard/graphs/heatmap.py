@@ -101,7 +101,6 @@ def build_single_run_heatmap(context: ChartContext) -> go.Figure:
     # Identify checkpoint identifier
     chkpt_col = "idx" if "idx" in df.columns else "checkpoint"
 
-    print(df.columns)
     # Pivot: Index=problem, Columns=chkpt_col, Values=passed_chkpt
     # passed_chkpt is boolean, convert to int (1=Pass, 0=Fail)
     pivot_df = df.pivot_table(

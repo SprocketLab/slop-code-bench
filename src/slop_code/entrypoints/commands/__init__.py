@@ -19,3 +19,4 @@ from slop_code.entrypoints.commands import run_agent
 from slop_code.entrypoints.commands import static
 from slop_code.entrypoints.commands import tools
 from slop_code.entrypoints.commands import variance
+from slop_code.entrypoints.commands import viz

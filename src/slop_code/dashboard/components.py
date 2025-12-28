@@ -151,6 +151,11 @@ def sidebar():
                                             href="/quality-deltas",
                                             active="exact"
                                         ),
+                                        dbc.NavLink(
+                                            [html.I(className="fas fa-chart-line me-2"), "Erosion"],
+                                            href="/erosion",
+                                            active="exact"
+                                        ),
                                     ],
                                     vertical=True,
                                     pills=True,

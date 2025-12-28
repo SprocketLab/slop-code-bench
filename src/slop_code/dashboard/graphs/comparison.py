@@ -47,7 +47,7 @@ def build_problem_comparison_chart(
             "Pass Rate: Regression (%)",
             "Pass Rate: Error (%)",
             "Mass: Top 90% (% of Func)",
-            "Mass: Complexity",
+            "Gini Concentration: Δ Complexity Mass",
             "Δ Mass: Top 75% (# Func)",
             "Δ Mass: Top 75%/ Total Complexity",
             "Δ Mass: Percent Change",
@@ -194,11 +194,11 @@ def build_problem_comparison_chart(
             5,
             2,
         )
-        add_trace(run_df["mass.complexity"], 5, 3)
+        add_trace(run_df["delta.mass.complexity_added_concentration"], 5, 3)
 
         # Row 6
         add_trace(
-            run_df["delta.mass.top75_count"]
+            run_df["delta.mass.complexity_added_top90_count"]
             / run_df[["functions", "methods"]].sum(axis=1)
             * 100,
             6,

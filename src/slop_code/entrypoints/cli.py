@@ -46,11 +46,17 @@ commands.judge.register(metrics_app, "judge")
 commands.carry_forward.register(metrics_app, "carry-forward")
 commands.variance.register(metrics_app, "variance")
 
+viz_app = typer.Typer(
+    help="Visualization tools.",
+)
+commands.viz.register(viz_app, "diff")
+
 app.add_typer(metrics_app, name="metrics")
 app.add_typer(utils_app, name="utils")
 app.add_typer(commands.docker.app, name="docker")
 app.add_typer(commands.tools.app, name="tools")
 app.add_typer(commands.problems.app, name="problems")
+app.add_typer(viz_app, name="viz")
 
 
 @app.callback()
