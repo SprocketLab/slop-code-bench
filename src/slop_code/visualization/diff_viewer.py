@@ -1,19 +1,19 @@
-import streamlit as st
-from pathlib import Path
-import json
-import difflib
-import os
-import re
 import argparse
-import sys
+import difflib
+import json
+from pathlib import Path
+
+import streamlit as st
 import streamlit.components.v1 as components
 
 # Try importing pygments
 try:
     import pygments
-    from pygments.lexers import get_lexer_for_filename, guess_lexer, TextLexer
-    from pygments.formatters import HtmlFormatter
     from pygments import highlight
+    from pygments.formatters import HtmlFormatter
+    from pygments.lexers import TextLexer
+    from pygments.lexers import get_lexer_for_filename
+    from pygments.lexers import guess_lexer
     HAS_PYGMENTS = True
 except ImportError:
     HAS_PYGMENTS = False
@@ -22,9 +22,9 @@ st.set_page_config(layout="wide", page_title="Diff Viewer")
 
 def load_json(path):
     try:
-        with open(path, 'r') as f:
+        with open(path) as f:
             return json.load(f)
-    except Exception as e:
+    except Exception:
         return None
 
 def get_subdirs(path):
@@ -81,18 +81,18 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
                 lexer = guess_lexer(a if a else b)
             except pygments.util.ClassNotFound:
                 lexer = TextLexer()
-    
+
     # 2. Split lines
     lines_a = a.splitlines()
     lines_b = b.splitlines()
-    
+
     # 3. Compute diff opcodes
     matcher = difflib.SequenceMatcher(None, lines_a, lines_b)
     opcodes = matcher.get_opcodes()
-    
+
     # 4. Build Table Rows
     rows = []
-    
+
     for tag, i1, i2, j1, j2 in opcodes:
         if tag == 'equal':
             for i, j in zip(range(i1, i2), range(j1, j2)):
@@ -110,23 +110,23 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
             len_a = i2 - i1
             len_b = j2 - j1
             max_len = max(len_a, len_b)
-            
+
             for k in range(max_len):
                 ia = i1 + k
                 jb = j1 + k
-                
+
                 cell_a = ""
                 num_a = ""
                 if ia < i2:
                     cell_a = get_highlighted_line(lines_a[ia], lexer)
                     num_a = ia + 1
-                
+
                 cell_b = ""
                 num_b = ""
                 if jb < j2:
                     cell_b = get_highlighted_line(lines_b[jb], lexer)
                     num_b = jb + 1
-                
+
                 rows.append(f"""
                 <tr>
                     <td class="lineno { 'diff-del-num' if num_a else ''}">{num_a}</td>
@@ -160,7 +160,7 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
 
     # 5. Assemble HTML
     table_body = "".join(rows)
-    
+
     style = """
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: white; }
@@ -294,7 +294,7 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
         window.onload = initChanges;
     </script>
     """
-    
+
     html = f"""
     {style}
     <div class="nav-controls">
@@ -384,7 +384,7 @@ with col_ov1:
     if eval_data:
         pass_counts = eval_data.get("pass_counts", {})
         st.write("Pass Counts:", pass_counts)
-        
+
         # Expandable details
         with st.expander("Test Details"):
             tests = eval_data.get("tests", {})
@@ -401,7 +401,7 @@ with col_ov1:
                 st.write("**Tests (Legacy List Format)**")
                 passed_tests = [t.get("id") for t in tests if t.get("status") == "passed"]
                 failed_tests = [t.get("id") for t in tests if t.get("status") != "passed"]
-                
+
                 if failed_tests:
                     st.error(f"Failed ({len(failed_tests)}): {', '.join(failed_tests[:5])}{'...' if len(failed_tests)>5 else ''}")
                 if passed_tests:
@@ -418,7 +418,7 @@ with col_ov2:
         lint = quality_data.get("lint", {})
         complexity = quality_data.get("complexity", {})
         lines = quality_data.get("lines", {})
-        
+
         metrics = {
             "Violations (AST)": ast_grep.get("violations"),
             "Lint Errors": lint.get("errors"),
@@ -426,7 +426,7 @@ with col_ov2:
             "LOC": lines.get("loc")
         }
         st.json(metrics)
-        
+
         with st.expander("Full Quality Data"):
             st.json(quality_data)
     else:
@@ -446,17 +446,17 @@ if not all_files:
     st.info("No files found in snapshots.")
 else:
     selected_file = st.selectbox("Select File", all_files)
-    
+
     content_a = snapshot_a.get(selected_file, "")
     content_b = snapshot_b.get(selected_file, "")
-    
+
     if content_a == content_b:
         st.info("Files are identical.")
     else:
         diff_html = generate_modern_diff(
-            content_a, 
-            content_b, 
-            f"{ckpt_a_name} (Before)", 
+            content_a,
+            content_b,
+            f"{ckpt_a_name} (Before)",
             f"{ckpt_b_name} (After)",
             filename=selected_file
         )
