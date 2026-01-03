@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from slop_code.entrypoints.commands import common
 from slop_code.execution import docker_runtime
-from slop_code.execution import local_runtime
+from slop_code.execution import local_streaming
 
 
 def test_validate_rubric_options_success():
@@ -99,7 +99,7 @@ def test_ensure_docker_ready_docker_env(mock_docker_client, mock_build):
 @patch("slop_code.execution.docker_runtime.build_base_image")
 def test_ensure_docker_ready_non_docker_env(mock_build):
     """Test ensure_docker_ready with non-Docker environment."""
-    env = MagicMock(spec=local_runtime.LocalEnvironmentSpec)
+    env = MagicMock(spec=local_streaming.LocalEnvironmentSpec)
 
     common.ensure_docker_ready(env)
 
@@ -162,7 +162,7 @@ def test_resolve_environment_success_local(mock_resolve):
 
     result = config_loader.resolve_environment(Path("env.yaml"))
 
-    assert isinstance(result, local_runtime.LocalEnvironmentSpec)
+    assert isinstance(result, local_streaming.LocalEnvironmentSpec)
     assert result.name == "test-local"
 
 
@@ -225,5 +225,5 @@ def test_resolve_environment_accepts_dict(mock_resolve):
 
     result = config_loader.resolve_environment(env_dict)
 
-    assert isinstance(result, local_runtime.LocalEnvironmentSpec)
+    assert isinstance(result, local_streaming.LocalEnvironmentSpec)
     mock_resolve.assert_called_once_with(env_dict)

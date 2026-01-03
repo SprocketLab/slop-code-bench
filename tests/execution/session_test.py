@@ -11,8 +11,8 @@ import pytest
 from slop_code.execution.assets import ResolvedStaticAsset
 from slop_code.execution.file_ops import FileType
 from slop_code.execution.file_ops import InputFile
-from slop_code.execution.local_runtime import LocalEnvironmentSpec
-from slop_code.execution.runtime import SubmissionRuntime
+from slop_code.execution.local_streaming import LocalEnvironmentSpec
+from slop_code.execution.protocols import StreamingRuntime
 from slop_code.execution.session import Session
 from slop_code.execution.workspace import Workspace
 
@@ -31,7 +31,8 @@ class TestSessionInitialization:
         assert session.spec == local_environment_spec
         assert session.workspace == workspace
         assert session.static_assets == resolved_static_assets
-        assert session.runtimes == []
+        assert session._streaming_runtimes == []
+        assert session._exec_runtimes == []
 
     def test_prepare_calls_workspace_prepare(self, session: Session):
         """Test that prepare calls workspace.prepare()."""
@@ -64,9 +65,9 @@ class TestSessionInitialization:
     ):
         """Test that cleanup calls cleanup on all runtimes."""
         # Create mock runtimes
-        mock_runtime1 = Mock(spec=SubmissionRuntime)
-        mock_runtime2 = Mock(spec=SubmissionRuntime)
-        session.runtimes = [mock_runtime1, mock_runtime2]  # noqa: SLF001
+        mock_runtime1 = Mock(spec=StreamingRuntime)
+        mock_runtime2 = Mock(spec=StreamingRuntime)
+        session._streaming_runtimes = [mock_runtime1, mock_runtime2]  # noqa: SLF001
 
         with patch.object(session.workspace, "cleanup"):
             session.cleanup()
@@ -118,26 +119,26 @@ class TestSessionInitialization:
         finally:
             session.cleanup()
 
-    @patch("slop_code.execution.session.spawn_runtime")
+    @patch("slop_code.execution.session.spawn_streaming_runtime")
     def test_spawn_creates_launch_spec(
         self,
-        mock_spawn_runtime: Mock,
+        mock_spawn_streaming_runtime: Mock,
         session: Session,
         workspace: Workspace,
         resolved_static_assets: dict[str, ResolvedStaticAsset],
     ):
         """Test that spawn creates correct LaunchSpec."""
         # Setup mock
-        mock_runtime = Mock(spec=SubmissionRuntime)
-        mock_spawn_runtime.return_value = mock_runtime
+        mock_runtime = Mock(spec=StreamingRuntime)
+        mock_spawn_streaming_runtime.return_value = mock_runtime
 
         try:
             session.prepare()
             runtime = session.spawn()
 
-            # Verify spawn_runtime was called with correct arguments
-            mock_spawn_runtime.assert_called_once()
-            call_kwargs = mock_spawn_runtime.call_args[1]
+            # Verify spawn_streaming_runtime was called with correct arguments
+            mock_spawn_streaming_runtime.assert_called_once()
+            call_kwargs = mock_spawn_streaming_runtime.call_args[1]
             assert call_kwargs["environment"] == session.spec
             assert call_kwargs["working_dir"] == workspace.working_dir
             assert call_kwargs["static_assets"] == resolved_static_assets
@@ -149,21 +150,21 @@ class TestSessionInitialization:
 
             # Verify runtime was added to runtimes list
             assert runtime == mock_runtime
-            assert session.runtimes == [mock_runtime]
+            assert session._streaming_runtimes == [mock_runtime]
         finally:
             session.cleanup()
 
-    @patch("slop_code.execution.session.spawn_runtime")
+    @patch("slop_code.execution.session.spawn_streaming_runtime")
     def test_spawn_multiple_runtimes(
         self,
-        mock_spawn_runtime: Mock,
+        mock_spawn_streaming_runtime: Mock,
         session: Session,
     ):
         """Test spawning multiple runtimes."""
         # Setup mocks
-        mock_runtime1 = Mock(spec=SubmissionRuntime)
-        mock_runtime2 = Mock(spec=SubmissionRuntime)
-        mock_spawn_runtime.side_effect = [mock_runtime1, mock_runtime2]
+        mock_runtime1 = Mock(spec=StreamingRuntime)
+        mock_runtime2 = Mock(spec=StreamingRuntime)
+        mock_spawn_streaming_runtime.side_effect = [mock_runtime1, mock_runtime2]
 
         try:
             session.prepare()
@@ -172,8 +173,8 @@ class TestSessionInitialization:
 
             assert runtime1 == mock_runtime1
             assert runtime2 == mock_runtime2
-            assert session.runtimes == [mock_runtime1, mock_runtime2]
-            assert mock_spawn_runtime.call_count == 2
+            assert session._streaming_runtimes == [mock_runtime1, mock_runtime2]
+            assert mock_spawn_streaming_runtime.call_count == 2
         finally:
             session.cleanup()
 
@@ -327,9 +328,9 @@ class TestSessionInitialization:
             workspace.prepare()
 
             with patch(
-                "slop_code.execution.session.spawn_runtime"
+                "slop_code.execution.session.spawn_streaming_runtime"
             ) as mock_spawn:
-                mock_runtime = Mock(spec=SubmissionRuntime)
+                mock_runtime = Mock(spec=StreamingRuntime)
                 mock_spawn.return_value = mock_runtime
 
                 runtime = session.spawn()
@@ -355,17 +356,17 @@ class TestSessionInitialization:
         finally:
             session.cleanup()
 
-    @patch("slop_code.execution.session.spawn_runtime")
+    @patch("slop_code.execution.session.spawn_streaming_runtime")
     def test_spawn_with_parameters(
         self,
-        mock_spawn_runtime: Mock,
+        mock_spawn_streaming_runtime: Mock,
         session: Session,
         workspace: Workspace,
     ):
         """Test that spawn passes parameters correctly to LaunchSpec."""
         # Setup mock
-        mock_runtime = Mock(spec=SubmissionRuntime)
-        mock_spawn_runtime.return_value = mock_runtime
+        mock_runtime = Mock(spec=StreamingRuntime)
+        mock_spawn_streaming_runtime.return_value = mock_runtime
 
         ports = {8080: 8081}
         mounts: dict[str, dict[str, str] | str] = {
@@ -383,9 +384,9 @@ class TestSessionInitialization:
                 setup_command=setup_command,
             )
 
-            # Verify spawn_runtime was called with correct arguments
-            mock_spawn_runtime.assert_called_once()
-            call_kwargs = mock_spawn_runtime.call_args[1]
+            # Verify spawn_streaming_runtime was called with correct arguments
+            mock_spawn_streaming_runtime.assert_called_once()
+            call_kwargs = mock_spawn_streaming_runtime.call_args[1]
             assert call_kwargs["environment"] == session.spec
             assert call_kwargs["working_dir"] == workspace.working_dir
             assert call_kwargs["ports"] == ports
@@ -396,21 +397,21 @@ class TestSessionInitialization:
 
             # Verify runtime was added to runtimes list
             assert runtime == mock_runtime
-            assert session.runtimes == [mock_runtime]
+            assert session._streaming_runtimes == [mock_runtime]
         finally:
             session.cleanup()
 
-    @patch("slop_code.execution.session.spawn_runtime")
+    @patch("slop_code.execution.session.spawn_streaming_runtime")
     def test_spawn_with_empty_parameters(
         self,
-        mock_spawn_runtime: Mock,
+        mock_spawn_streaming_runtime: Mock,
         session: Session,
         workspace: Workspace,
     ):
         """Test that spawn handles empty parameters correctly."""
         # Setup mock
-        mock_runtime = Mock(spec=SubmissionRuntime)
-        mock_spawn_runtime.return_value = mock_runtime
+        mock_runtime = Mock(spec=StreamingRuntime)
+        mock_spawn_streaming_runtime.return_value = mock_runtime
 
         try:
             session.prepare()
@@ -421,9 +422,9 @@ class TestSessionInitialization:
                 setup_command=None,
             )
 
-            # Verify spawn_runtime was called with correct arguments
-            mock_spawn_runtime.assert_called_once()
-            call_kwargs = mock_spawn_runtime.call_args[1]
+            # Verify spawn_streaming_runtime was called with correct arguments
+            mock_spawn_streaming_runtime.assert_called_once()
+            call_kwargs = mock_spawn_streaming_runtime.call_args[1]
             assert call_kwargs["environment"] == session.spec
             assert call_kwargs["working_dir"] == workspace.working_dir
             assert call_kwargs["ports"] == {}
@@ -434,7 +435,7 @@ class TestSessionInitialization:
 
             # Verify runtime was added to runtimes list
             assert runtime == mock_runtime
-            assert session.runtimes == [mock_runtime]
+            assert session._streaming_runtimes == [mock_runtime]
         finally:
             session.cleanup()
 

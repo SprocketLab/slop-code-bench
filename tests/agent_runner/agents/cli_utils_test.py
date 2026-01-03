@@ -14,8 +14,13 @@ from slop_code.execution.runtime import RuntimeResult
 class FakeSession:
     def __init__(self, runtime: object) -> None:
         self._runtime = runtime
+        self._exec_command: str | None = None
 
     def spawn(self) -> object:
+        return self._runtime
+
+    def exec(self, command: str) -> object:
+        self._exec_command = command
         return self._runtime
 
 
@@ -25,12 +30,11 @@ class FakeStreamingRuntime:
         self.cleanup_called = False
         self.stream_calls: list[dict[str, object]] = []
 
-    def stream(self, *, command, env, stdin, timeout):
+    def stream(self, *, command, env, timeout):
         self.stream_calls.append(
             {
                 "command": command,
                 "env": env,
-                "stdin": stdin,
                 "timeout": timeout,
             }
         )
@@ -46,10 +50,9 @@ class FakeExecuteRuntime:
         self.cleanup_called = False
         self.execute_calls: list[dict[str, object]] = []
 
-    def execute(self, *, command, env, stdin, timeout):
+    def execute(self, env, stdin, timeout):
         self.execute_calls.append(
             {
-                "command": command,
                 "env": env,
                 "stdin": stdin,
                 "timeout": timeout,
@@ -193,5 +196,6 @@ def test_run_cli_command_executes_command_and_cleans_up() -> None:
     assert command_result.stdout == "output"
     assert command_result.stderr == "error"
     assert runtime.cleanup_called is True
-    assert runtime.execute_calls[0]["command"] == ["tool", "--flag"]
+    # Command is now passed to session.exec(), not runtime.execute()
+    assert session._exec_command == ["tool", "--flag"]
     assert runtime.execute_calls[0]["env"] == {"KEY": "value"}

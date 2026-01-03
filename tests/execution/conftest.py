@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from slop_code.execution.assets import ResolvedStaticAsset
-from slop_code.execution.local_runtime import LocalEnvironmentSpec
+from slop_code.execution.local_streaming import LocalEnvironmentSpec
 from slop_code.execution.models import CommandConfig
 from slop_code.execution.session import Session
 from slop_code.execution.snapshot import Snapshot

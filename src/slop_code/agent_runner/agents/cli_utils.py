@@ -13,8 +13,9 @@ from slop_code.agent_runner.trajectory import StepRole
 from slop_code.agent_runner.trajectory import TrajectoryStep
 from slop_code.common.llms import TokenUsage
 from slop_code.execution import Session
+from slop_code.execution.protocols import ExecRuntime
+from slop_code.execution.protocols import StreamingRuntime
 from slop_code.execution.runtime import RuntimeResult
-from slop_code.execution.runtime import SubmissionRuntime
 from slop_code.logging import get_logger
 
 log = get_logger(__name__)
@@ -136,11 +137,10 @@ def run_cli_command(
     timeout: float | None = None,
 ) -> AgentCommandResult:
     env = dict(env or {})
-    runtime: SubmissionRuntime | None = None
+    runtime: ExecRuntime | None = None
     try:
-        runtime = session.spawn()
+        runtime = session.exec(command=command)
         result = runtime.execute(
-            command=command,
             env=env,
             stdin=None,
             timeout=timeout,
@@ -158,7 +158,7 @@ def run_cli_command(
 
 
 def run_streaming_cli_command(
-    runtime: SubmissionRuntime,
+    runtime: StreamingRuntime,
     command: str,
     parser: StreamParser,
     env: Mapping[str, str] | None = None,
@@ -172,7 +172,6 @@ def run_streaming_cli_command(
     for event in runtime.stream(
         command=command,
         env=env,
-        stdin=None,
         timeout=timeout,
     ):
         log.debug("Received event", ev=event)
@@ -196,7 +195,7 @@ def run_streaming_cli_command(
 
 
 def stream_cli_command(
-    runtime: SubmissionRuntime,
+    runtime: StreamingRuntime,
     command: str,
     parser: Callable[[str], tuple[float | None, TokenUsage | None, dict]],
     env: Mapping[str, str] | None = None,
@@ -211,7 +210,7 @@ def stream_cli_command(
     """Stream CLI command output and parse lines through the provided parser.
 
     Args:
-        runtime: The submission runtime to execute the command
+        runtime: The streaming runtime to execute the command
         command: The command to execute
         parser: Callable that parses a line and returns (cost, tokens, payload)
         env: Environment variables for the command
@@ -225,7 +224,7 @@ def stream_cli_command(
     start = time.monotonic()
     result: RuntimeResult | None = None
     for event in runtime.stream(
-        command=command, env=env, stdin=None, timeout=timeout
+        command=command, env=env, timeout=timeout
     ):
         if event.kind == "stdout":
             stdout += event.text or ""

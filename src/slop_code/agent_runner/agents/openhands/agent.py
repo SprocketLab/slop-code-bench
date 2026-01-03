@@ -26,7 +26,7 @@ from slop_code.common.llms import APIPricing
 from slop_code.common.llms import TokenUsage
 from slop_code.execution import EnvironmentSpec
 from slop_code.execution import Session
-from slop_code.execution import SubmissionRuntime
+from slop_code.execution import StreamingRuntime
 from slop_code.logging import get_logger
 
 log = get_logger(__name__)
@@ -130,7 +130,7 @@ class OpenHandsAgent(Agent):
         self._image = image
         self._session: Session | None = None
         self._environment: EnvironmentSpec | None = None
-        self._runtime: SubmissionRuntime | None = None
+        self._runtime: StreamingRuntime | None = None
         self._tmp_dir: tempfile.TemporaryDirectory | None = None
 
         self._last_prompt: str = ""
@@ -214,7 +214,7 @@ class OpenHandsAgent(Agent):
         return self._environment
 
     @property
-    def runtime(self) -> SubmissionRuntime:
+    def runtime(self) -> StreamingRuntime:
         if self._runtime is None:
             raise AgentError(
                 "OpenHandsAgent has not been set up with a runtime"

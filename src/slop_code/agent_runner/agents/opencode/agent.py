@@ -26,7 +26,7 @@ from slop_code.common.llms import ModelDefinition
 from slop_code.common.llms import ThinkingPreset
 from slop_code.common.llms import TokenUsage
 from slop_code.execution import Session
-from slop_code.execution import SubmissionRuntime
+from slop_code.execution import StreamingRuntime
 
 STEP_FINISH_TYPE = "step_finish"
 
@@ -76,7 +76,7 @@ class OpenCodeAgent(Agent):
 
         self.messages = []
         self.continue_on_run = True
-        self._runtime: SubmissionRuntime | None = None
+        self._runtime: StreamingRuntime | None = None
         self._tmp_dir: tempfile.TemporaryDirectory | None = None
         self._session: Session | None = None
         self._storage_dir: Path | None = None
@@ -153,7 +153,7 @@ class OpenCodeAgent(Agent):
         return self._session
 
     @property
-    def runtime(self) -> SubmissionRuntime:
+    def runtime(self) -> StreamingRuntime:
         if self._runtime is None:
             raise AgentError("Trying to get runtime before setup")
         return self._runtime

@@ -486,12 +486,12 @@ class AgentRunner:
             num_commands=len(resume_commands),
         )
 
-        # Spawn a runtime just for running resume commands
-        runtime = self.session.spawn(disable_setup=True)
-        try:
-            for cmd in resume_commands:
-                logger.debug("Running resume command", command=cmd)
-                result = runtime.execute(cmd, env={}, stdin=None, timeout=300)
+        # Execute each resume command with its own runtime
+        for cmd in resume_commands:
+            logger.debug("Running resume command", command=cmd)
+            runtime = self.session.exec(command=cmd, disable_setup=True)
+            try:
+                result = runtime.execute(env={}, stdin=None, timeout=300)
                 if result.exit_code != 0:
                     logger.warning(
                         "Resume command failed",
@@ -505,8 +505,8 @@ class AgentRunner:
                         command=cmd,
                         exit_code=result.exit_code,
                     )
-        finally:
-            runtime.cleanup()
+            finally:
+                runtime.cleanup()
 
     def run(self) -> dict[str, Any]:
         """Main entry point: setup, execute checkpoints, finish."""

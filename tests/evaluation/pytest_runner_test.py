@@ -1012,7 +1012,7 @@ class TestPytestRunnerRunMethod:
 
         # Create mock session
         mock_session = MagicMock()
-        mock_session.spawn.return_value = mock_runtime
+        mock_session.exec.return_value = mock_runtime
 
         # Create mock workspace
         mock_workspace = MagicMock()
@@ -1104,7 +1104,7 @@ class TestPytestRunnerRunMethod:
         )
 
         session = MagicMock()
-        session.spawn.return_value = runtime
+        session.exec.return_value = runtime
         session.workspace = workspace
 
         runner = PytestRunner(
@@ -1138,7 +1138,7 @@ class TestPytestRunnerRunMethod:
 
         # Verify env vars were passed to execute
         execute_call = runtime.execute.call_args
-        env_passed = execute_call[0][1]  # Second positional arg is env dict
+        env_passed = execute_call[0][0]  # First positional arg is env dict (command is set at spawn)
         assert "SCBENCH_ASSETS_DIR" in env_passed
         assert "SCBENCH_ASSET_STOPWORDS" in env_passed
         # Env vars use relative paths for Docker container compatibility
@@ -1178,7 +1178,7 @@ class TestPytestRunnerRunMethod:
         mock_runtime.execute.return_value = mock_pytest_result
 
         mock_session = MagicMock()
-        mock_session.spawn.return_value = mock_runtime
+        mock_session.exec.return_value = mock_runtime
 
         mock_workspace = MagicMock()
         mock_workspace.working_dir = submission_path
@@ -1269,7 +1269,7 @@ class TestPytestRunnerRunMethod:
         mock_runtime.execute.return_value = mock_pytest_result
 
         mock_session = MagicMock()
-        mock_session.spawn.return_value = mock_runtime
+        mock_session.exec.return_value = mock_runtime
 
         mock_workspace = MagicMock()
         mock_workspace.working_dir = submission_path
@@ -1382,7 +1382,7 @@ class TestPytestRunnerRunMethod:
         mock_runtime.execute.return_value = mock_pytest_result
 
         mock_session = MagicMock()
-        mock_session.spawn.return_value = mock_runtime
+        mock_session.exec.return_value = mock_runtime
 
         mock_workspace = MagicMock()
         mock_workspace.working_dir = submission_path
@@ -1715,7 +1715,7 @@ class TestSessionCreation:
 
         mock_runtime = MagicMock()
         mock_runtime.execute.return_value = mock_result
-        mock_session.spawn.return_value = mock_runtime
+        mock_session.exec.return_value = mock_runtime
 
         runner = PytestRunner(
             problem=mock_problem_config,
@@ -1883,7 +1883,7 @@ class TestSnapshotLocationRegression:
 
         mock_runtime = MagicMock()
         mock_runtime.execute.return_value = mock_result
-        mock_session.spawn.return_value = mock_runtime
+        mock_session.exec.return_value = mock_runtime
 
         runner = PytestRunner(
             problem=mock_problem_config,
@@ -1967,7 +1967,7 @@ class TestSnapshotLocationRegression:
 
         mock_runtime = MagicMock()
         mock_runtime.execute.return_value = mock_result
-        mock_session.spawn.return_value = mock_runtime
+        mock_session.exec.return_value = mock_runtime
 
         runner = PytestRunner(
             problem=mock_problem_config,

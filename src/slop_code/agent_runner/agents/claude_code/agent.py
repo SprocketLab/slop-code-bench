@@ -30,7 +30,7 @@ from slop_code.common.llms import ThinkingPreset
 from slop_code.common.llms import TokenUsage
 from slop_code.execution import EnvironmentSpec
 from slop_code.execution import Session
-from slop_code.execution import SubmissionRuntime
+from slop_code.execution import StreamingRuntime
 from slop_code.execution.runtime import RuntimeResult
 from slop_code.logging import get_logger
 
@@ -159,7 +159,7 @@ class ClaudeCodeAgent(Agent):
         self.max_output_tokens = max_output_tokens
         self._session: Session | None = None
         self._environment: EnvironmentSpec | None = None
-        self._runtime: SubmissionRuntime | None = None
+        self._runtime: StreamingRuntime | None = None
 
         # Temporary directory for storing artifacts of agent execution
         self._tmp_dir: tempfile.TemporaryDirectory | None = None
@@ -268,7 +268,7 @@ class ClaudeCodeAgent(Agent):
         return self._workspace
 
     @property
-    def runtime(self) -> SubmissionRuntime:
+    def runtime(self) -> StreamingRuntime:
         if self._runtime is None:
             raise AgentError(
                 "ClaudeCodeAgent has not been set up with a runtime"

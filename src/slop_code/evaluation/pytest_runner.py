@@ -1036,10 +1036,9 @@ markers =
                 **self.environment.get_full_env(self.checkpoint.env),
                 **asset_env_vars,
             }
-            runtime = session.spawn(command=pytest_cmd)
+            runtime = session.exec(command=pytest_cmd)
             try:
                 exec_result = runtime.execute(
-                    pytest_cmd,
                     full_env,
                     None,  # stdin
                     None,  # timeout handled by pytest-timeout

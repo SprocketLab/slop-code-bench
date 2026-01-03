@@ -23,8 +23,10 @@ from slop_code.execution.file_ops import InputFile
 from slop_code.execution.file_ops import materialize_input_files
 from slop_code.execution.models import EnvironmentSpec
 from slop_code.execution.placeholders import resolve_static_placeholders
-from slop_code.execution.runtime import SubmissionRuntime
-from slop_code.execution.runtime import spawn_runtime
+from slop_code.execution.protocols import ExecRuntime
+from slop_code.execution.protocols import StreamingRuntime
+from slop_code.execution.runtime import spawn_exec_runtime
+from slop_code.execution.runtime import spawn_streaming_runtime
 from slop_code.execution.snapshot import Snapshot
 from slop_code.execution.snapshot import SnapshotDiff
 from slop_code.execution.workspace import Workspace
@@ -69,7 +71,8 @@ class Session:
         self.workspace = workspace
         self.static_assets = static_assets
         self.spec = spec
-        self.runtimes: list[SubmissionRuntime] = []
+        self._streaming_runtimes: list[StreamingRuntime] = []
+        self._exec_runtimes: list[ExecRuntime] = []
         self.is_agent_infer = is_agent_infer
 
     def spawn(
@@ -79,10 +82,11 @@ class Session:
         env_vars: dict[str, str] | None = None,
         setup_command: str | None = None,
         disable_setup: bool = False,
-        command: str | None = None,
         **runtime_kwargs: Any,
-    ) -> SubmissionRuntime:
-        """Spawn a new runtime for this session.
+    ) -> StreamingRuntime:
+        """Spawn a new streaming runtime for interactive execution.
+
+        Used by agents for long-running sessions with streamed output.
 
         Args:
             ports: Port mappings
@@ -90,19 +94,17 @@ class Session:
             env_vars: Environment variables for runtime
             setup_command: Additional setup command
             disable_setup: Whether to disable setup commands
-            command: Command for single-shot execution (uses docker run)
             **runtime_kwargs: Additional runtime-specific arguments
 
         Returns:
-            New runtime instance configured for this session
+            New StreamingRuntime instance configured for this session
         """
         logger.debug(
-            "Spawning new runtime",
-            single_shot=command is not None,
+            "Spawning new streaming runtime",
             verbose=True,
         )
 
-        runtime = spawn_runtime(
+        runtime = spawn_streaming_runtime(
             environment=self.spec,
             working_dir=self.workspace.working_dir,
             static_assets=self.static_assets,
@@ -112,11 +114,60 @@ class Session:
             setup_command=setup_command,
             is_evaluation=not self.is_agent_infer,
             disable_setup=disable_setup,
-            command=command,
             **runtime_kwargs,
         )
 
-        self.runtimes.append(runtime)
+        self._streaming_runtimes.append(runtime)
+        return runtime
+
+    def exec(
+        self,
+        command: str,
+        ports: dict[int, int] | None = None,
+        mounts: dict[str, dict[str, str] | str] | None = None,
+        env_vars: dict[str, str] | None = None,
+        setup_command: str | None = None,
+        disable_setup: bool = False,
+        **runtime_kwargs: Any,
+    ) -> ExecRuntime:
+        """Spawn a new execution runtime for one-shot execution.
+
+        Used by evaluation for single command execution with buffered output.
+        The command is set at spawn time and executed via .execute().
+
+        Args:
+            command: Command to execute (immutable)
+            ports: Port mappings
+            mounts: Volume mounts
+            env_vars: Environment variables for runtime
+            setup_command: Additional setup command
+            disable_setup: Whether to disable setup commands
+            **runtime_kwargs: Additional runtime-specific arguments
+
+        Returns:
+            New ExecRuntime instance configured for this session
+        """
+        logger.debug(
+            "Spawning new exec runtime",
+            command=command[:100],
+            verbose=True,
+        )
+
+        runtime = spawn_exec_runtime(
+            environment=self.spec,
+            working_dir=self.workspace.working_dir,
+            command=command,
+            static_assets=self.static_assets,
+            ports=ports or {},
+            mounts=mounts or {},
+            env_vars=env_vars or {},
+            setup_command=setup_command,
+            is_evaluation=not self.is_agent_infer,
+            disable_setup=disable_setup,
+            **runtime_kwargs,
+        )
+
+        self._exec_runtimes.append(runtime)
         return runtime
 
     def prepare(self) -> None:
@@ -132,10 +183,13 @@ class Session:
         """Clean up all session resources."""
         logger.debug(
             "Cleaning up session",
-            num_runtimes=len(self.runtimes),
+            num_streaming_runtimes=len(self._streaming_runtimes),
+            num_exec_runtimes=len(self._exec_runtimes),
             verbose=True,
         )
-        for runtime in self.runtimes:
+        for runtime in self._streaming_runtimes:
+            runtime.cleanup()
+        for runtime in self._exec_runtimes:
             runtime.cleanup()
         self.workspace.cleanup()
 

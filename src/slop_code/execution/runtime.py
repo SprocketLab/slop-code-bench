@@ -1,24 +1,22 @@
 """Runtime protocol and implementations for code execution.
 
-This module defines the core runtime interface and supporting structures:
+This module defines the core runtime interfaces and supporting structures:
 
-- **SubmissionRuntime**: Protocol defining runtime interface for all implementations
-- **LaunchSpec**: Configuration for spawning runtime instances
+- **StreamingRuntime**: Protocol for interactive streaming execution (agents)
+- **ExecRuntime**: Protocol for one-shot execution (evaluation)
 - **RuntimeResult**: Summary of completed execution with output and metadata
 - **RuntimeEvent**: Events emitted during streaming execution
-- **Runtime registry**: System for registering and spawning runtime implementations
+- **LaunchSpec**: Configuration for spawning runtime instances
+- **Runtime registries**: System for registering and spawning runtime implementations
 - **SolutionRuntimeError**: Runtime-specific exception
 
-The runtime protocol provides a unified interface for both Docker and local
-execution environments, supporting streaming output, timeouts, and proper cleanup.
+The runtime protocols provide separate interfaces for streaming (interactive,
+long-lived) and execution (one-shot, buffered) use cases.
 """
 
-from abc import ABC
-from abc import abstractmethod
 from collections.abc import Callable
-from collections.abc import Iterator
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel
 from pydantic import Field
@@ -27,9 +25,13 @@ from slop_code.execution.assets import ResolvedStaticAsset
 from slop_code.execution.models import EnvironmentSpec
 from slop_code.execution.models import ExecutionError
 
+if TYPE_CHECKING:
+    from slop_code.execution.protocols import ExecRuntime
+    from slop_code.execution.protocols import StreamingRuntime
+
 
 class SolutionRuntimeError(ExecutionError):
-    """Exception raised by the SolutionRuntime class."""
+    """Exception raised by runtime implementations."""
 
 
 class LaunchSpec(BaseModel):
@@ -91,115 +93,15 @@ class RuntimeEvent(BaseModel):
     result: RuntimeResult | None = None
 
 
-class SubmissionRuntime(ABC):
-    """Protocol for runtime implementations that can execute code.
-
-    This protocol defines the interface that all runtime implementations
-    (Docker, local, etc.) must provide for executing commands and managing
-    process lifecycle.
-    """
-
-    @abstractmethod
-    def stream(
-        self,
-        command: str,
-        env: dict[str, str],
-        stdin: str | list[str] | None,
-        timeout: float | None,
-    ) -> Iterator[RuntimeEvent]:
-        """Stream execution of a command.
-
-        Note:
-            Most implementations do not support stdin for streaming execution.
-            If stdin is required, use execute() instead.
-
-        Args:
-            command: Command to execute
-            env: Environment variables
-            stdin: Optional stdin input (may not be supported by all implementations)
-            timeout: Optional timeout in seconds
-            ports: Optional port mappings
-
-        Yields:
-            RuntimeEvent objects for stdout, stderr, and completion
-        """
-
-    @abstractmethod
-    def execute(
-        self,
-        command: str,
-        env: dict[str, str],
-        stdin: str | list[str] | None,
-        timeout: float | None,
-    ) -> RuntimeResult:
-        """Execute a command and return the result.
-
-        Args:
-            command: Command to execute
-            env: Environment variables
-            stdin: Optional stdin input
-            timeout: Optional timeout in seconds
-            ports: Optional port mappings
-
-        Returns:
-            RuntimeResult with execution details
-        """
-
-    @abstractmethod
-    def poll(self) -> int | None:
-        """Check if the process is still running.
-
-        Returns:
-            Exit code if process has finished, None if still running
-        """
-
-    @abstractmethod
-    def kill(self) -> None:
-        """Kill the running process/container."""
-
-    @abstractmethod
-    def cleanup(self) -> None:
-        """Clean up all resources used by the runtime."""
-
-    @classmethod
-    @abstractmethod
-    def spawn(
-        cls,
-        environment: EnvironmentSpec,
-        working_dir: Path,
-        static_assets: dict[str, ResolvedStaticAsset] | None = None,
-        ports: dict[int, int] | None = None,
-        mounts: dict[str, dict[str, str] | str] | None = None,
-        env_vars: dict[str, str] | None = None,
-        *,
-        is_evaluation: bool = False,
-        disable_setup: bool = False,
-        **runtime_kwargs,
-    ) -> "SubmissionRuntime":
-        """Spawn a new runtime instance.
-
-        Args:
-            environment: Environment specification
-            working_dir: Directory to mount as workspace in container
-            static_assets: Optional static assets to mount in container
-            is_evaluation: Whether this is an evaluation context
-            ports: Extra ports to use
-            mounts: Extra mounts to use
-            env_vars: Extra environment variables to use
-            disable_setup: Whether to disable setup
-            runtime_kwargs: Additional runtime-specific arguments
-        Returns:
-            New runtime instance
-        """
+# Registries for streaming and exec runtimes
+STREAMING_RUNTIME_REGISTRY: dict[str, type["StreamingRuntime"]] = {}
+EXEC_RUNTIME_REGISTRY: dict[str, type["ExecRuntime"]] = {}
 
 
-RUNTIME_REGISTRY: dict[str, type[SubmissionRuntime]] = {}
-
-
-def register_runtime(
+def register_streaming_runtime(
     name: str,
-) -> Callable[[type[SubmissionRuntime]], type[SubmissionRuntime]]:
-    """Registers a runtime class for a given environment type.
+) -> Callable[[type], type]:
+    """Register a streaming runtime class for a given environment type.
 
     Args:
         name: Name of the environment type (e.g., "docker", "local")
@@ -208,24 +110,97 @@ def register_runtime(
         Decorator function that registers the runtime class
     """
 
-    def decorator(cls: type[SubmissionRuntime]) -> type[SubmissionRuntime]:
-        RUNTIME_REGISTRY[name] = cls
+    def decorator(cls: type) -> type:
+        STREAMING_RUNTIME_REGISTRY[name] = cls
         return cls
 
     return decorator
 
 
-def spawn_runtime(environment: EnvironmentSpec, **kwargs) -> SubmissionRuntime:
-    """Spawns a runtime for a given launch spec.
+def register_exec_runtime(
+    name: str,
+) -> Callable[[type], type]:
+    """Register an exec runtime class for a given environment type.
 
     Args:
-        spec: Launch specification containing environment and settings
+        name: Name of the environment type (e.g., "docker", "local")
 
     Returns:
-        Runtime instance appropriate for the environment type
+        Decorator function that registers the runtime class
+    """
+
+    def decorator(cls: type) -> type:
+        EXEC_RUNTIME_REGISTRY[name] = cls
+        return cls
+
+    return decorator
+
+
+# Lazy registration state
+_runtimes_registered = False
+
+
+def _ensure_runtimes_registered() -> None:
+    """Ensure all runtime implementations are registered (lazy registration)."""
+    global _runtimes_registered
+    if _runtimes_registered:
+        return
+
+    # Docker runtimes
+    from slop_code.execution.docker_runtime.exec import DockerExecRuntime
+    from slop_code.execution.docker_runtime.streaming import (
+        DockerStreamingRuntime,
+    )
+
+    STREAMING_RUNTIME_REGISTRY["docker"] = DockerStreamingRuntime
+    EXEC_RUNTIME_REGISTRY["docker"] = DockerExecRuntime
+
+    # Local runtimes
+    from slop_code.execution.local_exec import LocalExecRuntime
+    from slop_code.execution.local_streaming import LocalStreamingRuntime
+
+    STREAMING_RUNTIME_REGISTRY["local"] = LocalStreamingRuntime
+    EXEC_RUNTIME_REGISTRY["local"] = LocalExecRuntime
+
+    _runtimes_registered = True
+
+
+def spawn_streaming_runtime(
+    environment: EnvironmentSpec, **kwargs
+) -> "StreamingRuntime":
+    """Spawn a streaming runtime for the given environment.
+
+    Args:
+        environment: Environment specification
+        **kwargs: Additional arguments passed to spawn()
+
+    Returns:
+        StreamingRuntime instance appropriate for the environment type
 
     Raises:
         KeyError: If environment type is not registered
     """
-    runtime_cls = RUNTIME_REGISTRY[environment.type]
+    _ensure_runtimes_registered()
+    runtime_cls = STREAMING_RUNTIME_REGISTRY[environment.type]
     return runtime_cls.spawn(environment=environment, **kwargs)
+
+
+def spawn_exec_runtime(
+    environment: EnvironmentSpec, command: str, **kwargs
+) -> "ExecRuntime":
+    """Spawn an exec runtime for the given environment.
+
+    Args:
+        environment: Environment specification
+        command: Command to execute (immutable)
+        **kwargs: Additional arguments passed to spawn()
+
+    Returns:
+        ExecRuntime instance appropriate for the environment type
+
+    Raises:
+        KeyError: If environment type is not registered
+    """
+    _ensure_runtimes_registered()
+    runtime_cls = EXEC_RUNTIME_REGISTRY[environment.type]
+    return runtime_cls.spawn(environment=environment, command=command, **kwargs)
