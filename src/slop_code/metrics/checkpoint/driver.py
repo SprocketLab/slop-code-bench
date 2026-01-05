@@ -47,21 +47,19 @@ def get_checkpoint_metrics(
         **get_quality_metrics(checkpoint_dir),
         **get_rubric_metrics(checkpoint_dir),
     }
+
+    # Add rubric density metric if applicable
     if "rubric_total_flags" in metrics and metrics.get("loc", 0) > 0:
         metrics["rubric_per_loc"] = metrics["rubric_total_flags"] / metrics["loc"]
 
-    # Compute percentage deltas from prior metrics
-    if prior_metrics is not None:
-        delta = compute_checkpoint_delta(prior_metrics, metrics)
-    else:
-        delta = {}
+    # Compute deltas from prior checkpoint
+    delta = compute_checkpoint_delta(prior_metrics, metrics)
 
-    # Compute mass deltas from prior checkpoint's symbols
+    # Add mass deltas if prior checkpoint exists
     if prior_checkpoint_dir is not None:
         prior_symbols = prior_checkpoint_dir / QUALITY_DIR / SYMBOLS_QUALITY_SAVENAME
         curr_symbols = checkpoint_dir / QUALITY_DIR / SYMBOLS_QUALITY_SAVENAME
-        mass_delta = compute_mass_delta(prior_symbols, curr_symbols)
-        delta.update(mass_delta)
+        delta.update(compute_mass_delta(prior_symbols, curr_symbols))
 
     return {
         "is_first": is_first,

@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from slop_code.metrics.checkpoint.mass import _compute_gini_coefficient
-from slop_code.metrics.checkpoint.mass import _compute_top_n_for_added_mass
+from slop_code.metrics.checkpoint.mass import _compute_top_n_distribution
 from slop_code.metrics.checkpoint.mass import compute_mass_delta
 
 
@@ -72,12 +72,12 @@ class TestComputeGiniCoefficient:
         assert gini == 0.0  # Only one non-zero value
 
 
-class TestComputeTopNForAddedMass:
-    """Tests for _compute_top_n_for_added_mass helper function."""
+class TestComputeTopNDistribution:
+    """Tests for _compute_top_n_distribution helper function."""
 
     def test_empty_list_returns_zeros(self):
         """Empty list should return zeros for all percentiles."""
-        result = _compute_top_n_for_added_mass([])
+        result = _compute_top_n_distribution([], key_prefix="")
         assert result["top50_count"] == 0
         assert result["top50_mass"] == 0.0
         assert result["top75_count"] == 0
@@ -87,7 +87,7 @@ class TestComputeTopNForAddedMass:
 
     def test_single_symbol(self):
         """Single symbol should return 1 for all percentiles."""
-        result = _compute_top_n_for_added_mass([100.0])
+        result = _compute_top_n_distribution([100.0], key_prefix="")
         assert result["top50_count"] == 1
         assert result["top50_mass"] == 100.0
         assert result["top75_count"] == 1
@@ -98,7 +98,7 @@ class TestComputeTopNForAddedMass:
     def test_even_distribution(self):
         """10 symbols with equal mass should need N/threshold symbols."""
         masses = [10.0] * 10  # Total = 100
-        result = _compute_top_n_for_added_mass(masses)
+        result = _compute_top_n_distribution(masses, key_prefix="")
         # Top 50% needs 50 mass = 5 symbols
         assert result["top50_count"] == 5
         assert result["top50_mass"] == 50.0
@@ -110,14 +110,14 @@ class TestComputeTopNForAddedMass:
         """One large symbol should need 1 symbol for high percentiles."""
         # 90% of mass in first symbol
         masses = [90.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-        result = _compute_top_n_for_added_mass(masses)
+        result = _compute_top_n_distribution(masses, key_prefix="")
         assert result["top50_count"] == 1  # First symbol > 50%
         assert result["top90_count"] == 1  # First symbol = 90%
 
     def test_custom_percentiles(self):
         """Test with custom percentile list."""
         masses = [10.0] * 10  # Total = 100
-        result = _compute_top_n_for_added_mass(masses, [0.10, 0.90])
+        result = _compute_top_n_distribution(masses, percentiles=[0.10, 0.90], key_prefix="")
         assert result["top10_count"] == 1
         assert result["top10_mass"] == 10.0
         assert result["top90_count"] == 9
@@ -126,14 +126,14 @@ class TestComputeTopNForAddedMass:
     def test_only_top_90(self):
         """Test with only 90% percentile (used for non-complexity metrics)."""
         masses = [50.0, 30.0, 20.0]  # Total = 100
-        result = _compute_top_n_for_added_mass(masses, [0.90])
+        result = _compute_top_n_distribution(masses, percentiles=[0.90], key_prefix="")
         # 50 + 30 = 80, need 3rd to reach 90 (total 100)
         assert result["top90_count"] == 3
         assert result["top90_mass"] == 100.0
 
     def test_all_zeros_returns_zeros(self):
         """All zeros should return zeros."""
-        result = _compute_top_n_for_added_mass([0.0, 0.0, 0.0])
+        result = _compute_top_n_distribution([0.0, 0.0, 0.0], key_prefix="")
         assert result["top90_count"] == 0
         assert result["top90_mass"] == 0.0
 

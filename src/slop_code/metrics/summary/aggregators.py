@@ -27,23 +27,32 @@ from slop_code.metrics.summary.stats import compute_ratio_values
 from slop_code.metrics.summary.stats import extract_metric_values
 
 
+def safe_mean(values: list[float]) -> float:
+    """Compute mean of values, returning 0.0 for empty lists."""
+    return statistics.mean(values) if values else 0.0
+
+
+def aggregate_per_problem(
+    problems: dict[str, list[dict[str, Any]]],
+    key: str,
+    default: float = 0,
+) -> list[float]:
+    """Sum values for a given key across all checkpoints within each problem."""
+    return [sum(c.get(key, default) for c in chkpts) for chkpts in problems.values()]
+
+
 def compute_costs_stats(
     checkpoints: list[dict[str, Any]],
     problems: dict[str, list[dict[str, Any]]],
 ) -> CostsStats:
     """Compute cost statistics at checkpoint and problem levels."""
     checkpoint_costs = extract_metric_values(checkpoints, "cost")
-    total_cost = sum(checkpoint_costs) if checkpoint_costs else 0.0
-
-    problem_costs: list[float] = []
-    for problem_chkpts in problems.values():
-        problem_cost = sum(c.get("cost", 0) for c in problem_chkpts)
-        problem_costs.append(problem_cost)
+    problem_costs = aggregate_per_problem(problems, "cost")
 
     return CostsStats(
         checkpoint=compute_metric_stats(checkpoint_costs),
         problem=compute_metric_stats(problem_costs),
-        total=total_cost,
+        total=sum(checkpoint_costs) if checkpoint_costs else 0.0,
     )
 
 
@@ -53,11 +62,7 @@ def compute_time_stats(
 ) -> TimeStats:
     """Compute time statistics at checkpoint and problem levels."""
     checkpoint_times = extract_metric_values(checkpoints, "elapsed")
-
-    problem_times: list[float] = []
-    for problem_chkpts in problems.values():
-        problem_time = sum(c.get("elapsed", 0) for c in problem_chkpts)
-        problem_times.append(problem_time)
+    problem_times = aggregate_per_problem(problems, "elapsed")
 
     return TimeStats(
         checkpoint=compute_metric_stats(checkpoint_times),
@@ -70,53 +75,22 @@ def compute_tokens_stats(
     problems: dict[str, list[dict[str, Any]]],
 ) -> TokenStats:
     """Compute token statistics: totals and per-level means."""
-    input_values = extract_metric_values(checkpoints, "input")
-    output_values = extract_metric_values(checkpoints, "output")
-    cache_read_values = extract_metric_values(checkpoints, "cache_read")
-    cache_write_values = extract_metric_values(checkpoints, "cache_write")
-    reasoning_values = extract_metric_values(checkpoints, "reasoning")
+    token_types = ["input", "output", "cache_read", "cache_write", "reasoning"]
 
-    # Per-checkpoint means
-    checkpoint_token_means = TokenMeans(
-        input=statistics.mean(input_values) if input_values else 0.0,
-        output=statistics.mean(output_values) if output_values else 0.0,
-        cache_read=statistics.mean(cache_read_values) if cache_read_values else 0.0,
-        cache_write=statistics.mean(cache_write_values) if cache_write_values else 0.0,
-        reasoning=statistics.mean(reasoning_values) if reasoning_values else 0.0,
+    # Extract checkpoint-level values and compute means
+    checkpoint_values = {t: extract_metric_values(checkpoints, t) for t in token_types}
+    checkpoint_means = TokenMeans(
+        **{t: safe_mean(checkpoint_values[t]) for t in token_types}
     )
 
-    # Per-problem token totals, then compute means
-    problem_input: list[float] = []
-    problem_output: list[float] = []
-    problem_cache_read: list[float] = []
-    problem_cache_write: list[float] = []
-    problem_reasoning: list[float] = []
-
-    for problem_chkpts in problems.values():
-        problem_input.append(sum(c.get("input", 0) for c in problem_chkpts))
-        problem_output.append(sum(c.get("output", 0) for c in problem_chkpts))
-        problem_cache_read.append(sum(c.get("cache_read", 0) for c in problem_chkpts))
-        problem_cache_write.append(sum(c.get("cache_write", 0) for c in problem_chkpts))
-        problem_reasoning.append(sum(c.get("reasoning", 0) for c in problem_chkpts))
-
-    problem_token_means = TokenMeans(
-        input=statistics.mean(problem_input) if problem_input else 0.0,
-        output=statistics.mean(problem_output) if problem_output else 0.0,
-        cache_read=statistics.mean(problem_cache_read) if problem_cache_read else 0.0,
-        cache_write=statistics.mean(problem_cache_write)
-        if problem_cache_write
-        else 0.0,
-        reasoning=statistics.mean(problem_reasoning) if problem_reasoning else 0.0,
-    )
+    # Aggregate per-problem totals and compute means
+    problem_totals = {t: aggregate_per_problem(problems, t) for t in token_types}
+    problem_means = TokenMeans(**{t: safe_mean(problem_totals[t]) for t in token_types})
 
     return TokenStats(
-        input=int(sum(input_values)) if input_values else 0,
-        output=int(sum(output_values)) if output_values else 0,
-        cache_read=int(sum(cache_read_values)) if cache_read_values else 0,
-        cache_write=int(sum(cache_write_values)) if cache_write_values else 0,
-        reasoning=int(sum(reasoning_values)) if reasoning_values else 0,
-        checkpoint=checkpoint_token_means,
-        problem=problem_token_means,
+        **{t: int(sum(checkpoint_values[t])) if checkpoint_values[t] else 0 for t in token_types},
+        checkpoint=checkpoint_means,
+        problem=problem_means,
     )
 
 
@@ -126,11 +100,7 @@ def compute_steps_stats(
 ) -> StepsStats:
     """Compute step statistics at checkpoint and problem levels."""
     checkpoint_steps = extract_metric_values(checkpoints, "steps")
-
-    problem_steps: list[float] = []
-    for problem_chkpts in problems.values():
-        problem_step = sum(c.get("steps", 0) for c in problem_chkpts)
-        problem_steps.append(problem_step)
+    problem_steps = aggregate_per_problem(problems, "steps")
 
     return StepsStats(
         checkpoint=compute_metric_stats(checkpoint_steps),
@@ -150,34 +120,38 @@ def compute_solve_rates(
     pass_rates_list = extract_metric_values(checkpoints, "pass_rate")
     iso_pass_rates_list = extract_metric_values(checkpoints, "checkpoint_pass_rate")
     core_pass_rates_list = extract_metric_values(checkpoints, "core_pass_rate")
-    num_problems = len(problems)
+
     if not pass_rates_list or not iso_pass_rates_list:
         return {}
 
+    # Count checkpoints that fully pass (rate = 1.0)
     checkpoints_solved = sum(1 for pr in pass_rates_list if math.isclose(pr, 1.0))
     iso_solved = sum(1 for pr in iso_pass_rates_list if math.isclose(pr, 1.0))
     core_solved = sum(1 for pr in core_pass_rates_list if math.isclose(pr, 1.0))
-    pct_problems_solved: float | None = None
-    pct_problems_partial: float | None = None
 
-    fully_solved = 0
-    partially_solved = 0
-    for problem_chkpts in problems.values():
-        problem_pass_rates = [c.get("pass_rate", 0.0) for c in problem_chkpts]
-        if problem_pass_rates:
-            if all(pr == 1.0 for pr in problem_pass_rates):
-                fully_solved += 1
-            if any(pr == 1.0 for pr in problem_pass_rates):
-                partially_solved += 1
-    pct_problems_solved = (fully_solved / num_problems) * 100
-    pct_problems_partial = (partially_solved / num_problems) * 100
+    # Count problems fully vs partially solved
+    fully_solved = sum(
+        1
+        for chkpts in problems.values()
+        if (rates := [c.get("pass_rate", 0.0) for c in chkpts])
+        and all(pr == 1.0 for pr in rates)
+    )
+    partially_solved = sum(
+        1
+        for chkpts in problems.values()
+        if (rates := [c.get("pass_rate", 0.0) for c in chkpts])
+        and any(pr == 1.0 for pr in rates)
+    )
+
+    num_problems = len(problems)
+    num_checkpoints = len(checkpoints)
 
     return {
-        "pct_checkpoints_solved": checkpoints_solved / len(checkpoints) * 100,
-        "pct_checkpoints_iso_solved": iso_solved / len(checkpoints) * 100,
-        "pct_problems_solved": pct_problems_solved,
-        "pct_problems_partial": pct_problems_partial,
-        "pct_checkpoints_core_solved": core_solved / len(checkpoints) * 100,
+        "pct_checkpoints_solved": (checkpoints_solved / num_checkpoints) * 100,
+        "pct_checkpoints_iso_solved": (iso_solved / num_checkpoints) * 100,
+        "pct_checkpoints_core_solved": (core_solved / num_checkpoints) * 100,
+        "pct_problems_solved": (fully_solved / num_problems) * 100,
+        "pct_problems_partial": (partially_solved / num_problems) * 100,
         "problem_solved": fully_solved,
         "problem_partial": partially_solved,
         "checkpoints_solved": checkpoints_solved,
@@ -193,59 +167,33 @@ def compute_pass_rates_stats(
     """Compute pass rate statistics by test type at checkpoint and problem levels."""
     test_types = ["core", "total", "error", "functionality", "regression"]
 
-    # Per-checkpoint pass rates by type
-    checkpoint_pass_rates: dict[str, list[float]] = {t: [] for t in test_types}
-    for chkpt in checkpoints:
-        checkpoint_pass_rates["total"].append(
-            compute_pass_rate(chkpt.get("passed_tests"), chkpt.get("total_tests"))
-        )
-        for test_type in ["core", "error", "functionality", "regression"]:
-            checkpoint_pass_rates[test_type].append(
-                compute_pass_rate(
-                    chkpt.get(f"{test_type}_passed"),
-                    chkpt.get(f"{test_type}_total"),
-                )
-            )
+    def compute_pass_rates_by_type(chkpt: dict[str, Any]) -> dict[str, float]:
+        """Extract pass rates for all test types from a single checkpoint."""
+        return {
+            "total": compute_pass_rate(chkpt.get("passed_tests"), chkpt.get("total_tests")),
+            **{
+                t: compute_pass_rate(chkpt.get(f"{t}_passed"), chkpt.get(f"{t}_total"))
+                for t in ["core", "error", "functionality", "regression"]
+            },
+        }
 
-    # Per-problem pass rates by type (mean of checkpoint pass rates per problem)
-    problem_pass_rates: dict[str, list[float]] = {t: [] for t in test_types}
+    # Collect checkpoint-level pass rates
+    checkpoint_pass_rates = {t: [] for t in test_types}
+    for chkpt in checkpoints:
+        rates = compute_pass_rates_by_type(chkpt)
+        for test_type in test_types:
+            checkpoint_pass_rates[test_type].append(rates[test_type])
+
+    # Collect problem-level pass rates (mean across checkpoints per problem)
+    problem_pass_rates = {t: [] for t in test_types}
     for problem_chkpts in problems.values():
         for test_type in test_types:
-            if test_type == "total":
-                rates = [
-                    compute_pass_rate(c.get("passed_tests"), c.get("total_tests"))
-                    for c in problem_chkpts
-                ]
-            else:
-                rates = [
-                    compute_pass_rate(
-                        c.get(f"{test_type}_passed"),
-                        c.get(f"{test_type}_total"),
-                    )
-                    for c in problem_chkpts
-                ]
-            problem_pass_rates[test_type].append(
-                statistics.mean(rates) if rates else 0.0
-            )
-
-    def safe_mean(values: list[float]) -> float:
-        return statistics.mean(values) if values else 0.0
+            rates = [compute_pass_rates_by_type(c)[test_type] for c in problem_chkpts]
+            problem_pass_rates[test_type].append(safe_mean(rates))
 
     return PassRatesStats(
-        checkpoint=PassRatesByType(
-            core=safe_mean(checkpoint_pass_rates["core"]),
-            total=safe_mean(checkpoint_pass_rates["total"]),
-            error=safe_mean(checkpoint_pass_rates["error"]),
-            functionality=safe_mean(checkpoint_pass_rates["functionality"]),
-            regression=safe_mean(checkpoint_pass_rates["regression"]),
-        ),
-        problem=PassRatesByType(
-            core=safe_mean(problem_pass_rates["core"]),
-            total=safe_mean(problem_pass_rates["total"]),
-            error=safe_mean(problem_pass_rates["error"]),
-            functionality=safe_mean(problem_pass_rates["functionality"]),
-            regression=safe_mean(problem_pass_rates["regression"]),
-        ),
+        checkpoint=PassRatesByType(**{t: safe_mean(checkpoint_pass_rates[t]) for t in test_types}),
+        problem=PassRatesByType(**{t: safe_mean(problem_pass_rates[t]) for t in test_types}),
     )
 
 

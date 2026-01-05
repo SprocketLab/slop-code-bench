@@ -34,15 +34,14 @@ def load_checkpoint_data(results_file: Path) -> list[dict[str, Any]]:
             f"Checkpoint results file not found: {results_file}"
         )
 
-    checkpoints: list[dict[str, Any]] = []
+    checkpoints = []
     with results_file.open("r") as f:
         for line_num, line in enumerate(f, 1):
-            line = line.strip()
-            if not line:
+            stripped = line.strip()
+            if not stripped:
                 continue
             try:
-                entry = json.loads(line)
-                checkpoints.append(entry)
+                checkpoints.append(json.loads(stripped))
             except json.JSONDecodeError as e:
                 logger.warning(
                     "Skipping malformed JSON line",
@@ -70,8 +69,6 @@ def save_summary_json(
         Path to saved file.
     """
     output_path = run_dir / filename
-    with output_path.open("w") as f:
-        json.dump(summary.model_dump(), f, indent=2)
-
+    output_path.write_text(json.dumps(summary.model_dump(), indent=2))
     logger.info("Saved run summary", path=str(output_path))
     return output_path

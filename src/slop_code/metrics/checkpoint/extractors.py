@@ -28,6 +28,36 @@ from slop_code.metrics.utils import MetricsError
 logger = get_logger(__name__)
 
 
+def _load_json_file(file_path: Path, checkpoint_dir: Path, file_type: str) -> dict:
+    """Load and parse a JSON file with standardized error handling.
+
+    Args:
+        file_path: Path to the JSON file to load.
+        checkpoint_dir: Parent checkpoint directory for error context.
+        file_type: Description of file type for error messages.
+
+    Returns:
+        Parsed JSON data as a dictionary.
+
+    Raises:
+        MetricsError: If file cannot be parsed or read.
+    """
+    try:
+        with file_path.open("r") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        logger.error(
+            f"Failed to parse {file_type} JSON",
+            checkpoint_dir=str(checkpoint_dir),
+            file_path=str(file_path),
+            error=str(e),
+        )
+        raise MetricsError(
+            f"Failed to parse {file_type} file '{file_path}': {e}",
+            context={"checkpoint_dir": str(checkpoint_dir)},
+        ) from e
+
+
 def _compute_distributions(
     file_metrics_iter: Generator[dict, None, None],
     symbol_metrics_iter: Generator[dict, None, None],
@@ -48,19 +78,22 @@ def _compute_distributions(
     lines_removed = 0
 
     # Process file metrics for diff tracking
-    for fm in file_metrics_iter:
-        file_path = fm["file_path"]
-        if diff is not None and file_path in diff["file_diffs"]:
-            file_diff = diff["file_diffs"][file_path]
-            lines_added += file_diff["lines_added"]
-            lines_removed += file_diff["lines_removed"]
+    if diff is not None:
+        file_diffs = diff["file_diffs"]
+        for fm in file_metrics_iter:
+            if (file_path := fm["file_path"]) in file_diffs:
+                file_diff = file_diffs[file_path]
+                lines_added += file_diff["lines_added"]
+                lines_removed += file_diff["lines_removed"]
+    else:
+        # Consume iterator even if diff is None
+        list(file_metrics_iter)
 
-    # Function-specific aggregates
-    func_lines: list[int] = []
-    func_comparisons: list[int] = []
-    func_try_counts: list[int] = []
+    # Extract function metrics from symbols
+    func_lines = []
+    func_comparisons = []
+    func_try_counts = []
 
-    # Process symbol metrics for function aggregates
     for s in symbol_metrics_iter:
         if s.get("type") in {"function", "method"}:
             func_lines.append(s["lines"])
@@ -76,6 +109,50 @@ def _compute_distributions(
     }
 
 
+def _extract_optional_function_metrics(functions: dict) -> dict[str, float]:
+    """Extract optional function metrics with backward compatibility.
+
+    Args:
+        functions: Function statistics dictionary.
+
+    Returns:
+        Dictionary of optional metrics with default values.
+    """
+    optional_metrics = [
+        "nesting_mean",
+        "nesting_concentration",
+        "comparisons_mean",
+        "comparisons_concentration",
+        "branches_mean",
+        "branches_concentration",
+        "control_mean",
+        "control_concentration",
+    ]
+    return {key: functions.get(key, 0.0) for key in optional_metrics}
+
+
+def _extract_ast_grep_categories(ast_grep: dict) -> dict[str, int]:
+    """Extract AST-grep violation counts by category.
+
+    Args:
+        ast_grep: AST-grep metrics dictionary.
+
+    Returns:
+        Dictionary of category violation counts with sg_ prefix.
+    """
+    categories = [
+        "verbosity",
+        "naming",
+        "performance",
+        "types",
+        "safety",
+        "style",
+        "complexity",
+    ]
+    category_counts = ast_grep.get("category_counts", {})
+    return {f"sg_{cat}_violations": category_counts.get(cat, 0) for cat in categories}
+
+
 def _build_metrics_from_snapshot(
     snapshot: dict, distributions: dict[str, Any]
 ) -> dict[str, Any]:
@@ -89,18 +166,15 @@ def _build_metrics_from_snapshot(
     Returns:
         Flat dict with keys for metrics.
     """
+    # Extract nested structures
     file_count = snapshot["file_count"]
-
-    # Extract nested objects
     lines = snapshot["lines"]
     lint = snapshot["lint"]
     symbols = snapshot["symbols"]
     functions = snapshot["functions"]
     waste = snapshot["waste"]
     redundancy = snapshot["redundancy"]
-    # Backwards compatibility with old metrics
     ast_grep = snapshot.get("ast_grep") or snapshot.get("slop", {})
-
     total_loc = lines["loc"]
 
     result: dict[str, Any] = {
@@ -129,23 +203,11 @@ def _build_metrics_from_snapshot(
         "cc_concentration": functions["cc_concentration"],
         "max_nesting_depth": functions["depth_max"],
         "lines_per_symbol": functions["lines_mean"],
-        # Distribution stats (mean, concentration)
-        # Use .get() for backwards compatibility with old data
-        "nesting_mean": functions.get("nesting_mean", 0.0),
-        "nesting_concentration": functions.get("nesting_concentration", 0.0),
-        "comparisons_mean": functions.get("comparisons_mean", 0.0),
-        "comparisons_concentration": functions.get(
-            "comparisons_concentration", 0.0
-        ),
-        "branches_mean": functions.get("branches_mean", 0.0),
-        "branches_concentration": functions.get("branches_concentration", 0.0),
-        "control_mean": functions.get("control_mean", 0.0),
-        "control_concentration": functions.get("control_concentration", 0.0),
         # Waste
         "single_use_functions": waste["single_use_functions"],
         "trivial_wrappers": waste["trivial_wrappers"],
         "single_method_classes": waste["single_method_classes"],
-        # Redundancy (raw counts only)
+        # Redundancy
         "clone_instances": redundancy["clone_instances"],
         "clone_lines": redundancy["clone_lines"],
         # AST-grep
@@ -154,28 +216,19 @@ def _build_metrics_from_snapshot(
         "source_file_count": snapshot.get("source_file_count", file_count),
     }
 
-    # Add per-category AST-grep violation counts (not weighted)
-    category_counts = ast_grep.get("category_counts", {})
-    for cat in [
-        "verbosity",
-        "naming",
-        "performance",
-        "types",
-        "safety",
-        "style",
-        "complexity",
-    ]:
-        result[f"sg_{cat}_violations"] = category_counts.get(cat, 0)
+    # Add optional function metrics with backward compatibility
+    result.update(_extract_optional_function_metrics(functions))
 
-    # Per-LOC normalized metrics (only those actually used)
+    # Add AST-grep category counts
+    result.update(_extract_ast_grep_categories(ast_grep))
+
+    # Per-LOC normalized metrics
     if total_loc > 0:
         result["ast_grep_per_loc"] = ast_grep.get("violations", 0) / total_loc
         result["lint_per_loc"] = lint["errors"] / total_loc
 
     # Graph metrics (optional, may be None for non-Python or old data)
-    # Only keep the metrics that are actually used in dashboard
-    graph = snapshot.get("graph")
-    if graph:
+    if graph := snapshot.get("graph"):
         result.update(
             {
                 "graph_cyclic_dependency_mass": graph["cyclic_dependency_mass"],
@@ -210,20 +263,7 @@ def get_evaluation_metrics(
         )
         return {}
 
-    try:
-        with eval_file.open("r") as f:
-            metrics = json.load(f)
-    except json.JSONDecodeError as e:
-        logger.error(
-            "Failed to parse evaluation JSON",
-            checkpoint_dir=str(checkpoint_dir),
-            eval_file=str(eval_file),
-            error=str(e),
-        )
-        raise MetricsError(
-            f"Failed to parse evaluation file '{eval_file}': {e}",
-            context={"checkpoint_dir": str(checkpoint_dir)},
-        ) from e
+    metrics = _load_json_file(eval_file, checkpoint_dir, "evaluation")
 
     total_counts = metrics["total_counts"]
     pass_counts = metrics["pass_counts"]
@@ -231,6 +271,7 @@ def get_evaluation_metrics(
     total_total = sum(total_counts.values())
     checkpoint_passed = total_passed - pass_counts.get("Regression", 0)
     checkpoint_total = total_total - total_counts.get("Regression", 0)
+
     if "Core" not in total_counts:
         print(checkpoint_dir)
 
@@ -261,20 +302,7 @@ def get_inference_metrics(
     if not inference_file.exists():
         return {}
 
-    try:
-        with inference_file.open("r") as f:
-            metrics = json.load(f)
-    except json.JSONDecodeError as e:
-        logger.error(
-            "Failed to parse inference JSON",
-            checkpoint_dir=str(checkpoint_dir),
-            inference_file=str(inference_file),
-            error=str(e),
-        )
-        raise MetricsError(
-            f"Failed to parse inference file '{inference_file}': {e}",
-            context={"checkpoint_dir": str(checkpoint_dir)},
-        ) from e
+    metrics = _load_json_file(inference_file, checkpoint_dir, "inference")
 
     try:
         started = datetime.fromisoformat(metrics["started"])
@@ -352,6 +380,48 @@ def get_quality_metrics(
     return result
 
 
+def _load_jsonl_file(file_path: Path, checkpoint_dir: Path) -> list[dict]:
+    """Load and parse a JSONL file with error handling.
+
+    Args:
+        file_path: Path to the JSONL file to load.
+        checkpoint_dir: Parent checkpoint directory for error context.
+
+    Returns:
+        List of parsed JSON objects from the file.
+
+    Raises:
+        MetricsError: If file cannot be read.
+    """
+    records = []
+    try:
+        with file_path.open("r") as f:
+            for line_num, line in enumerate(f, 1):
+                if line := line.strip():
+                    try:
+                        records.append(json.loads(line))
+                    except json.JSONDecodeError as e:
+                        logger.warning(
+                            "Skipping malformed JSON line in JSONL file",
+                            checkpoint_dir=str(checkpoint_dir),
+                            file_path=str(file_path),
+                            line_num=line_num,
+                            error=str(e),
+                        )
+    except OSError as e:
+        logger.error(
+            "Failed to read JSONL file",
+            checkpoint_dir=str(checkpoint_dir),
+            file_path=str(file_path),
+            error=str(e),
+        )
+        raise MetricsError(
+            f"Failed to read JSONL file '{file_path}': {e}",
+            context={"checkpoint_dir": str(checkpoint_dir)},
+        ) from e
+    return records
+
+
 def get_rubric_metrics(
     checkpoint_dir: Path, rubric_file_name: str = "rubric.jsonl"
 ) -> dict:
@@ -375,46 +445,17 @@ def get_rubric_metrics(
     if not rubric_file.exists():
         return {}
 
-    grades = []
-    try:
-        with rubric_file.open("r") as f:
-            for line_num, line in enumerate(f, 1):
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    grades.append(json.loads(line))
-                except json.JSONDecodeError as e:
-                    logger.warning(
-                        "Skipping malformed JSON line in rubric.jsonl",
-                        checkpoint_dir=str(checkpoint_dir),
-                        line_num=line_num,
-                        error=str(e),
-                    )
-    except OSError as e:
-        logger.error(
-            "Failed to read rubric file",
-            checkpoint_dir=str(checkpoint_dir),
-            rubric_file=str(rubric_file),
-            error=str(e),
-        )
-        raise MetricsError(
-            f"Failed to read rubric file '{rubric_file}': {e}",
-            context={"checkpoint_dir": str(checkpoint_dir)},
-        ) from e
+    grades = _load_jsonl_file(rubric_file, checkpoint_dir)
 
-    # Count carried-over grades
+    # Count metrics using comprehensions
     carried_over_count = sum(1 for g in grades if "carried_over" in g)
-
-    # Count by type
     verbosity_count = sum(1 for g in grades if g.get("type") == "verbosity")
     erosion_count = sum(1 for g in grades if g.get("type") == "erosion")
 
     return {
         "rubric_total_flags": len(grades),
         "rubric_carried_over": carried_over_count,
-        # Dot-notation alias for dashboard compatibility
-        "rubric.carried_over": carried_over_count,
+        "rubric.carried_over": carried_over_count,  # Dot-notation alias for dashboard
         "rubric_verbosity_flags": verbosity_count,
         "rubric_erosion_flags": erosion_count,
     }
