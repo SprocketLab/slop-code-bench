@@ -20,50 +20,36 @@ from slop_code.metrics.utils import MetricsError
 logger = get_logger(__name__)
 
 
-def _load_json_file(file_path: Path, checkpoint_dir: Path, *, raise_on_error: bool = False) -> dict | None:
-    """Load a JSON file and return as dict, or None if missing/invalid.
+def _load_json_file(file_path: Path, checkpoint_dir: Path) -> dict | None:
+    """Load a JSON file and return as dict, or None if missing.
 
     Args:
         file_path: Path to the JSON file to load
         checkpoint_dir: Parent checkpoint directory (for logging context)
-        raise_on_error: If True, raise MetricsError on parse errors; otherwise log warning and return None
 
     Returns:
-        Parsed JSON dict, or None if file doesn't exist or parsing fails (when raise_on_error=False)
+        Parsed JSON dict, or None if file doesn't exist.
+
+    Raises:
+        MetricsError: If file exists but cannot be parsed.
     """
     if not file_path.exists():
-        if raise_on_error:
-            return None
-        logger.warning(
-            "JSON file not found",
-            checkpoint_dir=str(checkpoint_dir),
-            file=str(file_path),
-        )
         return None
 
     try:
         with file_path.open("r") as f:
             return json.load(f)
     except json.JSONDecodeError as e:
-        if raise_on_error:
-            logger.error(
-                "Failed to parse JSON file",
-                checkpoint_dir=str(checkpoint_dir),
-                file=str(file_path),
-                error=str(e),
-            )
-            raise MetricsError(
-                f"Failed to parse file '{file_path}': {e}",
-                context={"checkpoint_dir": str(checkpoint_dir)},
-            ) from e
-
-        logger.warning(
+        logger.error(
             "Failed to parse JSON file",
             checkpoint_dir=str(checkpoint_dir),
             file=str(file_path),
             error=str(e),
         )
-        return None
+        raise MetricsError(
+            f"Failed to parse file '{file_path}': {e}",
+            context={"checkpoint_dir": str(checkpoint_dir)},
+        ) from e
 
 
 def _load_jsonl_file(file_path: Path) -> Generator[dict, None, None]:
@@ -81,7 +67,7 @@ def load_snapshot_metrics(
 ) -> dict | None:
     """Load overall_quality.json and return as dict, or None if missing."""
     quality_file = checkpoint_dir / QUALITY_DIR / quality_file_name
-    return _load_json_file(quality_file, checkpoint_dir, raise_on_error=True)
+    return _load_json_file(quality_file, checkpoint_dir)
 
 
 def load_file_metrics(
@@ -103,6 +89,6 @@ def load_symbol_metrics(
 
 
 def load_diff_metrics(checkpoint_dir: Path) -> dict | None:
-    """Load diff.json and return as dict, or None if missing/invalid."""
+    """Load diff.json and return as dict, or None if missing."""
     diff_file = checkpoint_dir / DIFF_FILENAME
-    return _load_json_file(diff_file, checkpoint_dir, raise_on_error=False)
+    return _load_json_file(diff_file, checkpoint_dir)

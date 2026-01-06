@@ -412,7 +412,7 @@ def compute_mass_delta(
     Returns:
         Dict with delta metrics:
 
-        **Backward Compatible (Net Deltas)**:
+        **Net Deltas**:
         - delta.mass.{metric}: Net change in mass (added - removed)
         - delta.mass.top{50,75,90}_count: Change in top N% symbol counts
         - delta.symbols_added/removed/modified: Symbol change counts
@@ -449,7 +449,7 @@ def compute_mass_delta(
     matched_pairs, added_symbols, removed_symbols = _match_symbols(before, after)
     result: dict[str, Any] = {}
 
-    # Track complexity masses for backward-compatible top N% distribution
+    # Track complexity masses for top N% distribution
     before_complexity_masses = []
     after_complexity_masses = []
 
@@ -462,7 +462,6 @@ def compute_mass_delta(
             matched_pairs, added_symbols, removed_symbols, metric, baseline
         )
 
-        # Track complexity masses for backward compatibility
         if metric == "complexity":
             before_complexity_masses = before_masses
             after_complexity_masses = after_masses
@@ -473,7 +472,6 @@ def compute_mass_delta(
         net_delta = total_added - total_removed
         gross_delta = total_added + total_removed
 
-        # Net delta (backward compatible)
         result[f"delta.mass.{key}"] = round(net_delta, 2)
 
         # Full suite for complexity
@@ -490,7 +488,7 @@ def compute_mass_delta(
             result[f"delta.mass.{key}_added_top90_count"] = added_top90["top90_count"]
             result[f"delta.mass.{key}_added_top90_mass"] = added_top90["top90_mass"]
 
-    # Backward compatible: top N% distribution deltas
+    # Top N% distribution deltas
     before_top_n = _compute_top_n_distribution(before_complexity_masses)
     after_top_n = _compute_top_n_distribution(after_complexity_masses)
     for pct in ["50", "75", "90"]:

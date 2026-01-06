@@ -305,6 +305,19 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
             "control_blocks_sum": (
                 sum(func_control_blocks) if func_control_blocks else 0
             ),
+            # Distribution stats
+            "nesting_mean": 0.0,
+            "nesting_concentration": 0.0,
+            "nesting_high_count": 0,
+            "comparisons_mean": 0.0,
+            "comparisons_concentration": 0.0,
+            "comparisons_high_count": 0,
+            "branches_mean": 0.0,
+            "branches_concentration": 0.0,
+            "branches_high_count": 0,
+            "control_mean": 0.0,
+            "control_concentration": 0.0,
+            "control_high_count": 0,
         },
         "classes": {
             "count": len(class_method_counts),

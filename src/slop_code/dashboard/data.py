@@ -736,7 +736,7 @@ def compute_problem_deltas(df: pd.DataFrame) -> pd.DataFrame:
 
             # Non-carryover: total flags minus carried over flags
             total_flags = curr_row.get("rubric_total_flags", 0) or 0
-            carried_over = curr_row.get("rubric.carried_over", 0) or 0
+            carried_over = curr_row.get("rubric_carried_over", 0) or 0
             rubric_non_carryover = total_flags - carried_over
 
             results.append(

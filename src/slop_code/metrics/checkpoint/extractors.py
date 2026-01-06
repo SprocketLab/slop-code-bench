@@ -109,28 +109,6 @@ def _compute_distributions(
     }
 
 
-def _extract_optional_function_metrics(functions: dict) -> dict[str, float]:
-    """Extract optional function metrics with backward compatibility.
-
-    Args:
-        functions: Function statistics dictionary.
-
-    Returns:
-        Dictionary of optional metrics with default values.
-    """
-    optional_metrics = [
-        "nesting_mean",
-        "nesting_concentration",
-        "comparisons_mean",
-        "comparisons_concentration",
-        "branches_mean",
-        "branches_concentration",
-        "control_mean",
-        "control_concentration",
-    ]
-    return {key: functions.get(key, 0.0) for key in optional_metrics}
-
-
 def _extract_ast_grep_categories(ast_grep: dict) -> dict[str, int]:
     """Extract AST-grep violation counts by category.
 
@@ -174,7 +152,7 @@ def _build_metrics_from_snapshot(
     functions = snapshot["functions"]
     waste = snapshot["waste"]
     redundancy = snapshot["redundancy"]
-    ast_grep = snapshot.get("ast_grep") or snapshot.get("slop", {})
+    ast_grep = snapshot["ast_grep"]
     total_loc = lines["loc"]
 
     result: dict[str, Any] = {
@@ -210,24 +188,30 @@ def _build_metrics_from_snapshot(
         # Redundancy
         "clone_instances": redundancy["clone_instances"],
         "clone_lines": redundancy["clone_lines"],
+        # Function distribution stats
+        "nesting_mean": functions["nesting_mean"],
+        "nesting_concentration": functions["nesting_concentration"],
+        "comparisons_mean": functions["comparisons_mean"],
+        "comparisons_concentration": functions["comparisons_concentration"],
+        "branches_mean": functions["branches_mean"],
+        "branches_concentration": functions["branches_concentration"],
+        "control_mean": functions["control_mean"],
+        "control_concentration": functions["control_concentration"],
         # AST-grep
-        "ast_grep_violations": ast_grep.get("violations", 0),
+        "ast_grep_violations": ast_grep["violations"],
         # Source file tracking
         "source_file_count": snapshot.get("source_file_count", file_count),
     }
-
-    # Add optional function metrics with backward compatibility
-    result.update(_extract_optional_function_metrics(functions))
 
     # Add AST-grep category counts
     result.update(_extract_ast_grep_categories(ast_grep))
 
     # Per-LOC normalized metrics
     if total_loc > 0:
-        result["ast_grep_per_loc"] = ast_grep.get("violations", 0) / total_loc
+        result["ast_grep_per_loc"] = ast_grep["violations"] / total_loc
         result["lint_per_loc"] = lint["errors"] / total_loc
 
-    # Graph metrics (optional, may be None for non-Python or old data)
+    # Graph metrics (optional, may be None for non-Python)
     if graph := snapshot.get("graph"):
         result.update(
             {
@@ -427,10 +411,9 @@ def get_rubric_metrics(
 ) -> dict:
     """Extract rubric metrics with flattened criteria counts.
 
-    Returns a flat dict with dot-notation keys:
+    Returns a flat dict with keys:
     - rubric_total_flags: Total number of rubric violations
-    - rubric.files_flagged: Number of unique files with violations
-    - rubric.carried_over: Number of grades carried over from previous checkpoint
+    - rubric_carried_over: Number of grades carried over from previous checkpoint
     - rubric_verbosity_flags: Count of verbosity-type violations
     - rubric_erosion_flags: Count of erosion-type violations
 
@@ -455,7 +438,6 @@ def get_rubric_metrics(
     return {
         "rubric_total_flags": len(grades),
         "rubric_carried_over": carried_over_count,
-        "rubric.carried_over": carried_over_count,  # Dot-notation alias for dashboard
         "rubric_verbosity_flags": verbosity_count,
         "rubric_erosion_flags": erosion_count,
     }
