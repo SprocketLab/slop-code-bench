@@ -20,27 +20,54 @@ from slop_code.metrics.utils import MetricsError
 logger = get_logger(__name__)
 
 
+def _load_json_file(file_path: Path, checkpoint_dir: Path) -> dict | None:
+    """Load a JSON file and return as dict, or None if missing.
+
+    Args:
+        file_path: Path to the JSON file to load
+        checkpoint_dir: Parent checkpoint directory (for logging context)
+
+    Returns:
+        Parsed JSON dict, or None if file doesn't exist.
+
+    Raises:
+        MetricsError: If file exists but cannot be parsed.
+    """
+    if not file_path.exists():
+        return None
+
+    try:
+        with file_path.open("r") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        logger.error(
+            "Failed to parse JSON file",
+            checkpoint_dir=str(checkpoint_dir),
+            file=str(file_path),
+            error=str(e),
+        )
+        raise MetricsError(
+            f"Failed to parse file '{file_path}': {e}",
+            context={"checkpoint_dir": str(checkpoint_dir)},
+        ) from e
+
+
+def _load_jsonl_file(file_path: Path) -> Generator[dict, None, None]:
+    """Yield JSON objects from a JSONL file, skipping empty lines."""
+    if not file_path.exists():
+        return
+    with file_path.open("r") as f:
+        for line in f:
+            if line.strip():
+                yield json.loads(line)
+
+
 def load_snapshot_metrics(
     checkpoint_dir: Path, quality_file_name: str = QUALITY_METRIC_SAVENAME
 ) -> dict | None:
     """Load overall_quality.json and return as dict, or None if missing."""
     quality_file = checkpoint_dir / QUALITY_DIR / quality_file_name
-    if not quality_file.exists():
-        return None
-    try:
-        with quality_file.open("r") as f:
-            return json.load(f)
-    except json.JSONDecodeError as e:
-        logger.error(
-            "Failed to parse quality metrics JSON",
-            checkpoint_dir=str(checkpoint_dir),
-            quality_file=str(quality_file),
-            error=str(e),
-        )
-        raise MetricsError(
-            f"Failed to parse quality file '{quality_file}': {e}",
-            context={"checkpoint_dir": str(checkpoint_dir)},
-        ) from e
+    return _load_json_file(quality_file, checkpoint_dir)
 
 
 def load_file_metrics(
@@ -49,12 +76,7 @@ def load_file_metrics(
 ) -> Generator[dict, None, None]:
     """Yield file metrics from files.jsonl."""
     file_quality_path = checkpoint_dir / QUALITY_DIR / file_quality_name
-    if not file_quality_path.exists():
-        return
-    with file_quality_path.open("r") as f:
-        for line in f:
-            if line.strip():
-                yield json.loads(line)
+    return _load_jsonl_file(file_quality_path)
 
 
 def load_symbol_metrics(
@@ -63,31 +85,10 @@ def load_symbol_metrics(
 ) -> Generator[dict, None, None]:
     """Yield symbol metrics from symbols.jsonl."""
     symbol_path = checkpoint_dir / QUALITY_DIR / symbol_file_name
-    if not symbol_path.exists():
-        return
-    with symbol_path.open("r") as f:
-        for line in f:
-            if line.strip():
-                yield json.loads(line)
+    return _load_jsonl_file(symbol_path)
 
 
 def load_diff_metrics(checkpoint_dir: Path) -> dict | None:
-    """Load diff.json and return as dict, or None if missing/invalid."""
+    """Load diff.json and return as dict, or None if missing."""
     diff_file = checkpoint_dir / DIFF_FILENAME
-    if not diff_file.exists():
-        logger.warning(
-            "diff.json not found, skipping diff metrics",
-            checkpoint_dir=str(checkpoint_dir),
-            diff_file=str(diff_file),
-        )
-        return None
-    try:
-        return json.loads(diff_file.read_text())
-    except json.JSONDecodeError as e:
-        logger.warning(
-            "Failed to parse diff.json, skipping diff metrics",
-            checkpoint_dir=str(checkpoint_dir),
-            diff_file=str(diff_file),
-            error=str(e),
-        )
-        return None
+    return _load_json_file(diff_file, checkpoint_dir)

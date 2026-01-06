@@ -97,7 +97,7 @@ def build_problem_comparison_chart(
             "rubric_total_flags", pd.Series([0] * len(run_df))
         ).fillna(0)
         carried_over = run_df.get(
-            "rubric.carried_over", pd.Series([0] * len(run_df))
+            "rubric_carried_over", pd.Series([0] * len(run_df))
         ).fillna(0)
         new_flags = total_flags - carried_over
 

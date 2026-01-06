@@ -212,6 +212,141 @@ class TestRunSummaryPassRates:
         assert abs(summary.pass_rates.checkpoint.functionality - 2 / 3) < 0.01
         assert summary.pass_rates.checkpoint.error == 0.5
 
+    def test_pass_rates_exclude_zero_total_checkpoints(self, mock_config):
+        """Test that checkpoints with 0 tests for a type are excluded from averages.
+
+        Regression test: Previously, checkpoints with regression_total=0 would
+        contribute 0.0 to the mean, dragging down the average incorrectly.
+        """
+        checkpoints = [
+            {
+                "problem": "prob1",
+                "idx": 1,
+                "pass_rate": 1.0,
+                "total_tests": 10,
+                "passed_tests": 10,
+                "core_total": 5,
+                "core_passed": 5,
+                "functionality_total": 5,
+                "functionality_passed": 5,
+                "error_total": 0,  # No error tests
+                "error_passed": 0,
+                "regression_total": 0,  # No regression tests (first checkpoint)
+                "regression_passed": 0,
+            },
+            {
+                "problem": "prob1",
+                "idx": 2,
+                "pass_rate": 0.9,
+                "total_tests": 20,
+                "passed_tests": 18,
+                "core_total": 5,
+                "core_passed": 4,
+                "functionality_total": 5,
+                "functionality_passed": 4,
+                "error_total": 5,
+                "error_passed": 5,  # 100% error rate
+                "regression_total": 5,
+                "regression_passed": 5,  # 100% regression rate
+            },
+        ]
+        summary = compute_run_summary(mock_config, checkpoints)
+
+        # Core: mean of (5/5, 4/5) = (1.0 + 0.8) / 2 = 0.9
+        assert abs(summary.pass_rates.checkpoint.core - 0.9) < 0.01
+
+        # Error: only checkpoint 2 has error tests (5/5 = 1.0)
+        # checkpoint 1 should be EXCLUDED, not counted as 0.0
+        assert summary.pass_rates.checkpoint.error == 1.0
+
+        # Regression: only checkpoint 2 has regression tests (5/5 = 1.0)
+        # checkpoint 1 should be EXCLUDED, not counted as 0.0
+        assert summary.pass_rates.checkpoint.regression == 1.0
+
+    def test_pass_rates_multiple_checkpoints_with_zero_tests(self, mock_config):
+        """Test pass rate averaging with multiple checkpoints having no tests."""
+        checkpoints = [
+            {
+                "problem": "prob1",
+                "idx": 1,
+                "pass_rate": 1.0,
+                "total_tests": 10,
+                "passed_tests": 10,
+                "core_total": 10,
+                "core_passed": 10,
+                "error_total": 0,
+                "error_passed": 0,
+                "regression_total": 0,
+                "regression_passed": 0,
+            },
+            {
+                "problem": "prob2",
+                "idx": 1,
+                "pass_rate": 1.0,
+                "total_tests": 10,
+                "passed_tests": 10,
+                "core_total": 10,
+                "core_passed": 10,
+                "error_total": 0,
+                "error_passed": 0,
+                "regression_total": 0,
+                "regression_passed": 0,
+            },
+            {
+                "problem": "prob1",
+                "idx": 2,
+                "pass_rate": 0.8,
+                "total_tests": 20,
+                "passed_tests": 16,
+                "core_total": 10,
+                "core_passed": 8,
+                "error_total": 5,
+                "error_passed": 4,  # 80% error rate
+                "regression_total": 5,
+                "regression_passed": 4,  # 80% regression rate
+            },
+        ]
+        summary = compute_run_summary(mock_config, checkpoints)
+
+        # Error: only 1 checkpoint has error tests (4/5 = 0.8)
+        # The 2 checkpoints with error_total=0 should be EXCLUDED
+        assert summary.pass_rates.checkpoint.error == 0.8
+
+        # Regression: only 1 checkpoint has regression tests (4/5 = 0.8)
+        assert summary.pass_rates.checkpoint.regression == 0.8
+
+    def test_pass_rates_all_checkpoints_have_zero_tests_returns_zero(self, mock_config):
+        """Test that pass rate is 0.0 when ALL checkpoints have 0 tests for a type."""
+        checkpoints = [
+            {
+                "problem": "prob1",
+                "idx": 1,
+                "pass_rate": 1.0,
+                "total_tests": 10,
+                "passed_tests": 10,
+                "core_total": 10,
+                "core_passed": 10,
+                "error_total": 0,  # No error tests
+                "error_passed": 0,
+            },
+            {
+                "problem": "prob1",
+                "idx": 2,
+                "pass_rate": 1.0,
+                "total_tests": 10,
+                "passed_tests": 10,
+                "core_total": 10,
+                "core_passed": 10,
+                "error_total": 0,  # No error tests
+                "error_passed": 0,
+            },
+        ]
+        summary = compute_run_summary(mock_config, checkpoints)
+
+        # When no checkpoints have error tests, the rate should be 0.0
+        # (not NaN or an error)
+        assert summary.pass_rates.checkpoint.error == 0.0
+
 
 class TestRunSummaryCcMetrics:
     """Tests for cyclomatic complexity aggregation in compute_run_summary."""
