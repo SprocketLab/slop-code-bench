@@ -106,7 +106,9 @@ class TestValidateResumeConfig:
         result = _validate_resume_config(tmp_path, mock_run_cfg, mock_env_spec)
         assert result == []
 
-    def test_model_provider_mismatch(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_model_provider_mismatch(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test detection of model provider mismatch."""
         (tmp_path / "config.yaml").write_text(
             yaml.dump(
@@ -201,7 +203,9 @@ class TestValidateResumeConfig:
         assert result[0][1] == "/different/prompt.jinja"
         assert result[0][2] == "/path/to/prompt.jinja"
 
-    def test_environment_type_mismatch(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_environment_type_mismatch(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test detection of environment type mismatch."""
         (tmp_path / "config.yaml").write_text(
             yaml.dump(
@@ -224,7 +228,9 @@ class TestValidateResumeConfig:
         assert type_mismatch[1] == "local"
         assert type_mismatch[2] == "docker"
 
-    def test_environment_name_mismatch(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_environment_name_mismatch(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test detection of environment name mismatch."""
         (tmp_path / "config.yaml").write_text(
             yaml.dump(
@@ -305,7 +311,9 @@ class TestValidateResumeConfig:
         # Should have mismatches for: provider, name, agent.type, thinking, prompt_path, env.type, env.name
         assert len(result) >= 5
 
-    def test_missing_field_in_saved_config(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_missing_field_in_saved_config(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test that missing fields in saved config are skipped."""
         # Old config without thinking field
         (tmp_path / "config.yaml").write_text(
@@ -323,7 +331,9 @@ class TestValidateResumeConfig:
         # Should not report thinking as mismatch since it's missing in saved
         assert not any(m[0] == "thinking" for m in result)
 
-    def test_invalid_yaml_in_config(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_invalid_yaml_in_config(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test handling of invalid YAML in config file."""
         (tmp_path / "config.yaml").write_text("invalid: yaml: content: [")
 
@@ -331,7 +341,9 @@ class TestValidateResumeConfig:
         # Should return empty list on parse error
         assert result == []
 
-    def test_invalid_yaml_in_environment(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_invalid_yaml_in_environment(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test handling of invalid YAML in environment file."""
         (tmp_path / "config.yaml").write_text(
             yaml.dump(

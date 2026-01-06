@@ -13,13 +13,19 @@ from pydantic import Field, JsonValue
 
 from slop_code.agent_runner.agent import Agent, AgentConfigBase
 from slop_code.agent_runner.agents.utils import HOME_PATH
-from slop_code.agent_runner.credentials import (CredentialType,
-                                                ProviderCredential)
+from slop_code.agent_runner.credentials import (
+    CredentialType,
+    ProviderCredential,
+)
 from slop_code.agent_runner.models import AgentCostLimits, AgentError
 from slop_code.agent_runner.registry import register_agent
 from slop_code.common import deep_merge as _deep_merge
-from slop_code.common.llms import (APIPricing, ModelDefinition, ThinkingPreset,
-                                   TokenUsage)
+from slop_code.common.llms import (
+    APIPricing,
+    ModelDefinition,
+    ThinkingPreset,
+    TokenUsage,
+)
 from slop_code.execution import Session, StreamingRuntime
 
 STEP_FINISH_TYPE = "step_finish"
@@ -113,7 +119,9 @@ class OpenCodeAgent(Agent):
         # Merge config (agent_specific base, YAML config overrides)
         opencode_config = dict(config.config)
         if "config" in agent_settings:
-            opencode_config = _deep_merge(agent_settings["config"], opencode_config)
+            opencode_config = _deep_merge(
+                agent_settings["config"], opencode_config
+            )
 
         # Merge env (agent_specific base, YAML env overrides)
         env = dict(config.env)
@@ -238,7 +246,9 @@ class OpenCodeAgent(Agent):
         if self.credential is not None:
             if self.credential.credential_type == CredentialType.ENV_VAR:
                 # Use destination_key for the env var name
-                env_vars[self.credential.destination_key] = self.credential.value
+                env_vars[self.credential.destination_key] = (
+                    self.credential.value
+                )
             # File credentials are handled in _get_volumes()
 
         self._runtime = session.spawn(

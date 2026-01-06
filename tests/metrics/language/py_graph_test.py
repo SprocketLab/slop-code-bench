@@ -54,8 +54,7 @@ class TestBuildDependencyGraph:
     def test_single_call(self, tmp_path):
         """Test graph with one function calling another."""
         (tmp_path / "main.py").write_text(
-            "def helper():\n    return 1\n\n"
-            "def main():\n    return helper()\n"
+            "def helper():\n    return 1\n\ndef main():\n    return helper()\n"
         )
 
         graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
@@ -183,8 +182,7 @@ class TestBuildDependencyGraph:
         """Test calls across multiple files."""
         (tmp_path / "utils.py").write_text("def helper():\n    return 42\n")
         (tmp_path / "main.py").write_text(
-            "from utils import helper\n\n"
-            "def main():\n    return helper()\n"
+            "from utils import helper\n\ndef main():\n    return helper()\n"
         )
 
         graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
@@ -207,12 +205,14 @@ class TestBuildDependencyGraph:
 
     def test_nested_functions_not_included(self, tmp_path):
         """Nested functions should not be included in graph."""
-        (tmp_path / "main.py").write_text(dedent("""
+        (tmp_path / "main.py").write_text(
+            dedent("""
         def outer():
             def inner():
                 return 1
             return inner()
-        """))
+        """)
+        )
 
         graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
 
@@ -223,12 +223,14 @@ class TestBuildDependencyGraph:
 
     def test_recursive_function(self, tmp_path):
         """Test graph with recursive function."""
-        (tmp_path / "main.py").write_text(dedent("""
+        (tmp_path / "main.py").write_text(
+            dedent("""
         def factorial(n):
             if n <= 1:
                 return 1
             return n * factorial(n - 1)
-        """))
+        """)
+        )
 
         graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
 
@@ -338,7 +340,7 @@ class TestCyclicDependencyMass:
         metrics = compute_graph_metrics(graph)
 
         # 2 edges in cycle, 3 total edges -> CY = 2/3
-        assert metrics.cyclic_dependency_mass == pytest.approx(2/3, rel=0.01)
+        assert metrics.cyclic_dependency_mass == pytest.approx(2 / 3, rel=0.01)
 
     def test_self_loop(self):
         """Test CY with self-loop (recursive function)."""
@@ -470,12 +472,10 @@ class TestCallResolution:
         """Test that same function names in different files don't create false edges."""
         # Create two files with same function name "process"
         (tmp_path / "module_a.py").write_text(
-            "def process():\n"
-            "    return 'A'\n"
+            "def process():\n    return 'A'\n"
         )
         (tmp_path / "module_b.py").write_text(
-            "def process():\n"
-            "    return 'B'\n"
+            "def process():\n    return 'B'\n"
         )
         # Main imports both modules, but only calls module_a.process
         (tmp_path / "main.py").write_text(
@@ -490,23 +490,26 @@ class TestCallResolution:
 
         # Find the nodes
         main_node = [n for n in graph.nodes if "main.py::main" in n][0]
-        process_a_node = [n for n in graph.nodes if "module_a.py::process" in n][0]
-        process_b_node = [n for n in graph.nodes if "module_b.py::process" in n][0]
+        process_a_node = [
+            n for n in graph.nodes if "module_a.py::process" in n
+        ][0]
+        process_b_node = [
+            n for n in graph.nodes if "module_b.py::process" in n
+        ][0]
 
         # main() should call module_a.process
-        assert graph.has_edge(main_node, process_a_node), \
+        assert graph.has_edge(main_node, process_a_node), (
             "Should have edge from main to module_a.process"
+        )
 
         # main() should NOT call module_b.process (this is the bug!)
-        assert not graph.has_edge(main_node, process_b_node), \
+        assert not graph.has_edge(main_node, process_b_node), (
             "Should NOT have edge from main to module_b.process (false edge bug)"
+        )
 
     def test_qualified_module_calls(self, tmp_path):
         """Test that qualified calls like 'module.function()' are resolved correctly."""
-        (tmp_path / "utils.py").write_text(
-            "def helper():\n"
-            "    return 42\n"
-        )
+        (tmp_path / "utils.py").write_text("def helper():\n    return 42\n")
         (tmp_path / "main.py").write_text(
             "import utils\n\n"
             "def helper():\n"
@@ -520,22 +523,27 @@ class TestCallResolution:
         graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
 
         main_node = [n for n in graph.nodes if "main.py::main" in n][0]
-        utils_helper_node = [n for n in graph.nodes if "utils.py::helper" in n][0]
-        local_helper_node = [n for n in graph.nodes if "main.py::helper" in n][0]
+        utils_helper_node = [n for n in graph.nodes if "utils.py::helper" in n][
+            0
+        ]
+        local_helper_node = [n for n in graph.nodes if "main.py::helper" in n][
+            0
+        ]
 
         # main() should call utils.helper (qualified call)
-        assert graph.has_edge(main_node, utils_helper_node), \
+        assert graph.has_edge(main_node, utils_helper_node), (
             "Should have edge from main to utils.helper"
+        )
 
         # main() should NOT call local helper
-        assert not graph.has_edge(main_node, local_helper_node), \
+        assert not graph.has_edge(main_node, local_helper_node), (
             "Should NOT have edge from main to local helper (wrong resolution)"
+        )
 
     def test_same_file_resolution_priority(self, tmp_path):
         """Test that same-file calls are resolved correctly when imported names exist."""
         (tmp_path / "external.py").write_text(
-            "def helper():\n"
-            "    return 'external'\n"
+            "def helper():\n    return 'external'\n"
         )
         (tmp_path / "main.py").write_text(
             "from external import helper as ext_helper\n\n"
@@ -550,16 +558,22 @@ class TestCallResolution:
         graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
 
         main_node = [n for n in graph.nodes if "main.py::main" in n][0]
-        local_helper_node = [n for n in graph.nodes if "main.py::helper" in n][0]
-        external_helper_node = [n for n in graph.nodes if "external.py::helper" in n][0]
+        local_helper_node = [n for n in graph.nodes if "main.py::helper" in n][
+            0
+        ]
+        external_helper_node = [
+            n for n in graph.nodes if "external.py::helper" in n
+        ][0]
 
         # main() should call local helper (same-file priority)
-        assert graph.has_edge(main_node, local_helper_node), \
+        assert graph.has_edge(main_node, local_helper_node), (
             "Should have edge from main to local helper"
+        )
 
         # main() should NOT call external helper
-        assert not graph.has_edge(main_node, external_helper_node), \
+        assert not graph.has_edge(main_node, external_helper_node), (
             "Should NOT have edge from main to external helper"
+        )
 
 
 # =============================================================================
@@ -576,10 +590,7 @@ class TestAdvancedResolution:
         pkg = tmp_path / "mypackage"
         pkg.mkdir()
         (pkg / "__init__.py").write_text("")
-        (pkg / "submodule.py").write_text(
-            "def helper():\n"
-            "    return 42\n"
-        )
+        (pkg / "submodule.py").write_text("def helper():\n    return 42\n")
         (tmp_path / "main.py").write_text(
             "from mypackage.submodule import helper\n\n"
             "def main():\n"
@@ -596,8 +607,9 @@ class TestAdvancedResolution:
         helper_node = [n for n in graph.nodes if "submodule.py::helper" in n][0]
 
         # main() should call mypackage.submodule.helper
-        assert graph.has_edge(main_node, helper_node), \
+        assert graph.has_edge(main_node, helper_node), (
             "Should resolve dotted import 'from mypackage.submodule import helper'"
+        )
 
     def test_relative_import_same_package(self, tmp_path):
         """Test that relative imports like 'from . import sibling' resolve."""
@@ -605,14 +617,9 @@ class TestAdvancedResolution:
         pkg = tmp_path / "mypackage"
         pkg.mkdir()
         (pkg / "__init__.py").write_text("")
-        (pkg / "utils.py").write_text(
-            "def helper():\n"
-            "    return 42\n"
-        )
+        (pkg / "utils.py").write_text("def helper():\n    return 42\n")
         (pkg / "main.py").write_text(
-            "from . import utils\n\n"
-            "def main():\n"
-            "    return utils.helper()\n"
+            "from . import utils\n\ndef main():\n    return utils.helper()\n"
         )
 
         graph = build_dependency_graph(tmp_path, pkg / "main.py")
@@ -621,8 +628,9 @@ class TestAdvancedResolution:
         helper_node = [n for n in graph.nodes if "utils.py::helper" in n][0]
 
         # main() should call utils.helper via relative import
-        assert graph.has_edge(main_node, helper_node), \
+        assert graph.has_edge(main_node, helper_node), (
             "Should resolve relative import 'from . import utils'"
+        )
 
     def test_relative_import_from_module(self, tmp_path):
         """Test that relative imports like 'from .sibling import func' resolve."""
@@ -630,14 +638,9 @@ class TestAdvancedResolution:
         pkg = tmp_path / "mypackage"
         pkg.mkdir()
         (pkg / "__init__.py").write_text("")
-        (pkg / "utils.py").write_text(
-            "def helper():\n"
-            "    return 42\n"
-        )
+        (pkg / "utils.py").write_text("def helper():\n    return 42\n")
         (pkg / "main.py").write_text(
-            "from .utils import helper\n\n"
-            "def main():\n"
-            "    return helper()\n"
+            "from .utils import helper\n\ndef main():\n    return helper()\n"
         )
 
         graph = build_dependency_graph(tmp_path, pkg / "main.py")
@@ -646,8 +649,9 @@ class TestAdvancedResolution:
         helper_node = [n for n in graph.nodes if "utils.py::helper" in n][0]
 
         # main() should call helper via relative import
-        assert graph.has_edge(main_node, helper_node), \
+        assert graph.has_edge(main_node, helper_node), (
             "Should resolve relative import 'from .utils import helper'"
+        )
 
     def test_local_variable_type_tracking(self, tmp_path):
         """Test that method calls on local variables are resolved."""
@@ -674,10 +678,12 @@ class TestAdvancedResolution:
         send_node = [n for n in graph.nodes if "Client.send" in n][0]
 
         # main() should call Client.connect and Client.send
-        assert graph.has_edge(main_node, connect_node), \
+        assert graph.has_edge(main_node, connect_node), (
             "Should resolve c.connect() to Client.connect via type tracking"
-        assert graph.has_edge(main_node, send_node), \
+        )
+        assert graph.has_edge(main_node, send_node), (
             "Should resolve c.send() to Client.send via type tracking"
+        )
 
     def test_super_resolution(self, tmp_path):
         """Test that super().method() calls resolve to parent class methods."""
@@ -698,8 +704,9 @@ class TestAdvancedResolution:
         base_process = [n for n in graph.nodes if "Base.process" in n][0]
 
         # Child.process should call Base.process via super()
-        assert graph.has_edge(child_process, base_process), \
+        assert graph.has_edge(child_process, base_process), (
             "Should resolve super().process() to Base.process"
+        )
 
 
 # =============================================================================
@@ -736,8 +743,7 @@ class TestGraphIntegration:
     def test_metrics_serialization(self, tmp_path):
         """Test that GraphMetrics can be serialized to JSON."""
         (tmp_path / "main.py").write_text(
-            "def helper():\n    return 1\n\n"
-            "def main():\n    return helper()\n"
+            "def helper():\n    return 1\n\ndef main():\n    return helper()\n"
         )
 
         graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
@@ -757,7 +763,8 @@ class TestGraphIntegration:
     def test_complex_multi_file_project(self, tmp_path):
         """Test with a more complex multi-file project."""
         # Create a realistic project structure
-        (tmp_path / "main.py").write_text(dedent("""
+        (tmp_path / "main.py").write_text(
+            dedent("""
         from utils import process
         from helpers import helper1, helper2
 
@@ -765,9 +772,11 @@ class TestGraphIntegration:
             data = helper1()
             result = process(data)
             return helper2(result)
-        """))
+        """)
+        )
 
-        (tmp_path / "utils.py").write_text(dedent("""
+        (tmp_path / "utils.py").write_text(
+            dedent("""
         def process(data):
             return transform(validate(data))
 
@@ -776,22 +785,29 @@ class TestGraphIntegration:
 
         def validate(data):
             return data or {}
-        """))
+        """)
+        )
 
-        (tmp_path / "helpers.py").write_text(dedent("""
+        (tmp_path / "helpers.py").write_text(
+            dedent("""
         def helper1():
             return {}
 
         def helper2(data):
             return len(str(data))
-        """))
+        """)
+        )
 
         graph = build_dependency_graph(tmp_path, tmp_path / "main.py")
         metrics = compute_graph_metrics(graph)
 
         # Should have functions from all files
-        assert metrics.node_count >= 5  # main, process, transform, validate, helper1, helper2
+        assert (
+            metrics.node_count >= 5
+        )  # main, process, transform, validate, helper1, helper2
 
         # Should have edges from main to imported functions
         main_node = [n for n in graph.nodes if "main.py::main" in n][0]
-        assert graph.out_degree(main_node) >= 2  # Calls process, helper1, helper2
+        assert (
+            graph.out_degree(main_node) >= 2
+        )  # Calls process, helper1, helper2

@@ -258,8 +258,14 @@ class PytestRunner:
     # Maps marker name -> (description, GroupType)
     BUILTIN_MARKERS: dict[str, tuple[str, GroupType]] = {
         "error": ("error-handling / edge-case tests", GroupType.ERROR),
-        "functionality": ("non-core / nice-to-have tests", GroupType.FUNCTIONALITY),
-        "regression": ("regression tests from prior checkpoints", GroupType.REGRESSION),
+        "functionality": (
+            "non-core / nice-to-have tests",
+            GroupType.FUNCTIONALITY,
+        ),
+        "regression": (
+            "regression tests from prior checkpoints",
+            GroupType.REGRESSION,
+        ),
     }
 
     def _generate_pytest_ini(self, workspace_path: Path) -> None:
@@ -292,7 +298,9 @@ class PytestRunner:
         # Add problem-specific custom markers (MarkerConfig objects)
         for marker_name, marker_config in self.problem.markers.items():
             if marker_name not in self.BUILTIN_MARKERS:
-                markers_lines.append(f"    {marker_name}: {marker_config.description}")
+                markers_lines.append(
+                    f"    {marker_name}: {marker_config.description}"
+                )
 
         markers_section = "\n".join(markers_lines)
 

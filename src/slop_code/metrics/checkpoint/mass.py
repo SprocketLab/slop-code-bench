@@ -139,9 +139,9 @@ def _compute_gini_coefficient(masses: list[float]) -> float:
     return (2 * weighted_sum - (n + 1) * total) / (n * total)
 
 
-
-
-def compute_mass_metrics(symbol_iter: Iterator[dict[str, Any]]) -> dict[str, Any]:
+def compute_mass_metrics(
+    symbol_iter: Iterator[dict[str, Any]],
+) -> dict[str, Any]:
     """Compute mass metrics from symbol-level data.
 
     Args:
@@ -291,9 +291,7 @@ def _match_symbols(
     }
 
     # Primary key matches
-    matched_pairs = [
-        (before_by_key[k], after_by_key[k]) for k in matched_keys
-    ]
+    matched_pairs = [(before_by_key[k], after_by_key[k]) for k in matched_keys]
 
     # Fallback hash matching for unmatched symbols
     for hash_col in ["signature_hash", "body_hash", "structure_hash"]:
@@ -304,7 +302,11 @@ def _match_symbols(
         )
         matched_pairs.extend(hash_matches)
 
-    return matched_pairs, list(unmatched_after.values()), list(unmatched_before.values())
+    return (
+        matched_pairs,
+        list(unmatched_after.values()),
+        list(unmatched_before.values()),
+    )
 
 
 def _calc_symbol_mass(sym: dict[str, Any], metric: str, baseline: int) -> float:
@@ -382,8 +384,12 @@ def _add_complexity_metrics(
         added_masses, percentiles=[0.50, 0.75, 0.90], key_prefix=""
     )
     for pct in [50, 75, 90]:
-        result[f"delta.mass.{key}_added_top{pct}_count"] = added_top_n[f"top{pct}_count"]
-        result[f"delta.mass.{key}_added_top{pct}_mass"] = added_top_n[f"top{pct}_mass"]
+        result[f"delta.mass.{key}_added_top{pct}_count"] = added_top_n[
+            f"top{pct}_count"
+        ]
+        result[f"delta.mass.{key}_added_top{pct}_mass"] = added_top_n[
+            f"top{pct}_mass"
+        ]
 
     # Removed mass metrics
     result[f"delta.mass.{key}_removed"] = round(total_removed, 2)
@@ -437,7 +443,11 @@ def compute_mass_delta(
         - delta.mass.{branches,comparisons,etc}_added_top90_count
         - delta.mass.{metric}_added_top90_mass
     """
-    if not prior_symbols_path or not prior_symbols_path.exists() or not curr_symbols_path.exists():
+    if (
+        not prior_symbols_path
+        or not prior_symbols_path.exists()
+        or not curr_symbols_path.exists()
+    ):
         return {}
 
     before = _load_symbols(prior_symbols_path)
@@ -446,7 +456,9 @@ def compute_mass_delta(
     if not before and not after:
         return {}
 
-    matched_pairs, added_symbols, removed_symbols = _match_symbols(before, after)
+    matched_pairs, added_symbols, removed_symbols = _match_symbols(
+        before, after
+    )
     result: dict[str, Any] = {}
 
     # Track complexity masses for top N% distribution
@@ -458,8 +470,10 @@ def compute_mass_delta(
         baseline = BASELINES.get(metric, 0)
         key = KEY_NAMES[metric]
 
-        added_masses, removed_masses, before_masses, after_masses = _process_mass_deltas(
-            matched_pairs, added_symbols, removed_symbols, metric, baseline
+        added_masses, removed_masses, before_masses, after_masses = (
+            _process_mass_deltas(
+                matched_pairs, added_symbols, removed_symbols, metric, baseline
+            )
         )
 
         if metric == "complexity":
@@ -477,16 +491,26 @@ def compute_mass_delta(
         # Full suite for complexity
         if metric == "complexity":
             _add_complexity_metrics(
-                result, key, added_masses, removed_masses,
-                total_added, total_removed, gross_delta, net_delta
+                result,
+                key,
+                added_masses,
+                removed_masses,
+                total_added,
+                total_removed,
+                gross_delta,
+                net_delta,
             )
         else:
             # Top 90% only for other metrics
             added_top90 = _compute_top_n_distribution(
                 added_masses, percentiles=[0.90], key_prefix=""
             )
-            result[f"delta.mass.{key}_added_top90_count"] = added_top90["top90_count"]
-            result[f"delta.mass.{key}_added_top90_mass"] = added_top90["top90_mass"]
+            result[f"delta.mass.{key}_added_top90_count"] = added_top90[
+                "top90_count"
+            ]
+            result[f"delta.mass.{key}_added_top90_mass"] = added_top90[
+                "top90_mass"
+            ]
 
     # Top N% distribution deltas
     before_top_n = _compute_top_n_distribution(before_complexity_masses)
@@ -494,8 +518,12 @@ def compute_mass_delta(
     for pct in ["50", "75", "90"]:
         count_key = f"mass.top{pct}_count"
         mass_key = f"mass.top{pct}_mass"
-        result[f"delta.{count_key}"] = after_top_n[count_key] - before_top_n[count_key]
-        result[f"delta.{mass_key}"] = round(after_top_n[mass_key] - before_top_n[mass_key], 2)
+        result[f"delta.{count_key}"] = (
+            after_top_n[count_key] - before_top_n[count_key]
+        )
+        result[f"delta.{mass_key}"] = round(
+            after_top_n[mass_key] - before_top_n[mass_key], 2
+        )
 
     # Symbol change counts
     result["delta.symbols_added"] = len(added_symbols)
@@ -504,9 +532,13 @@ def compute_mass_delta(
     # Count modified symbols (complexity mass changed)
     baseline = BASELINES.get("complexity", 0)
     modified_count = sum(
-        1 for before_sym, after_sym in matched_pairs
-        if abs(_calc_symbol_mass(after_sym, "complexity", baseline) -
-               _calc_symbol_mass(before_sym, "complexity", baseline)) > 1e-9
+        1
+        for before_sym, after_sym in matched_pairs
+        if abs(
+            _calc_symbol_mass(after_sym, "complexity", baseline)
+            - _calc_symbol_mass(before_sym, "complexity", baseline)
+        )
+        > 1e-9
     )
     result["delta.symbols_modified"] = modified_count
 

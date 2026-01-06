@@ -28,11 +28,13 @@ class TestCalculateLintMetrics:
         test_file.write_text("def func():\n    x=1\n")
 
         # Mock ruff output
-        ruff_output = json.dumps([
-            {"code": "E501", "count": 3, "fixable": True},
-            {"code": "E302", "count": 2, "fixable": False},
-            {"code": "W503", "count": 1, "fixable": True},
-        ])
+        ruff_output = json.dumps(
+            [
+                {"code": "E501", "count": 3, "fixable": True},
+                {"code": "E302", "count": 2, "fixable": False},
+                {"code": "W503", "count": 1, "fixable": True},
+            ]
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output
@@ -116,13 +118,17 @@ class TestCalculateLintMetrics:
         assert metrics.fixable == 1
         assert metrics.counts["E501"] == 1
 
-    def test_calculate_lint_metrics_subprocess_error(self, tmp_path, monkeypatch):
+    def test_calculate_lint_metrics_subprocess_error(
+        self, tmp_path, monkeypatch
+    ):
         """Test handling subprocess errors gracefully."""
         test_file = tmp_path / "test.py"
         test_file.write_text("code")
 
         # Mock subprocess to raise CalledProcessError
-        mock_run = MagicMock(side_effect=subprocess.CalledProcessError(1, "ruff"))
+        mock_run = MagicMock(
+            side_effect=subprocess.CalledProcessError(1, "ruff")
+        )
         monkeypatch.setattr("subprocess.run", mock_run)
 
         metrics = calculate_lint_metrics(test_file)
@@ -146,9 +152,11 @@ class TestErrorCodes:
         test_file = tmp_path / "test.py"
         test_file.write_text("x=1")
 
-        ruff_output = json.dumps([
-            {"code": "E501", "count": 5, "fixable": True},
-        ])
+        ruff_output = json.dumps(
+            [
+                {"code": "E501", "count": 5, "fixable": True},
+            ]
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output
@@ -169,12 +177,14 @@ class TestErrorCodes:
         test_file = tmp_path / "test.py"
         test_file.write_text("code")
 
-        ruff_output = json.dumps([
-            {"code": "E501", "count": 2, "fixable": True},
-            {"code": "E302", "count": 3, "fixable": True},
-            {"code": "W503", "count": 1, "fixable": False},
-            {"code": "F401", "count": 4, "fixable": True},
-        ])
+        ruff_output = json.dumps(
+            [
+                {"code": "E501", "count": 2, "fixable": True},
+                {"code": "E302", "count": 3, "fixable": True},
+                {"code": "W503", "count": 1, "fixable": False},
+                {"code": "F401", "count": 4, "fixable": True},
+            ]
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output
@@ -194,10 +204,12 @@ class TestErrorCodes:
         test_file = tmp_path / "test.py"
         test_file.write_text("code")
 
-        ruff_output = json.dumps([
-            {"code": "E999", "count": 1, "fixable": False},
-            {"code": "E501", "count": 2, "fixable": False},
-        ])
+        ruff_output = json.dumps(
+            [
+                {"code": "E999", "count": 1, "fixable": False},
+                {"code": "E501", "count": 2, "fixable": False},
+            ]
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output
@@ -242,7 +254,9 @@ class TestLintMetricsEdgeCases:
         test_file = tmp_path / "test.py"
         test_file.write_text("code")
 
-        ruff_output = '  \n  [{"code": "E501", "count": 1, "fixable": true}]  \n'
+        ruff_output = (
+            '  \n  [{"code": "E501", "count": 1, "fixable": true}]  \n'
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output
@@ -266,9 +280,11 @@ class TestLintMetricsEdgeCases:
         test_file.write_text("code")
 
         # Missing count field
-        ruff_output = json.dumps([
-            {"code": "E501", "fixable": True},
-        ])
+        ruff_output = json.dumps(
+            [
+                {"code": "E501", "fixable": True},
+            ]
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output
@@ -291,9 +307,11 @@ class TestLintMetricsEdgeCases:
         test_file.write_text("code")
 
         # Missing fixable field
-        ruff_output = json.dumps([
-            {"code": "E501", "count": 1},
-        ])
+        ruff_output = json.dumps(
+            [
+                {"code": "E501", "count": 1},
+            ]
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output
@@ -311,15 +329,17 @@ class TestLintMetricsEdgeCases:
         test_file = tmp_path / "test.py"
         test_file.write_text("code")
 
-        ruff_output = json.dumps([
-            {
-                "code": "E501",
-                "count": 1,
-                "fixable": True,
-                "extra_field": "ignored",
-                "another": 123,
-            },
-        ])
+        ruff_output = json.dumps(
+            [
+                {
+                    "code": "E501",
+                    "count": 1,
+                    "fixable": True,
+                    "extra_field": "ignored",
+                    "another": 123,
+                },
+            ]
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output
@@ -338,9 +358,11 @@ class TestLintMetricsEdgeCases:
         test_file = tmp_path / "test.py"
         test_file.write_text("code")
 
-        ruff_output = json.dumps([
-            {"code": "E501", "count": 0, "fixable": True},
-        ])
+        ruff_output = json.dumps(
+            [
+                {"code": "E501", "count": 0, "fixable": True},
+            ]
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output
@@ -367,10 +389,12 @@ class TestLintMetricsModel:
         test_file = tmp_path / "test.py"
         test_file.write_text("code")
 
-        ruff_output = json.dumps([
-            {"code": "E501", "count": 2, "fixable": True},
-            {"code": "W503", "count": 1, "fixable": False},
-        ])
+        ruff_output = json.dumps(
+            [
+                {"code": "E501", "count": 2, "fixable": True},
+                {"code": "W503", "count": 1, "fixable": False},
+            ]
+        )
 
         mock_result = MagicMock()
         mock_result.stdout = ruff_output

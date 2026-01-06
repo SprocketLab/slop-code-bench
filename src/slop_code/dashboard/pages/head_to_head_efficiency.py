@@ -19,17 +19,26 @@ layout = dbc.Container(
     [
         dbc.Row(
             dbc.Col(
-                html.H3("Head to Head: Efficiency & Resources", className="display-6 fw-bold text-primary mb-4")
+                html.H3(
+                    "Head to Head: Efficiency & Resources",
+                    className="display-6 fw-bold text-primary mb-4",
+                )
             )
         ),
-
         dbc.Row(
             [
                 dbc.Col(
                     dbc.Card(
                         [
-                            dbc.CardHeader("Average Cost per Checkpoint ($)", className="fw-bold"),
-                            dbc.CardBody(loading_graph("h2h-cost-trajectory", height="400px")),
+                            dbc.CardHeader(
+                                "Average Cost per Checkpoint ($)",
+                                className="fw-bold",
+                            ),
+                            dbc.CardBody(
+                                loading_graph(
+                                    "h2h-cost-trajectory", height="400px"
+                                )
+                            ),
                         ],
                         className="mb-4 shadow-sm border-0 h-100",
                     ),
@@ -38,8 +47,15 @@ layout = dbc.Container(
                 dbc.Col(
                     dbc.Card(
                         [
-                            dbc.CardHeader("Cumulative Cost per Problem (Avg)", className="fw-bold"),
-                            dbc.CardBody(loading_graph("h2h-cumulative-cost", height="400px")),
+                            dbc.CardHeader(
+                                "Cumulative Cost per Problem (Avg)",
+                                className="fw-bold",
+                            ),
+                            dbc.CardBody(
+                                loading_graph(
+                                    "h2h-cumulative-cost", height="400px"
+                                )
+                            ),
                         ],
                         className="mb-4 shadow-sm border-0 h-100",
                     ),
@@ -52,8 +68,15 @@ layout = dbc.Container(
                 dbc.Col(
                     dbc.Card(
                         [
-                            dbc.CardHeader("Token Usage per Checkpoint (Avg)", className="fw-bold"),
-                            dbc.CardBody(loading_graph("h2h-token-trajectory", height="400px")),
+                            dbc.CardHeader(
+                                "Token Usage per Checkpoint (Avg)",
+                                className="fw-bold",
+                            ),
+                            dbc.CardBody(
+                                loading_graph(
+                                    "h2h-token-trajectory", height="400px"
+                                )
+                            ),
                         ],
                         className="mb-4 shadow-sm border-0 h-100",
                     ),
@@ -62,8 +85,15 @@ layout = dbc.Container(
                 dbc.Col(
                     dbc.Card(
                         [
-                            dbc.CardHeader("Duration per Checkpoint (Minutes)", className="fw-bold"),
-                            dbc.CardBody(loading_graph("h2h-duration-trajectory", height="400px")),
+                            dbc.CardHeader(
+                                "Duration per Checkpoint (Minutes)",
+                                className="fw-bold",
+                            ),
+                            dbc.CardBody(
+                                loading_graph(
+                                    "h2h-duration-trajectory", height="400px"
+                                )
+                            ),
                         ],
                         className="mb-4 shadow-sm border-0 h-100",
                     ),
@@ -75,6 +105,7 @@ layout = dbc.Container(
     fluid=True,
     className="py-3",
 )
+
 
 def normalize_and_bin(df, idx_col, num_bins=20):
     """Normalize checkpoint index to progress % and bin it."""
@@ -95,6 +126,7 @@ def normalize_and_bin(df, idx_col, num_bins=20):
     df["progress_bin"] = (df["progress"] * 20).round() * 5
 
     return df
+
 
 @callback(
     [
@@ -120,7 +152,8 @@ def update_efficiency(run_a_path, run_b_path):
     df_a_raw = df_chk[df_chk["run_path"] == run_a_path]
     df_b_raw = df_chk[df_chk["run_path"] == run_b_path]
 
-    if df_a_raw.empty or df_b_raw.empty: return default_outs
+    if df_a_raw.empty or df_b_raw.empty:
+        return default_outs
 
     row_a = df_a_raw.iloc[0]
     row_b = df_b_raw.iloc[0]
@@ -147,7 +180,8 @@ def update_efficiency(run_a_path, run_b_path):
     has_duration = "duration" in df_a_raw.columns
 
     rate_cols = ["cost"]
-    if has_tokens: rate_cols.append(token_col)
+    if has_tokens:
+        rate_cols.append(token_col)
     if has_duration:
         # Convert to minutes upfront
         df_a_raw["_dur_min"] = df_a_raw["duration"] / 60
@@ -160,7 +194,7 @@ def update_efficiency(run_a_path, run_b_path):
     def add_progress(df):
         df = df.copy()
         df["total"] = df["problem"].map(max_indices)
-        df["progress"] = (df[idx_col] / df["total"].replace(0, 1) * 100)
+        df["progress"] = df[idx_col] / df["total"].replace(0, 1) * 100
         return df
 
     df_a_scatter = add_progress(df_a_raw)
@@ -192,7 +226,9 @@ def update_efficiency(run_a_path, run_b_path):
             results.append(prob_binned)
 
         if not results:
-            return pd.DataFrame(index=bins, columns=state_cols + rate_cols).fillna(0)
+            return pd.DataFrame(
+                index=bins, columns=state_cols + rate_cols
+            ).fillna(0)
 
         # Average across problems
         final = pd.concat(results)
@@ -209,71 +245,99 @@ def update_efficiency(run_a_path, run_b_path):
         fig = go.Figure()
 
         # Scatter Points (A)
-        fig.add_trace(go.Scatter(
-            x=df_a_scatter["progress"],
-            y=df_a_scatter[col],
-            mode='markers',
-            name=f"{name_a} (Points)",
-            marker=dict(color='#1f77b4', size=3, opacity=0.3),
-            showlegend=False,
-            hoverinfo='skip'
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=df_a_scatter["progress"],
+                y=df_a_scatter[col],
+                mode="markers",
+                name=f"{name_a} (Points)",
+                marker=dict(color="#1f77b4", size=3, opacity=0.3),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
 
         # Scatter Points (B)
-        fig.add_trace(go.Scatter(
-            x=df_b_scatter["progress"],
-            y=df_b_scatter[col],
-            mode='markers',
-            name=f"{name_b} (Points)",
-            marker=dict(color='#d62728', size=3, opacity=0.3),
-            showlegend=False,
-            hoverinfo='skip'
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=df_b_scatter["progress"],
+                y=df_b_scatter[col],
+                mode="markers",
+                name=f"{name_b} (Points)",
+                marker=dict(color="#d62728", size=3, opacity=0.3),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
 
         # Trend Line (A)
         series_a = df_a_trend[col]
         series_a = series_a.rolling(window=3, min_periods=1, center=True).mean()
-        fig.add_trace(go.Scatter(
-            x=series_a.index,
-            y=series_a,
-            mode='lines',
-            name=name_a,
-            line=dict(color='#1f77b4', width=3, shape='spline', smoothing=1.0)
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=series_a.index,
+                y=series_a,
+                mode="lines",
+                name=name_a,
+                line=dict(
+                    color="#1f77b4", width=3, shape="spline", smoothing=1.0
+                ),
+            )
+        )
 
         # Trend Line (B)
         series_b = df_b_trend[col]
         series_b = series_b.rolling(window=3, min_periods=1, center=True).mean()
-        fig.add_trace(go.Scatter(
-            x=series_b.index,
-            y=series_b,
-            mode='lines',
-            name=name_b,
-            line=dict(color='#d62728', width=3, shape='spline', smoothing=1.0)
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=series_b.index,
+                y=series_b,
+                mode="lines",
+                name=name_b,
+                line=dict(
+                    color="#d62728", width=3, shape="spline", smoothing=1.0
+                ),
+            )
+        )
 
         fig.update_layout(
             title=title,
             xaxis_title="Problem Progress (%)",
             yaxis_title=y_axis,
             plot_bgcolor="white",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            margin=dict(l=40, r=40, t=50, b=40)
+            legend=dict(
+                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+            ),
+            margin=dict(l=40, r=40, t=50, b=40),
         )
-        fig.update_xaxes(showgrid=True, gridcolor='#f0f0f0', range=[-2, 102])
-        fig.update_yaxes(showgrid=True, gridcolor='#f0f0f0')
+        fig.update_xaxes(showgrid=True, gridcolor="#f0f0f0", range=[-2, 102])
+        fig.update_yaxes(showgrid=True, gridcolor="#f0f0f0")
         return fig
 
     # 1. Avg Cost per Checkpoint (Rate)
-    cost_traj = make_trajectory("cost", "Avg Incremental Cost per Progress Step", "$")
+    cost_traj = make_trajectory(
+        "cost", "Avg Incremental Cost per Progress Step", "$"
+    )
 
     # 2. Cumulative Cost (State)
-    cum_cost = make_trajectory("cumulative_cost", "Avg Cumulative Cost per Problem", "$")
+    cum_cost = make_trajectory(
+        "cumulative_cost", "Avg Cumulative Cost per Problem", "$"
+    )
 
     # 3. Tokens (Rate)
-    token_traj = make_trajectory(token_col, "Avg Output Tokens per Progress Step", "Tokens") if has_tokens else empty_figure()
+    token_traj = (
+        make_trajectory(
+            token_col, "Avg Output Tokens per Progress Step", "Tokens"
+        )
+        if has_tokens
+        else empty_figure()
+    )
 
     # 4. Duration (Rate)
-    dur_traj = make_trajectory("_dur_min", "Avg Duration per Progress Step", "Minutes") if has_duration else empty_figure()
+    dur_traj = (
+        make_trajectory("_dur_min", "Avg Duration per Progress Step", "Minutes")
+        if has_duration
+        else empty_figure()
+    )
 
     return cost_traj, cum_cost, token_traj, dur_traj

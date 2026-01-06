@@ -73,7 +73,9 @@ class TestComputeLineOffset:
 
     def test_line_before_any_hunks(self) -> None:
         """Line before first hunk has no offset."""
-        hunks = [DiffHunk(old_start=100, old_count=5, new_start=100, new_count=10)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=5, new_start=100, new_count=10)
+        ]
         new_line, is_changed = compute_line_offset(hunks, 50)
 
         assert new_line == 50
@@ -82,7 +84,9 @@ class TestComputeLineOffset:
     def test_line_after_single_hunk(self) -> None:
         """Line after hunk gets cumulative offset."""
         # Hunk adds 5 lines (10 - 5 = +5 delta)
-        hunks = [DiffHunk(old_start=100, old_count=5, new_start=100, new_count=10)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=5, new_start=100, new_count=10)
+        ]
         new_line, is_changed = compute_line_offset(hunks, 200)
 
         assert new_line == 205  # 200 + 5
@@ -91,8 +95,12 @@ class TestComputeLineOffset:
     def test_line_after_multiple_hunks(self) -> None:
         """Line after multiple hunks gets accumulated offset."""
         hunks = [
-            DiffHunk(old_start=10, old_count=5, new_start=10, new_count=15),  # +10
-            DiffHunk(old_start=50, old_count=10, new_start=60, new_count=5),  # -5
+            DiffHunk(
+                old_start=10, old_count=5, new_start=10, new_count=15
+            ),  # +10
+            DiffHunk(
+                old_start=50, old_count=10, new_start=60, new_count=5
+            ),  # -5
         ]
         new_line, is_changed = compute_line_offset(hunks, 100)
 
@@ -102,7 +110,9 @@ class TestComputeLineOffset:
 
     def test_line_inside_modified_region(self) -> None:
         """Line inside hunk is marked as changed."""
-        hunks = [DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)
+        ]
         new_line, is_changed = compute_line_offset(hunks, 105)
 
         assert is_changed is True
@@ -111,7 +121,9 @@ class TestComputeLineOffset:
 
     def test_line_at_hunk_boundary_start(self) -> None:
         """Line at exact start of hunk is inside changed region."""
-        hunks = [DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)
+        ]
         new_line, is_changed = compute_line_offset(hunks, 100)
 
         assert is_changed is True
@@ -119,7 +131,9 @@ class TestComputeLineOffset:
 
     def test_line_at_hunk_boundary_end(self) -> None:
         """Line just after hunk end is not changed."""
-        hunks = [DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)
+        ]
         # old_end = 100 + 10 = 110, so line 110 is just after
         new_line, is_changed = compute_line_offset(hunks, 110)
 
@@ -137,7 +151,9 @@ class TestComputeLineOffset:
     def test_between_hunks(self) -> None:
         """Line between two hunks gets offset from first hunk only."""
         hunks = [
-            DiffHunk(old_start=10, old_count=5, new_start=10, new_count=15),  # +10
+            DiffHunk(
+                old_start=10, old_count=5, new_start=10, new_count=15
+            ),  # +10
             DiffHunk(old_start=100, old_count=5, new_start=110, new_count=10),
         ]
         new_line, is_changed = compute_line_offset(hunks, 50)
@@ -151,7 +167,9 @@ class TestIsSpanUnchanged:
 
     def test_span_before_modified_region(self) -> None:
         """Span entirely before hunks is unchanged."""
-        hunks = [DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)
+        ]
         is_unchanged, new_start, new_end = is_span_unchanged(hunks, 50, 55)
 
         assert is_unchanged is True
@@ -160,7 +178,9 @@ class TestIsSpanUnchanged:
 
     def test_span_after_modified_region(self) -> None:
         """Span entirely after hunks is unchanged with offset."""
-        hunks = [DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)
+        ]
         is_unchanged, new_start, new_end = is_span_unchanged(hunks, 200, 205)
 
         assert is_unchanged is True
@@ -170,28 +190,36 @@ class TestIsSpanUnchanged:
 
     def test_span_overlapping_modified_region_start(self) -> None:
         """Span with start in modified region is changed."""
-        hunks = [DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)
+        ]
         is_unchanged, new_start, new_end = is_span_unchanged(hunks, 105, 115)
 
         assert is_unchanged is False
 
     def test_span_overlapping_modified_region_end(self) -> None:
         """Span with end in modified region is changed."""
-        hunks = [DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)
+        ]
         is_unchanged, new_start, new_end = is_span_unchanged(hunks, 95, 105)
 
         assert is_unchanged is False
 
     def test_span_containing_modified_region(self) -> None:
         """Span containing a hunk is changed."""
-        hunks = [DiffHunk(old_start=100, old_count=5, new_start=100, new_count=10)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=5, new_start=100, new_count=10)
+        ]
         is_unchanged, new_start, new_end = is_span_unchanged(hunks, 90, 120)
 
         assert is_unchanged is False
 
     def test_single_line_span(self) -> None:
         """Single line span (end=None) is handled correctly."""
-        hunks = [DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)
+        ]
         is_unchanged, new_start, new_end = is_span_unchanged(hunks, 50, None)
 
         assert is_unchanged is True
@@ -200,7 +228,9 @@ class TestIsSpanUnchanged:
 
     def test_single_line_in_changed_region(self) -> None:
         """Single line in changed region is marked changed."""
-        hunks = [DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)]
+        hunks = [
+            DiffHunk(old_start=100, old_count=10, new_start=100, new_count=20)
+        ]
         is_unchanged, new_start, new_end = is_span_unchanged(hunks, 105, None)
 
         assert is_unchanged is False
@@ -338,14 +368,34 @@ class TestCarryForwardGrades:
         """Multiple grades with different outcomes."""
         prev_grades = [
             # Unchanged, not re-flagged - should carry
-            {"criteria": "a", "start": 10, "confidence": 5, "file_name": "main.py"},
+            {
+                "criteria": "a",
+                "start": 10,
+                "confidence": 5,
+                "file_name": "main.py",
+            },
             # In changed region (100-104) - should not carry
-            {"criteria": "b", "start": 102, "confidence": 5, "file_name": "main.py"},
+            {
+                "criteria": "b",
+                "start": 102,
+                "confidence": 5,
+                "file_name": "main.py",
+            },
             # Unchanged, re-flagged - should not carry
-            {"criteria": "c", "start": 200, "confidence": 5, "file_name": "main.py"},
+            {
+                "criteria": "c",
+                "start": 200,
+                "confidence": 5,
+                "file_name": "main.py",
+            },
         ]
         new_grades = [
-            {"criteria": "c", "start": 210, "confidence": 4, "file_name": "main.py"},
+            {
+                "criteria": "c",
+                "start": 210,
+                "confidence": 4,
+                "file_name": "main.py",
+            },
         ]
         # Delta is +10, hunk covers old lines 100-104
         diff_text = "@@ -100,5 +100,15 @@\n context"
@@ -361,7 +411,12 @@ class TestCarryForwardGrades:
     def test_different_file_grades_ignored(self) -> None:
         """Grades for different files are not processed."""
         prev_grades = [
-            {"criteria": "a", "start": 10, "confidence": 5, "file_name": "other.py"},
+            {
+                "criteria": "a",
+                "start": 10,
+                "confidence": 5,
+                "file_name": "other.py",
+            },
         ]
         new_grades: list[dict] = []
         diff_text = ""
@@ -424,8 +479,18 @@ class TestCarryForwardAllFiles:
     def test_multiple_files_with_different_diffs(self) -> None:
         """Process multiple files with different diffs."""
         prev_grades = [
-            {"criteria": "a", "start": 50, "confidence": 5, "file_name": "main.py"},
-            {"criteria": "b", "start": 30, "confidence": 5, "file_name": "utils.py"},
+            {
+                "criteria": "a",
+                "start": 50,
+                "confidence": 5,
+                "file_name": "main.py",
+            },
+            {
+                "criteria": "b",
+                "start": 30,
+                "confidence": 5,
+                "file_name": "utils.py",
+            },
         ]
         new_grades: list[dict] = []
         file_diffs = {
@@ -451,7 +516,12 @@ class TestCarryForwardAllFiles:
     def test_file_not_in_diffs(self) -> None:
         """File without diff entry is treated as unchanged."""
         prev_grades = [
-            {"criteria": "a", "start": 50, "confidence": 5, "file_name": "main.py"},
+            {
+                "criteria": "a",
+                "start": 50,
+                "confidence": 5,
+                "file_name": "main.py",
+            },
         ]
         new_grades: list[dict] = []
         file_diffs: dict[str, str] = {}  # No diff for main.py

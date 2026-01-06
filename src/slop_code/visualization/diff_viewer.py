@@ -14,11 +14,13 @@ try:
     from pygments.lexers import TextLexer
     from pygments.lexers import get_lexer_for_filename
     from pygments.lexers import guess_lexer
+
     HAS_PYGMENTS = True
 except ImportError:
     HAS_PYGMENTS = False
 
 st.set_page_config(layout="wide", page_title="Diff Viewer")
+
 
 def load_json(path):
     try:
@@ -27,10 +29,18 @@ def load_json(path):
     except Exception:
         return None
 
+
 def get_subdirs(path):
     if not path.exists():
         return []
-    return sorted([d.name for d in path.iterdir() if d.is_dir() and not d.name.startswith('.')])
+    return sorted(
+        [
+            d.name
+            for d in path.iterdir()
+            if d.is_dir() and not d.name.startswith(".")
+        ]
+    )
+
 
 def get_checkpoints(problem_path):
     if not problem_path.exists():
@@ -40,35 +50,47 @@ def get_checkpoints(problem_path):
     for d in problem_path.iterdir():
         if d.is_dir() and d.name.startswith("checkpoint_"):
             try:
-                num = int(d.name.split('_')[1])
+                num = int(d.name.split("_")[1])
                 checkpoints.append((num, d.name))
             except ValueError:
                 pass
     checkpoints.sort(key=lambda x: x[0])
     return [c[1] for c in checkpoints]
 
+
 def get_snapshot_files(snapshot_dir):
     files = {}
     if not snapshot_dir.exists():
         return files
     for p in snapshot_dir.rglob("*"):
-        if p.is_file() and not p.name.startswith(".") and "__pycache__" not in p.parts and not p.name.endswith(".pyc"):
+        if (
+            p.is_file()
+            and not p.name.startswith(".")
+            and "__pycache__" not in p.parts
+            and not p.name.endswith(".pyc")
+        ):
             rel_path = p.relative_to(snapshot_dir)
             try:
-                files[str(rel_path)] = p.read_text(errors='replace')
+                files[str(rel_path)] = p.read_text(errors="replace")
             except Exception:
                 files[str(rel_path)] = "<binary or unreadable>"
     return files
 
+
 def get_highlighted_line(line, lexer):
     if not HAS_PYGMENTS:
-        return line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        return (
+            line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        )
     try:
         # highlight returns a full div/pre block usually, we need inner span
         # nowrap=True returns just the spans
-        return highlight(line, lexer, HtmlFormatter(nowrap=True, noclasses=True)).rstrip("\n")
+        return highlight(
+            line, lexer, HtmlFormatter(nowrap=True, noclasses=True)
+        ).rstrip("\n")
     except Exception:
         return line
+
 
 def generate_modern_diff(a, b, name_a, name_b, filename=""):
     # 1. Determine Lexer
@@ -94,18 +116,18 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
     rows = []
 
     for tag, i1, i2, j1, j2 in opcodes:
-        if tag == 'equal':
+        if tag == "equal":
             for i, j in zip(range(i1, i2), range(j1, j2)):
                 code = get_highlighted_line(lines_a[i], lexer)
                 rows.append(f"""
                 <tr>
-                    <td class="lineno">{i+1}</td>
+                    <td class="lineno">{i + 1}</td>
                     <td class="code">{code}</td>
-                    <td class="lineno">{j+1}</td>
+                    <td class="lineno">{j + 1}</td>
                     <td class="code">{code}</td>
                 </tr>
                 """)
-        elif tag == 'replace':
+        elif tag == "replace":
             # Align replaced lines as best as possible (simplistic)
             len_a = i2 - i1
             len_b = j2 - j1
@@ -129,31 +151,31 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
 
                 rows.append(f"""
                 <tr>
-                    <td class="lineno { 'diff-del-num' if num_a else ''}">{num_a}</td>
-                    <td class="code { 'diff-mod' if num_a else ''}">{cell_a}</td>
-                    <td class="lineno { 'diff-add-num' if num_b else ''}">{num_b}</td>
-                    <td class="code { 'diff-mod' if num_b else ''}">{cell_b}</td>
+                    <td class="lineno {"diff-del-num" if num_a else ""}">{num_a}</td>
+                    <td class="code {"diff-mod" if num_a else ""}">{cell_a}</td>
+                    <td class="lineno {"diff-add-num" if num_b else ""}">{num_b}</td>
+                    <td class="code {"diff-mod" if num_b else ""}">{cell_b}</td>
                 </tr>
                 """)
-        elif tag == 'delete':
+        elif tag == "delete":
             for i in range(i1, i2):
                 code = get_highlighted_line(lines_a[i], lexer)
                 rows.append(f"""
                 <tr>
-                    <td class="lineno diff-del-num">{i+1}</td>
+                    <td class="lineno diff-del-num">{i + 1}</td>
                     <td class="code diff-del">{code}</td>
                     <td class="lineno"></td>
                     <td class="code"></td>
                 </tr>
                 """)
-        elif tag == 'insert':
+        elif tag == "insert":
             for j in range(j1, j2):
                 code = get_highlighted_line(lines_b[j], lexer)
                 rows.append(f"""
                 <tr>
                     <td class="lineno"></td>
                     <td class="code"></td>
-                    <td class="lineno diff-add-num">{j+1}</td>
+                    <td class="lineno diff-add-num">{j + 1}</td>
                     <td class="code diff-add">{code}</td>
                 </tr>
                 """)
@@ -317,8 +339,11 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
     """
     return html
 
+
 # Parse command line arguments
-default_run_dir = "outputs/variance_runs/gpt-5.2_0.74.0_low_just-solve/20251227T1027"
+default_run_dir = (
+    "outputs/variance_runs/gpt-5.2_0.74.0_low_just-solve/20251227T1027"
+)
 
 try:
     # Use parse_known_args to ignore streamlit's own arguments
@@ -394,16 +419,24 @@ with col_ov1:
                     failed = results.get("failed", [])
                     passed = results.get("passed", [])
                     if failed:
-                        st.error(f"Failed ({len(failed)}): {', '.join(failed[:5])}{'...' if len(failed)>5 else ''}")
+                        st.error(
+                            f"Failed ({len(failed)}): {', '.join(failed[:5])}{'...' if len(failed) > 5 else ''}"
+                        )
                     if passed:
                         st.success(f"Passed ({len(passed)})")
             elif isinstance(tests, list):
                 st.write("**Tests (Legacy List Format)**")
-                passed_tests = [t.get("id") for t in tests if t.get("status") == "passed"]
-                failed_tests = [t.get("id") for t in tests if t.get("status") != "passed"]
+                passed_tests = [
+                    t.get("id") for t in tests if t.get("status") == "passed"
+                ]
+                failed_tests = [
+                    t.get("id") for t in tests if t.get("status") != "passed"
+                ]
 
                 if failed_tests:
-                    st.error(f"Failed ({len(failed_tests)}): {', '.join(failed_tests[:5])}{'...' if len(failed_tests)>5 else ''}")
+                    st.error(
+                        f"Failed ({len(failed_tests)}): {', '.join(failed_tests[:5])}{'...' if len(failed_tests) > 5 else ''}"
+                    )
                 if passed_tests:
                     st.success(f"Passed ({len(passed_tests)})")
             else:
@@ -423,7 +456,7 @@ with col_ov2:
             "Violations (AST)": ast_grep.get("violations"),
             "Lint Errors": lint.get("errors"),
             "Complexity (CC Sum)": complexity.get("cc_sum"),
-            "LOC": lines.get("loc")
+            "LOC": lines.get("loc"),
         }
         st.json(metrics)
 
@@ -458,6 +491,6 @@ else:
             content_b,
             f"{ckpt_a_name} (Before)",
             f"{ckpt_b_name} (After)",
-            filename=selected_file
+            filename=selected_file,
         )
         components.html(diff_html, height=800, scrolling=True)

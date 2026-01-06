@@ -295,7 +295,9 @@ class TestWorkspace:
         finally:
             workspace.cleanup()
 
-    def test_get_file_contents_expands_glob_patterns(self, workspace: Workspace):
+    def test_get_file_contents_expands_glob_patterns(
+        self, workspace: Workspace
+    ):
         """Test that get_file_contents expands glob patterns."""
         try:
             workspace.prepare()
@@ -390,9 +392,7 @@ class TestWorkspace:
         finally:
             workspace.cleanup()
 
-    def test_get_file_contents_directory_with_globs(
-        self, workspace: Workspace
-    ):
+    def test_get_file_contents_directory_with_globs(self, workspace: Workspace):
         """Test that directories and glob patterns work together."""
         try:
             workspace.prepare()

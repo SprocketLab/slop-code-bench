@@ -63,10 +63,15 @@ def cleanup_as_root(path: Path) -> None:
     # Use docker to remove files as root
     subprocess.run(
         [
-            "docker", "run", "--rm",
-            "-v", f"{path}:/cleanup",
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            f"{path}:/cleanup",
             "alpine:latest",
-            "rm", "-rf", "/cleanup"
+            "rm",
+            "-rf",
+            "/cleanup",
         ],
         capture_output=True,
         check=False,
@@ -105,6 +110,7 @@ class TestResumeCommandsIntegration:
 
         # Copy snapshot to workspace
         import shutil
+
         for item in snapshot_dir.iterdir():
             if item.is_dir():
                 shutil.copytree(item, workspace_dir / item.name)
@@ -154,9 +160,7 @@ class TestResumeCommandsIntegration:
             ".venv/bin/pip show requests",
             timeout=30,
         )
-        assert result.exit_code == 0, (
-            f"requests not installed: {result.stderr}"
-        )
+        assert result.exit_code == 0, f"requests not installed: {result.stderr}"
         assert "requests" in result.stdout.lower()
 
     def test_resume_commands_handle_missing_requirements(

@@ -278,7 +278,9 @@ def evaluate_snapshot(
                 )
             )
             raise typer.Exit(1)
-        checkpoint_name, checkpoint_config = ordered_checkpoints[checkpoint_num - 1]
+        checkpoint_name, checkpoint_config = ordered_checkpoints[
+            checkpoint_num - 1
+        ]
     elif checkpoint in checkpoint_names:
         checkpoint_idx = checkpoint_names.index(checkpoint)
         checkpoint_num = checkpoint_idx + 1

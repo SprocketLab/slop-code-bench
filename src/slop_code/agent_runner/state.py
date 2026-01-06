@@ -157,8 +157,10 @@ class AgentState(BaseModel):
             "total_tokens": total_tokens - self.checkpoint.total_tokens,
             "cost": cost - self.checkpoint.cost,
             "input_tokens": input_tokens - self.checkpoint.input_tokens,
-            "generated_tokens": generated_tokens - self.checkpoint.generated_tokens,
-            "reasoning_tokens": reasoning_tokens - self.checkpoint.reasoning_tokens,
+            "generated_tokens": generated_tokens
+            - self.checkpoint.generated_tokens,
+            "reasoning_tokens": reasoning_tokens
+            - self.checkpoint.reasoning_tokens,
         }
 
     def step(

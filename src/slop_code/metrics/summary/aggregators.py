@@ -38,7 +38,9 @@ def aggregate_per_problem(
     default: float = 0,
 ) -> list[float]:
     """Sum values for a given key across all checkpoints within each problem."""
-    return [sum(c.get(key, default) for c in chkpts) for chkpts in problems.values()]
+    return [
+        sum(c.get(key, default) for c in chkpts) for chkpts in problems.values()
+    ]
 
 
 def compute_costs_stats(
@@ -78,17 +80,26 @@ def compute_tokens_stats(
     token_types = ["input", "output", "cache_read", "cache_write", "reasoning"]
 
     # Extract checkpoint-level values and compute means
-    checkpoint_values = {t: extract_metric_values(checkpoints, t) for t in token_types}
+    checkpoint_values = {
+        t: extract_metric_values(checkpoints, t) for t in token_types
+    }
     checkpoint_means = TokenMeans(
         **{t: safe_mean(checkpoint_values[t]) for t in token_types}
     )
 
     # Aggregate per-problem totals and compute means
-    problem_totals = {t: aggregate_per_problem(problems, t) for t in token_types}
-    problem_means = TokenMeans(**{t: safe_mean(problem_totals[t]) for t in token_types})
+    problem_totals = {
+        t: aggregate_per_problem(problems, t) for t in token_types
+    }
+    problem_means = TokenMeans(
+        **{t: safe_mean(problem_totals[t]) for t in token_types}
+    )
 
     return TokenStats(
-        **{t: int(sum(checkpoint_values[t])) if checkpoint_values[t] else 0 for t in token_types},
+        **{
+            t: int(sum(checkpoint_values[t])) if checkpoint_values[t] else 0
+            for t in token_types
+        },
         checkpoint=checkpoint_means,
         problem=problem_means,
     )
@@ -118,14 +129,18 @@ def compute_solve_rates(
         Dict with pct_checkpoints_solved, pct_problems_solved, pct_problems_partial.
     """
     pass_rates_list = extract_metric_values(checkpoints, "pass_rate")
-    iso_pass_rates_list = extract_metric_values(checkpoints, "checkpoint_pass_rate")
+    iso_pass_rates_list = extract_metric_values(
+        checkpoints, "checkpoint_pass_rate"
+    )
     core_pass_rates_list = extract_metric_values(checkpoints, "core_pass_rate")
 
     if not pass_rates_list or not iso_pass_rates_list:
         return {}
 
     # Count checkpoints that fully pass (rate = 1.0)
-    checkpoints_solved = sum(1 for pr in pass_rates_list if math.isclose(pr, 1.0))
+    checkpoints_solved = sum(
+        1 for pr in pass_rates_list if math.isclose(pr, 1.0)
+    )
     iso_solved = sum(1 for pr in iso_pass_rates_list if math.isclose(pr, 1.0))
     core_solved = sum(1 for pr in core_pass_rates_list if math.isclose(pr, 1.0))
 
@@ -171,12 +186,18 @@ def compute_pass_rates_stats(
     """
     test_types = ["core", "total", "error", "functionality", "regression"]
 
-    def compute_pass_rates_by_type(chkpt: dict[str, Any]) -> dict[str, float | None]:
+    def compute_pass_rates_by_type(
+        chkpt: dict[str, Any],
+    ) -> dict[str, float | None]:
         """Extract pass rates for all test types from a single checkpoint."""
         return {
-            "total": compute_pass_rate(chkpt.get("passed_tests"), chkpt.get("total_tests")),
+            "total": compute_pass_rate(
+                chkpt.get("passed_tests"), chkpt.get("total_tests")
+            ),
             **{
-                t: compute_pass_rate(chkpt.get(f"{t}_passed"), chkpt.get(f"{t}_total"))
+                t: compute_pass_rate(
+                    chkpt.get(f"{t}_passed"), chkpt.get(f"{t}_total")
+                )
                 for t in ["core", "error", "functionality", "regression"]
             },
         }
@@ -187,7 +208,9 @@ def compute_pass_rates_stats(
         return statistics.mean(valid) if valid else 0.0
 
     # Collect checkpoint-level pass rates (excluding None for checkpoints with 0 tests)
-    checkpoint_pass_rates: dict[str, list[float | None]] = {t: [] for t in test_types}
+    checkpoint_pass_rates: dict[str, list[float | None]] = {
+        t: [] for t in test_types
+    }
     for chkpt in checkpoints:
         rates = compute_pass_rates_by_type(chkpt)
         for test_type in test_types:
@@ -197,14 +220,21 @@ def compute_pass_rates_stats(
     problem_pass_rates: dict[str, list[float]] = {t: [] for t in test_types}
     for problem_chkpts in problems.values():
         for test_type in test_types:
-            rates = [compute_pass_rates_by_type(c)[test_type] for c in problem_chkpts]
+            rates = [
+                compute_pass_rates_by_type(c)[test_type] for c in problem_chkpts
+            ]
             problem_pass_rates[test_type].append(mean_excluding_none(rates))
 
     return PassRatesStats(
         checkpoint=PassRatesByType(
-            **{t: mean_excluding_none(checkpoint_pass_rates[t]) for t in test_types}
+            **{
+                t: mean_excluding_none(checkpoint_pass_rates[t])
+                for t in test_types
+            }
         ),
-        problem=PassRatesByType(**{t: safe_mean(problem_pass_rates[t]) for t in test_types}),
+        problem=PassRatesByType(
+            **{t: safe_mean(problem_pass_rates[t]) for t in test_types}
+        ),
     )
 
 
@@ -225,9 +255,13 @@ def compute_cc_stats(
 
 def compute_ratios_stats(checkpoints: list[dict[str, Any]]) -> RatiosStats:
     """Compute quality ratio statistics (per LOC)."""
-    rubric_ratios = compute_ratio_values(checkpoints, "rubric_total_flags", "loc")
+    rubric_ratios = compute_ratio_values(
+        checkpoints, "rubric_total_flags", "loc"
+    )
     lint_ratios = compute_ratio_values(checkpoints, "lint_errors", "loc")
-    ast_grep_ratios = compute_ratio_values(checkpoints, "ast_grep_violations", "loc")
+    ast_grep_ratios = compute_ratio_values(
+        checkpoints, "ast_grep_violations", "loc"
+    )
 
     return RatiosStats(
         rubric=compute_metric_stats(rubric_ratios),
@@ -252,7 +286,9 @@ def compute_delta_stats(checkpoints: list[dict[str, Any]]) -> DeltaStats:
         lint=compute_metric_stats(extract_delta_values("lint_errors")),
         complex=compute_metric_stats(extract_delta_values("cc_high_count")),
         comparisons=compute_metric_stats(extract_delta_values("comparisons")),
-        ast_grep=compute_metric_stats(extract_delta_values("ast_grep_violations")),
+        ast_grep=compute_metric_stats(
+            extract_delta_values("ast_grep_violations")
+        ),
         rubric_non_carryover=compute_metric_stats(
             extract_delta_values("new_violations_per_loc")
         ),
@@ -279,11 +315,16 @@ def compute_composite_scores(
         # Verbosity: (ast_grep + rubric) / loc + wrapper_ratios
         if loc > 0 and total_callables > 0:
             flags_per_loc = (
-                chkpt.get("ast_grep_violations", 0) + chkpt.get("rubric_total_flags", 0)
+                chkpt.get("ast_grep_violations", 0)
+                + chkpt.get("rubric_total_flags", 0)
             ) / loc
             wrapper_ratio = chkpt.get("trivial_wrappers", 0) / total_callables
-            single_use_ratio = chkpt.get("single_use_functions", 0) / total_callables
-            verbosity_values.append(flags_per_loc + wrapper_ratio + single_use_ratio)
+            single_use_ratio = (
+                chkpt.get("single_use_functions", 0) / total_callables
+            )
+            verbosity_values.append(
+                flags_per_loc + wrapper_ratio + single_use_ratio
+            )
 
         # Erosion: high complexity ratio + lint per LOC
         lint_per_loc = chkpt.get("lint_per_loc", 0.0) or 0.0

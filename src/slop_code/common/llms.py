@@ -220,7 +220,9 @@ class ModelCatalog:
 
     _models: ClassVar[dict[str, ModelDefinition]] = {}
     _aliases: ClassVar[dict[str, str]] = {}  # alias -> canonical name
-    _provider_slugs: ClassVar[dict[str, str]] = {}  # provider-specific slug -> canonical name
+    _provider_slugs: ClassVar[
+        dict[str, str]
+    ] = {}  # provider-specific slug -> canonical name
     _loaded: ClassVar[bool] = False
 
     @classmethod

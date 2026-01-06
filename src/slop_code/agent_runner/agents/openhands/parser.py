@@ -13,7 +13,10 @@ from slop_code.agent_runner.trajectory import (
     TrajectoryStep,
     UserStep,
 )
-from slop_code.agent_runner.trajectory_parsing import ParseError, TrajectoryParser
+from slop_code.agent_runner.trajectory_parsing import (
+    ParseError,
+    TrajectoryParser,
+)
 
 
 class OpenHandsParser(TrajectoryParser):
@@ -131,8 +134,12 @@ class OpenHandsParser(TrajectoryParser):
             # Extract metadata from llm_metrics
             if "llm_metrics" in entry and "accumulated_cost" not in metadata:
                 llm_metrics = entry.get("llm_metrics", {})
-                metadata["accumulated_cost"] = llm_metrics.get("accumulated_cost", 0.0)
-                accumulated_tokens = llm_metrics.get("accumulated_token_usage", {})
+                metadata["accumulated_cost"] = llm_metrics.get(
+                    "accumulated_cost", 0.0
+                )
+                accumulated_tokens = llm_metrics.get(
+                    "accumulated_token_usage", {}
+                )
                 metadata["total_tokens"] = {
                     "input": accumulated_tokens.get("prompt_tokens", 0),
                     "output": accumulated_tokens.get("completion_tokens", 0),
@@ -208,7 +215,10 @@ class OpenHandsParser(TrajectoryParser):
                 content = args.get("content", "") or message
                 if content:
                     for step in reversed(steps):
-                        if isinstance(step, ToolUseStep) and step.result is None:
+                        if (
+                            isinstance(step, ToolUseStep)
+                            and step.result is None
+                        ):
                             step.result = content
                             break
 
@@ -229,7 +239,9 @@ class OpenHandsParser(TrajectoryParser):
                     try:
                         event = json.loads(line)
                     except json.JSONDecodeError as e:
-                        raise ParseError(f"Invalid JSON at line {line_num}: {e}")
+                        raise ParseError(
+                            f"Invalid JSON at line {line_num}: {e}"
+                        )
 
                     self._process_event(event, steps)
         except OSError as e:

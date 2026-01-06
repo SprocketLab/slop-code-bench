@@ -68,11 +68,7 @@ class TestSerializePathDict:
         assert result == {"config": "configs/test.yaml"}
 
     def test_nested_dict_with_path(self) -> None:
-        data = {
-            "outer": {
-                "inner": PROJECT_ROOT / "configs" / "nested.yaml"
-            }
-        }
+        data = {"outer": {"inner": PROJECT_ROOT / "configs" / "nested.yaml"}}
         result = serialize_path_dict(data)
         assert result == {"outer": {"inner": "configs/nested.yaml"}}
 

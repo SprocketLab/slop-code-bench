@@ -5,7 +5,11 @@ import subprocess
 import pytest
 
 
-def run_main(input_text: str, args: list[str] | None = None, entrypoint: str = "python main.py") -> str:
+def run_main(
+    input_text: str,
+    args: list[str] | None = None,
+    entrypoint: str = "python main.py",
+) -> str:
     """Run main.py with the given input and return stdout."""
     cmd = entrypoint.split()
     if args:
@@ -25,12 +29,16 @@ class TestLineCount:
 
     def test_lines_single_line(self, entrypoint):
         """Test line count with single line."""
-        output = run_main("hello world", args=["--lines"], entrypoint=entrypoint)
+        output = run_main(
+            "hello world", args=["--lines"], entrypoint=entrypoint
+        )
         assert output == "words: 2, lines: 1"
 
     def test_lines_multiple(self, entrypoint):
         """Test line count with multiple lines."""
-        output = run_main("hello world\nfoo bar\nbaz", args=["--lines"], entrypoint=entrypoint)
+        output = run_main(
+            "hello world\nfoo bar\nbaz", args=["--lines"], entrypoint=entrypoint
+        )
         assert output == "words: 5, lines: 3"
 
     def test_lines_empty(self, entrypoint):

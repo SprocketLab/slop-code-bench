@@ -30,7 +30,9 @@ class CheckpointValidationError(Exception):
     """Raised when a checkpoint configuration fails validation."""
 
 
-def set_object_attr(obj: BaseModel | Mapping, attr_name: str, value: ResultValueType):
+def set_object_attr(
+    obj: BaseModel | Mapping, attr_name: str, value: ResultValueType
+):
     """Set ``attr_name`` on either a Pydantic model or mapping-like object."""
     if isinstance(obj, Mapping):
         obj[attr_name] = value
@@ -81,12 +83,16 @@ def set_nested_value(
         return
     v = get_object_attr(obj, attr_name)
     if not isinstance(v, Mapping):
-        raise TypeError(f"value must be a mapping: {attr_name}={type(v).__name__}")
+        raise TypeError(
+            f"value must be a mapping: {attr_name}={type(v).__name__}"
+        )
     v = functools.reduce(lambda dct, key: dct[key], key_path[:-1], v)
     v[key_path[-1]] = value  # type: ignore[index]
 
 
-def maybe_set_nested(dct: dict[str, Any], keys: list[str] | str, value: Any) -> None:
+def maybe_set_nested(
+    dct: dict[str, Any], keys: list[str] | str, value: Any
+) -> None:
     """Assign ``value`` into ``dct`` at a nested path if possible.
 
     When ``keys`` is a list, dictionaries are created along the way as

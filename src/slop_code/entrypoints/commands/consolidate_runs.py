@@ -227,7 +227,9 @@ def consolidate_runs(
 
         # Load checkpoints first to check for mass columns
         checkpoint_results_path = run_dir / CHECKPOINT_RESULTS_FILENAME
-        checkpoint_records = list(load_checkpoint_results(checkpoint_results_path))
+        checkpoint_records = list(
+            load_checkpoint_results(checkpoint_results_path)
+        )
 
         # Check if any checkpoint is missing mass columns - skip entire run if so
         if checkpoint_records and check_mass_columns(checkpoint_records[0]):
@@ -352,7 +354,9 @@ def consolidate_runs(
             if not df.empty:
                 filename = f"{name}.csv"
                 df.to_csv(output_dir / filename, index=False)
-                typer.echo(f"  {filename}: {len(df)} rows, {len(df.columns)} cols")
+                typer.echo(
+                    f"  {filename}: {len(df)} rows, {len(df.columns)} cols"
+                )
 
     # Write quality files
     if all_quality_files:
@@ -363,7 +367,9 @@ def consolidate_runs(
     if all_quality_symbols:
         df = pd.DataFrame(all_quality_symbols)
         df.to_csv(
-            output_dir / "quality_symbols.csv.gz", index=False, compression="gzip"
+            output_dir / "quality_symbols.csv.gz",
+            index=False,
+            compression="gzip",
         )
         typer.echo(f"  quality_symbols.csv.gz: {len(df)} rows (compressed)")
 
@@ -374,12 +380,16 @@ def consolidate_runs(
             index=False,
             compression="gzip",
         )
-        typer.echo(f"  quality_ast_violations.csv.gz: {len(df)} rows (compressed)")
+        typer.echo(
+            f"  quality_ast_violations.csv.gz: {len(df)} rows (compressed)"
+        )
 
     # Write evaluations
     if all_evaluations:
         df = pd.DataFrame(all_evaluations)
-        df.to_csv(output_dir / "evaluations.csv.gz", index=False, compression="gzip")
+        df.to_csv(
+            output_dir / "evaluations.csv.gz", index=False, compression="gzip"
+        )
         typer.echo(f"  evaluations.csv.gz: {len(df)} rows (compressed)")
 
     # Write rubric
@@ -563,9 +573,9 @@ def flatten_result(
                     "functionality",
                     "regression",
                 ]:
-                    flat[f"pass_rate_{level}_{rate_type}"] = pass_rates[level].get(
-                        rate_type
-                    )
+                    flat[f"pass_rate_{level}_{rate_type}"] = pass_rates[
+                        level
+                    ].get(rate_type)
 
     return flat
 
@@ -666,7 +676,11 @@ def split_checkpoint_columns(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
 
 
 def expand_evaluation(
-    eval_json: dict[str, Any], setup: str, run_id: str, problem: str, checkpoint: str
+    eval_json: dict[str, Any],
+    setup: str,
+    run_id: str,
+    problem: str,
+    checkpoint: str,
 ) -> list[dict[str, Any]]:
     """Expand evaluation.json tests into flat rows."""
     rows: list[dict[str, Any]] = []

@@ -29,7 +29,9 @@ def make_dockerfile(
         Path, typer.Argument(exists=True, dir_okay=False)
     ],
 ) -> None:
-    environment_config = config_loader.resolve_environment(environment_config_path)
+    environment_config = config_loader.resolve_environment(
+        environment_config_path
+    )
     if not isinstance(environment_config, docker_runtime.DockerEnvironmentSpec):
         raise typer.BadParameter(
             "Environment config must be a DockerEnvironmentSpec"
@@ -54,7 +56,9 @@ def build_base_image(
     force_build: bool = False,
 ) -> None:
     client = docker.from_env()
-    environment_config = config_loader.resolve_environment(environment_config_path)
+    environment_config = config_loader.resolve_environment(
+        environment_config_path
+    )
 
     docker_runtime.build_base_image(
         client,
@@ -82,7 +86,9 @@ def build_submission_image(
     build_base: bool = False,
 ) -> None:
     client = docker.from_env()
-    environment_config = config_loader.resolve_environment(environment_config_path)
+    environment_config = config_loader.resolve_environment(
+        environment_config_path
+    )
     problem = ProblemConfig.from_yaml(ctx.obj.problem_path / problem_name)
 
     static_assets = resolve_static_assets(problem.path, problem.static_assets)
@@ -116,7 +122,9 @@ def build_agent_image(
 ) -> None:
     _, agent_data = config_loader.load_agent_config(agent_config_path)
     agent_config = build_agent_config(agent_data)
-    environment_config = config_loader.resolve_environment(environment_config_path)
+    environment_config = config_loader.resolve_environment(
+        environment_config_path
+    )
     common.build_agent_docker(
         agent_config=agent_config,
         environment=environment_config,

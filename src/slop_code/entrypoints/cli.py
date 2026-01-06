@@ -127,7 +127,9 @@ def main(
 
     if not quiet:
         typer.echo(
-            typer.style("Starting Slop Code CLI", fg=typer.colors.GREEN, bold=True)
+            typer.style(
+                "Starting Slop Code CLI", fg=typer.colors.GREEN, bold=True
+            )
         )
         typer.echo(f"\tProblem path: {problem_path}")
         typer.echo(f"\tSeed: {seed}")

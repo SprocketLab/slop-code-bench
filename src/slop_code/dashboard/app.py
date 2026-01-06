@@ -66,9 +66,7 @@ all_dates = []
 max_problems_found = 0
 
 for run_path in available_run_paths:
-
     try:
-
         metadata = load_config_metadata(run_path)
 
         # Use get_display_annotation for consistent formatting
@@ -96,10 +94,12 @@ for run_path in available_run_paths:
             "model_name": model_name,
             "agent_type": metadata.get("agent_type", "Unknown Agent"),
             "agent_version": metadata.get("agent_version", ""),
-            "prompt_template": metadata.get("prompt_template", "Unknown Prompt"),
+            "prompt_template": metadata.get(
+                "prompt_template", "Unknown Prompt"
+            ),
             "thinking_display": thinking_display,
             "run_date": date,
-            "num_problems": num_problems
+            "num_problems": num_problems,
         }
 
         # Group by model + thinking mode
@@ -109,14 +109,19 @@ for run_path in available_run_paths:
         all_metadata_list.append(run_info)
 
     except Exception as e:
-
-        print(f"Warning: Could not load metadata for run {run_path.name}: {e}. Skipping.")
+        print(
+            f"Warning: Could not load metadata for run {run_path.name}: {e}. Skipping."
+        )
 
 
 if not all_run_values:
-    print(f"No runs found in {runs_dir} (looking for {runs_dir}/*/checkpoints.jsonl and valid config.yaml)")
+    print(
+        f"No runs found in {runs_dir} (looking for {runs_dir}/*/checkpoints.jsonl and valid config.yaml)"
+    )
 else:
-    print(f"Found {len(all_run_values)} runs across {len(runs_by_model)} models.")
+    print(
+        f"Found {len(all_run_values)} runs across {len(runs_by_model)} models."
+    )
 
 # Compute filter ranges
 thinking_options = sorted(list(thinking_modes_seen))
@@ -159,30 +164,47 @@ app.layout = html.Div(
         dcc.Store(id="run-analysis-store", storage_type="session"),
         # Store for persisting Accordion state (expanded items)
         dcc.Store(id="accordion-state-store", storage_type="session"),
-
         # Default to selecting all runs initially
         dcc.Store(
-            id="selected-runs-store", data=all_run_values, storage_type="session"
+            id="selected-runs-store",
+            data=all_run_values,
+            storage_type="session",
         ),
         dcc.Location(id="url", refresh=False),
         sidebar(),
         html.Div(dash.page_container, style=CONTENT_STYLE),
-
         # Redefine Modal here with pre-populated content
         dbc.Modal(
             [
-                dbc.ModalHeader(dbc.ModalTitle("Configuration"), id="settings-modal-header"),
+                dbc.ModalHeader(
+                    dbc.ModalTitle("Configuration"), id="settings-modal-header"
+                ),
                 dbc.ModalBody(
                     [
-                        html.Div(build_configuration_modal_content(), id="settings-content-global", style={"display": "none"}),
-                        html.Div(build_h2h_modal_content(), id="settings-content-h2h", style={"display": "none"}),
-                        html.Div(build_run_analysis_modal_content(), id="settings-content-ra", style={"display": "none"}),
+                        html.Div(
+                            build_configuration_modal_content(),
+                            id="settings-content-global",
+                            style={"display": "none"},
+                        ),
+                        html.Div(
+                            build_h2h_modal_content(),
+                            id="settings-content-h2h",
+                            style={"display": "none"},
+                        ),
+                        html.Div(
+                            build_run_analysis_modal_content(),
+                            id="settings-content-ra",
+                            style={"display": "none"},
+                        ),
                     ],
-                    id="settings-modal-body"
+                    id="settings-modal-body",
                 ),
                 dbc.ModalFooter(
                     dbc.Button(
-                        "Close", id="close-settings-modal", className="ms-auto", n_clicks=0
+                        "Close",
+                        id="close-settings-modal",
+                        className="ms-auto",
+                        n_clicks=0,
                     )
                 ),
             ],
@@ -229,9 +251,21 @@ def toggle_settings_modal(n_open, n_close, is_open, pathname):
 
             return True, style_g, style_h, style_r, dbc.ModalTitle(title_text)
 
-        return False, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return (
+            False,
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
+        )
 
-    return is_open, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+    return (
+        is_open,
+        dash.no_update,
+        dash.no_update,
+        dash.no_update,
+        dash.no_update,
+    )
 
 
 if __name__ == "__main__":

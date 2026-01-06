@@ -18,11 +18,21 @@ from slop_code.dashboard.settings_content import (
 
 
 def _manage_run_selection_logic(
-    start_date, end_date, min_problems, selected_thinking,
+    start_date,
+    end_date,
+    min_problems,
+    selected_thinking,
     appearance_options,
-    select_all_n_clicks, deselect_all_n_clicks,
-    group_switch_values, subgroup_switch_values, selected_values_groups,
-    all_runs, current_selection, saved_settings, accordion_state, ctx
+    select_all_n_clicks,
+    deselect_all_n_clicks,
+    group_switch_values,
+    subgroup_switch_values,
+    selected_values_groups,
+    all_runs,
+    current_selection,
+    saved_settings,
+    accordion_state,
+    ctx,
 ):
     """
     Extracted logic for manage_run_selection to facilitate testing.
@@ -30,7 +40,9 @@ def _manage_run_selection_logic(
     """
     # Use rsplit to only split off the property (e.g. '.value') from the end
     # This preserves dots inside the JSON ID (like "gpt-5.2")
-    triggered_id = ctx.triggered[0]["prop_id"].rsplit(".", 1)[0] if ctx.triggered else None
+    triggered_id = (
+        ctx.triggered[0]["prop_id"].rsplit(".", 1)[0] if ctx.triggered else None
+    )
 
     if not all_runs:
         return [], [], no_update
@@ -38,7 +50,9 @@ def _manage_run_selection_logic(
     min_problems = min_problems or 0
     selected_thinking = set(selected_thinking or [])
     appearance_options = appearance_options or []
-    disable_colors = ["disable_colors"] if "disable_colors" in appearance_options else []
+    disable_colors = (
+        ["disable_colors"] if "disable_colors" in appearance_options else []
+    )
     show_annotations = "show_annotations" in appearance_options
     group_runs = "group_runs" in appearance_options
     common_problems_only = "common_problems_only" in appearance_options
@@ -76,67 +90,82 @@ def _manage_run_selection_logic(
         new_selection = []
 
     elif triggered_id and "group-select-switch" in triggered_id:
-            # Parse triggered index (parent directory name)
-            try:
-                triggered_idx = json.loads(triggered_id)["index"]
-            except (json.JSONDecodeError, KeyError):
-                triggered_idx = None
+        # Parse triggered index (parent directory name)
+        try:
+            triggered_idx = json.loads(triggered_id)["index"]
+        except (json.JSONDecodeError, KeyError):
+            triggered_idx = None
 
-            # Get the value from the context
-            is_selected = ctx.triggered[0]['value']
+        # Get the value from the context
+        is_selected = ctx.triggered[0]["value"]
 
-            if triggered_idx:
-                # Find runs in this group
-                group_runs = [r for r in visible_runs if Path(r["value"]).parent.name == triggered_idx]
-                group_ids = set(r["value"] for r in group_runs)
+        if triggered_idx:
+            # Find runs in this group
+            group_runs = [
+                r
+                for r in visible_runs
+                if Path(r["value"]).parent.name == triggered_idx
+            ]
+            group_ids = set(r["value"] for r in group_runs)
 
-                current_sel_set = set(current_selection or [])
+            current_sel_set = set(current_selection or [])
 
-                if is_selected:
-                    new_selection = list(current_sel_set.union(group_ids))
-                else:
-                    new_selection = list(current_sel_set - group_ids)
+            if is_selected:
+                new_selection = list(current_sel_set.union(group_ids))
             else:
-                new_selection = current_selection if current_selection is not None else visible_run_values
+                new_selection = list(current_sel_set - group_ids)
+        else:
+            new_selection = (
+                current_selection
+                if current_selection is not None
+                else visible_run_values
+            )
 
     elif triggered_id and "subgroup-select-switch" in triggered_id:
-            try:
-                triggered_idx = json.loads(triggered_id)["index"] # "Parent|Prompt"
-                parts = triggered_idx.split("|")
-                parent_part = parts[0]
-                prompt_part = parts[1] if len(parts) > 1 else "Unknown"
-            except (json.JSONDecodeError, KeyError, IndexError):
-                triggered_idx = None
+        try:
+            triggered_idx = json.loads(triggered_id)["index"]  # "Parent|Prompt"
+            parts = triggered_idx.split("|")
+            parent_part = parts[0]
+            prompt_part = parts[1] if len(parts) > 1 else "Unknown"
+        except (json.JSONDecodeError, KeyError, IndexError):
+            triggered_idx = None
 
-            is_selected = ctx.triggered[0]['value']
+        is_selected = ctx.triggered[0]["value"]
 
-            if triggered_idx:
-                group_runs = [
-                    r for r in visible_runs
-                    if Path(r["value"]).parent.name == parent_part
-                    and r.get("prompt_template", "Unknown") == prompt_part
-                ]
-                group_ids = set(r["value"] for r in group_runs)
-                current_sel_set = set(current_selection or [])
+        if triggered_idx:
+            group_runs = [
+                r
+                for r in visible_runs
+                if Path(r["value"]).parent.name == parent_part
+                and r.get("prompt_template", "Unknown") == prompt_part
+            ]
+            group_ids = set(r["value"] for r in group_runs)
+            current_sel_set = set(current_selection or [])
 
-                if is_selected:
-                    new_selection = list(current_sel_set.union(group_ids))
-                else:
-                    new_selection = list(current_sel_set - group_ids)
+            if is_selected:
+                new_selection = list(current_sel_set.union(group_ids))
             else:
-                new_selection = current_selection if current_selection is not None else visible_run_values
+                new_selection = list(current_sel_set - group_ids)
+        else:
+            new_selection = (
+                current_selection
+                if current_selection is not None
+                else visible_run_values
+            )
 
     elif triggered_id and triggered_id.startswith('{"index"'):
         # Triggered by run selector (individual checkbox)
         # Flatten list of lists
-        new_selection = [val for group in selected_values_groups if group for val in group]
+        new_selection = [
+            val for group in selected_values_groups if group for val in group
+        ]
 
     else:
         if current_selection is not None:
-                visible_set = set(visible_run_values)
-                new_selection = [r for r in current_selection if r in visible_set]
+            visible_set = set(visible_run_values)
+            new_selection = [r for r in current_selection if r in visible_set]
         else:
-                new_selection = visible_run_values
+            new_selection = visible_run_values
 
     # --- Step 4: Build UI ---
     run_selectors = build_hierarchical_run_selector(
@@ -160,7 +189,6 @@ def _manage_run_selection_logic(
 
 
 def register_settings_callbacks(app):
-
     @app.callback(
         Output("date-filter", "min_date_allowed"),
         Output("date-filter", "max_date_allowed"),
@@ -171,7 +199,7 @@ def register_settings_callbacks(app):
         Output("min-problems-filter", "value"),
         Output("appearance-options", "value"),
         Input("app-config-store", "data"),
-        State("filter-settings-store", "data")
+        State("filter-settings-store", "data"),
     )
     def init_filters(app_config, saved_settings):
         if not app_config:
@@ -193,12 +221,16 @@ def register_settings_callbacks(app):
         if saved_settings:
             start_date = saved_settings.get("start_date", start_date)
             end_date = saved_settings.get("end_date", end_date)
-            thinking_value = saved_settings.get("thinking_value", thinking_value)
+            thinking_value = saved_settings.get(
+                "thinking_value", thinking_value
+            )
             min_problems = saved_settings.get("min_problems", min_problems)
             disable_colors = saved_settings.get("disable_colors", [])
             show_annotations = saved_settings.get("show_annotations", False)
             group_runs = saved_settings.get("group_runs", False)
-            common_problems_only = saved_settings.get("common_problems_only", False)
+            common_problems_only = saved_settings.get(
+                "common_problems_only", False
+            )
 
         thinking_opts = [{"label": t, "value": t} for t in thinking_options]
 
@@ -212,12 +244,20 @@ def register_settings_callbacks(app):
         if common_problems_only:
             appearance_val.append("common_problems_only")
 
-        return min_date, max_date, start_date, end_date, thinking_opts, thinking_value, min_problems, appearance_val
+        return (
+            min_date,
+            max_date,
+            start_date,
+            end_date,
+            thinking_opts,
+            thinking_value,
+            min_problems,
+            appearance_val,
+        )
 
     app.clientside_callback(
         ClientsideFunction(
-            namespace="settings",
-            function_name="updateAccordionStore"
+            namespace="settings", function_name="updateAccordionStore"
         ),
         Output("accordion-state-store", "data"),
         Input("run-selector-accordion", "active_item"),
@@ -245,29 +285,45 @@ def register_settings_callbacks(app):
             State("selected-runs-store", "data"),
             State("filter-settings-store", "data"),
             State("accordion-state-store", "data"),
-        ]
+        ],
     )
     def manage_run_selection(
-        start_date, end_date, min_problems, selected_thinking,
+        start_date,
+        end_date,
+        min_problems,
+        selected_thinking,
         appearance_options,
-        select_all_n_clicks, deselect_all_n_clicks,
-        group_switch_values, subgroup_switch_values, selected_values_groups,
-        all_runs, current_selection, saved_settings, accordion_state
+        select_all_n_clicks,
+        deselect_all_n_clicks,
+        group_switch_values,
+        subgroup_switch_values,
+        selected_values_groups,
+        all_runs,
+        current_selection,
+        saved_settings,
+        accordion_state,
     ):
         return _manage_run_selection_logic(
-            start_date, end_date, min_problems, selected_thinking,
+            start_date,
+            end_date,
+            min_problems,
+            selected_thinking,
             appearance_options,
-            select_all_n_clicks, deselect_all_n_clicks,
-            group_switch_values, subgroup_switch_values, selected_values_groups,
-            all_runs, current_selection, saved_settings, accordion_state, callback_context
+            select_all_n_clicks,
+            deselect_all_n_clicks,
+            group_switch_values,
+            subgroup_switch_values,
+            selected_values_groups,
+            all_runs,
+            current_selection,
+            saved_settings,
+            accordion_state,
+            callback_context,
         )
 
     # Head-to-Head and Run Analysis Callbacks
     @app.callback(
-        [
-            Output("h2h-run-a", "options"),
-            Output("h2h-run-b", "options")
-        ],
+        [Output("h2h-run-a", "options"), Output("h2h-run-b", "options")],
         Input("all-runs-metadata", "data"),
     )
     def update_dropdowns(all_runs):
@@ -286,18 +342,20 @@ def register_settings_callbacks(app):
         Output("run-analysis-selector-container", "children"),
         [
             Input("all-runs-metadata", "data"),
-            Input("run-analysis-store", "data")
-        ]
+            Input("run-analysis-store", "data"),
+        ],
     )
     def render_run_analysis_selector(all_runs, current_selection):
-        return build_hierarchical_run_selector_single(all_runs, current_selection)
+        return build_hierarchical_run_selector_single(
+            all_runs, current_selection
+        )
 
     # Handle radio selection (ensure single selection updates store)
     @app.callback(
         Output("run-analysis-store", "data"),
         Input({"type": "run-analysis-radio", "index": ALL}, "value"),
         State("run-analysis-store", "data"),
-        prevent_initial_call=True
+        prevent_initial_call=True,
     )
     def handle_run_analysis_selection(radio_values, current_store):
         ctx = callback_context
@@ -305,7 +363,7 @@ def register_settings_callbacks(app):
             return no_update
 
         for t in ctx.triggered:
-            val = t['value']
+            val = t["value"]
             # Update only if value is truthy (selected) and different
             if val and val != current_store:
                 return val

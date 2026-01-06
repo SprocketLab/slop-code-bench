@@ -25,7 +25,9 @@ layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(loading_graph("ra-lint-dist", height="350px"), md=4),
-                dbc.Col(loading_graph("ra-ast-grep-dist", height="350px"), md=4),
+                dbc.Col(
+                    loading_graph("ra-ast-grep-dist", height="350px"), md=4
+                ),
                 dbc.Col(loading_graph("ra-complex-dist", height="350px"), md=4),
             ],
             className="mb-4",

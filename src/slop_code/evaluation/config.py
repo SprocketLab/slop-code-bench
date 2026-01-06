@@ -636,7 +636,9 @@ class CheckpointConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
     # Core fields
-    name: str = Field(description="Checkpoint identifier (e.g., 'checkpoint_1')")
+    name: str = Field(
+        description="Checkpoint identifier (e.g., 'checkpoint_1')"
+    )
     version: int = Field(
         description="Version number for checkpoint tests (incremented when tests change)"
     )
@@ -776,7 +778,9 @@ class ProblemConfig(BaseConfig):
             checkpoint_cfg["name"] = checkpoint_name
 
             # Merge with problem defaults (env, timeout)
-            checkpoint_cfg = nested_priority_merge(problem_defaults, checkpoint_cfg)
+            checkpoint_cfg = nested_priority_merge(
+                problem_defaults, checkpoint_cfg
+            )
 
             # Set default order if not specified
             if "order" not in checkpoint_cfg:

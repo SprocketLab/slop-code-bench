@@ -484,14 +484,22 @@ def build_chart_context(runs: list[Path], layout: LayoutConfig) -> ChartContext:
     if not checkpoints_df.empty:
         display_names.extend(checkpoints_df["display_name"].unique().tolist())
         model_groups.update(
-            dict(zip(checkpoints_df["display_name"], checkpoints_df["model_name"]))
+            dict(
+                zip(
+                    checkpoints_df["display_name"], checkpoints_df["model_name"]
+                )
+            )
         )
 
     if not run_summaries.empty:
         summary_names = run_summaries["display_name"].unique().tolist()
-        display_names.extend([n for n in summary_names if n not in display_names])
+        display_names.extend(
+            [n for n in summary_names if n not in display_names]
+        )
         model_groups.update(
-            dict(zip(run_summaries["display_name"], run_summaries["model_name"]))
+            dict(
+                zip(run_summaries["display_name"], run_summaries["model_name"])
+            )
         )
 
     sorted_names = sorted(set(filter(None, display_names)))
@@ -501,7 +509,9 @@ def build_chart_context(runs: list[Path], layout: LayoutConfig) -> ChartContext:
     group_colors = {group: next(palette) for group in unique_groups}
 
     color_map = build_color_map(sorted_names, model_groups, group_colors)
-    base_color_map = build_base_color_map(sorted_names, model_groups, group_colors)
+    base_color_map = build_base_color_map(
+        sorted_names, model_groups, group_colors
+    )
 
     return ChartContext(
         checkpoints=checkpoints_df,

@@ -15,7 +15,10 @@ from slop_code.agent_runner.trajectory import (
     TrajectoryStep,
     UserStep,
 )
-from slop_code.agent_runner.trajectory_parsing import ParseError, TrajectoryParser
+from slop_code.agent_runner.trajectory_parsing import (
+    ParseError,
+    TrajectoryParser,
+)
 
 
 class MinisweParser(TrajectoryParser):
@@ -85,7 +88,9 @@ class MinisweParser(TrajectoryParser):
     def _extract_metadata(self, content: str, metadata: dict[str, Any]) -> None:
         """Extract metadata from system messages."""
         if "claude" in content.lower():
-            model_match = re.search(r"claude[-\s]*(\S+)", content, re.IGNORECASE)
+            model_match = re.search(
+                r"claude[-\s]*(\S+)", content, re.IGNORECASE
+            )
             if model_match:
                 metadata["model"] = model_match.group(1)
 

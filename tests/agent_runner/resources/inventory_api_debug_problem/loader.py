@@ -32,7 +32,9 @@ def _load_case(
 
     expected_path = case_dir / "EXPECTED.json"
     expected_output = (
-        json.loads(expected_path.read_text()) if expected_path.exists() else None
+        json.loads(expected_path.read_text())
+        if expected_path.exists()
+        else None
     )
 
     case = APICase(
@@ -92,8 +94,11 @@ def load_checkpoint(
     for group_config in config.groups.values():
         if groups_to_get is not None and group_config.name not in groups_to_get:
             continue
-        yield group_config, _load_group_cases(
-            group_config=group_config,
-            checkpoint_dir=checkpoint_dir,
-            checkpoint_name=checkpoint_name,
+        yield (
+            group_config,
+            _load_group_cases(
+                group_config=group_config,
+                checkpoint_dir=checkpoint_dir,
+                checkpoint_name=checkpoint_name,
+            ),
         )

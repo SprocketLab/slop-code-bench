@@ -238,7 +238,9 @@ def migrate_evaluation_format(
 
     if dry_run:
         typer.echo(
-            typer.style("DRY RUN - no changes will be made", fg=typer.colors.YELLOW)
+            typer.style(
+                "DRY RUN - no changes will be made", fg=typer.colors.YELLOW
+            )
         )
 
     total_found = 0
@@ -260,7 +262,9 @@ def migrate_evaluation_format(
         typer.echo(f"Discovered {len(run_dirs)} run(s) in collection")
 
         for i, single_run_dir in enumerate(run_dirs, 1):
-            typer.echo(f"\nProcessing run {i}/{len(run_dirs)}: {single_run_dir.name}")
+            typer.echo(
+                f"\nProcessing run {i}/{len(run_dirs)}: {single_run_dir.name}"
+            )
 
             found, migrated, skipped = _migrate_directory(
                 single_run_dir, dry_run, logger
@@ -280,13 +284,13 @@ def migrate_evaluation_format(
 
     # Summary
     typer.echo("\n" + "=" * 50)
-    typer.echo(
-        typer.style("Summary:", bold=True)
-    )
+    typer.echo(typer.style("Summary:", bold=True))
     typer.echo(f"  Files found:    {total_found}")
     typer.echo(f"  Files migrated: {total_migrated}")
     typer.echo(f"  Already done:   {total_skipped}")
-    typer.echo(f"  Failed:         {total_found - total_migrated - total_skipped}")
+    typer.echo(
+        f"  Failed:         {total_found - total_migrated - total_skipped}"
+    )
 
     if dry_run and total_migrated > 0:
         typer.echo(

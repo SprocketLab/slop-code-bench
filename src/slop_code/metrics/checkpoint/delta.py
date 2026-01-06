@@ -90,7 +90,12 @@ def compute_checkpoint_delta(
 
     # Compute new violations per LOC if rubric metrics exist
     if "rubric_total_flags" in curr_metrics:
-        new_flags = curr_metrics["rubric_total_flags"] - curr_metrics["rubric_carried_over"]
-        result["delta.new_violations_per_loc"] = safe_ratio(new_flags, curr_metrics["loc"])
+        new_flags = (
+            curr_metrics["rubric_total_flags"]
+            - curr_metrics["rubric_carried_over"]
+        )
+        result["delta.new_violations_per_loc"] = safe_ratio(
+            new_flags, curr_metrics["loc"]
+        )
 
     return result

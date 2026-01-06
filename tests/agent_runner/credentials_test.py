@@ -31,14 +31,26 @@ class TestAPIKeyStore:
 
     def test_get_credential_type_env_var(self):
         """Test credential type detection for env var providers."""
-        assert APIKeyStore.get_credential_type("anthropic") == CredentialType.ENV_VAR
-        assert APIKeyStore.get_credential_type("openai") == CredentialType.ENV_VAR
-        assert APIKeyStore.get_credential_type("zhipu") == CredentialType.ENV_VAR
+        assert (
+            APIKeyStore.get_credential_type("anthropic")
+            == CredentialType.ENV_VAR
+        )
+        assert (
+            APIKeyStore.get_credential_type("openai") == CredentialType.ENV_VAR
+        )
+        assert (
+            APIKeyStore.get_credential_type("zhipu") == CredentialType.ENV_VAR
+        )
 
     def test_get_credential_type_file(self):
         """Test credential type detection for file providers."""
-        assert APIKeyStore.get_credential_type("codex_auth") == CredentialType.FILE
-        assert APIKeyStore.get_credential_type("opencode_auth") == CredentialType.FILE
+        assert (
+            APIKeyStore.get_credential_type("codex_auth") == CredentialType.FILE
+        )
+        assert (
+            APIKeyStore.get_credential_type("opencode_auth")
+            == CredentialType.FILE
+        )
 
     def test_get_credential_type_unknown_raises(self):
         """Test that unknown provider raises ValueError."""
@@ -53,7 +65,9 @@ class TestAPIKeyStore:
 
     def test_get_env_var_name_file_provider_raises(self):
         """Test that file providers raise when asking for env var name."""
-        with pytest.raises(ValueError, match="does not use environment variables"):
+        with pytest.raises(
+            ValueError, match="does not use environment variables"
+        ):
             APIKeyStore.get_env_var_name("codex_auth")
 
     def test_get_file_path(self):
@@ -205,7 +219,9 @@ class TestCredentialSpec:
     def test_get_destination_key_file_provider_raises(self):
         """Test get_destination_key raises for file providers without explicit key."""
         spec = CredentialSpec(provider="codex_auth")
-        with pytest.raises(ValueError, match="requires explicit 'destination_key'"):
+        with pytest.raises(
+            ValueError, match="requires explicit 'destination_key'"
+        ):
             spec.get_destination_key()
 
 

@@ -117,7 +117,9 @@ class TestComputeTopNDistribution:
     def test_custom_percentiles(self):
         """Test with custom percentile list."""
         masses = [10.0] * 10  # Total = 100
-        result = _compute_top_n_distribution(masses, percentiles=[0.10, 0.90], key_prefix="")
+        result = _compute_top_n_distribution(
+            masses, percentiles=[0.10, 0.90], key_prefix=""
+        )
         assert result["top10_count"] == 1
         assert result["top10_mass"] == 10.0
         assert result["top90_count"] == 9
@@ -126,7 +128,9 @@ class TestComputeTopNDistribution:
     def test_only_top_90(self):
         """Test with only 90% percentile (used for non-complexity metrics)."""
         masses = [50.0, 30.0, 20.0]  # Total = 100
-        result = _compute_top_n_distribution(masses, percentiles=[0.90], key_prefix="")
+        result = _compute_top_n_distribution(
+            masses, percentiles=[0.90], key_prefix=""
+        )
         # 50 + 30 = 80, need 3rd to reach 90 (total 100)
         assert result["top90_count"] == 3
         assert result["top90_mass"] == 100.0
@@ -346,7 +350,9 @@ class TestComputeMassDelta:
             # Net to gross ratio should be close to 0
             assert abs(result["delta.mass.complexity_net_to_gross_ratio"]) < 0.1
 
-    def test_concentration_high_for_single_function_change(self, symbol_template):
+    def test_concentration_high_for_single_function_change(
+        self, symbol_template
+    ):
         """Concentration should be 0 for single function (trivial case)."""
         with tempfile.TemporaryDirectory() as tmp:
             prior_path = Path(tmp) / "prior_symbols.jsonl"

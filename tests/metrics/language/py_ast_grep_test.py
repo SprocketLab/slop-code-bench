@@ -68,7 +68,9 @@ class TestGetAstGrepRulesDir:
 
     def test_default_rules_dir_exists(self) -> None:
         """Verify the default rules directory actually exists."""
-        assert AST_GREP_RULES_DIR.exists(), f"Expected {AST_GREP_RULES_DIR} to exist"
+        assert AST_GREP_RULES_DIR.exists(), (
+            f"Expected {AST_GREP_RULES_DIR} to exist"
+        )
         assert AST_GREP_RULES_DIR.is_dir()
 
 
@@ -95,10 +97,13 @@ class TestCalculateAstGrepMetrics:
 
     def test_returns_empty_when_rules_dir_missing(self, tmp_path: Path) -> None:
         source = _write(tmp_path, "test.py", "x = 1")
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": "/nonexistent"}):
+        with (
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.shutil.which",
+                return_value="/usr/bin/sg",
+            ),
+            patch.dict("os.environ", {"AST_GREP_RULES_DIR": "/nonexistent"}),
+        ):
             result = calculate_ast_grep_metrics(source)
 
         assert result.total_violations == 0
@@ -109,10 +114,13 @@ class TestCalculateAstGrepMetrics:
         rules_dir = tmp_path / "empty-rules"
         rules_dir.mkdir()
 
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}):
+        with (
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.shutil.which",
+                return_value="/usr/bin/sg",
+            ),
+            patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}),
+        ):
             result = calculate_ast_grep_metrics(source)
 
         assert result.total_violations == 0
@@ -150,12 +158,16 @@ def bad():
             '"end": {"line": 5, "column": 12}}}'
         )
 
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}), patch(
-            "slop_code.metrics.languages.python.ast_grep.subprocess.run"
-        ) as mock_run:
+        with (
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.shutil.which",
+                return_value="/usr/bin/sg",
+            ),
+            patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}),
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.subprocess.run"
+            ) as mock_run,
+        ):
             mock_run.return_value = MagicMock(
                 stdout=mock_output,
                 stderr="",
@@ -189,12 +201,16 @@ def bad():
             ]
         )
 
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}), patch(
-            "slop_code.metrics.languages.python.ast_grep.subprocess.run"
-        ) as mock_run:
+        with (
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.shutil.which",
+                return_value="/usr/bin/sg",
+            ),
+            patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}),
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.subprocess.run"
+            ) as mock_run,
+        ):
             mock_run.return_value = MagicMock(
                 stdout=mock_output,
                 stderr="",
@@ -233,12 +249,16 @@ def bad():
             ]
         )
 
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}), patch(
-            "slop_code.metrics.languages.python.ast_grep.subprocess.run"
-        ) as mock_run:
+        with (
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.shutil.which",
+                return_value="/usr/bin/sg",
+            ),
+            patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}),
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.subprocess.run"
+            ) as mock_run,
+        ):
             mock_run.return_value = MagicMock(
                 stdout=mock_output,
                 stderr="",
@@ -258,12 +278,16 @@ def bad():
             "id: test\nlanguage: python\nrule:\n  pattern: 'x'"
         )
 
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}), patch(
-            "slop_code.metrics.languages.python.ast_grep.subprocess.run"
-        ) as mock_run:
+        with (
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.shutil.which",
+                return_value="/usr/bin/sg",
+            ),
+            patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}),
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.subprocess.run"
+            ) as mock_run,
+        ):
             mock_run.side_effect = OSError("sg not found")
             result = calculate_ast_grep_metrics(source)
 
@@ -276,12 +300,16 @@ def bad():
         rules_dir.mkdir()
         (rules_dir / "test.yaml").write_text("id: test")
 
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}), patch(
-            "slop_code.metrics.languages.python.ast_grep.subprocess.run"
-        ) as mock_run:
+        with (
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.shutil.which",
+                return_value="/usr/bin/sg",
+            ),
+            patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}),
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.subprocess.run"
+            ) as mock_run,
+        ):
             mock_run.return_value = MagicMock(
                 stdout="not valid json",
                 stderr="",
@@ -291,7 +319,9 @@ def bad():
 
         assert result.total_violations == 0
 
-    def test_handles_missing_json_fields_gracefully(self, tmp_path: Path) -> None:
+    def test_handles_missing_json_fields_gracefully(
+        self, tmp_path: Path
+    ) -> None:
         source = _write(tmp_path, "test.py", "x = 1")
         rules_dir = tmp_path / "rules"
         rules_dir.mkdir()
@@ -300,12 +330,16 @@ def bad():
         # Missing 'range' field
         mock_output = '{"ruleId": "test", "severity": "warning"}'
 
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}), patch(
-            "slop_code.metrics.languages.python.ast_grep.subprocess.run"
-        ) as mock_run:
+        with (
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.shutil.which",
+                return_value="/usr/bin/sg",
+            ),
+            patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}),
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.subprocess.run"
+            ) as mock_run,
+        ):
             mock_run.return_value = MagicMock(
                 stdout=mock_output,
                 stderr="",
@@ -321,12 +355,16 @@ def bad():
         rules_dir.mkdir()
         (rules_dir / "test.yaml").write_text("id: test")
 
-        with patch(
-            "slop_code.metrics.languages.python.ast_grep.shutil.which",
-            return_value="/usr/bin/sg",
-        ), patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}), patch(
-            "slop_code.metrics.languages.python.ast_grep.subprocess.run"
-        ) as mock_run:
+        with (
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.shutil.which",
+                return_value="/usr/bin/sg",
+            ),
+            patch.dict("os.environ", {"AST_GREP_RULES_DIR": str(rules_dir)}),
+            patch(
+                "slop_code.metrics.languages.python.ast_grep.subprocess.run"
+            ) as mock_run,
+        ):
             mock_run.return_value = MagicMock(
                 stdout="",
                 stderr="",

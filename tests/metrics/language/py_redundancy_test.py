@@ -22,7 +22,8 @@ class TestCalculateRedundancyMetrics:
     def test_no_duplicates(self, tmp_path):
         """Test file with no duplicate code."""
         source = tmp_path / "unique.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def func_a():
             return 1
 
@@ -33,7 +34,8 @@ class TestCalculateRedundancyMetrics:
             x = 1
             y = 2
             return x + y
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -44,7 +46,8 @@ class TestCalculateRedundancyMetrics:
     def test_identical_code_blocks(self, tmp_path):
         """Test detection of identical code blocks."""
         source = tmp_path / "clones.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def first():
             if True:
                 return 1
@@ -52,7 +55,8 @@ class TestCalculateRedundancyMetrics:
         def second():
             if True:
                 return 1
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -64,7 +68,8 @@ class TestCalculateRedundancyMetrics:
     def test_renamed_variables_detected_as_clones(self, tmp_path):
         """Test that code with renamed variables is detected as clones."""
         source = tmp_path / "renamed.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def process_a():
             data = []
             for item in items:
@@ -76,7 +81,8 @@ class TestCalculateRedundancyMetrics:
             for element in items:
                 result.append(element)
             return result
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -87,7 +93,8 @@ class TestCalculateRedundancyMetrics:
     def test_different_literals_not_clones(self, tmp_path):
         """Test that code with different literals is not detected as clones."""
         source = tmp_path / "different.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def get_one():
             return 1
 
@@ -96,7 +103,8 @@ class TestCalculateRedundancyMetrics:
 
         def get_three():
             return 3
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -106,11 +114,13 @@ class TestCalculateRedundancyMetrics:
     def test_minimum_line_threshold(self, tmp_path):
         """Test that clones below minimum line threshold are not detected."""
         source = tmp_path / "small.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def a(): pass
         def b(): pass
         def c(): pass
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -120,13 +130,15 @@ class TestCalculateRedundancyMetrics:
     def test_single_occurrence_not_clone(self, tmp_path):
         """Test that single occurrence is not marked as clone."""
         source = tmp_path / "single.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def unique_function():
             x = 1
             y = 2
             z = x + y
             return z
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -156,7 +168,8 @@ class TestCloneLocation:
     def test_clone_locations_tracked(self, tmp_path):
         """Test that clone locations are properly tracked."""
         source = tmp_path / "clones.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def first():
             if True:
                 x = 1
@@ -166,14 +179,17 @@ class TestCloneLocation:
             if True:
                 y = 1
                 return y
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
         if metrics.clones:
             for clone in metrics.clones:
                 # Each clone should have valid location info
-                assert hasattr(clone, 'node_type') or hasattr(clone, 'locations')
+                assert hasattr(clone, "node_type") or hasattr(
+                    clone, "locations"
+                )
                 assert clone.line_count > 0
 
 
@@ -188,7 +204,8 @@ class TestCloneMetrics:
     def test_clone_ratio_calculation(self, tmp_path):
         """Test clone ratio is calculated correctly."""
         source = tmp_path / "test.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def first():
             if True:
                 return 1
@@ -199,7 +216,8 @@ class TestCloneMetrics:
 
         def unique():
             return 42
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -210,7 +228,8 @@ class TestCloneMetrics:
     def test_total_clone_instances(self, tmp_path):
         """Test total clone instances count."""
         source = tmp_path / "multi.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def a():
             x = 1
             y = 2
@@ -225,7 +244,8 @@ class TestCloneMetrics:
             m = 1
             n = 2
             return m + n
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -245,7 +265,8 @@ class TestComplexCodePatterns:
     def test_nested_loops_clone(self, tmp_path):
         """Test clone detection with nested loops."""
         source = tmp_path / "nested.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def matrix_sum_a(matrix):
             total = 0
             for row in matrix:
@@ -259,7 +280,8 @@ class TestComplexCodePatterns:
                 for c in r:
                     result += c
             return result
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -269,7 +291,8 @@ class TestComplexCodePatterns:
     def test_try_except_clone(self, tmp_path):
         """Test clone detection with try/except blocks."""
         source = tmp_path / "exceptions.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def safe_divide_a(a, b):
             try:
                 return a / b
@@ -281,7 +304,8 @@ class TestComplexCodePatterns:
                 return x / y
             except ZeroDivisionError:
                 return 0
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -295,13 +319,15 @@ class TestComplexCodePatterns:
         for clone detection (typically 3 lines).
         """
         source = tmp_path / "comprehension.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def filter_positive_a(items):
             return [x for x in items if x > 0]
 
         def filter_positive_b(values):
             return [v for v in values if v > 0]
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -312,7 +338,8 @@ class TestComplexCodePatterns:
     def test_class_method_clones(self, tmp_path):
         """Test clone detection in class methods."""
         source = tmp_path / "classes.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         class ClassA:
             def process(self, data):
                 result = []
@@ -328,7 +355,8 @@ class TestComplexCodePatterns:
                     if elem > 0:
                         output.append(elem)
                 return output
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -347,12 +375,14 @@ class TestRedundancyEdgeCases:
     def test_single_function(self, tmp_path):
         """Test file with single function."""
         source = tmp_path / "single.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         def only_function():
             x = 1
             y = 2
             return x + y
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -375,7 +405,8 @@ class TestRedundancyEdgeCases:
     def test_docstrings_not_clones(self, tmp_path):
         """Test that similar docstrings don't create false clones."""
         source = tmp_path / "docs.py"
-        source.write_text(dedent('''
+        source.write_text(
+            dedent('''
         def func_a():
             """Process data and return result."""
             return 1
@@ -383,7 +414,8 @@ class TestRedundancyEdgeCases:
         def func_b():
             """Process data and return result."""
             return 2
-        '''))
+        ''')
+        )
 
         metrics = calculate_redundancy_metrics(source)
 
@@ -393,13 +425,15 @@ class TestRedundancyEdgeCases:
     def test_imports_not_clones(self, tmp_path):
         """Test that similar imports don't create false clones."""
         source = tmp_path / "imports.py"
-        source.write_text(dedent("""
+        source.write_text(
+            dedent("""
         import os
 
         def func():
             import os
             return os.getcwd()
-        """))
+        """)
+        )
 
         metrics = calculate_redundancy_metrics(source)
 

@@ -75,7 +75,8 @@ class TestCalculateMI:
     def test_calculate_mi_complex_function(self, tmp_path, monkeypatch):
         """Test MI for complex function."""
         test_file = tmp_path / "complex.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def complex(x, y, z):
             if x > 0:
                 if y > 0:
@@ -85,9 +86,12 @@ class TestCalculateMI:
                                 for k in range(z):
                                     print(i, j, k)
             return None
-        """))
+        """)
+        )
 
-        mock_mi_visit = MagicMock(return_value=40.0)  # Lower MI for complex code
+        mock_mi_visit = MagicMock(
+            return_value=40.0
+        )  # Lower MI for complex code
         monkeypatch.setattr(
             "slop_code.metrics.languages.python.line_metrics.radon.metrics.mi_visit",
             mock_mi_visit,
@@ -179,17 +183,21 @@ class TestCalculateLineMetrics:
         assert metrics.comments == 3
         assert metrics.single_comment == 3
 
-    def test_calculate_line_metrics_multiline_string(self, tmp_path, monkeypatch):
+    def test_calculate_line_metrics_multiline_string(
+        self, tmp_path, monkeypatch
+    ):
         """Test file with multiline docstring."""
         test_file = tmp_path / "docstring.py"
-        test_file.write_text(dedent('''
+        test_file.write_text(
+            dedent('''
         """
         This is a docstring.
         It spans multiple lines.
         """
         def func():
             pass
-        '''))
+        ''')
+        )
 
         mock_raw_metrics = MagicMock()
         mock_raw_metrics.loc = 7
@@ -243,7 +251,8 @@ class TestLineMetricsEdgeCases:
     def test_mixed_content(self, tmp_path, monkeypatch):
         """Test file with mixed content types."""
         test_file = tmp_path / "mixed.py"
-        test_file.write_text(dedent('''
+        test_file.write_text(
+            dedent('''
         # Single line comment
         """Multi-line
         docstring"""
@@ -251,7 +260,8 @@ class TestLineMetricsEdgeCases:
             # Inline comment
             x = 1  # End-of-line comment
             return x
-        '''))
+        ''')
+        )
 
         mock_raw_metrics = MagicMock()
         mock_raw_metrics.loc = 8

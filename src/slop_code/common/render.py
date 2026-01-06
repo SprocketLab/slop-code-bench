@@ -18,8 +18,7 @@ logger = get_logger(__name__)
 
 # Template directory: src/slop_code/common/render.py -> configs/rubrics/templates
 TEMPLATES_DIR = (
-    Path(__file__).parent.parent.parent.parent
-    / "configs/rubrics/templates"
+    Path(__file__).parent.parent.parent.parent / "configs/rubrics/templates"
 )
 
 ENTRYPOINT_PLACEHOLDER_PATTERN = re.compile(r"%%%ENTRYPOINT:entry_file%%%")

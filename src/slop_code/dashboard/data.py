@@ -248,9 +248,10 @@ def get_display_annotation(row: pd.Series | dict[str, Any]) -> str:
     # If we have extras, append them
     if extras:
         annotation = f"{annotation} ({', '.join(extras)})"
-    elif prompt_display == "Default": # Should be covered above but safe fallback
-         annotation = f"{annotation} ({prompt_display})"
-
+    elif (
+        prompt_display == "Default"
+    ):  # Should be covered above but safe fallback
+        annotation = f"{annotation} ({prompt_display})"
 
     if time_display:
         annotation = f"{annotation} [{time_display}]"
@@ -322,7 +323,9 @@ def analyze_model_variations(
     df: pd.DataFrame,
 ) -> dict[str, ModelVariationInfo]:
     """Analyze what varies within each model's runs."""
-    model_variants: dict[str, set[tuple[str, str, str, str, str]]] = defaultdict(set)
+    model_variants: dict[str, set[tuple[str, str, str, str, str]]] = (
+        defaultdict(set)
+    )
 
     for _, row in df.iterrows():
         model_name = row["model_name"]
@@ -331,7 +334,9 @@ def analyze_model_variations(
         agent = str(row.get("agent_type", ""))
         version = str(row.get("agent_version", ""))
         run_date = str(row.get("run_date", ""))
-        model_variants[model_name].add((thinking, prompt, agent, version, run_date))
+        model_variants[model_name].add(
+            (thinking, prompt, agent, version, run_date)
+        )
 
     result = {}
     for model_name, variants in model_variants.items():
@@ -609,31 +614,41 @@ def build_chart_context(
         problem_sets = []
         unique_run_paths = checkpoints_df["run_path"].unique()
         for run_path in unique_run_paths:
-            probs = set(checkpoints_df[checkpoints_df["run_path"] == run_path]["problem"].unique())
+            probs = set(
+                checkpoints_df[checkpoints_df["run_path"] == run_path][
+                    "problem"
+                ].unique()
+            )
             problem_sets.append(probs)
-        
+
         if problem_sets:
             common_probs = set.intersection(*problem_sets)
-            checkpoints_df = checkpoints_df[checkpoints_df["problem"].isin(common_probs)].copy()
-            
+            checkpoints_df = checkpoints_df[
+                checkpoints_df["problem"].isin(common_probs)
+            ].copy()
+
             # Re-calculate summary stats from the filtered checkpoints
             # This ensures Overview bars reflect the subset
             new_summaries = []
             for run_path in unique_run_paths:
-                run_chkpts = checkpoints_df[checkpoints_df["run_path"] == run_path]
+                run_chkpts = checkpoints_df[
+                    checkpoints_df["run_path"] == run_path
+                ]
                 if run_chkpts.empty:
                     continue
-                
+
                 # Basic metrics
                 total_chkpts = len(run_chkpts)
                 passed_chkpts = run_chkpts["passed_chkpt"].sum()
-                
+
                 all_probs = run_chkpts["problem"].unique()
-                solved_probs = run_chkpts[run_chkpts["passed_chkpt"]]["problem"].unique()
-                
+                solved_probs = run_chkpts[run_chkpts["passed_chkpt"]][
+                    "problem"
+                ].unique()
+
                 # Get metadata from first row
                 meta = run_chkpts.iloc[0].to_dict()
-                
+
                 # Construct new summary row
                 summary_row = {
                     "run_path": run_path,
@@ -644,22 +659,34 @@ def build_chart_context(
                     "prompt_template": meta["prompt_template"],
                     "run_date": meta["run_date"],
                     "run_timestamp": meta.get("run_timestamp", ""),
-                    "pct_checkpoints_solved": (passed_chkpts / total_chkpts * 100) if total_chkpts > 0 else 0,
-                    "pct_problems_partial": (len(solved_probs) / len(all_probs) * 100) if len(all_probs) > 0 else 0,
-                    "costs.total": run_chkpts["cost"].sum() if "cost" in run_chkpts.columns else 0,
+                    "pct_checkpoints_solved": (
+                        passed_chkpts / total_chkpts * 100
+                    )
+                    if total_chkpts > 0
+                    else 0,
+                    "pct_problems_partial": (
+                        len(solved_probs) / len(all_probs) * 100
+                    )
+                    if len(all_probs) > 0
+                    else 0,
+                    "costs.total": run_chkpts["cost"].sum()
+                    if "cost" in run_chkpts.columns
+                    else 0,
                     # We might miss some fields from result.json, but these are the main ones for Overview
                 }
-                
+
                 # Try to preserve other fields from original run_summaries if they exist
                 if not run_summaries.empty:
-                    orig_row = run_summaries[run_summaries["run_path"] == run_path]
+                    orig_row = run_summaries[
+                        run_summaries["run_path"] == run_path
+                    ]
                     if not orig_row.empty:
                         for col in run_summaries.columns:
                             if col not in summary_row:
                                 summary_row[col] = orig_row.iloc[0][col]
-                
+
                 new_summaries.append(summary_row)
-            
+
             run_summaries = pd.DataFrame(new_summaries)
 
     if not checkpoints_df.empty:
@@ -689,23 +716,40 @@ def build_chart_context(
             return name
 
         if not checkpoints_df.empty:
-            checkpoints_df["display_name"] = checkpoints_df.apply(get_group_name, axis=1)
+            checkpoints_df["display_name"] = checkpoints_df.apply(
+                get_group_name, axis=1
+            )
         if not run_summaries.empty:
-            run_summaries["display_name"] = run_summaries.apply(get_group_name, axis=1)
+            run_summaries["display_name"] = run_summaries.apply(
+                get_group_name, axis=1
+            )
 
     # Prepare a list of tuples for sorting, then extract display_names in sorted order
     sortable_runs = []
-    sort_cols = ["model_name", "_thinking_sort_key", "prompt_template", "run_date"]
-    
+    sort_cols = [
+        "model_name",
+        "_thinking_sort_key",
+        "prompt_template",
+        "run_date",
+    ]
+
     if not checkpoints_df.empty:
-        unique_runs = checkpoints_df[sort_cols + ["display_name"]].drop_duplicates()
+        unique_runs = checkpoints_df[
+            sort_cols + ["display_name"]
+        ].drop_duplicates()
         for _, row in unique_runs.iterrows():
-            sortable_runs.append(tuple(row[col] for col in sort_cols) + (row["display_name"],))
+            sortable_runs.append(
+                tuple(row[col] for col in sort_cols) + (row["display_name"],)
+            )
 
     if not run_summaries.empty:
-        unique_sum_runs = run_summaries[sort_cols + ["display_name"]].drop_duplicates()
+        unique_sum_runs = run_summaries[
+            sort_cols + ["display_name"]
+        ].drop_duplicates()
         for _, row in unique_sum_runs.iterrows():
-            run_tuple = tuple(row[col] for col in sort_cols) + (row["display_name"],)
+            run_tuple = tuple(row[col] for col in sort_cols) + (
+                row["display_name"],
+            )
             if run_tuple not in sortable_runs:
                 sortable_runs.append(run_tuple)
 
@@ -716,9 +760,19 @@ def build_chart_context(
     # Generate model groups and colors
     model_groups = {}
     if not checkpoints_df.empty:
-        model_groups.update(dict(zip(checkpoints_df["display_name"], checkpoints_df["model_name"])))
+        model_groups.update(
+            dict(
+                zip(
+                    checkpoints_df["display_name"], checkpoints_df["model_name"]
+                )
+            )
+        )
     if not run_summaries.empty:
-        model_groups.update(dict(zip(run_summaries["display_name"], run_summaries["model_name"])))
+        model_groups.update(
+            dict(
+                zip(run_summaries["display_name"], run_summaries["model_name"])
+            )
+        )
 
     unique_groups = sorted(list(set(model_groups.values())))
     palette = cycle(DEFAULT_COLOR_PALETTE)
@@ -729,7 +783,9 @@ def build_chart_context(
         base_color_map = color_map.copy()
     else:
         color_map = build_color_map(sorted_names, model_groups, group_colors)
-        base_color_map = build_base_color_map(sorted_names, model_groups, group_colors)
+        base_color_map = build_base_color_map(
+            sorted_names, model_groups, group_colors
+        )
 
     return ChartContext(
         checkpoints=checkpoints_df,

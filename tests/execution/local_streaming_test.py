@@ -180,7 +180,9 @@ class TestLocalStreamingRuntimeStream:
             working_dir=tmp_path,
         )
         try:
-            events = list(runtime.stream("echo hello_world", env={}, timeout=10))
+            events = list(
+                runtime.stream("echo hello_world", env={}, timeout=10)
+            )
             stdout_events = [e for e in events if e.kind == "stdout"]
             stdout_text = "".join(e.text for e in stdout_events if e.text)
             assert "hello_world" in stdout_text
@@ -196,7 +198,9 @@ class TestLocalStreamingRuntimeStream:
             working_dir=tmp_path,
         )
         try:
-            events = list(runtime.stream("sh -c 'echo error_msg >&2'", env={}, timeout=10))
+            events = list(
+                runtime.stream("sh -c 'echo error_msg >&2'", env={}, timeout=10)
+            )
             stderr_events = [e for e in events if e.kind == "stderr"]
             stderr_text = "".join(e.text for e in stderr_events if e.text)
             assert "error_msg" in stderr_text
@@ -259,7 +263,9 @@ class TestLocalStreamingRuntimeStream:
         try:
             events = list(
                 runtime.stream(
-                    "sh -c 'echo $MY_VAR'", env={"MY_VAR": "test_value"}, timeout=10
+                    "sh -c 'echo $MY_VAR'",
+                    env={"MY_VAR": "test_value"},
+                    timeout=10,
                 )
             )
             stdout_events = [e for e in events if e.kind == "stdout"]
@@ -307,12 +313,18 @@ class TestLocalStreamingRuntimeStream:
             assert result1.exit_code == 0
             assert result2.exit_code == 0
             # Output should be captured in either events or result
-            stdout1 = "".join(
-                e.text for e in events1 if e.kind == "stdout" and e.text
-            ) or result1.stdout
-            stdout2 = "".join(
-                e.text for e in events2 if e.kind == "stdout" and e.text
-            ) or result2.stdout
+            stdout1 = (
+                "".join(
+                    e.text for e in events1 if e.kind == "stdout" and e.text
+                )
+                or result1.stdout
+            )
+            stdout2 = (
+                "".join(
+                    e.text for e in events2 if e.kind == "stdout" and e.text
+                )
+                or result2.stdout
+            )
             assert "first" in stdout1
             assert "second" in stdout2
         finally:
@@ -428,7 +440,9 @@ class TestLocalStreamingRuntimeIntegration:
             working_dir=tmp_path,
         )
         try:
-            events = list(runtime.stream("echo integration_test", env={}, timeout=10))
+            events = list(
+                runtime.stream("echo integration_test", env={}, timeout=10)
+            )
             finished = events[-1]
             assert finished.result.exit_code == 0
             stdout_text = "".join(
@@ -450,7 +464,9 @@ class TestLocalStreamingRuntimeIntegration:
             working_dir=tmp_path,
         )
         try:
-            events = list(runtime.stream("cat test_input.txt", env={}, timeout=10))
+            events = list(
+                runtime.stream("cat test_input.txt", env={}, timeout=10)
+            )
             stdout_text = "".join(
                 e.text for e in events if e.kind == "stdout" and e.text
             )
@@ -498,8 +514,12 @@ class TestLocalStreamingRuntimeIntegration:
             assert "stdout_line_1" in stdout_text
             assert "stdout_line_2" in stdout_text
             # Check that stderr was captured (may be combined with stdout in some cases)
-            assert "stderr_line_1" in stderr_text or "stderr_line_1" in stdout_text
-            assert "stderr_line_2" in stderr_text or "stderr_line_2" in stdout_text
+            assert (
+                "stderr_line_1" in stderr_text or "stderr_line_1" in stdout_text
+            )
+            assert (
+                "stderr_line_2" in stderr_text or "stderr_line_2" in stdout_text
+            )
         finally:
             runtime.cleanup()
 
@@ -528,10 +548,16 @@ class TestLocalStreamingRuntimeIntegration:
         )
         try:
             # Create a file with first command
-            list(runtime.stream("sh -c 'echo test > testfile.txt'", env={}, timeout=10))
+            list(
+                runtime.stream(
+                    "sh -c 'echo test > testfile.txt'", env={}, timeout=10
+                )
+            )
 
             # Verify file exists with second command
-            events = list(runtime.stream("cat testfile.txt", env={}, timeout=10))
+            events = list(
+                runtime.stream("cat testfile.txt", env={}, timeout=10)
+            )
             stdout_text = "".join(
                 e.text for e in events if e.kind == "stdout" and e.text
             )

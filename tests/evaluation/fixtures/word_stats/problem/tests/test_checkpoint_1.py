@@ -3,7 +3,11 @@
 import subprocess
 
 
-def run_main(input_text: str, args: list[str] | None = None, entrypoint: str = "python main.py") -> str:
+def run_main(
+    input_text: str,
+    args: list[str] | None = None,
+    entrypoint: str = "python main.py",
+) -> str:
     """Run main.py with the given input and return stdout."""
     cmd = entrypoint.split()
     if args:

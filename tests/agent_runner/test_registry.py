@@ -26,7 +26,9 @@ def test_build_agent_config_uses_registry(isolated_registry):
         type: Literal["dummy"] = "dummy"
         extra: str
 
-        def initialize_agent(self, problem_name: str, verbose: bool, image: str):
+        def initialize_agent(
+            self, problem_name: str, verbose: bool, image: str
+        ):
             raise NotImplementedError
 
     config = build_agent_config(
@@ -40,14 +42,19 @@ def test_duplicate_agent_type_registration_errors(isolated_registry):
     class FirstConfig(AgentConfigBase):
         type: Literal["dup"] = "dup"
 
-        def initialize_agent(self, problem_name: str, verbose: bool, image: str):
+        def initialize_agent(
+            self, problem_name: str, verbose: bool, image: str
+        ):
             raise NotImplementedError
 
     with pytest.raises(ValueError, match="already registered"):
+
         class SecondConfig(AgentConfigBase):
             type: Literal["dup"] = "dup"
 
-            def initialize_agent(self, problem_name: str, verbose: bool, image: str):
+            def initialize_agent(
+                self, problem_name: str, verbose: bool, image: str
+            ):
                 raise NotImplementedError
 
 
@@ -56,7 +63,9 @@ def test_agent_type_validator_requires_match(isolated_registry):
         agent_type = "sample"
         type: str = Field(default="sample", frozen=True)
 
-        def initialize_agent(self, problem_name: str, verbose: bool, image: str):
+        def initialize_agent(
+            self, problem_name: str, verbose: bool, image: str
+        ):
             raise NotImplementedError
 
     with pytest.raises(ValueError, match="Agent type mismatch"):

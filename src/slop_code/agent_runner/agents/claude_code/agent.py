@@ -12,16 +12,22 @@ from pathlib import Path
 from pydantic import Field, JsonValue
 
 from slop_code.agent_runner.agent import Agent, AgentConfigBase
-from slop_code.agent_runner.agents.cli_utils import (AgentCommandResult,
-                                                     stream_cli_command)
+from slop_code.agent_runner.agents.cli_utils import (
+    AgentCommandResult,
+    stream_cli_command,
+)
 from slop_code.agent_runner.agents.utils import HOME_PATH, resolve_env_vars
 from slop_code.agent_runner.credentials import ProviderCredential
 from slop_code.agent_runner.models import AgentCostLimits, AgentError
 from slop_code.agent_runner.registry import register_agent
 from slop_code.agent_runner.trajectory import TrajectoryStep
 from slop_code.common import mask_sensitive_values
-from slop_code.common.llms import (APIPricing, ModelDefinition, ThinkingPreset,
-                                   TokenUsage)
+from slop_code.common.llms import (
+    APIPricing,
+    ModelDefinition,
+    ThinkingPreset,
+    TokenUsage,
+)
 from slop_code.execution import EnvironmentSpec, Session, StreamingRuntime
 from slop_code.execution.runtime import RuntimeResult
 from slop_code.logging import get_logger

@@ -126,7 +126,9 @@ class TestDetectFileSignature:
             (".xyz", FileType.TEXT, Compression.NONE),
         ],
     )
-    def test_detect_signature(self, filename, expected_type, expected_compression):
+    def test_detect_signature(
+        self, filename, expected_type, expected_compression
+    ):
         """Test file signature detection for various extensions."""
         path = Path(f"test{filename}")
         signature = detect_file_signature(path)
@@ -213,15 +215,21 @@ class TestFileHandlerRoundTrips:
         gz_bytes = gz_file.read_bytes()
 
         # Verify gzip magic number
-        assert gz_bytes[:2] == b'\x1f\x8b', "GZIP file should start with magic number 0x1f8b"
+        assert gz_bytes[:2] == b"\x1f\x8b", (
+            "GZIP file should start with magic number 0x1f8b"
+        )
 
         # Verify it's not plain text (shouldn't start with CSV headers)
-        assert not gz_bytes.startswith(b'col1,col2'), "File should be compressed, not plain text"
+        assert not gz_bytes.startswith(b"col1,col2"), (
+            "File should be compressed, not plain text"
+        )
 
         # Verify it can be decompressed and contains CSV data
         decompressed_gz = gzip.decompress(gz_bytes)
-        assert decompressed_gz.startswith(b'col1,col2'), "Decompressed content should be CSV"
-        assert b'\n' in decompressed_gz, "CSV should contain newlines"
+        assert decompressed_gz.startswith(b"col1,col2"), (
+            "Decompressed content should be CSV"
+        )
+        assert b"\n" in decompressed_gz, "CSV should contain newlines"
 
         # Test CSV with BZIP2 compression
         handler_bz2 = _REGISTRY.get_handler(FileType.CSV, Compression.BZIP2)
@@ -231,15 +239,18 @@ class TestFileHandlerRoundTrips:
         bz2_bytes = bz2_file.read_bytes()
 
         # Verify bzip2 magic number
-        assert bz2_bytes[:2] == b'BZ', "BZIP2 file should start with 'BZ'"
+        assert bz2_bytes[:2] == b"BZ", "BZIP2 file should start with 'BZ'"
 
         # Verify it's not plain text
-        assert not bz2_bytes.startswith(b'col1,col2'), "File should be compressed, not plain text"
+        assert not bz2_bytes.startswith(b"col1,col2"), (
+            "File should be compressed, not plain text"
+        )
 
         # Verify it can be decompressed
         decompressed_bz2 = bz2.decompress(bz2_bytes)
-        assert decompressed_bz2.startswith(b'col1,col2'), "Decompressed content should be CSV"
-
+        assert decompressed_bz2.startswith(b"col1,col2"), (
+            "Decompressed content should be CSV"
+        )
 
     def test_compressed_json_written_as_bytes(self, tmp_path, sample_json_data):
         """Test that compressed JSON files are written as binary compressed data."""
@@ -251,15 +262,21 @@ class TestFileHandlerRoundTrips:
         gz_bytes = gz_file.read_bytes()
 
         # Verify gzip magic number
-        assert gz_bytes[:2] == b'\x1f\x8b', "GZIP file should start with magic number"
+        assert gz_bytes[:2] == b"\x1f\x8b", (
+            "GZIP file should start with magic number"
+        )
 
         # Verify it's not plain JSON text
-        assert not gz_bytes.startswith(b'{'), "File should be compressed, not plain JSON"
+        assert not gz_bytes.startswith(b"{"), (
+            "File should be compressed, not plain JSON"
+        )
 
         # Verify decompressed content is valid JSON
         decompressed = gzip.decompress(gz_bytes)
         json_data = json.loads(decompressed)
-        assert json_data == sample_json_data, "Decompressed JSON should match original"
+        assert json_data == sample_json_data, (
+            "Decompressed JSON should match original"
+        )
 
         # Test JSON with BZIP2 compression
         handler_bz2 = _REGISTRY.get_handler(FileType.JSON, Compression.BZIP2)
@@ -269,15 +286,19 @@ class TestFileHandlerRoundTrips:
         bz2_bytes = bz2_file.read_bytes()
 
         # Verify bzip2 magic number
-        assert bz2_bytes[:2] == b'BZ', "BZIP2 file should start with 'BZ'"
-        assert not bz2_bytes.startswith(b'{'), "File should be compressed"
+        assert bz2_bytes[:2] == b"BZ", "BZIP2 file should start with 'BZ'"
+        assert not bz2_bytes.startswith(b"{"), "File should be compressed"
 
         # Verify decompressed content
         decompressed_bz2 = bz2.decompress(bz2_bytes)
         json_data_bz2 = json.loads(decompressed_bz2)
-        assert json_data_bz2 == sample_json_data, "Decompressed JSON should match"
+        assert json_data_bz2 == sample_json_data, (
+            "Decompressed JSON should match"
+        )
 
-    def test_compressed_jsonl_written_as_bytes(self, tmp_path, sample_jsonl_data):
+    def test_compressed_jsonl_written_as_bytes(
+        self, tmp_path, sample_jsonl_data
+    ):
         """Test that compressed JSONL files are written as binary compressed data."""
         # Test JSONL with GZIP compression
         handler_gz = _REGISTRY.get_handler(FileType.JSONL, Compression.GZIP)
@@ -287,19 +308,27 @@ class TestFileHandlerRoundTrips:
         gz_bytes = gz_file.read_bytes()
 
         # Verify gzip magic number
-        assert gz_bytes[:2] == b'\x1f\x8b', "GZIP file should start with magic number"
+        assert gz_bytes[:2] == b"\x1f\x8b", (
+            "GZIP file should start with magic number"
+        )
 
         # Verify it's not plain JSONL text
-        assert not gz_bytes.startswith(b'{'), "File should be compressed, not plain JSONL"
+        assert not gz_bytes.startswith(b"{"), (
+            "File should be compressed, not plain JSONL"
+        )
 
         # Verify decompressed content is valid JSONL
         decompressed = gzip.decompress(gz_bytes)
-        lines = decompressed.strip().split(b'\n')
-        assert len(lines) == len(sample_jsonl_data), "Should have same number of lines"
+        lines = decompressed.strip().split(b"\n")
+        assert len(lines) == len(sample_jsonl_data), (
+            "Should have same number of lines"
+        )
 
         for i, line in enumerate(lines):
             data = json.loads(line)
-            assert data == sample_jsonl_data[i], f"Line {i} should match original"
+            assert data == sample_jsonl_data[i], (
+                f"Line {i} should match original"
+            )
 
         # Test JSONL with BZIP2 compression
         handler_bz2 = _REGISTRY.get_handler(FileType.JSONL, Compression.BZIP2)
@@ -309,13 +338,15 @@ class TestFileHandlerRoundTrips:
         bz2_bytes = bz2_file.read_bytes()
 
         # Verify bzip2 magic number
-        assert bz2_bytes[:2] == b'BZ', "BZIP2 file should start with 'BZ'"
-        assert not bz2_bytes.startswith(b'{'), "File should be compressed"
+        assert bz2_bytes[:2] == b"BZ", "BZIP2 file should start with 'BZ'"
+        assert not bz2_bytes.startswith(b"{"), "File should be compressed"
 
         # Verify decompressed content
         decompressed_bz2 = bz2.decompress(bz2_bytes)
-        lines_bz2 = decompressed_bz2.strip().split(b'\n')
-        assert len(lines_bz2) == len(sample_jsonl_data), "Should have same number of lines"
+        lines_bz2 = decompressed_bz2.strip().split(b"\n")
+        assert len(lines_bz2) == len(sample_jsonl_data), (
+            "Should have same number of lines"
+        )
 
     def test_sqlite_handler_roundtrip(self, tmp_path, sample_sqlite_data):
         """Test SQLite handler round-trip with multiple tables."""
@@ -326,7 +357,9 @@ class TestFileHandlerRoundTrips:
         result = handler.read(test_file)
 
         assert set(result["tables"]) == {"logs", "users"}
-        assert result["tables"]["users"] == sample_sqlite_data["tables"]["users"]
+        assert (
+            result["tables"]["users"] == sample_sqlite_data["tables"]["users"]
+        )
         assert result["tables"]["logs"] == []
 
     def test_text_handler_roundtrip(self, tmp_path, sample_text_data):
@@ -407,7 +440,9 @@ class TestInputFile:
         assert input_file.compression == Compression.GZIP
         assert input_file.file_type == FileType.JSON
 
-    def test_from_path_converts_absolute_to_relative(self, tmp_path, sample_json_data):
+    def test_from_path_converts_absolute_to_relative(
+        self, tmp_path, sample_json_data
+    ):
         """Test from_path converts absolute paths to relative."""
         test_file = tmp_path / "subdir" / "data.json"
         test_file.parent.mkdir(parents=True)

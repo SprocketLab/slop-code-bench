@@ -1122,7 +1122,9 @@ class TestCountVariables:
 
     def test_variable_usage(self):
         """Function that uses variables."""
-        node = get_function_node("def foo():\n    x = 1\n    y = x + 1\n    return y")
+        node = get_function_node(
+            "def foo():\n    x = 1\n    y = x + 1\n    return y"
+        )
         defined, used = _count_variables(node)
         assert defined == 2
         assert used >= 2
@@ -1314,7 +1316,8 @@ class TestRadonComplexityComparison:
     def test_if_elif_else_matches_radon(self, tmp_path):
         """Test if/elif/else complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def classify(x):
             if x > 0:
                 return "positive"
@@ -1322,7 +1325,8 @@ class TestRadonComplexityComparison:
                 return "negative"
             else:
                 return "zero"
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1332,7 +1336,8 @@ class TestRadonComplexityComparison:
     def test_nested_if_matches_radon(self, tmp_path):
         """Test nested if statements complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def nested_check(a, b, c):
             if a:
                 if b:
@@ -1341,7 +1346,8 @@ class TestRadonComplexityComparison:
                     return "a and b"
                 return "only a"
             return "none"
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1351,13 +1357,15 @@ class TestRadonComplexityComparison:
     def test_for_loop_matches_radon(self, tmp_path):
         """Test for loop complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def sum_list(items):
             total = 0
             for item in items:
                 total += item
             return total
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1367,13 +1375,15 @@ class TestRadonComplexityComparison:
     def test_while_loop_matches_radon(self, tmp_path):
         """Test while loop complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def countdown(n):
             while n > 0:
                 print(n)
                 n -= 1
             return "done"
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1383,14 +1393,16 @@ class TestRadonComplexityComparison:
     def test_nested_loops_matches_radon(self, tmp_path):
         """Test nested loops complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def matrix_sum(matrix):
             total = 0
             for row in matrix:
                 for cell in row:
                     total += cell
             return total
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1400,12 +1412,14 @@ class TestRadonComplexityComparison:
     def test_boolean_and_matches_radon(self, tmp_path):
         """Test boolean 'and' operator complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def check_both(a, b):
             if a and b:
                 return True
             return False
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1415,12 +1429,14 @@ class TestRadonComplexityComparison:
     def test_boolean_or_matches_radon(self, tmp_path):
         """Test boolean 'or' operator complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def check_either(a, b):
             if a or b:
                 return True
             return False
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1430,13 +1446,15 @@ class TestRadonComplexityComparison:
     def test_try_except_matches_radon(self, tmp_path):
         """Test try/except complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def safe_divide(a, b):
             try:
                 return a / b
             except ZeroDivisionError:
                 return 0
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1446,10 +1464,12 @@ class TestRadonComplexityComparison:
     def test_list_comprehension_matches_radon(self, tmp_path):
         """Test list comprehension complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def get_squares(items):
             return [x**2 for x in items]
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1459,10 +1479,12 @@ class TestRadonComplexityComparison:
     def test_ternary_expression_matches_radon(self, tmp_path):
         """Test ternary/conditional expression matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def get_sign(x):
             return "positive" if x > 0 else "non-positive"
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1472,7 +1494,8 @@ class TestRadonComplexityComparison:
     def test_class_method_matches_radon(self, tmp_path):
         """Test class method complexity matches radon."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class Calculator:
             def add(self, a, b):
                 if a < 0 or b < 0:
@@ -1484,7 +1507,8 @@ class TestRadonComplexityComparison:
                 for _ in range(b):
                     result += a
                 return result
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         radon_cc = get_radon_complexity(test_file)
 
@@ -1514,13 +1538,15 @@ class TestGetSymbols:
     def test_extracts_functions(self, tmp_path):
         """Test extracting functions."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def func_a():
             pass
 
         def func_b(x):
             return x
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
 
         names = {s.name for s in symbols}
@@ -1530,10 +1556,12 @@ class TestGetSymbols:
     def test_extracts_classes(self, tmp_path):
         """Test extracting classes."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class MyClass:
             pass
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
 
         cls = next(s for s in symbols if s.name == "MyClass")
@@ -1542,11 +1570,13 @@ class TestGetSymbols:
     def test_extracts_methods(self, tmp_path):
         """Test extracting methods with parent_class."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class MyClass:
             def method(self):
                 pass
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
 
         method = next(s for s in symbols if s.name == "method")
@@ -1556,11 +1586,13 @@ class TestGetSymbols:
     def test_extracts_variables(self, tmp_path):
         """Test extracting module-level variables."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         x = 1
         y = 2
         CONSTANT = "value"
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
 
         names = {s.name for s in symbols}
@@ -1583,12 +1615,14 @@ class TestGetSymbols:
     def test_extracts_nested_functions(self, tmp_path):
         """Test extracting nested functions."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def outer():
             def inner():
                 pass
             return inner
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
 
         names = {s.name for s in symbols}
@@ -1598,12 +1632,14 @@ class TestGetSymbols:
     def test_extracts_async_functions(self, tmp_path):
         """Test extracting async functions."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         async def fetch(url):
             if url.startswith("https"):
                 return await do_fetch(url)
             return None
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
 
         func = next(s for s in symbols if s.name == "fetch")
@@ -1612,10 +1648,12 @@ class TestGetSymbols:
     def test_function_has_signature(self, tmp_path):
         """Function symbol includes signature."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def foo(x: int, y: str = 'hello') -> bool:
             return True
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         func = next(s for s in symbols if s.name == "foo")
 
@@ -1625,11 +1663,13 @@ class TestGetSymbols:
     def test_function_has_hashes(self, tmp_path):
         """Function symbol includes body and structure hashes."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def foo(x):
             y = x + 1
             return y
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         func = next(s for s in symbols if s.name == "foo")
 
@@ -1643,14 +1683,16 @@ class TestGetSymbols:
     def test_function_has_flow_metrics(self, tmp_path):
         """Function symbol includes flow metrics."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def foo(x):
             if x < 0:
                 raise ValueError()
             y = x * 2
             z = y + 1
             return z
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         func = next(s for s in symbols if s.name == "foo")
 
@@ -1662,11 +1704,13 @@ class TestGetSymbols:
     def test_method_has_parent_class(self, tmp_path):
         """Method symbol includes parent_class."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class Foo:
             def bar(self, x: int) -> str:
                 return str(x)
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         method = next(s for s in symbols if s.name == "bar")
 
@@ -1677,10 +1721,12 @@ class TestGetSymbols:
     def test_class_has_base_classes(self, tmp_path):
         """Class symbol includes base_classes."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class Foo(Bar, Generic[T]):
             pass
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         cls = next(s for s in symbols if s.name == "Foo")
 
@@ -1690,10 +1736,12 @@ class TestGetSymbols:
     def test_class_no_base_classes(self, tmp_path):
         """Class with no base classes has None."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class Foo:
             pass
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         cls = next(s for s in symbols if s.name == "Foo")
 
@@ -1703,7 +1751,8 @@ class TestGetSymbols:
     def test_file_path_set(self, tmp_path):
         """All symbols have file_path set."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class Foo:
             def bar(self):
                 pass
@@ -1712,7 +1761,8 @@ class TestGetSymbols:
             pass
 
         X = 1
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
 
         for sym in symbols:
@@ -1722,7 +1772,9 @@ class TestGetSymbols:
         """Test that positions are accurate."""
         test_file = tmp_path / "test.py"
         # Don't use dedent with leading newline to keep line numbers predictable
-        test_file.write_text("# Comment\nx = 1\n\ndef func():\n    pass\n\nclass Cls:\n    pass\n")
+        test_file.write_text(
+            "# Comment\nx = 1\n\ndef func():\n    pass\n\nclass Cls:\n    pass\n"
+        )
         symbols = get_symbols(test_file)
 
         var = next(s for s in symbols if s.name == "x")
@@ -1816,10 +1868,12 @@ class TestEdgeCases:
     def test_async_function(self, tmp_path):
         """Async function has signature and hashes."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         async def fetch(url: str) -> bytes:
             return b''
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         func = symbols[0]
 
@@ -1830,11 +1884,13 @@ class TestEdgeCases:
     def test_decorated_function(self, tmp_path):
         """Decorated function has signature and hashes."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         @decorator
         def foo(x: int) -> str:
             return str(x)
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         func = next(s for s in symbols if s.name == "foo")
 
@@ -1844,12 +1900,14 @@ class TestEdgeCases:
     def test_property_method(self, tmp_path):
         """Property method has signature."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class Foo:
             @property
             def value(self) -> int:
                 return self._value
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         method = next(s for s in symbols if s.name == "value")
 
@@ -1861,12 +1919,14 @@ class TestEdgeCases:
     def test_staticmethod(self, tmp_path):
         """Static method has signature without self."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class Foo:
             @staticmethod
             def create(x: int) -> 'Foo':
                 return Foo()
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         method = next(s for s in symbols if s.name == "create")
 
@@ -1877,12 +1937,14 @@ class TestEdgeCases:
     def test_classmethod(self, tmp_path):
         """Class method has signature with cls."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class Foo:
             @classmethod
             def from_string(cls, s: str) -> 'Foo':
                 return cls()
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         method = next(s for s in symbols if s.name == "from_string")
 
@@ -1902,11 +1964,13 @@ class TestEdgeCases:
     def test_lambda_inside_function(self, tmp_path):
         """Lambda inside function doesn't create extra symbol."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def outer():
             f = lambda x: x + 1
             return f
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
 
         # Only outer function should be a symbol
@@ -1917,7 +1981,8 @@ class TestEdgeCases:
     def test_complex_class_hierarchy(self, tmp_path):
         """Complex class with multiple methods and inheritance."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class Base:
             def method1(self) -> None:
                 pass
@@ -1929,16 +1994,21 @@ class TestEdgeCases:
             def method2(self, x: int, y: str) -> bool:
                 result = x > len(y)
                 return result
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
 
         base = next(s for s in symbols if s.name == "Base")
         child = next(s for s in symbols if s.name == "Child")
         method1_base = next(
-            s for s in symbols if s.name == "method1" and s.parent_class == "Base"
+            s
+            for s in symbols
+            if s.name == "method1" and s.parent_class == "Base"
         )
         method1_child = next(
-            s for s in symbols if s.name == "method1" and s.parent_class == "Child"
+            s
+            for s in symbols
+            if s.name == "method1" and s.parent_class == "Child"
         )
         method2 = next(s for s in symbols if s.name == "method2")
 
@@ -1962,7 +2032,8 @@ class TestSymbolMetricsFields:
     def test_function_metrics_fields(self, tmp_path):
         """Test all metrics fields for a function."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def complex_func(a, b, c):
             result = 0
             if a:
@@ -1974,7 +2045,8 @@ class TestSymbolMetricsFields:
             except ZeroDivisionError:
                 result = 0
             return result
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         func = symbols[0]
 
@@ -2024,7 +2096,8 @@ class TestSymbolMetricsFields:
     def test_class_metrics_fields(self, tmp_path):
         """Test all metrics fields for a class."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         class MyClass(BaseClass):
             x: int
             y: str = "default"
@@ -2035,7 +2108,8 @@ class TestSymbolMetricsFields:
 
             def method(self):
                 pass
-        """))
+        """)
+        )
         symbols = get_symbols(test_file)
         cls = next(s for s in symbols if s.name == "MyClass")
 

@@ -133,7 +133,9 @@ def _compute_aggregated_eval_results(
         if total_passed != total_count:
             all_passed = False
 
-    overall_pass_rate = sum(pass_rates) / len(pass_rates) if pass_rates else None
+    overall_pass_rate = (
+        sum(pass_rates) / len(pass_rates) if pass_rates else None
+    )
     return all_passed, all_passed_policy, overall_pass_rate
 
 

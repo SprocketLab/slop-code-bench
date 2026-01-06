@@ -98,63 +98,118 @@ def sidebar():
         [
             html.Div(
                 [
-                    html.H2("Slop Code", className="display-6 fw-bold text-primary"),
+                    html.H2(
+                        "Slop Code", className="display-6 fw-bold text-primary"
+                    ),
                     html.Hr(),
-                    html.P("Benchmark visualization", className="lead fs-6 text-dark"),
+                    html.P(
+                        "Benchmark visualization",
+                        className="lead fs-6 text-dark",
+                    ),
                     dbc.Accordion(
                         [
                             dbc.AccordionItem(
                                 dbc.Nav(
                                     [
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-home me-2"), "Dashboard"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-home me-2"
+                                                ),
+                                                "Dashboard",
+                                            ],
                                             href="/",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-table me-2"), "Tables"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-table me-2"
+                                                ),
+                                                "Tables",
+                                            ],
                                             href="/tables",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-chart-scatter me-2"), "Scatter Plots"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-chart-scatter me-2"
+                                                ),
+                                                "Scatter Plots",
+                                            ],
                                             href="/scatter",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-flag-checkered me-2"), "Checkpoints"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-flag-checkered me-2"
+                                                ),
+                                                "Checkpoints",
+                                            ],
                                             href="/checkpoints",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-vial me-2"), "Test Pass Rates"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-vial me-2"
+                                                ),
+                                                "Test Pass Rates",
+                                            ],
                                             href="/tests",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-scale-balanced me-2"), "Problem Comparison"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-scale-balanced me-2"
+                                                ),
+                                                "Problem Comparison",
+                                            ],
                                             href="/problem_comparison",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-code-branch me-2"), "Code Quality"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-code-branch me-2"
+                                                ),
+                                                "Code Quality",
+                                            ],
                                             href="/code-quality",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-stopwatch me-2"), "Efficiency"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-stopwatch me-2"
+                                                ),
+                                                "Efficiency",
+                                            ],
                                             href="/efficiency",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-random me-2"), "Quality Deltas"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-random me-2"
+                                                ),
+                                                "Quality Deltas",
+                                            ],
                                             href="/quality-deltas",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-chart-line me-2"), "Erosion"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-chart-line me-2"
+                                                ),
+                                                "Erosion",
+                                            ],
                                             href="/erosion",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                     ],
                                     vertical=True,
@@ -168,24 +223,44 @@ def sidebar():
                                 dbc.Nav(
                                     [
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-microscope me-2"), "Overview"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-microscope me-2"
+                                                ),
+                                                "Overview",
+                                            ],
                                             href="/run-analysis",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-cubes me-2"), "Problems"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-cubes me-2"
+                                                ),
+                                                "Problems",
+                                            ],
                                             href="/run-analysis/problems",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-check-double me-2"), "Quality"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-check-double me-2"
+                                                ),
+                                                "Quality",
+                                            ],
                                             href="/run-analysis/quality",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-vial-circle-check me-2"), "Tests"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-vial-circle-check me-2"
+                                                ),
+                                                "Tests",
+                                            ],
                                             href="/run-analysis/tests",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                     ],
                                     vertical=True,
@@ -199,29 +274,54 @@ def sidebar():
                                 dbc.Nav(
                                     [
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-right-left me-2"), "Overview"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-right-left me-2"
+                                                ),
+                                                "Overview",
+                                            ],
                                             href="/head-to-head",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-flag-checkered me-2"), "Checkpoints"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-flag-checkered me-2"
+                                                ),
+                                                "Checkpoints",
+                                            ],
                                             href="/head-to-head/checkpoints",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-code me-2"), "Code Quality"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-code me-2"
+                                                ),
+                                                "Code Quality",
+                                            ],
                                             href="/head-to-head/quality",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-tachometer-alt me-2"), "Efficiency"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-tachometer-alt me-2"
+                                                ),
+                                                "Efficiency",
+                                            ],
                                             href="/head-to-head/efficiency",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            [html.I(className="fas fa-history me-2"), "Code Evolution"],
+                                            [
+                                                html.I(
+                                                    className="fas fa-history me-2"
+                                                ),
+                                                "Code Evolution",
+                                            ],
                                             href="/head-to-head/evolution",
-                                            active="exact"
+                                            active="exact",
                                         ),
                                     ],
                                     vertical=True,
@@ -234,11 +334,20 @@ def sidebar():
                         ],
                         flush=True,
                         always_open=True,
-                        active_item=["overview", "run-analysis", "head-to-head"],
+                        active_item=[
+                            "overview",
+                            "run-analysis",
+                            "head-to-head",
+                        ],
                         className="sidebar-accordion",
                     ),
                 ],
-                style={"flex": "1", "overflowY": "auto", "scrollbarWidth": "thin", "overflowX": "hidden"},
+                style={
+                    "flex": "1",
+                    "overflowY": "auto",
+                    "scrollbarWidth": "thin",
+                    "overflowX": "hidden",
+                },
             ),
             html.Div(
                 [

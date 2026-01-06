@@ -26,6 +26,7 @@ def docker_available() -> bool:
     """Check if Docker is available and running."""
     try:
         import docker
+
         client = docker.from_env()
         client.ping()
         return True
@@ -94,9 +95,7 @@ class TestPytestRunnerE2ECheckpoint1:
         )
 
         # Should pass core policy
-        assert results.passes_policy("core-cases"), (
-            "Failed core-cases policy"
-        )
+        assert results.passes_policy("core-cases"), "Failed core-cases policy"
 
 
 class TestPytestRunnerE2ECheckpoint2:
@@ -137,9 +136,7 @@ class TestPytestRunnerE2ECheckpoint2:
         )
 
         # Should pass core policy
-        assert results.passes_policy("core-cases"), (
-            "Failed core-cases policy"
-        )
+        assert results.passes_policy("core-cases"), "Failed core-cases policy"
 
     def test_checkpoint_2_runs_checkpoint_1_tests(
         self,
@@ -159,12 +156,10 @@ class TestPytestRunnerE2ECheckpoint2:
 
         # Count tests from each checkpoint by looking at test IDs
         checkpoint_1_tests = [
-            t for t in results.tests
-            if "test_checkpoint_1" in t.file_path
+            t for t in results.tests if "test_checkpoint_1" in t.file_path
         ]
         checkpoint_2_tests = [
-            t for t in results.tests
-            if "test_checkpoint_2" in t.file_path
+            t for t in results.tests if "test_checkpoint_2" in t.file_path
         ]
 
         # Should have tests from both checkpoints
@@ -203,8 +198,7 @@ class TestPytestRunnerE2EStaticAssets:
         # Tests that use stopwords should pass
         # (they would fail or skip if static assets weren't available)
         stopword_tests = [
-            t for t in results.tests
-            if "stopword" in t.id.lower()
+            t for t in results.tests if "stopword" in t.id.lower()
         ]
 
         # Should have some stopword-related tests
@@ -214,8 +208,7 @@ class TestPytestRunnerE2EStaticAssets:
 
         # Stopword tests should pass (not skip)
         passed_stopword_tests = [
-            t for t in stopword_tests
-            if t.status == "passed"
+            t for t in stopword_tests if t.status == "passed"
         ]
         assert len(passed_stopword_tests) > 0, (
             f"Stopword tests did not pass: {[t.status for t in stopword_tests]}"
@@ -242,7 +235,9 @@ class TestPytestRunnerE2EMarkers:
         )
 
         # Should have some FUNCTIONALITY tests
-        functionality_total = results.total_counts.get(GroupType.FUNCTIONALITY, 0)
+        functionality_total = results.total_counts.get(
+            GroupType.FUNCTIONALITY, 0
+        )
 
         # The test_checkpoint_2.py has @pytest.mark.functionality tests
         assert functionality_total > 0, (

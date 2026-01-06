@@ -81,7 +81,9 @@ def _find_agent_dirs(run_dir: Path) -> list[Path]:
     return agent_dirs
 
 
-def _process_single_run(run_dir: Path) -> tuple[int, int, list[tuple[Path, str]]]:
+def _process_single_run(
+    run_dir: Path,
+) -> tuple[int, int, list[tuple[Path, str]]]:
     """Process a single run directory.
 
     Args:
@@ -206,7 +208,9 @@ def compress_artifacts(
         agent_dirs = _find_agent_dirs(run_dir)
 
         if dry_run:
-            typer.echo(f"  Would compress {len(agent_dirs)} agent directory(ies):")
+            typer.echo(
+                f"  Would compress {len(agent_dirs)} agent directory(ies):"
+            )
             for agent_dir in agent_dirs:
                 tar_path = agent_dir.parent / AGENT_TAR_FILENAME
                 if tar_path.exists():
@@ -254,20 +258,26 @@ def compress_artifacts(
     typer.echo("\n" + "=" * 50)
     if dry_run:
         typer.echo(
-            typer.style("DRY RUN - No changes made", fg=typer.colors.CYAN, bold=True)
+            typer.style(
+                "DRY RUN - No changes made", fg=typer.colors.CYAN, bold=True
+            )
         )
         typer.echo(f"Would compress: {total_compressed}")
         typer.echo(f"Would skip: {total_skipped}")
     else:
         typer.echo(
             typer.style(
-                f"Compressed: {total_compressed}", fg=typer.colors.GREEN, bold=True
+                f"Compressed: {total_compressed}",
+                fg=typer.colors.GREEN,
+                bold=True,
             )
         )
         typer.echo(f"Skipped: {total_skipped}")
         if total_errors:
             typer.echo(
                 typer.style(
-                    f"Errors: {len(total_errors)}", fg=typer.colors.RED, bold=True
+                    f"Errors: {len(total_errors)}",
+                    fg=typer.colors.RED,
+                    bold=True,
                 )
             )

@@ -11,11 +11,18 @@ from slop_code.dashboard.graphs.comparison import build_problem_comparison_chart
 from slop_code.dashboard.page_context import build_context
 from slop_code.dashboard.page_context import empty_figure
 
-dash.register_page(__name__, path='/problem_comparison')
+dash.register_page(__name__, path="/problem_comparison")
 
 layout = dbc.Container(
     [
-        dbc.Row(dbc.Col(html.H3("Problem Comparison", className="display-6 fw-bold text-primary mb-4"))),
+        dbc.Row(
+            dbc.Col(
+                html.H3(
+                    "Problem Comparison",
+                    className="display-6 fw-bold text-primary mb-4",
+                )
+            )
+        ),
         dbc.Card(
             [
                 dbc.CardHeader(
@@ -32,7 +39,9 @@ layout = dbc.Container(
                     ],
                     className="d-flex align-items-center bg-light",
                 ),
-                dbc.CardBody(loading_graph("problem-comparison-graph", height="80vh")),
+                dbc.CardBody(
+                    loading_graph("problem-comparison-graph", height="80vh")
+                ),
             ],
             className="shadow-sm border-0",
         ),
@@ -40,6 +49,7 @@ layout = dbc.Container(
     fluid=True,
     className="py-3",
 )
+
 
 @callback(
     Output("problem-selector", "options"),
@@ -58,11 +68,14 @@ def update_problem_options(selected_paths):
     problems = sorted(context.checkpoints["problem"].dropna().unique())
     return [{"label": p, "value": p} for p in problems]
 
+
 @callback(
     Output("problem-comparison-graph", "figure"),
-    [Input("selected-runs-store", "data"),
-     Input("problem-selector", "value"),
-     Input("filter-settings-store", "data")],
+    [
+        Input("selected-runs-store", "data"),
+        Input("problem-selector", "value"),
+        Input("filter-settings-store", "data"),
+    ],
 )
 def update_graph(selected_paths, selected_problem, filter_settings):
     if not selected_problem:
@@ -74,7 +87,9 @@ def update_graph(selected_paths, selected_problem, filter_settings):
     if filter_settings:
         disable_colors = bool(filter_settings.get("disable_colors", []))
         group_runs = bool(filter_settings.get("group_runs", False))
-        common_problems_only = bool(filter_settings.get("common_problems_only", False))
+        common_problems_only = bool(
+            filter_settings.get("common_problems_only", False)
+        )
 
     context = build_context(
         selected_paths,

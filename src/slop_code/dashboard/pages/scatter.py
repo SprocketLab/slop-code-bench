@@ -12,7 +12,7 @@ from slop_code.dashboard.graphs.scatter import build_scatter_chart
 from slop_code.dashboard.page_context import build_context
 from slop_code.dashboard.page_context import empty_figure
 
-dash.register_page(__name__, path='/scatter')
+dash.register_page(__name__, path="/scatter")
 
 # Create tabs for each scatter chart type
 tabs = []
@@ -80,7 +80,9 @@ def update_graph(selected_paths, active_tab, filter_settings, grid_view):
         disable_colors = bool(filter_settings.get("disable_colors", []))
         show_annotations = bool(filter_settings.get("show_annotations", False))
         group_runs = bool(filter_settings.get("group_runs", False))
-        common_problems_only = bool(filter_settings.get("common_problems_only", False))
+        common_problems_only = bool(
+            filter_settings.get("common_problems_only", False)
+        )
 
     context = build_context(
         selected_paths,

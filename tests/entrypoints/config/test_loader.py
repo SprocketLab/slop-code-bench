@@ -366,7 +366,9 @@ problems:
 
     def test_agent_override_with_explicit_prefix(self):
         """Test that agent.cost_limits.step_limit=X is applied to agent config."""
-        config = load_run_config(cli_overrides=["agent.cost_limits.net_cost_limit=50"])
+        config = load_run_config(
+            cli_overrides=["agent.cost_limits.net_cost_limit=50"]
+        )
 
         assert config.agent["cost_limits"]["net_cost_limit"] == 50
 
@@ -431,7 +433,7 @@ agent:
     def test_empty_save_dir(self, tmp_path):
         """Test that empty save_dir produces path without leading slash."""
         config_file = tmp_path / "run.yaml"
-        config_file.write_text("save_dir: \"\"\n")
+        config_file.write_text('save_dir: ""\n')
         config = load_run_config(config_path=config_file)
 
         assert config.save_dir == ""

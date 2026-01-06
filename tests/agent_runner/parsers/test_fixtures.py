@@ -26,7 +26,12 @@ def get_claude_thinking() -> dict:
             "id": "msg_test",
             "type": "message",
             "role": "assistant",
-            "content": [{"type": "thinking", "thinking": "I need to read the file first."}],
+            "content": [
+                {
+                    "type": "thinking",
+                    "thinking": "I need to read the file first.",
+                }
+            ],
             "usage": {"input_tokens": 10, "output_tokens": 20},
         },
         "parent_tool_use_id": None,
@@ -34,7 +39,9 @@ def get_claude_thinking() -> dict:
     }
 
 
-def get_claude_tool_use(tool_id: str = "tool_test", tool_name: str = "Read") -> dict:
+def get_claude_tool_use(
+    tool_id: str = "tool_test", tool_name: str = "Read"
+) -> dict:
     """Get realistic Claude Code tool_use message."""
     return {
         "type": "assistant",
@@ -43,7 +50,14 @@ def get_claude_tool_use(tool_id: str = "tool_test", tool_name: str = "Read") -> 
             "id": "msg_test",
             "type": "message",
             "role": "assistant",
-            "content": [{"type": "tool_use", "id": tool_id, "name": tool_name, "input": {"file_path": "test.txt"}}],
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": tool_id,
+                    "name": tool_name,
+                    "input": {"file_path": "test.txt"},
+                }
+            ],
             "usage": {"input_tokens": 15, "output_tokens": 25},
         },
         "parent_tool_use_id": None,
@@ -51,7 +65,9 @@ def get_claude_tool_use(tool_id: str = "tool_test", tool_name: str = "Read") -> 
     }
 
 
-def get_claude_tool_result(tool_use_id: str = "tool_test", content: str = "File content") -> dict:
+def get_claude_tool_result(
+    tool_use_id: str = "tool_test", content: str = "File content"
+) -> dict:
     """Get realistic Claude Code tool_result message."""
     return {
         "type": "user",
@@ -89,7 +105,9 @@ def get_codex_reasoning(text: str = "I need to analyze the code") -> dict:
     }
 
 
-def get_codex_command(command: str = "ls -la", exit_code: int = 0, output: str = "") -> dict:
+def get_codex_command(
+    command: str = "ls -la", exit_code: int = 0, output: str = ""
+) -> dict:
     """Get realistic Codex command execution messages."""
     return [
         {
@@ -140,7 +158,9 @@ def get_opencode_step_start() -> dict:
     }
 
 
-def get_opencode_step_finish(reason: str = "tool-calls", tokens: dict = None) -> dict:
+def get_opencode_step_finish(
+    reason: str = "tool-calls", tokens: dict = None
+) -> dict:
     """Get realistic OpenCode step_finish message."""
     part = {
         "id": "prt_test",

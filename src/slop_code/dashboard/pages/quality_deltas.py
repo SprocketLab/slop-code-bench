@@ -66,7 +66,7 @@ layout = dbc.Container(
     [
         Input("selected-runs-store", "data"),
         Input("filter-settings-store", "data"),
-    ]
+    ],
 )
 def update_graph(selected_paths, filter_settings):
     disable_colors = False
@@ -75,7 +75,9 @@ def update_graph(selected_paths, filter_settings):
     if filter_settings:
         disable_colors = bool(filter_settings.get("disable_colors", []))
         group_runs = bool(filter_settings.get("group_runs", False))
-        common_problems_only = bool(filter_settings.get("common_problems_only", False))
+        common_problems_only = bool(
+            filter_settings.get("common_problems_only", False)
+        )
 
     context = build_context(
         selected_paths,

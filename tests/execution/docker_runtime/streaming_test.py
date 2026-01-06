@@ -207,7 +207,9 @@ class TestDockerStreamingRuntimeContainer:
                 env_vars={},
                 setup_command=None,
             )
-            with pytest.raises(SolutionRuntimeError, match="Container not created"):
+            with pytest.raises(
+                SolutionRuntimeError, match="Container not created"
+            ):
                 _ = runtime.container
 
 
@@ -395,7 +397,9 @@ class TestDockerStreamingRuntimeIntegration:
             disable_setup=True,
         )
         try:
-            events = list(runtime.stream("echo hello_docker", env={}, timeout=30))
+            events = list(
+                runtime.stream("echo hello_docker", env={}, timeout=30)
+            )
             stdout_events = [e for e in events if e.kind == "stdout"]
             stdout_text = "".join(e.text for e in stdout_events if e.text)
             assert "hello_docker" in stdout_text
@@ -412,7 +416,9 @@ class TestDockerStreamingRuntimeIntegration:
             disable_setup=True,
         )
         try:
-            events = list(runtime.stream("echo error_msg >&2", env={}, timeout=30))
+            events = list(
+                runtime.stream("echo error_msg >&2", env={}, timeout=30)
+            )
             stderr_events = [e for e in events if e.kind == "stderr"]
             stderr_text = "".join(e.text for e in stderr_events if e.text)
             assert "error_msg" in stderr_text

@@ -21,12 +21,14 @@ from slop_code.agent_runner import MetricsTracker
 from slop_code.agent_runner import UsageTracker
 from slop_code.entrypoints.config.run_config import OneShotConfig
 
-_TERMINAL_STATES = frozenset({
-    AgentStateEnum.COMPLETED,
-    AgentStateEnum.FAILED,
-    AgentStateEnum.ERROR,
-    AgentStateEnum.HIT_RATE_LIMITED,
-})
+_TERMINAL_STATES = frozenset(
+    {
+        AgentStateEnum.COMPLETED,
+        AgentStateEnum.FAILED,
+        AgentStateEnum.ERROR,
+        AgentStateEnum.HIT_RATE_LIMITED,
+    }
+)
 
 if TYPE_CHECKING:
     from slop_code.agent_runner import AgentConfigType

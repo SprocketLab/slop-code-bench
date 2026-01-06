@@ -11,7 +11,10 @@ from slop_code.agent_runner.trajectory import (
     Trajectory,
     UserStep,
 )
-from slop_code.agent_runner.trajectory_parsing import parse_trajectory, ParseError
+from slop_code.agent_runner.trajectory_parsing import (
+    parse_trajectory,
+    ParseError,
+)
 from slop_code.agent_runner.agents.claude_code.parser import ClaudeCodeParser
 from slop_code.agent_runner.agents.codex.parser import CodexParser
 from slop_code.agent_runner.agents.gemini.parser import GeminiParser
@@ -31,7 +34,9 @@ class TestClaudeCodeParser:
         """Test detection of Claude Code trajectory format."""
         # Create a minimal Claude Code trajectory
         jsonl = tmp_path / "stdout.jsonl"
-        jsonl.write_text('{"type": "system", "subtype": "init", "model": "test"}\n')
+        jsonl.write_text(
+            '{"type": "system", "subtype": "init", "model": "test"}\n'
+        )
 
         parser = ClaudeCodeParser()
         assert parser.can_parse(tmp_path) is True
@@ -255,8 +260,7 @@ class TestParseTrajectory:
         """Test auto-detection of OpenCode format."""
         jsonl = tmp_path / "messages.jsonl"
         jsonl.write_text(
-            '{"type": "step_start"}\n'
-            '{"type": "text", "part": {"text": "Hi"}}\n'
+            '{"type": "step_start"}\n{"type": "text", "part": {"text": "Hi"}}\n'
         )
 
         traj = parse_trajectory(tmp_path)
@@ -361,7 +365,9 @@ class TestMinisweParser:
     def test_can_parse_miniswe_file(self, tmp_path: Path) -> None:
         """Test detection of MiniSWE trajectory format."""
         jsonl = tmp_path / "stdout.jsonl"
-        jsonl.write_text('{"role": "system", "content": "You are an assistant"}\n')
+        jsonl.write_text(
+            '{"role": "system", "content": "You are an assistant"}\n'
+        )
 
         parser = MinisweParser()
         assert parser.can_parse(tmp_path) is True
@@ -433,10 +439,18 @@ class TestOpenHandsParser:
         import json
 
         traj_file = tmp_path / "trajectory.json"
-        traj_file.write_text(json.dumps([
-            {"source": "agent", "action": "message", "args": {"content": "Hi"}},
-            {"llm_metrics": {"accumulated_cost": 0.01}},
-        ]))
+        traj_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "source": "agent",
+                        "action": "message",
+                        "args": {"content": "Hi"},
+                    },
+                    {"llm_metrics": {"accumulated_cost": 0.01}},
+                ]
+            )
+        )
 
         parser = OpenHandsParser()
         assert parser.can_parse(tmp_path) is True
@@ -456,10 +470,24 @@ class TestOpenHandsParser:
         import json
 
         traj_file = tmp_path / "trajectory.json"
-        traj_file.write_text(json.dumps([
-            {"source": "agent", "action": "run", "args": {"command": "ls -la"}, "message": ""},
-            {"source": "environment", "action": "observation", "args": {"content": "file1.txt"}, "message": ""},
-        ]))
+        traj_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "source": "agent",
+                        "action": "run",
+                        "args": {"command": "ls -la"},
+                        "message": "",
+                    },
+                    {
+                        "source": "environment",
+                        "action": "observation",
+                        "args": {"content": "file1.txt"},
+                        "message": "",
+                    },
+                ]
+            )
+        )
 
         parser = OpenHandsParser()
         traj = parser.parse(tmp_path)
@@ -475,9 +503,18 @@ class TestOpenHandsParser:
         import json
 
         traj_file = tmp_path / "trajectory.json"
-        traj_file.write_text(json.dumps([
-            {"source": "agent", "action": "edit", "args": {"path": "/test.py", "content": "print(1)"}, "message": ""},
-        ]))
+        traj_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "source": "agent",
+                        "action": "edit",
+                        "args": {"path": "/test.py", "content": "print(1)"},
+                        "message": "",
+                    },
+                ]
+            )
+        )
 
         parser = OpenHandsParser()
         traj = parser.parse(tmp_path)
@@ -492,9 +529,18 @@ class TestOpenHandsParser:
         import json
 
         traj_file = tmp_path / "trajectory.json"
-        traj_file.write_text(json.dumps([
-            {"source": "agent", "action": "message", "args": {"content": "Task completed!"}, "message": ""},
-        ]))
+        traj_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "source": "agent",
+                        "action": "message",
+                        "args": {"content": "Task completed!"},
+                        "message": "",
+                    },
+                ]
+            )
+        )
 
         parser = OpenHandsParser()
         traj = parser.parse(tmp_path)
@@ -508,19 +554,28 @@ class TestOpenHandsParser:
         import json
 
         traj_file = tmp_path / "trajectory.json"
-        traj_file.write_text(json.dumps([
-            {"source": "agent", "action": "message", "args": {"content": "Hi"}, "message": ""},
-            {
-                "source": "agent",
-                "llm_metrics": {
-                    "accumulated_cost": 0.05,
-                    "accumulated_token_usage": {
-                        "prompt_tokens": 1000,
-                        "completion_tokens": 500,
+        traj_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "source": "agent",
+                        "action": "message",
+                        "args": {"content": "Hi"},
+                        "message": "",
                     },
-                },
-            },
-        ]))
+                    {
+                        "source": "agent",
+                        "llm_metrics": {
+                            "accumulated_cost": 0.05,
+                            "accumulated_token_usage": {
+                                "prompt_tokens": 1000,
+                                "completion_tokens": 500,
+                            },
+                        },
+                    },
+                ]
+            )
+        )
 
         parser = OpenHandsParser()
         traj = parser.parse(tmp_path)
@@ -534,9 +589,18 @@ class TestOpenHandsParser:
         import json
 
         traj_file = tmp_path / "trajectory.json"
-        traj_file.write_text(json.dumps([
-            {"source": "agent", "action": "message", "args": {"content": "Hello"}, "message": ""},
-        ]))
+        traj_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "source": "agent",
+                        "action": "message",
+                        "args": {"content": "Hello"},
+                        "message": "",
+                    },
+                ]
+            )
+        )
 
         traj = parse_trajectory(tmp_path)
         assert traj.agent_type == "openhands"

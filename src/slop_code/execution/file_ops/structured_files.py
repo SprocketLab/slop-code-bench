@@ -36,7 +36,9 @@ class StructuredFileHandler(FileHandler):
                 yield stream
         except Exception as exc:
             if "w" in mode:
-                raise InputFileWriteError(f"Failed to write {path}: {exc}") from exc
+                raise InputFileWriteError(
+                    f"Failed to write {path}: {exc}"
+                ) from exc
             raise InputFileReadError(f"Failed to open {path}: {exc}") from exc
 
 
@@ -113,7 +115,9 @@ class DelimitedHandlerBase(StructuredFileHandler):
                     if isinstance(content[0], dict):
                         fieldnames = content[0].keys()
                         writer = csv.DictWriter(
-                            stream, fieldnames=fieldnames, delimiter=self.delimiter
+                            stream,
+                            fieldnames=fieldnames,
+                            delimiter=self.delimiter,
                         )
                         writer.writeheader()
                         writer.writerows(content)
@@ -145,12 +149,18 @@ class SQLiteHandler(StructuredFileHandler):
             with sqlite3.connect(path) as conn:
                 conn.row_factory = sqlite3.Row
                 for table_name in self._list_tables(conn):
-                    query = f"SELECT * FROM {self._quote_identifier(table_name)}"
+                    query = (
+                        f"SELECT * FROM {self._quote_identifier(table_name)}"
+                    )
                     cursor = conn.execute(query)
-                    tables[table_name] = [dict(row) for row in cursor.fetchall()]
+                    tables[table_name] = [
+                        dict(row) for row in cursor.fetchall()
+                    ]
             return {"tables": tables}
         except sqlite3.Error as exc:
-            raise InputFileReadError(f"Failed to read SQLite database {path}: {exc}") from exc
+            raise InputFileReadError(
+                f"Failed to read SQLite database {path}: {exc}"
+            ) from exc
 
     def write(self, path: Path, content: FileContent) -> None:
         tables = self._normalize_tables(content)
@@ -161,10 +171,14 @@ class SQLiteHandler(StructuredFileHandler):
         try:
             with sqlite3.connect(path) as conn:
                 for table_name, spec in tables.items():
-                    self._create_table(conn, table_name, spec["columns"], spec["rows"])
+                    self._create_table(
+                        conn, table_name, spec["columns"], spec["rows"]
+                    )
                 conn.commit()
         except sqlite3.Error as exc:
-            raise InputFileWriteError(f"Failed to write SQLite database {path}: {exc}") from exc
+            raise InputFileWriteError(
+                f"Failed to write SQLite database {path}: {exc}"
+            ) from exc
 
     def _normalize_tables(
         self, content: FileContent
@@ -186,7 +200,9 @@ class SQLiteHandler(StructuredFileHandler):
         for table_name, table_payload in raw_tables.items():
             if not isinstance(table_name, str):
                 raise InputFileWriteError("Table names must be strings")
-            normalized[table_name] = self._normalize_table_payload(table_name, table_payload)
+            normalized[table_name] = self._normalize_table_payload(
+                table_name, table_payload
+            )
 
         return normalized
 
@@ -238,12 +254,12 @@ class SQLiteHandler(StructuredFileHandler):
                 seen.add(column)
                 normalized.append(column)
         if not normalized:
-            raise InputFileWriteError(f"Table '{table_name}' must contain at least one column")
+            raise InputFileWriteError(
+                f"Table '{table_name}' must contain at least one column"
+            )
         return normalized
 
-    def _normalize_row(
-        self, table_name: str, row: Any
-    ) -> dict[str, Any]:
+    def _normalize_row(self, table_name: str, row: Any) -> dict[str, Any]:
         if not isinstance(row, Mapping):
             raise InputFileWriteError(
                 f"Rows for table '{table_name}' must be mappings of column names to values"
@@ -286,7 +302,9 @@ class SQLiteHandler(StructuredFileHandler):
             f"{self._quote_identifier(column)} {column_types[column]}"
             for column in columns
         )
-        conn.execute(f"DROP TABLE IF EXISTS {self._quote_identifier(table_name)}")
+        conn.execute(
+            f"DROP TABLE IF EXISTS {self._quote_identifier(table_name)}"
+        )
         conn.execute(
             f"CREATE TABLE {self._quote_identifier(table_name)} ({columns_sql})"
         )
@@ -343,6 +361,7 @@ class SQLiteHandler(StructuredFileHandler):
     def _quote_identifier(identifier: str) -> str:
         escaped = identifier.replace('"', '""')
         return f'"{escaped}"'
+
 
 SETUPS = {
     (JSONHandler, FileType.JSON): {

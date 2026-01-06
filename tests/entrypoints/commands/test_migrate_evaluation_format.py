@@ -160,7 +160,9 @@ class TestMigrateSingleFile:
             def warning(self, *args, **kwargs):
                 pass
 
-        success, message = _migrate_single_file(eval_path, dry_run=False, logger=MockLogger())
+        success, message = _migrate_single_file(
+            eval_path, dry_run=False, logger=MockLogger()
+        )
 
         assert success
         assert "Migrated 1 tests" in message
@@ -191,7 +193,9 @@ class TestMigrateSingleFile:
             def info(self, *args, **kwargs):
                 pass
 
-        success, message = _migrate_single_file(eval_path, dry_run=False, logger=MockLogger())
+        success, message = _migrate_single_file(
+            eval_path, dry_run=False, logger=MockLogger()
+        )
 
         assert success
         assert "Already migrated" in message
@@ -220,7 +224,9 @@ class TestMigrateSingleFile:
             def info(self, *args, **kwargs):
                 pass
 
-        success, message = _migrate_single_file(eval_path, dry_run=True, logger=MockLogger())
+        success, message = _migrate_single_file(
+            eval_path, dry_run=True, logger=MockLogger()
+        )
 
         assert success
         assert "Would migrate" in message

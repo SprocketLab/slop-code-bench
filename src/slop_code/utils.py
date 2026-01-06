@@ -64,7 +64,8 @@ def get_total_size(obj, seen=None):
     seen.add(obj_id)
     if isinstance(obj, dict):
         size += sum(
-            get_total_size(v, seen) + get_total_size(k, seen) for k, v in obj.items()
+            get_total_size(v, seen) + get_total_size(k, seen)
+            for k, v in obj.items()
         )
     elif hasattr(obj, "__dict__"):
         size += get_total_size(vars(obj), seen)
@@ -190,7 +191,9 @@ def log_command_args(output_dir: Path | None) -> None:
         cmd_file.write_text(" ".join(sys.argv) + "\n")
 
 
-def coerce(value: Any, target_type: type[T], *, allow_none: bool = False) -> T | None:
+def coerce(
+    value: Any, target_type: type[T], *, allow_none: bool = False
+) -> T | None:
     """
     Coerce a value to a target type.
 

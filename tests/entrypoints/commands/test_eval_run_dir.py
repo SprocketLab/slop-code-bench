@@ -401,17 +401,17 @@ class TestAutoSkipLogic:
         problem_names = ["test_problem"]
         overwrite = False
         auto_skip_evaluated = not overwrite
-        assert (
-            auto_skip_evaluated is True
-        ), "--problem alone should still auto-skip"
+        assert auto_skip_evaluated is True, (
+            "--problem alone should still auto-skip"
+        )
 
         # Test case 4: --problem X --overwrite
         problem_names = ["test_problem"]
         overwrite = True
         auto_skip_evaluated = not overwrite
-        assert (
-            auto_skip_evaluated is False
-        ), "--problem with --overwrite should not auto-skip"
+        assert auto_skip_evaluated is False, (
+            "--problem with --overwrite should not auto-skip"
+        )
 
     def test_problem_filter_with_skip_logic(
         self, evaluated_problem_dir: Path
@@ -448,9 +448,9 @@ class TestAutoSkipLogic:
             ):
                 should_skip = True
 
-        assert (
-            should_skip is True
-        ), "--problem X should skip if already evaluated and config unchanged"
+        assert should_skip is True, (
+            "--problem X should skip if already evaluated and config unchanged"
+        )
 
     def test_problem_filter_with_overwrite_forces_evaluation(
         self, evaluated_problem_dir: Path
@@ -472,9 +472,7 @@ class TestAutoSkipLogic:
         ):
             should_skip = True
 
-        assert (
-            should_skip is False
-        ), "--problem X --overwrite should NOT skip"
+        assert should_skip is False, "--problem X --overwrite should NOT skip"
 
 
 # =============================================================================
@@ -505,9 +503,9 @@ class TestEdgeCases:
             problem_dir
         )
 
-        assert (
-            should_skip is False
-        ), "Partial evaluation should not trigger skip"
+        assert should_skip is False, (
+            "Partial evaluation should not trigger skip"
+        )
 
     def test_config_change_overrides_skip(self, tmp_path: Path) -> None:
         """Config changes trigger re-evaluation even when auto-skip is enabled."""
@@ -549,6 +547,4 @@ class TestEdgeCases:
             ):
                 should_skip = True
 
-        assert (
-            should_skip is False
-        ), "Config change should prevent skip"
+        assert should_skip is False, "Config change should prevent skip"

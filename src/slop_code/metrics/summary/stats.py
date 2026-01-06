@@ -68,7 +68,9 @@ def compute_ratio_values(
     return ratios
 
 
-def compute_pass_rate(passed: float | None, total: float | None) -> float | None:
+def compute_pass_rate(
+    passed: float | None, total: float | None
+) -> float | None:
     """Compute pass rate safely.
 
     Returns:

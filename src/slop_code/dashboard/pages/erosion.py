@@ -36,9 +36,13 @@ layout = dbc.Container(
                 dbc.Col(
                     dbc.Card(
                         [
-                            dbc.CardHeader("Mass Delta Overview", className="fw-bold"),
+                            dbc.CardHeader(
+                                "Mass Delta Overview", className="fw-bold"
+                            ),
                             dbc.CardBody(
-                                loading_graph("erosion-delta-bars", height="400px"),
+                                loading_graph(
+                                    "erosion-delta-bars", height="400px"
+                                ),
                                 className="p-0",
                             ),
                         ],
@@ -53,7 +57,9 @@ layout = dbc.Container(
                                 "Mass Delta vs Solve Rate", className="fw-bold"
                             ),
                             dbc.CardBody(
-                                loading_graph("erosion-scatter", height="400px"),
+                                loading_graph(
+                                    "erosion-scatter", height="400px"
+                                ),
                                 className="p-0",
                             ),
                         ],
@@ -78,7 +84,9 @@ layout = dbc.Container(
         # Symbol sprawl
         dbc.Card(
             [
-                dbc.CardHeader("Symbol Sprawl vs Refactoring", className="fw-bold"),
+                dbc.CardHeader(
+                    "Symbol Sprawl vs Refactoring", className="fw-bold"
+                ),
                 dbc.CardBody(
                     loading_graph("erosion-sprawl", height="400px"),
                     className="p-0",
@@ -89,7 +97,9 @@ layout = dbc.Container(
         # Heatmap - high complexity concentration
         dbc.Card(
             [
-                dbc.CardHeader("High Complexity Mass by Problem", className="fw-bold"),
+                dbc.CardHeader(
+                    "High Complexity Mass by Problem", className="fw-bold"
+                ),
                 dbc.CardBody(
                     loading_graph("erosion-delta-heatmap"),
                     className="p-0",
@@ -111,7 +121,9 @@ layout = dbc.Container(
         # Other mass metrics - median relative changes
         dbc.Card(
             [
-                dbc.CardHeader("Mass Metrics (Median % Change)", className="fw-bold"),
+                dbc.CardHeader(
+                    "Mass Metrics (Median % Change)", className="fw-bold"
+                ),
                 dbc.CardBody(
                     loading_graph("erosion-other-mass", height="450px"),
                     className="p-0",
@@ -147,7 +159,9 @@ def update_erosion_graphs(selected_paths, filter_settings):
     if filter_settings:
         disable_colors = bool(filter_settings.get("disable_colors", []))
         group_runs = bool(filter_settings.get("group_runs", False))
-        common_problems_only = bool(filter_settings.get("common_problems_only", False))
+        common_problems_only = bool(
+            filter_settings.get("common_problems_only", False)
+        )
 
     context = build_context(
         selected_paths,

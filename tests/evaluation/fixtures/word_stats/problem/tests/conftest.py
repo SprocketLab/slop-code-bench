@@ -50,6 +50,6 @@ def static_assets() -> dict[str, str]:
     assets = {}
     for key, value in os.environ.items():
         if key.startswith(prefix):
-            name = key[len(prefix):].lower()
+            name = key[len(prefix) :].lower()
             assets[name] = value
     return assets

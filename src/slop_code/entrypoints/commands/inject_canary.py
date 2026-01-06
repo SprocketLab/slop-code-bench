@@ -153,9 +153,7 @@ def _python_has_canary(content: str, canary: str) -> bool:
     if not lines:
         return False
 
-    line_patterns = [
-        rf"[ \t]*#\s*{re.escape(line)}\s*" for line in lines
-    ]
+    line_patterns = [rf"[ \t]*#\s*{re.escape(line)}\s*" for line in lines]
     pattern = r"\n".join(line_patterns)
     return re.search(pattern, content) is not None
 
@@ -337,9 +335,7 @@ def _discover_eligible_files(
 
         # Checkpoint specs at problem root (pytest-style problems)
         for spec_path in sorted(problem_dir.glob("checkpoint_*.md")):
-            if not _is_excluded_path(
-                spec_path, problem_dir, static_asset_dirs
-            ):
+            if not _is_excluded_path(spec_path, problem_dir, static_asset_dirs):
                 eligible["markdown"].append(spec_path)
 
         # Shell scripts at problem level

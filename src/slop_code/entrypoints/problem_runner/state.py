@@ -14,18 +14,22 @@ from slop_code.agent_runner import MetricsTracker
 from slop_code.agent_runner import UsageTracker
 from slop_code.entrypoints.problem_runner.models import ProblemState
 
-_TERMINAL_STATES = frozenset({
-    AgentStateEnum.COMPLETED,
-    AgentStateEnum.FAILED,
-    AgentStateEnum.ERROR,
-})
+_TERMINAL_STATES = frozenset(
+    {
+        AgentStateEnum.COMPLETED,
+        AgentStateEnum.FAILED,
+        AgentStateEnum.ERROR,
+    }
+)
 
-_ACTIVE_STATES = frozenset({
-    AgentStateEnum.RUNNING,
-    AgentStateEnum.EVALUATING,
-    AgentStateEnum.PENDING,
-    AgentStateEnum.INITIALIZED,
-})
+_ACTIVE_STATES = frozenset(
+    {
+        AgentStateEnum.RUNNING,
+        AgentStateEnum.EVALUATING,
+        AgentStateEnum.PENDING,
+        AgentStateEnum.INITIALIZED,
+    }
+)
 
 
 class ProblemStateTracker:

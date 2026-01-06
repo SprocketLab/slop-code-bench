@@ -118,10 +118,14 @@ class ProblemProgressRenderer:
 
         # Calculate percentages
         pct_solved = (
-            (total_passed / total_evaluated * 100) if total_evaluated > 0 else 0.0
+            (total_passed / total_evaluated * 100)
+            if total_evaluated > 0
+            else 0.0
         )
         pct_iso = (
-            (total_iso_passed / total_evaluated * 100) if total_evaluated > 0 else 0.0
+            (total_iso_passed / total_evaluated * 100)
+            if total_evaluated > 0
+            else 0.0
         )
 
         # Build layout: output dir on its own line, then stats
@@ -146,15 +150,21 @@ class ProblemProgressRenderer:
                 (f"{problems_done}/{self._total_problems}", "bold green"),
             ),
             Text.assemble(("Elapsed: ", "dim"), (elapsed_str, "green")),
-            Text.assemble(("Spend: ", "dim"), (f"${total_cost:.2f}", "bold cyan")),
-            Text.assemble(("Solved: ", "dim"), (f"{pct_solved:.1f}%", "bold green")),
+            Text.assemble(
+                ("Spend: ", "dim"), (f"${total_cost:.2f}", "bold cyan")
+            ),
+            Text.assemble(
+                ("Solved: ", "dim"), (f"{pct_solved:.1f}%", "bold green")
+            ),
             Text.assemble(
                 ("Iso Solved: ", "dim"), (f"{pct_iso:.1f}%", "bold green")
             ),
         )
         content.add_row(stats_row)
 
-        return Panel(content, title="[bold cyan]Run Status[/]", border_style="dim")
+        return Panel(
+            content, title="[bold cyan]Run Status[/]", border_style="dim"
+        )
 
     def render(self) -> list[Table | Panel]:
         """Render header and actively running problem rows."""

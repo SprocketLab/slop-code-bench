@@ -16,24 +16,28 @@ from slop_code.agent_runner.credentials import ProviderCredential
 from slop_code.agent_runner.models import AgentCostLimits
 from slop_code.agent_runner.registry import register_agent
 from slop_code.agent_runner.trajectory import StepRole, TrajectoryStep
-from slop_code.common.llms import (APIPricing, ModelDefinition, ThinkingPreset,
-                                   TokenUsage)
-from slop_code.execution import (DockerEnvironmentSpec, EnvironmentSpecType,
-                                 LocalEnvironmentSpec, Session)
+from slop_code.common.llms import (
+    APIPricing,
+    ModelDefinition,
+    ThinkingPreset,
+    TokenUsage,
+)
+from slop_code.execution import (
+    DockerEnvironmentSpec,
+    EnvironmentSpecType,
+    LocalEnvironmentSpec,
+    Session,
+)
 
 # This needs to be done before the imports to avoid logging startup messages
 os.environ["MSWEA_SILENT_STARTUP"] = "1"
-from minisweagent.agents import \
-    default as miniswe_default  # pylint: disable=C0413
-from minisweagent.environments.docker import \
-    DockerEnvironment  # pylint: disable=C0413
-from minisweagent.environments.local import \
-    LocalEnvironment  # pylint: disable=C0413
+from minisweagent.agents import default as miniswe_default  # pylint: disable=C0413
+from minisweagent.environments.docker import DockerEnvironment  # pylint: disable=C0413
+from minisweagent.environments.local import LocalEnvironment  # pylint: disable=C0413
 from minisweagent.models import get_model  # pylint: disable=C0413
 from minisweagent.models import litellm_model  # pylint: disable=C0413
 from minisweagent.models import openrouter_model  # pylint: disable=C0413
-from minisweagent.models.utils.cache_control import \
-    set_cache_control  # pylint: disable=C0413
+from minisweagent.models.utils.cache_control import set_cache_control  # pylint: disable=C0413
 
 if tp.TYPE_CHECKING:
     from minisweagent import Model
@@ -73,12 +77,16 @@ def _litellm_query(self, messages: list[dict[str, str]], **kwargs) -> dict:
     import litellm
 
     if self.config.set_cache_control:
-        messages = set_cache_control(messages, mode=self.config.set_cache_control)
+        messages = set_cache_control(
+            messages, mode=self.config.set_cache_control
+        )
     response = self._query(messages, **kwargs)
     try:
         cost = litellm.cost_calculator.completion_cost(response)
     except Exception as e:
-        print(f"Error calculating cost for model {self.config.model_name}: {e}. ")
+        print(
+            f"Error calculating cost for model {self.config.model_name}: {e}. "
+        )
         raise
     self.n_calls += 1
 
@@ -404,7 +412,8 @@ class MiniSWEAgent(Agent):
                 model_kwargs.update(
                     {
                         "input_cost_per_token": model.pricing.input / 1_000_000,
-                        "output_cost_per_token": model.pricing.output / 1_000_000,
+                        "output_cost_per_token": model.pricing.output
+                        / 1_000_000,
                     }
                 )
 
@@ -497,7 +506,9 @@ class MiniSWEAgent(Agent):
 
     def parse_action(self, response: dict) -> dict:
         """Parse the action from the message. Returns the action."""
-        actions = re.findall(r"```bash\s*\n(.*?)\n```", response["content"], re.DOTALL)
+        actions = re.findall(
+            r"```bash\s*\n(.*?)\n```", response["content"], re.DOTALL
+        )
 
         self.log.debug(
             "Parsed actions",
@@ -515,7 +526,9 @@ class MiniSWEAgent(Agent):
         try:
             output = self.env.execute(action["action"])
         except subprocess.TimeoutExpired as e:
-            output = e.output.decode("utf-8", errors="replace") if e.output else ""
+            output = (
+                e.output.decode("utf-8", errors="replace") if e.output else ""
+            )
             raise miniswe_default.ExecutionTimeoutError(
                 self.render_template(
                     self.timeout_template, action=action, output=output
@@ -562,14 +575,18 @@ class MiniSWEAgent(Agent):
         env_spec: EnvironmentSpecType,
     ) -> DockerEnvironment | LocalEnvironment:
         if isinstance(env_spec, LocalEnvironmentSpec):
-            env_vars = {str(k): str(v) for k, v in env_spec.environment.env.items()}
+            env_vars = {
+                str(k): str(v) for k, v in env_spec.environment.env.items()
+            }
             return LocalEnvironment(cwd=str(workspace), env=env_vars)
 
         if isinstance(env_spec, DockerEnvironmentSpec):
             run_args = ["--rm"]
             if env_spec.docker.mount_workspace:
                 host_path = workspace.resolve()
-                run_args.extend(["-v", f"{host_path}:{env_spec.docker.workdir}"])
+                run_args.extend(
+                    ["-v", f"{host_path}:{env_spec.docker.workdir}"]
+                )
             for host, container in env_spec.docker.extra_mounts.items():
                 host_path = Path(host)
                 if not host_path.is_absolute():
@@ -581,7 +598,9 @@ class MiniSWEAgent(Agent):
             user = env_spec.get_actual_user()
             if user:
                 run_args.extend(["--user", user])
-            env_vars = {str(k): str(v) for k, v in env_spec.environment.env.items()}
+            env_vars = {
+                str(k): str(v) for k, v in env_spec.environment.env.items()
+            }
             return DockerEnvironment(
                 image=env_spec.get_base_image(),
                 cwd=env_spec.docker.workdir,
@@ -604,10 +623,14 @@ class MiniSWEAgent(Agent):
                 **kwargs,
             )
         )
-        self.add_message("system" if role == StepRole.SYSTEM else "user", content)
+        self.add_message(
+            "system" if role == StepRole.SYSTEM else "user", content
+        )
 
     def agent_step(self) -> dict | None:
-        if self.cost_limits.is_above_limits(self.usage, prior_cost=self.prior_cost):
+        if self.cost_limits.is_above_limits(
+            self.usage, prior_cost=self.prior_cost
+        ):
             self.log.debug(
                 "Hit agent limits",
                 cost=self.usage.cost,
@@ -618,7 +641,9 @@ class MiniSWEAgent(Agent):
                 net_cost_limit=self.cost_limits.net_cost_limit,
             )
             self._finished = True
-            raise miniswe_default.LimitsExceeded("Agent hit cost or step limits")
+            raise miniswe_default.LimitsExceeded(
+                "Agent hit cost or step limits"
+            )
         self.log.debug(
             "Querying model",
             calls=self.usage.steps,

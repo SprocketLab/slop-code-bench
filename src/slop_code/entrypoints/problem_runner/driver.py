@@ -255,7 +255,11 @@ def run_problems(
     start_time = datetime.now()
     states = ProblemStateTracker(problem_names, checkpoint_map)
     renderer = ProblemProgressRenderer(
-        states, config.run_dir, start_time, len(problem_names), total_checkpoints
+        states,
+        config.run_dir,
+        start_time,
+        len(problem_names),
+        total_checkpoints,
     )
 
     with maybe_live_progress(

@@ -141,7 +141,10 @@ class TestModelDefinitionProviderSlugs:
         )
         assert model.get_model_slug("openrouter") == "openrouter/model"
         assert model.get_model_slug("together") == "together/model"
-        assert model.get_model_slug("fireworks") == "accounts/fireworks/models/model"
+        assert (
+            model.get_model_slug("fireworks")
+            == "accounts/fireworks/models/model"
+        )
         assert model.get_model_slug() == "base-model"
 
 
@@ -333,11 +336,15 @@ class TestModelCatalog:
             internal_name="canonical-name",
             provider="anthropic",
             pricing=APIPricing(input=1, output=4),
-            provider_slugs={"bedrock": "anthropic.claude-3-5-sonnet-20241022-v2:0"},
+            provider_slugs={
+                "bedrock": "anthropic.claude-3-5-sonnet-20241022-v2:0"
+            },
         )
         ModelCatalog.register(model)
         assert (
-            ModelCatalog._provider_slugs["anthropic.claude-3-5-sonnet-20241022-v2:0"]
+            ModelCatalog._provider_slugs[
+                "anthropic.claude-3-5-sonnet-20241022-v2:0"
+            ]
             == "canonical-name"
         )
 
@@ -386,9 +393,7 @@ class TestModelCatalog:
 
         assert ModelCatalog._models.get("to-clear") is not None
         assert ModelCatalog._aliases.get("alias") is not None
-        assert (
-            ModelCatalog._provider_slugs.get("provider/model") == "to-clear"
-        )
+        assert ModelCatalog._provider_slugs.get("provider/model") == "to-clear"
 
         ModelCatalog.clear()
 
@@ -545,7 +550,9 @@ class TestYAMLLoadedModels:
         model = ModelCatalog.get("sonnet-4.5")
         assert model is not None
         assert model.name == "sonnet-4.5"  # Config filename
-        assert model.internal_name == "claude-sonnet-4-5-20250929"  # API model name
+        assert (
+            model.internal_name == "claude-sonnet-4-5-20250929"
+        )  # API model name
         assert model.provider == "anthropic"
         assert model.pricing.input == 3
         assert model.pricing.output == 15
@@ -562,9 +569,9 @@ class TestYAMLLoadedModels:
         canonical = ModelCatalog.get("sonnet-4.5")
         by_slug = ModelCatalog.get("anthropic/claude-sonnet-4.5")
         assert canonical is by_slug
-        assert ModelCatalog.resolve_canonical("anthropic/claude-sonnet-4.5") == (
-            "sonnet-4.5"
-        )
+        assert ModelCatalog.resolve_canonical(
+            "anthropic/claude-sonnet-4.5"
+        ) == ("sonnet-4.5")
 
     def test_claude_opus_loaded(self):
         """Test that Claude Opus is loaded from YAML."""
@@ -572,7 +579,9 @@ class TestYAMLLoadedModels:
         model = ModelCatalog.get("opus-4.5")
         assert model is not None
         assert model.name == "opus-4.5"  # Config filename
-        assert model.internal_name == "claude-opus-4-5-20251101"  # API model name
+        assert (
+            model.internal_name == "claude-opus-4-5-20251101"
+        )  # API model name
         assert model.provider == "anthropic"
         assert model.pricing.input == 5
         assert model.pricing.output == 25

@@ -14,7 +14,10 @@ from slop_code.agent_runner.trajectory import (
     Trajectory,
     TrajectoryStep,
 )
-from slop_code.agent_runner.trajectory_parsing import ParseError, TrajectoryParser
+from slop_code.agent_runner.trajectory_parsing import (
+    ParseError,
+    TrajectoryParser,
+)
 
 
 class CodexParser(TrajectoryParser):

@@ -76,7 +76,9 @@ class WrongClass:
         return "wrong_result"
 """)
 
-            with pytest.raises(ProtocolLoadError, match="does not implement protocol"):
+            with pytest.raises(
+                ProtocolLoadError, match="does not implement protocol"
+            ):
                 load_protocol_entrypoint(
                     protocol=TestProtocol,
                     module_path=module_file,
@@ -107,7 +109,9 @@ def test_function() -> str:
 
     def test_load_nonexistent_file(self):
         """Test loading from a nonexistent file."""
-        with pytest.raises(ProtocolLoadError, match="Module file .* does not exist"):
+        with pytest.raises(
+            ProtocolLoadError, match="Module file .* does not exist"
+        ):
             load_protocol_entrypoint(
                 protocol=TestProtocol,
                 module_path=Path("nonexistent.py"),
@@ -149,7 +153,10 @@ def test_function() -> str:
             module_file = temp_path / "test_module.py"
             module_file.write_text("test_variable = 42")
 
-            with pytest.raises(ProtocolLoadError, match="not a class and has no type annotations"):
+            with pytest.raises(
+                ProtocolLoadError,
+                match="not a class and has no type annotations",
+            ):
                 load_protocol_entrypoint(
                     protocol=TestProtocol,
                     module_path=module_file,
@@ -163,7 +170,9 @@ def test_function() -> str:
             module_file = temp_path / "test_module.py"
             module_file.write_text("import nonexistent_module")
 
-            with pytest.raises(ProtocolLoadError, match="Failed to import module"):
+            with pytest.raises(
+                ProtocolLoadError, match="Failed to import module"
+            ):
                 load_protocol_entrypoint(
                     protocol=TestProtocol,
                     module_path=module_file,
@@ -205,11 +214,11 @@ class TestGetSourceFiles:
             module_file = temp_path / "test_module.py"
 
             # Write a test module
-            module_content = '''
+            module_content = """
 class TestClass:
     def test_method(self) -> str:
         return "test_result"
-'''
+"""
             module_file.write_text(module_content)
 
             # Mock load function that does nothing
@@ -226,7 +235,9 @@ class TestClass:
 
     def test_get_source_files_nonexistent_file(self):
         """Test getting source files from a nonexistent file."""
-        with pytest.raises(ProtocolLoadError, match="Module file .* does not exist"):
+        with pytest.raises(
+            ProtocolLoadError, match="Module file .* does not exist"
+        ):
             get_source_files(
                 module_path=Path("nonexistent.py"),
                 load_function=lambda: None,
@@ -254,7 +265,7 @@ def helper_function() -> str:
     return "helper_result"
 """)
 
-# Load function that imports the main module
+            # Load function that imports the main module
             def load_main():
                 import importlib.util
                 import sys
@@ -263,7 +274,9 @@ def helper_function() -> str:
                 if str(temp_path) not in sys.path:
                     sys.path.insert(0, str(temp_path))
 
-                spec = importlib.util.spec_from_file_location("main", main_module)
+                spec = importlib.util.spec_from_file_location(
+                    "main", main_module
+                )
                 module = importlib.util.module_from_spec(spec)
                 sys.modules["main"] = module
                 spec.loader.exec_module(module)

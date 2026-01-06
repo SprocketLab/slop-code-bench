@@ -508,8 +508,12 @@ class TestCorrectnessResults:
 
         # Check structure for Core tests
         assert "checkpoint_1-Core" in data["tests"]
-        assert data["tests"]["checkpoint_1-Core"]["passed"] == ["test_core_pass"]
-        assert data["tests"]["checkpoint_1-Core"]["failed"] == ["test_core_fail"]
+        assert data["tests"]["checkpoint_1-Core"]["passed"] == [
+            "test_core_pass"
+        ]
+        assert data["tests"]["checkpoint_1-Core"]["failed"] == [
+            "test_core_fail"
+        ]
 
         # Check structure for Functionality tests
         assert "checkpoint_1-Functionality" in data["tests"]
@@ -565,7 +569,9 @@ class TestCorrectnessResults:
         # Both checkpoints should appear as separate keys
         assert "checkpoint_1-Regression" in data["tests"]
         assert "checkpoint_2-Core" in data["tests"]
-        assert data["tests"]["checkpoint_1-Regression"]["passed"] == ["test_old"]
+        assert data["tests"]["checkpoint_1-Regression"]["passed"] == [
+            "test_old"
+        ]
         assert data["tests"]["checkpoint_2-Core"]["passed"] == ["test_new"]
 
     def test_save_grouped_tests_all_group_types(self):
@@ -612,7 +618,9 @@ class TestCorrectnessResults:
         assert data["tests"]["checkpoint_1-Functionality"]["passed"] == [
             "test_functionality"
         ]
-        assert data["tests"]["checkpoint_1-Regression"]["passed"] == ["test_regression"]
+        assert data["tests"]["checkpoint_1-Regression"]["passed"] == [
+            "test_regression"
+        ]
         assert data["tests"]["checkpoint_1-Error"]["passed"] == ["test_error"]
 
     def test_to_output_dict_returns_grouped_format(self):

@@ -28,7 +28,9 @@ from slop_code.metrics.utils import MetricsError
 logger = get_logger(__name__)
 
 
-def _load_json_file(file_path: Path, checkpoint_dir: Path, file_type: str) -> dict:
+def _load_json_file(
+    file_path: Path, checkpoint_dir: Path, file_type: str
+) -> dict:
     """Load and parse a JSON file with standardized error handling.
 
     Args:
@@ -128,7 +130,10 @@ def _extract_ast_grep_categories(ast_grep: dict) -> dict[str, int]:
         "complexity",
     ]
     category_counts = ast_grep.get("category_counts", {})
-    return {f"sg_{cat}_violations": category_counts.get(cat, 0) for cat in categories}
+    return {
+        f"sg_{cat}_violations": category_counts.get(cat, 0)
+        for cat in categories
+    }
 
 
 def _build_metrics_from_snapshot(

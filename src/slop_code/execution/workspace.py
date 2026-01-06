@@ -189,7 +189,9 @@ class Workspace:
                     target=target_path,
                     verbose=True,
                 )
-                shutil.copytree(asset.absolute_path, target_path, dirs_exist_ok=True)
+                shutil.copytree(
+                    asset.absolute_path, target_path, dirs_exist_ok=True
+                )
             else:
                 logger.debug(
                     "Copying file asset",

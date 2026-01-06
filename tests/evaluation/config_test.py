@@ -1,6 +1,5 @@
 """Tests for evaluation configuration models."""
 
-
 from slop_code.evaluation.config import CheckpointConfig
 from slop_code.evaluation.config import GroupConfig
 from slop_code.evaluation.report import GroupType

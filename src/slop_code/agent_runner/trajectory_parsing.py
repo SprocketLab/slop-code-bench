@@ -59,7 +59,9 @@ def parse_trajectory(artifact_dir: Path) -> Trajectory:
         ValueError: If artifact path doesn't exist
     """
     # Import parsers here to avoid circular imports
-    from slop_code.agent_runner.agents.claude_code.parser import ClaudeCodeParser
+    from slop_code.agent_runner.agents.claude_code.parser import (
+        ClaudeCodeParser,
+    )
     from slop_code.agent_runner.agents.codex.parser import CodexParser
     from slop_code.agent_runner.agents.gemini.parser import GeminiParser
     from slop_code.agent_runner.agents.miniswe.parser import MinisweParser
@@ -100,7 +102,9 @@ def parse_trajectory(artifact_dir: Path) -> Trajectory:
             try:
                 return parser.parse(artifact_dir)
             except Exception as e:
-                raise ParseError(f"Failed to parse with {parser_cls.__name__}: {e}")
+                raise ParseError(
+                    f"Failed to parse with {parser_cls.__name__}: {e}"
+                )
 
     raise ParseError(f"No trajectory parser found for: {artifact_dir}")
 

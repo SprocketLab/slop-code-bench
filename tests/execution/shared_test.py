@@ -36,12 +36,16 @@ class TestFormatSetupCommands:
 
     def test_multiple_commands_joined_with_newlines(self) -> None:
         """Multiple commands are joined with newlines."""
-        result = format_setup_commands(["cd /app", "pip install -e .", "echo done"])
+        result = format_setup_commands(
+            ["cd /app", "pip install -e .", "echo done"]
+        )
         assert result == "cd /app\npip install -e .\necho done\n\n"
 
     def test_preserves_command_content(self) -> None:
         """Commands with special characters are preserved."""
-        result = format_setup_commands(['echo "hello world"', "export VAR='value'"])
+        result = format_setup_commands(
+            ['echo "hello world"', "export VAR='value'"]
+        )
         assert 'echo "hello world"' in result
         assert "export VAR='value'" in result
 
@@ -92,7 +96,9 @@ class TestWriteEntryScript:
     def test_script_with_setup_commands(self, tmp_path: Path) -> None:
         """Script includes setup commands before split marker."""
         script_path = write_entry_script(
-            tmp_path, "python main.py", setup_commands=["cd /app", "pip install -e ."]
+            tmp_path,
+            "python main.py",
+            setup_commands=["cd /app", "pip install -e ."],
         )
         content = script_path.read_text()
         # Setup should come before split marker
@@ -173,7 +179,9 @@ class TestSplitSetupOutput:
 
     def test_empty_output(self) -> None:
         """Handles empty output gracefully."""
-        setup_stdout, cmd_stdout, setup_stderr, cmd_stderr = split_setup_output("", "")
+        setup_stdout, cmd_stdout, setup_stderr, cmd_stderr = split_setup_output(
+            "", ""
+        )
         assert setup_stdout == ""
         assert cmd_stdout == ""
         assert setup_stderr == ""
@@ -220,7 +228,9 @@ class TestSplitSetupOutput:
 
     def test_preserves_whitespace_in_output(self) -> None:
         """Whitespace in output is preserved."""
-        stdout = f"  setup with spaces  \n{SPLIT_STRING}\n  command with spaces  "
+        stdout = (
+            f"  setup with spaces  \n{SPLIT_STRING}\n  command with spaces  "
+        )
         setup_stdout, cmd_stdout, setup_stderr, cmd_stderr = split_setup_output(
             stdout, ""
         )

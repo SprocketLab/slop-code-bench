@@ -173,8 +173,7 @@ class StubProblem:
         self.entry_file = "main.py"
         self.checkpoints = checkpoints
         self._specs = {
-            checkpoint: f"Spec for {checkpoint}"
-            for checkpoint in checkpoints
+            checkpoint: f"Spec for {checkpoint}" for checkpoint in checkpoints
         }
 
     def get_checkpoint_spec(self, checkpoint: str) -> str:

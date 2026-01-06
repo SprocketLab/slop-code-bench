@@ -42,7 +42,9 @@ def list_problems(ctx: typer.Context) -> None:
     console.print(table)
 
 
-@app.command("status", help="Check if a problem has been converted to the new format.")
+@app.command(
+    "status", help="Check if a problem has been converted to the new format."
+)
 def problem_status(
     ctx: typer.Context,
     problem_name: Annotated[str, typer.Argument(help="Problem name to check")],
@@ -51,7 +53,9 @@ def problem_status(
     problem_path = ctx.obj.problem_path / problem_name
 
     if not problem_path.exists():
-        console.print(f"[red]Problem '{problem_name}' not found at {problem_path}[/red]")
+        console.print(
+            f"[red]Problem '{problem_name}' not found at {problem_path}[/red]"
+        )
         raise typer.Exit(1)
 
     config_path = problem_path / "config.yaml"
@@ -77,16 +81,22 @@ def problem_status(
     _print_structure_status(structure_checks)
 
     if not structure_checks["is_converted"]:
-        console.print("\n[yellow]Problem is NOT fully converted to new format.[/yellow]")
+        console.print(
+            "\n[yellow]Problem is NOT fully converted to new format.[/yellow]"
+        )
         return
 
-    console.print("\n[green]Problem is fully converted to new format.[/green]\n")
+    console.print(
+        "\n[green]Problem is fully converted to new format.[/green]\n"
+    )
 
     # Show test counts per checkpoint
     _print_test_counts_raw(problem_path, checkpoint_names)
 
 
-def _check_structure_raw(problem_path: Path, checkpoint_names: list[str]) -> dict:
+def _check_structure_raw(
+    problem_path: Path, checkpoint_names: list[str]
+) -> dict:
     """Check if problem has the expected new format structure."""
     tests_dir = problem_path / "tests"
     solutions_dir = problem_path / "solutions"
@@ -113,9 +123,7 @@ def _check_structure_raw(problem_path: Path, checkpoint_names: list[str]) -> dic
         and checks["conftest"]
         and checks["no_loader"]
         and checks["no_verifier"]
-        and all(
-            all(cp.values()) for cp in checks["checkpoints"].values()
-        )
+        and all(all(cp.values()) for cp in checks["checkpoints"].values())
     )
 
     return checks
@@ -123,6 +131,7 @@ def _check_structure_raw(problem_path: Path, checkpoint_names: list[str]) -> dic
 
 def _print_structure_status(checks: dict) -> None:
     """Print structure check results."""
+
     def status(ok: bool) -> str:
         return "[green]OK[/green]" if ok else "[red]MISSING[/red]"
 
@@ -130,18 +139,24 @@ def _print_structure_status(checks: dict) -> None:
     console.print(f"  tests/ directory: {status(checks['tests_dir'])}")
     console.print(f"  tests/conftest.py: {status(checks['conftest'])}")
     console.print(f"  No loader.py (old format): {status(checks['no_loader'])}")
-    console.print(f"  No verifier.py (old format): {status(checks['no_verifier'])}")
+    console.print(
+        f"  No verifier.py (old format): {status(checks['no_verifier'])}"
+    )
 
     if checks["checkpoints"]:
         console.print("\n[bold]Checkpoint Files:[/bold]")
         for cp_name, cp_checks in checks["checkpoints"].items():
             console.print(f"  {cp_name}:")
             console.print(f"    test file: {status(cp_checks['test_file'])}")
-            console.print(f"    solution dir: {status(cp_checks['solution_dir'])}")
+            console.print(
+                f"    solution dir: {status(cp_checks['solution_dir'])}"
+            )
             console.print(f"    spec file: {status(cp_checks['spec_file'])}")
 
 
-def _print_test_counts_raw(problem_path: Path, checkpoint_names: list[str]) -> None:
+def _print_test_counts_raw(
+    problem_path: Path, checkpoint_names: list[str]
+) -> None:
     """Print test counts per checkpoint."""
     tests_dir = problem_path / "tests"
 

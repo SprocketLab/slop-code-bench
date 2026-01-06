@@ -80,7 +80,9 @@ def save_quality_metrics(
                 "clone_instances": (
                     fm.redundancy.total_clone_instances if fm.redundancy else 0
                 ),
-                "clone_lines": fm.redundancy.clone_lines if fm.redundancy else 0,
+                "clone_lines": fm.redundancy.clone_lines
+                if fm.redundancy
+                else 0,
                 "clone_ratio": (
                     fm.redundancy.clone_ratio if fm.redundancy else 0.0
                 ),

@@ -26,25 +26,33 @@ def _prepare_bar_data(context: ChartContext):
             "pct_problems_partial",
             "costs.total",
         ]
-        
-        group_df = df.groupby("display_name").agg({
-            col: ["mean", "std"] for col in agg_cols if col in df.columns
-        })
+
+        group_df = df.groupby("display_name").agg(
+            {col: ["mean", "std"] for col in agg_cols if col in df.columns}
+        )
         # Flatten columns
-        group_df.columns = ["_".join(col).strip() for col in group_df.columns.values]
+        group_df.columns = [
+            "_".join(col).strip() for col in group_df.columns.values
+        ]
         group_df = group_df.reset_index()
-        
+
         # We still need model_name and _thinking_sort_key for the tracker
-        metadata = df.groupby("display_name").first()[["model_name", "_thinking_sort_key", "thinking"]].reset_index()
+        metadata = (
+            df.groupby("display_name")
+            .first()[["model_name", "_thinking_sort_key", "thinking"]]
+            .reset_index()
+        )
         group_df = group_df.merge(metadata, on="display_name")
-        
+
         variation_info = analyze_model_variations(group_df)
         tracker = LegendGroupTracker(
             context.color_map, context.base_color_map, variation_info
         )
-        
-        sorted_unique_runs = group_df.sort_values(by=["model_name", "_thinking_sort_key"])
-        
+
+        sorted_unique_runs = group_df.sort_values(
+            by=["model_name", "_thinking_sort_key"]
+        )
+
         return group_df, chkpt_df, sorted_unique_runs, tracker
 
     variation_info = analyze_model_variations(df)
@@ -98,12 +106,14 @@ def build_bar_comparison(context: ChartContext) -> go.Figure:
         info = tracker.get_info(display_name, run_df.iloc[0])
 
         is_grouped = context.group_runs
-        
+
         def get_trace_params(col):
             y = run_df[f"{col}_mean"] if is_grouped else run_df[col]
             error_y = None
             if is_grouped:
-                error_y = dict(type="data", array=run_df[f"{col}_std"], visible=True)
+                error_y = dict(
+                    type="data", array=run_df[f"{col}_std"], visible=True
+                )
             return y, error_y
 
         # Subplot 1: Solved
@@ -125,7 +135,7 @@ def build_bar_comparison(context: ChartContext) -> go.Figure:
             row=1,
             col=1,
         )
-        
+
         # Subplot 2: Iso Solved
         y, error_y = get_trace_params("pct_checkpoints_iso_solved")
         fig.add_trace(
@@ -143,7 +153,7 @@ def build_bar_comparison(context: ChartContext) -> go.Figure:
             row=1,
             col=2,
         )
-        
+
         # Subplot 3: Partial
         y, error_y = get_trace_params("pct_problems_partial")
         fig.add_trace(
@@ -161,7 +171,7 @@ def build_bar_comparison(context: ChartContext) -> go.Figure:
             row=1,
             col=3,
         )
-        
+
         # Subplot 4: Cost
         y, error_y = get_trace_params("costs.total")
         fig.add_trace(
@@ -220,7 +230,9 @@ def build_efficiency_bars(context: ChartContext) -> go.Figure:
 
         if "output" in checkpoint_run.columns:
             if is_grouped:
-                run_token_sums = checkpoint_run.groupby("run_path")["output"].sum()
+                run_token_sums = checkpoint_run.groupby("run_path")[
+                    "output"
+                ].sum()
                 total_output_tokens = run_token_sums.mean()
                 std_output_tokens = run_token_sums.std()
             else:
@@ -327,9 +339,9 @@ def build_quality_bars(context: ChartContext) -> go.Figure:
             and "loc" in checkpoint_run.columns
         ):
             checkpoint_run = checkpoint_run.copy()
-            checkpoint_run["_cmp_per_loc"] = checkpoint_run["comparisons"] / checkpoint_run[
-                "loc"
-            ].replace(0, 1)
+            checkpoint_run["_cmp_per_loc"] = checkpoint_run[
+                "comparisons"
+            ] / checkpoint_run["loc"].replace(0, 1)
             mean_cmp_loc, std_cmp_loc = get_stats("_cmp_per_loc")
         else:
             mean_cmp_loc, std_cmp_loc = 0, 0
@@ -340,26 +352,32 @@ def build_quality_bars(context: ChartContext) -> go.Figure:
             and "loc" in checkpoint_run.columns
         ):
             checkpoint_run = checkpoint_run.copy()
-            checkpoint_run["_try_per_loc"] = checkpoint_run["try_scaffold"] / checkpoint_run[
-                "loc"
-            ].replace(0, 1)
+            checkpoint_run["_try_per_loc"] = checkpoint_run[
+                "try_scaffold"
+            ] / checkpoint_run["loc"].replace(0, 1)
             mean_try_loc, std_try_loc = get_stats("_try_per_loc")
         else:
             mean_try_loc, std_try_loc = 0, 0
 
-        def add_bar(y_val, std_val, r, c, show_legend=False, format_str="{:.1f}"):
+        def add_bar(
+            y_val, std_val, r, c, show_legend=False, format_str="{:.1f}"
+        ):
             error_y = None
             if is_grouped:
                 error_y = dict(type="data", array=[std_val], visible=True)
-            
+
             fig.add_trace(
                 go.Bar(
                     y=[y_val],
                     error_y=error_y,
                     name=info.variant,
                     legendgroup=info.model_name,
-                    legendgrouptitle_text=info.group_title if show_legend else None,
-                    legendgrouptitle_font={"color": info.model_base_color} if show_legend else None,
+                    legendgrouptitle_text=info.group_title
+                    if show_legend
+                    else None,
+                    legendgrouptitle_font={"color": info.model_base_color}
+                    if show_legend
+                    else None,
                     marker={"color": info.color},
                     text=[format_str.format(y_val)],
                     textposition="inside",
@@ -428,15 +446,19 @@ def build_graph_metrics_bars(context: ChartContext) -> go.Figure:
             error_y = None
             if is_grouped:
                 error_y = dict(type="data", array=[std_val], visible=True)
-            
+
             fig.add_trace(
                 go.Bar(
                     y=[y_val],
                     error_y=error_y,
                     name=info.variant,
                     legendgroup=info.model_name,
-                    legendgrouptitle_text=info.group_title if show_legend else None,
-                    legendgrouptitle_font={"color": info.model_base_color} if show_legend else None,
+                    legendgrouptitle_text=info.group_title
+                    if show_legend
+                    else None,
+                    legendgrouptitle_font={"color": info.model_base_color}
+                    if show_legend
+                    else None,
                     marker={"color": info.color},
                     text=[f"{y_val:.3f}"],
                     textposition="inside",

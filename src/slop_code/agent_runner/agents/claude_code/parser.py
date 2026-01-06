@@ -12,7 +12,10 @@ from slop_code.agent_runner.trajectory import (
     Trajectory,
     TrajectoryStep,
 )
-from slop_code.agent_runner.trajectory_parsing import ParseError, TrajectoryParser
+from slop_code.agent_runner.trajectory_parsing import (
+    ParseError,
+    TrajectoryParser,
+)
 
 
 class ClaudeCodeParser(TrajectoryParser):
@@ -31,7 +34,10 @@ class ClaudeCodeParser(TrajectoryParser):
                     return False
                 data = json.loads(first_line)
                 # Claude Code starts with system init event
-                return data.get("type") == "system" and data.get("subtype") == "init"
+                return (
+                    data.get("type") == "system"
+                    and data.get("subtype") == "init"
+                )
         except (json.JSONDecodeError, OSError):
             return False
 
@@ -78,7 +84,9 @@ class ClaudeCodeParser(TrajectoryParser):
                         if block_type == "thinking":
                             thinking_text = block.get("thinking", "")
                             if thinking_text:
-                                steps.append(ThinkingStep(content=thinking_text))
+                                steps.append(
+                                    ThinkingStep(content=thinking_text)
+                                )
 
                         elif block_type == "text":
                             text = block.get("text", "")

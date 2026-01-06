@@ -41,7 +41,9 @@ def diff(
     app_path = viz_dir / "diff_viewer.py"
 
     if not app_path.exists():
-        console.print(f"[red]Could not find diff viewer app at {app_path}[/red]")
+        console.print(
+            f"[red]Could not find diff viewer app at {app_path}[/red]"
+        )
         raise typer.Exit(1)
 
     cmd = [

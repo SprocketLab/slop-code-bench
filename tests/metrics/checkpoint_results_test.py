@@ -584,7 +584,9 @@ class TestGetQualityMetrics:
         assert result["files"] == 2
         # cc values for functions/methods only: 5, 15, 8 -> 1 above 10
         assert result["cc_high_count"] == 1
-        assert result["cc_mean"] == (5 + 15 + 8) / 3  # Functions only, not class
+        assert (
+            result["cc_mean"] == (5 + 15 + 8) / 3
+        )  # Functions only, not class
         assert result["cc_max"] == 15
         assert result["high_cc_mean"] == 15.0  # only one high value
 

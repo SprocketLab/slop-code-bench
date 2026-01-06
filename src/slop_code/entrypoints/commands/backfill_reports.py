@@ -728,7 +728,9 @@ def backfill_reports(
                     tb_lines = tb.strip().split("\n")[-3:]
                     for line in tb_lines:
                         typer.echo(
-                            typer.style(f"      {line}", fg=typer.colors.BRIGHT_BLACK)
+                            typer.style(
+                                f"      {line}", fg=typer.colors.BRIGHT_BLACK
+                            )
                         )
 
         if total_errors > 0:

@@ -20,7 +20,9 @@ def mock_catalog_miniswe(monkeypatch):
     mock_model = ModelDefinition(
         internal_name="test-model",
         provider="anthropic",
-        pricing=APIPricing(input=3, output=15, cache_read=0.30, cache_write=3.75),
+        pricing=APIPricing(
+            input=3, output=15, cache_read=0.30, cache_write=3.75
+        ),
         agent_specific={
             "mini_swe": {
                 "model_name": "claude-3-5-sonnet-20241022",

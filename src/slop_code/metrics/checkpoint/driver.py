@@ -50,14 +50,18 @@ def get_checkpoint_metrics(
 
     # Add rubric density metric if applicable
     if "rubric_total_flags" in metrics and metrics.get("loc", 0) > 0:
-        metrics["rubric_per_loc"] = metrics["rubric_total_flags"] / metrics["loc"]
+        metrics["rubric_per_loc"] = (
+            metrics["rubric_total_flags"] / metrics["loc"]
+        )
 
     # Compute deltas from prior checkpoint
     delta = compute_checkpoint_delta(prior_metrics, metrics)
 
     # Add mass deltas if prior checkpoint exists
     if prior_checkpoint_dir is not None:
-        prior_symbols = prior_checkpoint_dir / QUALITY_DIR / SYMBOLS_QUALITY_SAVENAME
+        prior_symbols = (
+            prior_checkpoint_dir / QUALITY_DIR / SYMBOLS_QUALITY_SAVENAME
+        )
         curr_symbols = checkpoint_dir / QUALITY_DIR / SYMBOLS_QUALITY_SAVENAME
         delta.update(compute_mass_delta(prior_symbols, curr_symbols))
 

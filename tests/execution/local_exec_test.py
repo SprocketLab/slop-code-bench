@@ -161,7 +161,7 @@ class TestLocalExecRuntimeSpawn:
             name="test",
             commands=CommandConfig(command="python"),
             setup=SetupConfig(
-                commands=[f'sh -c \'echo "$TEST_VAR" > {output_file}\''],
+                commands=[f"sh -c 'echo \"$TEST_VAR\" > {output_file}'"],
             ),
         )
 
@@ -275,7 +275,9 @@ class TestLocalExecRuntimeExecute:
             working_dir=tmp_path,
             command="sh -c 'echo $MY_VAR'",
         )
-        result = runtime.execute(env={"MY_VAR": "test_value"}, stdin=None, timeout=10)
+        result = runtime.execute(
+            env={"MY_VAR": "test_value"}, stdin=None, timeout=10
+        )
         assert "test_value" in result.stdout
 
     def test_execute_measures_elapsed_time(

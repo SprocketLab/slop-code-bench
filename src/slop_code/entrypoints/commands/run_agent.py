@@ -134,7 +134,9 @@ def _validate_resume_config(
             with env_path.open() as f:
                 saved_env = yaml.safe_load(f)
         except (yaml.YAMLError, OSError) as e:
-            logger.warning("Failed to load saved environment.yaml", error=str(e))
+            logger.warning(
+                "Failed to load saved environment.yaml", error=str(e)
+            )
             saved_env = None
 
         if saved_env:
@@ -149,7 +151,9 @@ def _validate_resume_config(
                     continue
 
                 if saved_val != current_val:
-                    mismatches.append((f"environment.{field}", saved_val, current_val))
+                    mismatches.append(
+                        (f"environment.{field}", saved_val, current_val)
+                    )
 
             # Check Docker image if Docker environment
             if saved_env.get("type") == "docker":
@@ -450,7 +454,9 @@ def _discover_problems(problem_path: Path) -> list[str]:
     return problem_names
 
 
-def _validate_problem_paths(problem_names: list[str], problem_path: Path) -> None:
+def _validate_problem_paths(
+    problem_names: list[str], problem_path: Path
+) -> None:
     """Validate that all problem paths exist.
 
     Args:
@@ -537,9 +543,7 @@ def _preview_dry_run(
         )
 
         if resume_info:
-            typer.echo(
-                f"  Resume from: {resume_info.resume_from_checkpoint}"
-            )
+            typer.echo(f"  Resume from: {resume_info.resume_from_checkpoint}")
             typer.echo(
                 f"  Completed: {', '.join(resume_info.completed_checkpoints)}"
             )
@@ -763,9 +767,7 @@ def _handle_resume_validation(
         )
         for field, saved, current in mismatches:
             typer.echo(f"  {field}: saved='{saved}' vs current='{current}'")
-        typer.echo(
-            "\nUse --overwrite to start fresh with new configuration."
-        )
+        typer.echo("\nUse --overwrite to start fresh with new configuration.")
         raise typer.Exit(1)
 
 
@@ -849,7 +851,9 @@ def _validate_resume_flags(
     if model_override is not None:
         conflicts.append("--model")
     if overrides:
-        conflicts.append(f"config overrides ({', '.join(overrides[:3])}{'...' if len(overrides) > 3 else ''})")
+        conflicts.append(
+            f"config overrides ({', '.join(overrides[:3])}{'...' if len(overrides) > 3 else ''})"
+        )
 
     if conflicts:
         typer.echo(
@@ -1179,9 +1183,7 @@ def run_agent(
         try:
             run_cfg = load_config_from_run_dir(resume)
         except (FileNotFoundError, ValueError) as exc:
-            typer.echo(
-                typer.style(str(exc), fg=typer.colors.RED, bold=True)
-            )
+            typer.echo(typer.style(str(exc), fg=typer.colors.RED, bold=True))
             raise typer.Exit(1) from exc
 
         # Use the run directory as output path (preexisted is always True)
@@ -1199,7 +1201,10 @@ def run_agent(
         # Normal config loading path
         try:
             cli_flags = _build_cli_flags(
-                agent_config_path, environment_config_path, prompt_template_path, model_override
+                agent_config_path,
+                environment_config_path,
+                prompt_template_path,
+                model_override,
             )
         except ValueError as exc:
             typer.echo(typer.style(str(exc), fg=typer.colors.RED, bold=True))
@@ -1223,7 +1228,9 @@ def run_agent(
     # 4. Echo model info
     typer.echo(f"Using model: {run_cfg.model.provider}/{run_cfg.model.name}")
     if provider_api_key_env:
-        typer.echo(f"Using provider API key env override: {provider_api_key_env}")
+        typer.echo(
+            f"Using provider API key env override: {provider_api_key_env}"
+        )
 
     # 5. Resolve problem names from CLI and config
     problem_names_resolved = _resolve_problem_names(
@@ -1282,7 +1289,9 @@ def run_agent(
             )
 
         # Validate config matches saved config when resuming
-        _handle_resume_validation(run_dir, run_cfg, env_spec, is_resuming, ctx.obj.overwrite)
+        _handle_resume_validation(
+            run_dir, run_cfg, env_spec, is_resuming, ctx.obj.overwrite
+        )
 
         to_run, skipped, rerun_reasons = _filter_problems_for_execution(
             run_dir,
@@ -1296,7 +1305,9 @@ def run_agent(
 
         if not ctx.obj.overwrite:
             # Log why problems are being rerun
-            spec_changed = [p for p, r in rerun_reasons.items() if "spec_changed" in r]
+            spec_changed = [
+                p for p, r in rerun_reasons.items() if "spec_changed" in r
+            ]
             if spec_changed:
                 typer.echo(
                     typer.style(
@@ -1317,7 +1328,12 @@ def run_agent(
 
         # Check if nothing to do
         if _handle_early_completion(
-            problem_names_resolved, run_dir, ctx.obj.problem_path, console, evaluate, requested
+            problem_names_resolved,
+            run_dir,
+            ctx.obj.problem_path,
+            console,
+            evaluate,
+            requested,
         ):
             return
 
@@ -1336,7 +1352,9 @@ def run_agent(
     run_cfg.problems = full_problem_list
 
     # 12. Save environment and config to run directory, build docker image if needed
-    image_name = _prepare_run_artifacts(run_dir, env_spec, agent_config, run_cfg)
+    image_name = _prepare_run_artifacts(
+        run_dir, env_spec, agent_config, run_cfg
+    )
     run_logger.info(
         "Starting agent runs",
         num_problems=len(problem_names_resolved),

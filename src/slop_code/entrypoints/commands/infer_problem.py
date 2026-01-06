@@ -164,7 +164,9 @@ def infer_problem(
         )
     except CredentialNotFoundError as e:
         typer.echo(
-            typer.style(f"Credential error: {e}", fg=typer.colors.RED, bold=True)
+            typer.style(
+                f"Credential error: {e}", fg=typer.colors.RED, bold=True
+            )
         )
         raise typer.Exit(1) from e
 
@@ -172,7 +174,9 @@ def infer_problem(
     _, agent_data = config_loader.load_agent_config(agent_config_path)
     agent_config = build_agent_config(agent_data)
     if provider_api_key_env:
-        typer.echo(f"Using provider API key env override: {provider_api_key_env}")
+        typer.echo(
+            f"Using provider API key env override: {provider_api_key_env}"
+        )
     env_spec = config_loader.resolve_environment(environment_config_path)
     prompt_template = prompt_template_path.read_text(encoding="utf-8")
     save_dir = output_path / problem_name

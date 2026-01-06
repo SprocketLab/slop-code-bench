@@ -145,12 +145,14 @@ class TestExtractImports:
     def test_multiple_imports(self, tmp_path):
         """Test extracting multiple import statements."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         import os
         import sys
         from pathlib import Path
         from . import utils
-        """))
+        """)
+        )
 
         imports = extract_imports(test_file)
 
@@ -181,11 +183,13 @@ class TestExtractImports:
     def test_import_in_function(self, tmp_path):
         """Test that imports inside functions are still extracted."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         def func():
             import os
             return os.getcwd()
-        """))
+        """)
+        )
 
         imports = extract_imports(test_file)
 
@@ -209,13 +213,15 @@ class TestExtractImports:
     def test_multiline_import(self, tmp_path):
         """Test multiline import with parentheses."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         from typing import (
             List,
             Dict,
             Optional,
         )
-        """))
+        """)
+        )
 
         imports = extract_imports(test_file)
 
@@ -417,10 +423,12 @@ class TestImportEdgeCases:
     def test_multiple_imports_same_module(self, tmp_path):
         """Test multiple imports from same module."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         from typing import List
         from typing import Dict
-        """))
+        """)
+        )
 
         imports = extract_imports(test_file)
 
@@ -429,13 +437,15 @@ class TestImportEdgeCases:
     def test_conditional_import(self, tmp_path):
         """Test import inside if block."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         import sys
         if sys.version_info >= (3, 10):
             from typing import ParamSpec
         else:
             from typing_extensions import ParamSpec
-        """))
+        """)
+        )
 
         imports = extract_imports(test_file)
 
@@ -445,12 +455,14 @@ class TestImportEdgeCases:
     def test_try_except_import(self, tmp_path):
         """Test import inside try/except."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent("""
         try:
             import ujson as json
         except ImportError:
             import json
-        """))
+        """)
+        )
 
         imports = extract_imports(test_file)
 

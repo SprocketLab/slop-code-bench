@@ -46,7 +46,9 @@ def _extract_functions_from_file(file_path: Path) -> list[tuple[str, Node]]:
             # Get function name
             name_node = node.child_by_field_name("name")
             if name_node:
-                func_name = source_code[name_node.start_byte:name_node.end_byte].decode('utf-8')
+                func_name = source_code[
+                    name_node.start_byte : name_node.end_byte
+                ].decode("utf-8")
                 if class_name:
                     qualified_name = f"{class_name}.{func_name}"
                 else:
@@ -58,7 +60,9 @@ def _extract_functions_from_file(file_path: Path) -> list[tuple[str, Node]]:
             name_node = node.child_by_field_name("name")
             body_node = node.child_by_field_name("body")
             if name_node and body_node:
-                class_name_str = source_code[name_node.start_byte:name_node.end_byte].decode('utf-8')
+                class_name_str = source_code[
+                    name_node.start_byte : name_node.end_byte
+                ].decode("utf-8")
                 # Visit all children in the class body
                 for child in body_node.children:
                     visit_node(child, class_name_str)
@@ -101,7 +105,9 @@ def _extract_class_hierarchy(file_path: Path) -> dict[str, list[str]]:
         if node.type == "class_definition":
             name_node = node.child_by_field_name("name")
             if name_node:
-                class_name = source_code[name_node.start_byte:name_node.end_byte].decode('utf-8')
+                class_name = source_code[
+                    name_node.start_byte : name_node.end_byte
+                ].decode("utf-8")
                 parents: list[str] = []
 
                 # Find argument_list which contains parent classes
@@ -110,7 +116,9 @@ def _extract_class_hierarchy(file_path: Path) -> dict[str, list[str]]:
                         # Extract parent class names from argument list
                         for arg in child.children:
                             if arg.type == "identifier":
-                                parent_name = source_code[arg.start_byte:arg.end_byte].decode('utf-8')
+                                parent_name = source_code[
+                                    arg.start_byte : arg.end_byte
+                                ].decode("utf-8")
                                 parents.append(parent_name)
 
                 hierarchy[class_name] = parents
@@ -156,7 +164,9 @@ def _extract_imports(
 
     imports = {}
 
-    def _resolve_relative_import(level: int, module_name: str | None) -> str | None:
+    def _resolve_relative_import(
+        level: int, module_name: str | None
+    ) -> str | None:
         """Resolve a relative import to a module path stem.
 
         Args:
@@ -182,8 +192,8 @@ def _extract_imports(
         if module_name:
             # Construct path like 'mypackage/utils' -> stem 'utils'
             # But we need to match against full relative path
-            parts = module_name.split('.')
-            resolved = current / '/'.join(parts)
+            parts = module_name.split(".")
+            resolved = current / "/".join(parts)
             # Return the path without .py extension for matching
             return resolved.as_posix()
         # 'from . import x' - x is a sibling module
@@ -196,22 +206,30 @@ def _extract_imports(
             # Handle: import module [as alias]
             for child in node.children:
                 if child.type == "dotted_name":
-                    module_name = source_code[child.start_byte:child.end_byte].decode('utf-8')
+                    module_name = source_code[
+                        child.start_byte : child.end_byte
+                    ].decode("utf-8")
                     imports[module_name] = module_name
                 elif child.type == "aliased_import":
                     # import module as alias
                     name_node = child.child_by_field_name("name")
                     alias_node = child.child_by_field_name("alias")
                     if name_node and alias_node:
-                        module_name = source_code[name_node.start_byte:name_node.end_byte].decode('utf-8')
-                        alias = source_code[alias_node.start_byte:alias_node.end_byte].decode('utf-8')
+                        module_name = source_code[
+                            name_node.start_byte : name_node.end_byte
+                        ].decode("utf-8")
+                        alias = source_code[
+                            alias_node.start_byte : alias_node.end_byte
+                        ].decode("utf-8")
                         imports[alias] = module_name
 
         elif node.type == "import_from_statement":
             # Handle: from module import name [as alias]
             module_node = node.child_by_field_name("module_name")
             if module_node:
-                raw_module = source_code[module_node.start_byte:module_node.end_byte].decode('utf-8')
+                raw_module = source_code[
+                    module_node.start_byte : module_node.end_byte
+                ].decode("utf-8")
 
                 # Check if this is a relative import
                 is_relative = module_node.type == "relative_import"
@@ -223,9 +241,13 @@ def _extract_imports(
                         if child.type == "import_prefix":
                             level = child.end_byte - child.start_byte
                         elif child.type == "dotted_name":
-                            inner_module = source_code[child.start_byte:child.end_byte].decode('utf-8')
+                            inner_module = source_code[
+                                child.start_byte : child.end_byte
+                            ].decode("utf-8")
 
-                    resolved_base = _resolve_relative_import(level, inner_module)
+                    resolved_base = _resolve_relative_import(
+                        level, inner_module
+                    )
                     if resolved_base is None:
                         # Can't resolve, skip this import
                         return
@@ -237,43 +259,68 @@ def _extract_imports(
                         # The dotted_name children are the imported modules
                         for child in node.children:
                             if child.type == "dotted_name":
-                                imported_name = source_code[child.start_byte:child.end_byte].decode('utf-8')
+                                imported_name = source_code[
+                                    child.start_byte : child.end_byte
+                                ].decode("utf-8")
                                 # Map 'utils' -> 'mypackage/utils'
-                                imports[imported_name] = f"{resolved_base}/{imported_name}"
+                                imports[imported_name] = (
+                                    f"{resolved_base}/{imported_name}"
+                                )
                             elif child.type == "aliased_import":
                                 name_node = child.child_by_field_name("name")
                                 alias_node = child.child_by_field_name("alias")
                                 if name_node and alias_node:
-                                    imported_name = source_code[name_node.start_byte:name_node.end_byte].decode('utf-8')
-                                    alias = source_code[alias_node.start_byte:alias_node.end_byte].decode('utf-8')
-                                    imports[alias] = f"{resolved_base}/{imported_name}"
+                                    imported_name = source_code[
+                                        name_node.start_byte : name_node.end_byte
+                                    ].decode("utf-8")
+                                    alias = source_code[
+                                        alias_node.start_byte : alias_node.end_byte
+                                    ].decode("utf-8")
+                                    imports[alias] = (
+                                        f"{resolved_base}/{imported_name}"
+                                    )
                     else:
                         # 'from .utils import x' pattern
                         module_name = resolved_base
                         for child in node.children:
-                            if child.type == "dotted_name" and child != module_node:
-                                func_name = source_code[child.start_byte:child.end_byte].decode('utf-8')
+                            if (
+                                child.type == "dotted_name"
+                                and child != module_node
+                            ):
+                                func_name = source_code[
+                                    child.start_byte : child.end_byte
+                                ].decode("utf-8")
                                 imports[func_name] = module_name
                             elif child.type == "aliased_import":
                                 name_node = child.child_by_field_name("name")
                                 alias_node = child.child_by_field_name("alias")
                                 if name_node and alias_node:
-                                    func_name = source_code[name_node.start_byte:name_node.end_byte].decode('utf-8')
-                                    alias = source_code[alias_node.start_byte:alias_node.end_byte].decode('utf-8')
+                                    func_name = source_code[
+                                        name_node.start_byte : name_node.end_byte
+                                    ].decode("utf-8")
+                                    alias = source_code[
+                                        alias_node.start_byte : alias_node.end_byte
+                                    ].decode("utf-8")
                                     imports[alias] = module_name
                 else:
                     # Absolute import
                     module_name = raw_module
                     for child in node.children:
                         if child.type == "dotted_name" and child != module_node:
-                            func_name = source_code[child.start_byte:child.end_byte].decode('utf-8')
+                            func_name = source_code[
+                                child.start_byte : child.end_byte
+                            ].decode("utf-8")
                             imports[func_name] = module_name
                         elif child.type == "aliased_import":
                             name_node = child.child_by_field_name("name")
                             alias_node = child.child_by_field_name("alias")
                             if name_node and alias_node:
-                                func_name = source_code[name_node.start_byte:name_node.end_byte].decode('utf-8')
-                                alias = source_code[alias_node.start_byte:alias_node.end_byte].decode('utf-8')
+                                func_name = source_code[
+                                    name_node.start_byte : name_node.end_byte
+                                ].decode("utf-8")
+                                alias = source_code[
+                                    alias_node.start_byte : alias_node.end_byte
+                                ].decode("utf-8")
                                 imports[alias] = module_name
 
         # Recurse into children
@@ -284,7 +331,9 @@ def _extract_imports(
     return imports
 
 
-def _extract_function_calls(func_node: Node, source_code: bytes) -> list[tuple[str, str | None]]:
+def _extract_function_calls(
+    func_node: Node, source_code: bytes
+) -> list[tuple[str, str | None]]:
     """Extract all function/method calls from a function body.
 
     Args:
@@ -307,7 +356,9 @@ def _extract_function_calls(func_node: Node, source_code: bytes) -> list[tuple[s
             if func_node:
                 # Handle simple calls: func()
                 if func_node.type == "identifier":
-                    name = source_code[func_node.start_byte:func_node.end_byte].decode('utf-8')
+                    name = source_code[
+                        func_node.start_byte : func_node.end_byte
+                    ].decode("utf-8")
                     calls.append((name, None))
                 # Handle qualified calls: module.func() or obj.method()
                 elif func_node.type == "attribute":
@@ -316,8 +367,12 @@ def _extract_function_calls(func_node: Node, source_code: bytes) -> list[tuple[s
                     attr_node = func_node.child_by_field_name("attribute")
                     if object_node and attr_node:
                         # Extract qualifier (could be nested like a.b.c)
-                        qualifier = source_code[object_node.start_byte:object_node.end_byte].decode('utf-8')
-                        method_name = source_code[attr_node.start_byte:attr_node.end_byte].decode('utf-8')
+                        qualifier = source_code[
+                            object_node.start_byte : object_node.end_byte
+                        ].decode("utf-8")
+                        method_name = source_code[
+                            attr_node.start_byte : attr_node.end_byte
+                        ].decode("utf-8")
                         calls.append((method_name, qualifier))
 
         # Recurse into children
@@ -370,12 +425,16 @@ def _extract_local_types(
                             break
 
             if target and value:
-                var_name = source_code[target.start_byte:target.end_byte].decode('utf-8')
+                var_name = source_code[
+                    target.start_byte : target.end_byte
+                ].decode("utf-8")
 
                 # Check if the call is to a simple identifier (class name)
                 func_node_inner = value.child_by_field_name("function")
                 if func_node_inner and func_node_inner.type == "identifier":
-                    class_name = source_code[func_node_inner.start_byte:func_node_inner.end_byte].decode('utf-8')
+                    class_name = source_code[
+                        func_node_inner.start_byte : func_node_inner.end_byte
+                    ].decode("utf-8")
                     # Only track if it looks like a class (starts with uppercase)
                     if class_name and class_name[0].isupper():
                         local_types[var_name] = class_name
@@ -464,8 +523,11 @@ def _resolve_call(
             for file_path, qual_name in candidates:
                 # Match by module name - can be stem (absolute imports) or
                 # path without extension (relative imports like 'mypackage/utils')
-                file_path_no_ext = file_path.with_suffix('').as_posix()
-                if file_path.stem == module_name or file_path_no_ext == module_name:
+                file_path_no_ext = file_path.with_suffix("").as_posix()
+                if (
+                    file_path.stem == module_name
+                    or file_path_no_ext == module_name
+                ):
                     return f"{file_path.as_posix()}::{qual_name}"
 
         # Check if qualifier is a local variable with known type
@@ -489,11 +551,14 @@ def _resolve_call(
         module_name = imports[called_name]
         # Find functions in that module
         for file_path, qual_name in candidates:
-            file_path_no_ext = file_path.with_suffix('').as_posix()
+            file_path_no_ext = file_path.with_suffix("").as_posix()
             matches_module = (
                 file_path.stem == module_name or file_path_no_ext == module_name
             )
-            if matches_module and (qual_name.endswith(f".{called_name}") or qual_name == called_name):
+            if matches_module and (
+                qual_name.endswith(f".{called_name}")
+                or qual_name == called_name
+            ):
                 return f"{file_path.as_posix()}::{qual_name}"
 
     # Case 4: Fallback to unique name matching (if only one candidate exists)
@@ -577,7 +642,7 @@ def build_dependency_graph(
             graph.add_node(node_id)
 
             # Index by simple function name (last component)
-            simple_name = qual_name.split('.')[-1]
+            simple_name = qual_name.split(".")[-1]
             if simple_name not in function_index:
                 function_index[simple_name] = []
             function_index[simple_name].append((file_path, qual_name))
@@ -642,8 +707,7 @@ def _compute_cyclic_dependency_mass(graph: nx.DiGraph) -> float:
 
     # Compute total edge weight
     total_weight = sum(
-        graph.get_edge_data(u, v).get("weight", 1)
-        for u, v in graph.edges()
+        graph.get_edge_data(u, v).get("weight", 1) for u, v in graph.edges()
     )
 
     if total_weight == 0:
@@ -728,7 +792,9 @@ def _compute_dependency_entropy(graph: nx.DiGraph) -> float:
             continue
 
         # Compute probability distribution over outgoing edges
-        total_weight = sum(edge_data.get("weight", 1) for _, _, edge_data in out_edges)
+        total_weight = sum(
+            edge_data.get("weight", 1) for _, _, edge_data in out_edges
+        )
 
         if total_weight == 0:
             normalized_entropies.append(0.0)
@@ -740,9 +806,7 @@ def _compute_dependency_entropy(graph: nx.DiGraph) -> float:
         ]
 
         # Compute Shannon entropy: H(u) = -sum(p * log(p))
-        entropy = -sum(
-            p * math.log(p) for p in probabilities if p > 0
-        )
+        entropy = -sum(p * math.log(p) for p in probabilities if p > 0)
 
         # Normalize by max entropy for this outdegree
         k = len(out_edges)

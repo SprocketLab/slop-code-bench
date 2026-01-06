@@ -120,9 +120,7 @@ def test_collect_ci_entries_filters_by_width() -> None:
     assert entries[0].width == pytest.approx(1.2)
 
 
-def test_collect_ci_entries_filters_to_allowed_delta_metrics() -> (
-    None
-):
+def test_collect_ci_entries_filters_to_allowed_delta_metrics() -> None:
     record = {
         "problem": "prob",
         "run_count": 2,
@@ -143,9 +141,7 @@ def test_collect_ci_entries_filters_to_allowed_delta_metrics() -> (
     assert entries == []
 
 
-def test_collect_ci_entries_canonicalizes_metric_names() -> (
-    None
-):
+def test_collect_ci_entries_canonicalizes_metric_names() -> None:
     record = {
         "problem": "prob",
         "run_count": 2,

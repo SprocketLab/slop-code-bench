@@ -660,7 +660,9 @@ class MetricStats(BaseModel):
             return "N/A"
         if self.stddev is None or self.stddev == 0:
             return f"{self.mean:.{precision}f}{suffix}"
-        return f"{self.mean:.{precision}f} +/- {self.stddev:.{precision}f}{suffix}"
+        return (
+            f"{self.mean:.{precision}f} +/- {self.stddev:.{precision}f}{suffix}"
+        )
 
 
 class CostsStats(BaseModel):
@@ -791,7 +793,9 @@ class RunSummary(BaseModel):
     pass_rates: PassRatesStats = Field(default_factory=PassRatesStats)
 
     # Cyclomatic complexity
-    cc: CyclomaticComplexityStats = Field(default_factory=CyclomaticComplexityStats)
+    cc: CyclomaticComplexityStats = Field(
+        default_factory=CyclomaticComplexityStats
+    )
 
     # Quality ratios (per LOC): {rubric, lint, ast_grep}
     ratios: RatiosStats = Field(default_factory=RatiosStats)

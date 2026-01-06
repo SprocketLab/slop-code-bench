@@ -164,7 +164,10 @@ class TestSessionInitialization:
         # Setup mocks
         mock_runtime1 = Mock(spec=StreamingRuntime)
         mock_runtime2 = Mock(spec=StreamingRuntime)
-        mock_spawn_streaming_runtime.side_effect = [mock_runtime1, mock_runtime2]
+        mock_spawn_streaming_runtime.side_effect = [
+            mock_runtime1,
+            mock_runtime2,
+        ]
 
         try:
             session.prepare()
@@ -459,7 +462,9 @@ class TestRestoreFromSnapshotDir:
 
             # Verify files were copied
             assert (workspace.working_dir / "file1.txt").exists()
-            assert (workspace.working_dir / "file1.txt").read_text() == "content1"
+            assert (
+                workspace.working_dir / "file1.txt"
+            ).read_text() == "content1"
             assert (workspace.working_dir / "file2.py").exists()
             assert (
                 workspace.working_dir / "file2.py"
@@ -481,7 +486,9 @@ class TestRestoreFromSnapshotDir:
             session.prepare()
             session.restore_from_snapshot_dir(snapshot_dir)
 
-            assert (workspace.working_dir / "subdir" / "nested" / "deep.txt").exists()
+            assert (
+                workspace.working_dir / "subdir" / "nested" / "deep.txt"
+            ).exists()
             assert (
                 workspace.working_dir / "subdir" / "nested" / "deep.txt"
             ).read_text() == "deep content"
@@ -540,7 +547,9 @@ class TestRestoreFromSnapshotDir:
             session.restore_from_snapshot_dir(snapshot_dir)
 
             # Old file should be gone, new file should exist
-            assert not (workspace.working_dir / "mydir" / "old_file.txt").exists()
+            assert not (
+                workspace.working_dir / "mydir" / "old_file.txt"
+            ).exists()
             assert (workspace.working_dir / "mydir" / "new_file.txt").exists()
             assert (
                 workspace.working_dir / "mydir" / "new_file.txt"

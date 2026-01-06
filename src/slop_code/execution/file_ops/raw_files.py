@@ -22,7 +22,9 @@ class YAMLHandler(FileHandler):
             with path.open(encoding="utf-8") as f:
                 return yaml.safe_load(f)
         except Exception as e:
-            raise InputFileReadError(f"Failed to read YAML file {path}: {e}") from e
+            raise InputFileReadError(
+                f"Failed to read YAML file {path}: {e}"
+            ) from e
 
     def write(self, path: Path, content: FileContent) -> None:
         """Write content to YAML file."""
@@ -33,7 +35,9 @@ class YAMLHandler(FileHandler):
             with path.open("w", encoding="utf-8") as f:
                 yaml.dump(content, f)
         except Exception as e:
-            raise InputFileWriteError(f"Failed to write YAML file {path}: {e}") from e
+            raise InputFileWriteError(
+                f"Failed to write YAML file {path}: {e}"
+            ) from e
 
 
 class ParquetHandler(FileHandler):
@@ -46,7 +50,9 @@ class ParquetHandler(FileHandler):
         try:
             return pq.read_table(path).to_pylist()
         except Exception as e:
-            raise InputFileReadError(f"Failed to read Parquet file {path}: {e}") from e
+            raise InputFileReadError(
+                f"Failed to read Parquet file {path}: {e}"
+            ) from e
 
     def write(self, path: Path, content: FileContent) -> None:
         """Write content to Parquet file."""
@@ -64,7 +70,9 @@ class ParquetHandler(FileHandler):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             table = pa.Table.from_pylist(content)
-            pq.write_table(table, path, compression="zstd", compression_level=10)
+            pq.write_table(
+                table, path, compression="zstd", compression_level=10
+            )
         except Exception as e:
             raise InputFileWriteError(
                 f"Failed to write Parquet file {path}: {e}"
@@ -81,7 +89,9 @@ class TextHandler(FileHandler):
                 path, "r", compression=self.compression, encoding="utf-8"
             ) as f:
                 result = f.read()
-            if self.compression != Compression.NONE and isinstance(result, bytes):
+            if self.compression != Compression.NONE and isinstance(
+                result, bytes
+            ):
                 result = result.decode("utf-8")
             return result
         except FileNotFoundError as e:

@@ -527,7 +527,11 @@ def _count_variables(node: Node) -> tuple[int, int]:
     used: set[str] = set()
 
     # Track assignment contexts to distinguish definitions from uses
-    assignment_types = {"assignment", "augmented_assignment", "annotated_assignment"}
+    assignment_types = {
+        "assignment",
+        "augmented_assignment",
+        "annotated_assignment",
+    }
 
     stack: list[tuple[Node, bool]] = [(block, False)]
     while stack:
@@ -728,7 +732,9 @@ def _handle_function_definition(
     )
 
     # Check for nested functions (not at module level)
-    _extract_symbols_from_node(node, symbols, parent_class=None, at_module_level=False)
+    _extract_symbols_from_node(
+        node, symbols, parent_class=None, at_module_level=False
+    )
 
 
 def _handle_class_definition(
@@ -761,7 +767,9 @@ def _handle_class_definition(
     symbols.append(symbol)
 
     # Extract methods from inside the class (not at module level)
-    _extract_symbols_from_node(node, symbols, parent_class=name, at_module_level=False)
+    _extract_symbols_from_node(
+        node, symbols, parent_class=name, at_module_level=False
+    )
 
 
 def _handle_assignment(node: Node, symbols: list[SymbolMetrics]) -> None:

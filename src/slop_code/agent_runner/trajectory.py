@@ -46,7 +46,9 @@ class ToolUseStep(BaseModel):
     arguments: dict[str, Any] = Field(
         default_factory=dict, description="Tool input arguments"
     )
-    result: str | None = Field(default=None, description="Tool execution result")
+    result: str | None = Field(
+        default=None, description="Tool execution result"
+    )
     timestamp: datetime | None = Field(
         default=None, description="When this step occurred"
     )
@@ -61,7 +63,9 @@ TrajectoryStep = Annotated[
 class Trajectory(BaseModel):
     """Container for parsed trajectory steps."""
 
-    agent_type: str = Field(description="Agent identifier (e.g., 'claude_code')")
+    agent_type: str = Field(
+        description="Agent identifier (e.g., 'claude_code')"
+    )
     steps: list[TrajectoryStep] = Field(
         default_factory=list, description="Chronologically ordered steps"
     )

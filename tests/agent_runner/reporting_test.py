@@ -20,9 +20,7 @@ from slop_code.common.llms import TokenUsage
 from slop_code.evaluation import PassPolicy
 
 
-def _make_usage_tracker(
-    cost: float = 0.5, steps: int = 10
-) -> UsageTracker:
+def _make_usage_tracker(cost: float = 0.5, steps: int = 10) -> UsageTracker:
     """Create a UsageTracker for testing."""
     return UsageTracker(
         cost=cost,

@@ -409,7 +409,12 @@ def load_run_config(
     # 4. Separate agent-specific overrides from top-level overrides
     # Agent overrides can be specified as either "agent.key=value" or just "key=value"
     # where key is a known agent config field (version, cost_limits, etc.)
-    agent_config_fields = {"version", "cost_limits", "binary", "permission_mode"}
+    agent_config_fields = {
+        "version",
+        "cost_limits",
+        "binary",
+        "permission_mode",
+    }
     agent_overrides: dict[str, Any] = {}
     top_level_overrides: list[str] = []
 
@@ -703,7 +708,11 @@ def load_config_from_run_dir(run_dir: Path) -> ResolvedRunConfig:
         )
 
     # Convert string paths back to Path objects where needed
-    path_fields = ["agent_config_path", "environment_config_path", "prompt_path"]
+    path_fields = [
+        "agent_config_path",
+        "environment_config_path",
+        "prompt_path",
+    ]
     for field in path_fields:
         if field in config_dict and config_dict[field] is not None:
             config_dict[field] = Path(config_dict[field])
@@ -713,7 +722,9 @@ def load_config_from_run_dir(run_dir: Path) -> ResolvedRunConfig:
         config_dict["model"] = ModelConfig(**config_dict["model"])
 
     # Handle pass_policy as string -> enum
-    if "pass_policy" in config_dict and isinstance(config_dict["pass_policy"], str):
+    if "pass_policy" in config_dict and isinstance(
+        config_dict["pass_policy"], str
+    ):
         config_dict["pass_policy"] = PassPolicy(config_dict["pass_policy"])
 
     # Handle one_shot as dict -> OneShotConfig

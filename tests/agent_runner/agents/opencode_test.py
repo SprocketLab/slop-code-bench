@@ -108,7 +108,9 @@ def _runtime_events_from_stdout_chunks(
     exit_code: int = 0,
     stderr: str = "",
 ) -> list[RuntimeEvent]:
-    events = [RuntimeEvent(kind="stdout", text=chunk, result=None) for chunk in chunks]
+    events = [
+        RuntimeEvent(kind="stdout", text=chunk, result=None) for chunk in chunks
+    ]
     events.append(
         RuntimeEvent(
             kind="finished",
@@ -175,8 +177,14 @@ def test_run_collects_messages_and_updates_usage(make_agent):
         for step in (first_step, final_step)
     )
     assert agent.usage.cost == pytest.approx(expected_cost)
-    assert agent.usage.current_tokens.input == final_step["part"]["tokens"]["input"]
-    assert agent.usage.current_tokens.output == final_step["part"]["tokens"]["output"]
+    assert (
+        agent.usage.current_tokens.input
+        == final_step["part"]["tokens"]["input"]
+    )
+    assert (
+        agent.usage.current_tokens.output
+        == final_step["part"]["tokens"]["output"]
+    )
     assert agent.usage.net_tokens.reasoning == 3
     assert (
         agent.usage.current_tokens.cache_read
@@ -298,7 +306,9 @@ def test_run_respects_cost_limit(make_agent):
             },
         },
     }
-    runtime.events = _runtime_events_from_stdout_chunks([json.dumps(expensive_step)])
+    runtime.events = _runtime_events_from_stdout_chunks(
+        [json.dumps(expensive_step)]
+    )
 
     agent.run("too expensive")
     assert agent.messages[0] == expensive_step

@@ -12,17 +12,29 @@ from jinja2 import Template
 from pydantic import Field
 
 from slop_code.agent_runner.agent import Agent, AgentConfigBase
-from slop_code.agent_runner.agents.cli_utils import (AgentCommandResult,
-                                                     stream_cli_command)
+from slop_code.agent_runner.agents.cli_utils import (
+    AgentCommandResult,
+    stream_cli_command,
+)
 from slop_code.agent_runner.agents.utils import HOME_PATH
-from slop_code.agent_runner.credentials import (CredentialType,
-                                                ProviderCredential)
+from slop_code.agent_runner.credentials import (
+    CredentialType,
+    ProviderCredential,
+)
 from slop_code.agent_runner.models import AgentCostLimits, AgentError
 from slop_code.agent_runner.registry import register_agent
-from slop_code.common.llms import (APIPricing, ModelDefinition, ThinkingPreset,
-                                   TokenUsage)
-from slop_code.execution import (DockerEnvironmentSpec, EnvironmentSpec,
-                                 Session, StreamingRuntime)
+from slop_code.common.llms import (
+    APIPricing,
+    ModelDefinition,
+    ThinkingPreset,
+    TokenUsage,
+)
+from slop_code.execution import (
+    DockerEnvironmentSpec,
+    EnvironmentSpec,
+    Session,
+    StreamingRuntime,
+)
 from slop_code.logging import get_logger
 
 log = get_logger(__name__)

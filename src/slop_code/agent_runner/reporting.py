@@ -263,7 +263,9 @@ class MetricsTracker(BaseModel):
         checkpoint_passed = total_passed - regression_passed
         checkpoint_total = total_total - regression_total
         checkpoint_pass_rate = (
-            checkpoint_passed / checkpoint_total if checkpoint_total > 0 else 0.0
+            checkpoint_passed / checkpoint_total
+            if checkpoint_total > 0
+            else 0.0
         )
 
         self.checkpoint_results.append(

@@ -206,9 +206,7 @@ async def _llm_judge_checkpoint_async(
     # For OpenRouter, use httpx.AsyncClient for connection pooling
     # For Bedrock, client is created per-call (boto3 handles pooling internally)
     async_client = (
-        httpx.AsyncClient()
-        if provider == RubricProvider.OPENROUTER
-        else None
+        httpx.AsyncClient() if provider == RubricProvider.OPENROUTER else None
     )
 
     try:
@@ -636,7 +634,7 @@ def llm_judge_snapshot_batch(
     )
 
     async def _run_all(
-        chunk: list[tuple[ProblemConfig, str, Path, Path]]
+        chunk: list[tuple[ProblemConfig, str, Path, Path]],
     ) -> list[tuple[str, str, list[dict], dict, Path]]:
         semaphore = asyncio.Semaphore(max_checkpoint_concurrency)
 
@@ -742,9 +740,7 @@ def llm_judge_snapshot_batch(
 
         return results
 
-    def _chunked(
-        seq: list[tuple[ProblemConfig, str, Path, Path]], size: int
-    ):
+    def _chunked(seq: list[tuple[ProblemConfig, str, Path, Path]], size: int):
         for i in range(0, len(seq), size):
             yield seq[i : i + size]
 

@@ -83,7 +83,10 @@ class TestDetectResumePoint:
         assert result is not None
         assert result.resume_from_checkpoint == "checkpoint_1"
         assert result.completed_checkpoints == []
-        assert result.invalidated_checkpoints == ["checkpoint_1", "checkpoint_2"]
+        assert result.invalidated_checkpoints == [
+            "checkpoint_1",
+            "checkpoint_2",
+        ]
 
     def test_returns_resume_info_when_all_checkpoints_completed(
         self, tmp_path: Path
@@ -105,9 +108,7 @@ class TestDetectResumePoint:
         (tmp_path / "checkpoint_1" / SNAPSHOT_DIR_NAME).mkdir(parents=True)
         (tmp_path / "checkpoint_2" / SNAPSHOT_DIR_NAME).mkdir(parents=True)
 
-        result = detect_resume_point(
-            tmp_path, ["checkpoint_1", "checkpoint_2"]
-        )
+        result = detect_resume_point(tmp_path, ["checkpoint_1", "checkpoint_2"])
         assert result is not None
         assert result.resume_from_checkpoint == ""  # Empty = nothing to resume
         assert result.completed_checkpoints == ["checkpoint_1", "checkpoint_2"]
@@ -128,13 +129,14 @@ class TestDetectResumePoint:
         with (tmp_path / RUN_INFO_FILENAME).open("w") as f:
             yaml.dump(run_info, f)
 
-        result = detect_resume_point(
-            tmp_path, ["checkpoint_1", "checkpoint_2"]
-        )
+        result = detect_resume_point(tmp_path, ["checkpoint_1", "checkpoint_2"])
         assert result is not None
         assert result.resume_from_checkpoint == "checkpoint_1"
         assert result.completed_checkpoints == []
-        assert result.invalidated_checkpoints == ["checkpoint_1", "checkpoint_2"]
+        assert result.invalidated_checkpoints == [
+            "checkpoint_1",
+            "checkpoint_2",
+        ]
 
     def test_detects_resume_point_after_first_checkpoint(
         self, tmp_path: Path
@@ -227,14 +229,12 @@ class TestDetectResumePoint:
         # Only create snapshot for checkpoint_1, not checkpoint_2
         (tmp_path / "checkpoint_1" / SNAPSHOT_DIR_NAME).mkdir(parents=True)
         inference_result = {"usage": {"cost": 0.5, "steps": 5}}
-        with (
-            tmp_path / "checkpoint_1" / INFERENCE_RESULT_FILENAME
-        ).open("w") as f:
+        with (tmp_path / "checkpoint_1" / INFERENCE_RESULT_FILENAME).open(
+            "w"
+        ) as f:
             json.dump(inference_result, f)
 
-        result = detect_resume_point(
-            tmp_path, ["checkpoint_1", "checkpoint_2"]
-        )
+        result = detect_resume_point(tmp_path, ["checkpoint_1", "checkpoint_2"])
 
         assert result is not None
         # Should resume from checkpoint_2 since it has no snapshot
@@ -265,7 +265,9 @@ class TestDetectResumePoint:
 class TestDetectResumeFromArtifacts:
     """Tests for _detect_resume_from_artifacts fallback function."""
 
-    def test_returns_resume_info_when_no_snapshots(self, tmp_path: Path) -> None:
+    def test_returns_resume_info_when_no_snapshots(
+        self, tmp_path: Path
+    ) -> None:
         """Returns ResumeInfo to resume from first checkpoint when no snapshots exist."""
         result = _detect_resume_from_artifacts(
             tmp_path, ["checkpoint_1", "checkpoint_2"]
@@ -274,7 +276,10 @@ class TestDetectResumeFromArtifacts:
         assert result is not None
         assert result.resume_from_checkpoint == "checkpoint_1"
         assert result.completed_checkpoints == []
-        assert result.invalidated_checkpoints == ["checkpoint_1", "checkpoint_2"]
+        assert result.invalidated_checkpoints == [
+            "checkpoint_1",
+            "checkpoint_2",
+        ]
 
     def test_resumes_from_checkpoint_with_error(self, tmp_path: Path) -> None:
         """Resumes from checkpoint that has snapshot + error."""
@@ -282,13 +287,17 @@ class TestDetectResumeFromArtifacts:
         checkpoint_1_dir = tmp_path / "checkpoint_1"
         (checkpoint_1_dir / SNAPSHOT_DIR_NAME).mkdir(parents=True)
         with (checkpoint_1_dir / INFERENCE_RESULT_FILENAME).open("w") as f:
-            json.dump({"had_error": False, "usage": {"cost": 0.5, "steps": 5}}, f)
+            json.dump(
+                {"had_error": False, "usage": {"cost": 0.5, "steps": 5}}, f
+            )
 
         # checkpoint_2: snapshot + error (resume from here)
         checkpoint_2_dir = tmp_path / "checkpoint_2"
         (checkpoint_2_dir / SNAPSHOT_DIR_NAME).mkdir(parents=True)
         with (checkpoint_2_dir / INFERENCE_RESULT_FILENAME).open("w") as f:
-            json.dump({"had_error": True, "usage": {"cost": 0.3, "steps": 3}}, f)
+            json.dump(
+                {"had_error": True, "usage": {"cost": 0.3, "steps": 3}}, f
+            )
 
         result = _detect_resume_from_artifacts(
             tmp_path, ["checkpoint_1", "checkpoint_2", "checkpoint_3"]
@@ -308,7 +317,9 @@ class TestDetectResumeFromArtifacts:
         checkpoint_1_dir = tmp_path / "checkpoint_1"
         (checkpoint_1_dir / SNAPSHOT_DIR_NAME).mkdir(parents=True)
         with (checkpoint_1_dir / INFERENCE_RESULT_FILENAME).open("w") as f:
-            json.dump({"had_error": True, "usage": {"cost": 0.5, "steps": 5}}, f)
+            json.dump(
+                {"had_error": True, "usage": {"cost": 0.5, "steps": 5}}, f
+            )
 
         result = _detect_resume_from_artifacts(
             tmp_path, ["checkpoint_1", "checkpoint_2"]
@@ -318,7 +329,10 @@ class TestDetectResumeFromArtifacts:
         assert result is not None
         assert result.resume_from_checkpoint == "checkpoint_1"
         assert result.completed_checkpoints == []
-        assert result.invalidated_checkpoints == ["checkpoint_1", "checkpoint_2"]
+        assert result.invalidated_checkpoints == [
+            "checkpoint_1",
+            "checkpoint_2",
+        ]
 
     def test_resumes_from_next_checkpoint_after_completed(
         self, tmp_path: Path
@@ -328,7 +342,9 @@ class TestDetectResumeFromArtifacts:
         checkpoint_1_dir = tmp_path / "checkpoint_1"
         (checkpoint_1_dir / SNAPSHOT_DIR_NAME).mkdir(parents=True)
         with (checkpoint_1_dir / INFERENCE_RESULT_FILENAME).open("w") as f:
-            json.dump({"had_error": False, "usage": {"cost": 1.0, "steps": 10}}, f)
+            json.dump(
+                {"had_error": False, "usage": {"cost": 1.0, "steps": 10}}, f
+            )
 
         # checkpoint_2: no snapshot (resume from here)
         # (directory doesn't exist)
@@ -343,7 +359,9 @@ class TestDetectResumeFromArtifacts:
         assert result.last_snapshot_dir == checkpoint_1_dir / SNAPSHOT_DIR_NAME
         assert result.prior_usage.cost == 1.0
 
-    def test_returns_resume_info_when_all_completed(self, tmp_path: Path) -> None:
+    def test_returns_resume_info_when_all_completed(
+        self, tmp_path: Path
+    ) -> None:
         """Returns ResumeInfo with empty resume_from when all checkpoints completed."""
         for i in range(1, 3):
             checkpoint_dir = tmp_path / f"checkpoint_{i}"
@@ -367,7 +385,9 @@ class TestDetectResumeFromArtifacts:
         checkpoint_1_dir = tmp_path / "checkpoint_1"
         (checkpoint_1_dir / SNAPSHOT_DIR_NAME).mkdir(parents=True)
         with (checkpoint_1_dir / INFERENCE_RESULT_FILENAME).open("w") as f:
-            json.dump({"had_error": False, "usage": {"cost": 0.5, "steps": 5}}, f)
+            json.dump(
+                {"had_error": False, "usage": {"cost": 0.5, "steps": 5}}, f
+            )
 
         # checkpoint_2: snapshot but no inference result (resume from here)
         checkpoint_2_dir = tmp_path / "checkpoint_2"
@@ -389,7 +409,9 @@ class TestDetectResumeFromArtifacts:
         checkpoint_1_dir = tmp_path / "checkpoint_1"
         (checkpoint_1_dir / SNAPSHOT_DIR_NAME).mkdir(parents=True)
         with (checkpoint_1_dir / INFERENCE_RESULT_FILENAME).open("w") as f:
-            json.dump({"had_error": False, "usage": {"cost": 0.5, "steps": 5}}, f)
+            json.dump(
+                {"had_error": False, "usage": {"cost": 0.5, "steps": 5}}, f
+            )
 
         # checkpoint_2: snapshot + invalid JSON (resume from here)
         checkpoint_2_dir = tmp_path / "checkpoint_2"
@@ -414,14 +436,17 @@ class TestDetectResumeFromArtifacts:
             checkpoint_dir = tmp_path / f"checkpoint_{i}"
             (checkpoint_dir / SNAPSHOT_DIR_NAME).mkdir(parents=True)
             with (checkpoint_dir / INFERENCE_RESULT_FILENAME).open("w") as f:
-                json.dump({
-                    "had_error": False,
-                    "usage": {
-                        "cost": float(i),
-                        "steps": i * 10,
-                        "net_tokens": {"input": i * 100, "output": i * 50},
+                json.dump(
+                    {
+                        "had_error": False,
+                        "usage": {
+                            "cost": float(i),
+                            "steps": i * 10,
+                            "net_tokens": {"input": i * 100, "output": i * 50},
+                        },
                     },
-                }, f)
+                    f,
+                )
 
         # checkpoint_3: no snapshot (resume from here)
 
@@ -444,11 +469,11 @@ class TestDetectResumeFromArtifacts:
         checkpoint_1_dir = tmp_path / "checkpoint_1"
         (checkpoint_1_dir / SNAPSHOT_DIR_NAME).mkdir(parents=True)
         with (checkpoint_1_dir / INFERENCE_RESULT_FILENAME).open("w") as f:
-            json.dump({"had_error": False, "usage": {"cost": 1.0, "steps": 5}}, f)
+            json.dump(
+                {"had_error": False, "usage": {"cost": 1.0, "steps": 5}}, f
+            )
 
-        result = detect_resume_point(
-            tmp_path, ["checkpoint_1", "checkpoint_2"]
-        )
+        result = detect_resume_point(tmp_path, ["checkpoint_1", "checkpoint_2"])
 
         assert result is not None
         assert result.resume_from_checkpoint == "checkpoint_2"
@@ -581,16 +606,20 @@ class TestMetricsTrackerOnResume:
         )
 
         # Simulate loading multiple completed checkpoints
-        tracker.finish_checkpoint(UsageTracker(
-            cost=1.0,
-            steps=5,
-            net_tokens=TokenUsage(input=100, output=50),
-        ))
-        tracker.finish_checkpoint(UsageTracker(
-            cost=2.0,
-            steps=15,
-            net_tokens=TokenUsage(input=200, output=100),
-        ))
+        tracker.finish_checkpoint(
+            UsageTracker(
+                cost=1.0,
+                steps=5,
+                net_tokens=TokenUsage(input=100, output=50),
+            )
+        )
+        tracker.finish_checkpoint(
+            UsageTracker(
+                cost=2.0,
+                steps=15,
+                net_tokens=TokenUsage(input=200, output=100),
+            )
+        )
 
         assert tracker.usage.cost == 3.0
         assert tracker.usage.steps == 20
@@ -617,11 +646,13 @@ class TestMetricsTrackerOnResume:
         )
 
         # Add usage from a newly completed checkpoint
-        tracker.finish_checkpoint(UsageTracker(
-            cost=1.0,
-            steps=10,
-            net_tokens=TokenUsage(input=100, output=50),
-        ))
+        tracker.finish_checkpoint(
+            UsageTracker(
+                cost=1.0,
+                steps=10,
+                net_tokens=TokenUsage(input=100, output=50),
+            )
+        )
 
         assert tracker.usage.cost == 6.0
         assert tracker.usage.steps == 60

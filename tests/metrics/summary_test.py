@@ -136,10 +136,30 @@ class TestRunSummarySolveRates:
     def test_computes_checkpoint_solve_rate(self, mock_config):
         """Test that summary computes checkpoint solve rate correctly."""
         checkpoints = [
-            {"problem": "prob1", "idx": 1, "pass_rate": 1.0, "checkpoint_pass_rate": 1.0},
-            {"problem": "prob1", "idx": 2, "pass_rate": 0.8, "checkpoint_pass_rate": 0.8},
-            {"problem": "prob2", "idx": 1, "pass_rate": 1.0, "checkpoint_pass_rate": 1.0},
-            {"problem": "prob2", "idx": 2, "pass_rate": 1.0, "checkpoint_pass_rate": 1.0},
+            {
+                "problem": "prob1",
+                "idx": 1,
+                "pass_rate": 1.0,
+                "checkpoint_pass_rate": 1.0,
+            },
+            {
+                "problem": "prob1",
+                "idx": 2,
+                "pass_rate": 0.8,
+                "checkpoint_pass_rate": 0.8,
+            },
+            {
+                "problem": "prob2",
+                "idx": 1,
+                "pass_rate": 1.0,
+                "checkpoint_pass_rate": 1.0,
+            },
+            {
+                "problem": "prob2",
+                "idx": 2,
+                "pass_rate": 1.0,
+                "checkpoint_pass_rate": 1.0,
+            },
         ]
         summary = compute_run_summary(mock_config, checkpoints)
 
@@ -149,9 +169,24 @@ class TestRunSummarySolveRates:
     def test_computes_problem_solve_rate(self, mock_config):
         """Test that summary computes problem solve rate correctly."""
         checkpoints = [
-            {"problem": "prob1", "idx": 1, "pass_rate": 1.0, "checkpoint_pass_rate": 1.0},
-            {"problem": "prob1", "idx": 2, "pass_rate": 1.0, "checkpoint_pass_rate": 1.0},  # fully solved
-            {"problem": "prob2", "idx": 1, "pass_rate": 0.8, "checkpoint_pass_rate": 0.8},
+            {
+                "problem": "prob1",
+                "idx": 1,
+                "pass_rate": 1.0,
+                "checkpoint_pass_rate": 1.0,
+            },
+            {
+                "problem": "prob1",
+                "idx": 2,
+                "pass_rate": 1.0,
+                "checkpoint_pass_rate": 1.0,
+            },  # fully solved
+            {
+                "problem": "prob2",
+                "idx": 1,
+                "pass_rate": 0.8,
+                "checkpoint_pass_rate": 0.8,
+            },
             {
                 "problem": "prob2",
                 "idx": 2,
@@ -167,15 +202,30 @@ class TestRunSummarySolveRates:
     def test_computes_partial_solve_rate(self, mock_config):
         """Test that summary computes partial solve rate correctly."""
         checkpoints = [
-            {"problem": "prob1", "idx": 1, "pass_rate": 1.0, "checkpoint_pass_rate": 1.0},
+            {
+                "problem": "prob1",
+                "idx": 1,
+                "pass_rate": 1.0,
+                "checkpoint_pass_rate": 1.0,
+            },
             {
                 "problem": "prob1",
                 "idx": 2,
                 "pass_rate": 0.5,
                 "checkpoint_pass_rate": 0.5,
             },  # has at least one 1.0
-            {"problem": "prob2", "idx": 1, "pass_rate": 0.8, "checkpoint_pass_rate": 0.8},
-            {"problem": "prob2", "idx": 2, "pass_rate": 0.9, "checkpoint_pass_rate": 0.9},  # no 1.0
+            {
+                "problem": "prob2",
+                "idx": 1,
+                "pass_rate": 0.8,
+                "checkpoint_pass_rate": 0.8,
+            },
+            {
+                "problem": "prob2",
+                "idx": 2,
+                "pass_rate": 0.9,
+                "checkpoint_pass_rate": 0.9,
+            },  # no 1.0
         ]
         summary = compute_run_summary(mock_config, checkpoints)
 
@@ -315,7 +365,9 @@ class TestRunSummaryPassRates:
         # Regression: only 1 checkpoint has regression tests (4/5 = 0.8)
         assert summary.pass_rates.checkpoint.regression == 0.8
 
-    def test_pass_rates_all_checkpoints_have_zero_tests_returns_zero(self, mock_config):
+    def test_pass_rates_all_checkpoints_have_zero_tests_returns_zero(
+        self, mock_config
+    ):
         """Test that pass rate is 0.0 when ALL checkpoints have 0 tests for a type."""
         checkpoints = [
             {

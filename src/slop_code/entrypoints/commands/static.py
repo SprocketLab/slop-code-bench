@@ -122,7 +122,9 @@ def _process_single_run_worker(
             checkpoint_results, files_saved = process_problem_quality(
                 problem_dir, entry_file, discover_checkpoints
             )
-            reports, errors = create_problem_reports(problem_dir, problem_config)
+            reports, errors = create_problem_reports(
+                problem_dir, problem_config
+            )
             all_reports.extend(reports)
             for checkpoint_name, error_msg in errors:
                 report_errors.append(
@@ -443,8 +445,11 @@ def static_metrics(
 
                 if not result.success:
                     run_failures.append(
-                        (result.run_dir, result.error_message or "Unknown error",
-                         result.error_traceback)
+                        (
+                            result.run_dir,
+                            result.error_message or "Unknown error",
+                            result.error_traceback,
+                        )
                     )
                     console.print(
                         f"[red]Failed to process {single_run_dir.name}: "
@@ -453,9 +458,7 @@ def static_metrics(
                     continue
 
                 # Process successful result
-                console.print(
-                    f"\n[bold]Completed {single_run_dir.name}[/bold]"
-                )
+                console.print(f"\n[bold]Completed {single_run_dir.name}[/bold]")
 
                 # Save results to THIS run's directory
                 report_file = single_run_dir / CHECKPOINT_RESULTS_FILENAME

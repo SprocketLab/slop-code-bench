@@ -43,7 +43,14 @@ def _create_snapshot_from_files(
     source_files: set[str] | None = None,
 ) -> SnapshotMetrics:
     """Helper to create SnapshotMetrics from a files dict for testing."""
-    cc_ratings: dict[str, int] = {"A": 0, "B": 0, "C": 0, "D": 0, "E": 0, "F": 0}
+    cc_ratings: dict[str, int] = {
+        "A": 0,
+        "B": 0,
+        "C": 0,
+        "D": 0,
+        "E": 0,
+        "F": 0,
+    }
     mi_ratings: dict[str, int] = {"A": 0, "B": 0, "C": 0}
 
     file_count = len(files)
@@ -103,11 +110,17 @@ def _create_snapshot_from_files(
 
     # Use first file's lines/lint for entry file metrics (test simplification)
     first_file = next(iter(files.values()), None)
-    lines = first_file.lines if first_file else LineCountMetrics(
-        total_lines=0, loc=0, comments=0, multi_comment=0, single_comment=0
+    lines = (
+        first_file.lines
+        if first_file
+        else LineCountMetrics(
+            total_lines=0, loc=0, comments=0, multi_comment=0, single_comment=0
+        )
     )
-    lint = first_file.lint if first_file else LintMetrics(
-        errors=0, fixable=0, counts={}
+    lint = (
+        first_file.lint
+        if first_file
+        else LintMetrics(errors=0, fixable=0, counts={})
     )
 
     return SnapshotMetrics(
@@ -235,7 +248,14 @@ class TestSnapshotQualityReport:
         assert report.lint_errors == 2
         assert report.lint_fixable == 1
         # CC ratings: complexity 2=A, 8=B, 15=C
-        assert report.cc_counts == {"A": 1, "B": 1, "C": 1, "D": 0, "E": 0, "F": 0}
+        assert report.cc_counts == {
+            "A": 1,
+            "B": 1,
+            "C": 1,
+            "D": 0,
+            "E": 0,
+            "F": 0,
+        }
         # MI ratings: 20.5=A, 12.0=B
         assert report.mi == {"A": 1, "B": 1, "C": 0}
 
@@ -423,7 +443,14 @@ class TestSnapshotQualityReport:
         assert report.lint_errors == 0
         assert report.lint_fixable == 0
         # Empty files means no CC/MI counts
-        assert report.cc_counts == {"A": 0, "B": 0, "C": 0, "D": 0, "E": 0, "F": 0}
+        assert report.cc_counts == {
+            "A": 0,
+            "B": 0,
+            "C": 0,
+            "D": 0,
+            "E": 0,
+            "F": 0,
+        }
         assert report.mi == {"A": 0, "B": 0, "C": 0}
         assert report.ast_grep_violations == 0
         assert report.ast_grep_rules_checked == 0
@@ -448,7 +475,9 @@ class TestSnapshotQualityReport:
         snapshot = _create_snapshot_from_files(files)
         # Set ast_grep values directly on the ast_grep aggregate section
         snapshot = snapshot.model_copy(
-            update={"ast_grep": AstGrepAggregates(violations=15, rules_checked=34)}
+            update={
+                "ast_grep": AstGrepAggregates(violations=15, rules_checked=34)
+            }
         )
 
         report = SnapshotQualityReport.from_snapshot_metrics(snapshot)

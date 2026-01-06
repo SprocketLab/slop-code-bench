@@ -66,9 +66,7 @@ def make_registry(
         problems = {k: v for k, v in problems.items() if k in problem}
 
     if not problems:
-        typer.echo(
-            typer.style("No problems found", fg=typer.colors.YELLOW)
-        )
+        typer.echo(typer.style("No problems found", fg=typer.colors.YELLOW))
         raise typer.Exit(0)
 
     typer.echo(f"Generating registry for {len(problems)} problem(s)")
@@ -78,7 +76,10 @@ def make_registry(
         logger.debug("Processing problem", problem=problem_name)
 
         checkpoints = []
-        for checkpoint_name, checkpoint_config in config.iterate_checkpoint_items():
+        for (
+            checkpoint_name,
+            checkpoint_config,
+        ) in config.iterate_checkpoint_items():
             try:
                 spec = config.get_checkpoint_spec(checkpoint_name)
             except FileNotFoundError:
@@ -89,12 +90,14 @@ def make_registry(
                 )
                 spec = ""
 
-            checkpoints.append({
-                "checkpoint_name": checkpoint_name,
-                "spec": spec,
-                "version": checkpoint_config.version,
-                "state": checkpoint_config.state,
-            })
+            checkpoints.append(
+                {
+                    "checkpoint_name": checkpoint_name,
+                    "spec": spec,
+                    "version": checkpoint_config.version,
+                    "state": checkpoint_config.state,
+                }
+            )
 
         entry = {
             "problem_name": config.name,
@@ -116,5 +119,7 @@ def make_registry(
             f.write(json.dumps(entry) + "\n")
 
     typer.echo(
-        typer.style(f"Wrote {len(entries)} entries to {output}", fg=typer.colors.GREEN)
+        typer.style(
+            f"Wrote {len(entries)} entries to {output}", fg=typer.colors.GREEN
+        )
     )

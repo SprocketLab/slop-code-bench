@@ -200,7 +200,9 @@ class TestResolveOutputDirectory:
 
     def test_debug_prefix_with_nested_path(self):
         """Test DEBUG_ prefix with nested path."""
-        result, existed = _resolve_output_directory("outputs/run_123", debug=True)
+        result, existed = _resolve_output_directory(
+            "outputs/run_123", debug=True
+        )
         assert "outputs/DEBUG_run_123" in str(result)
 
     def test_debug_prefix_with_simple_path(self):
@@ -212,7 +214,9 @@ class TestResolveOutputDirectory:
         """Test preexisted flag correctly set when directory exists."""
         existing_dir = tmp_path / "exists"
         existing_dir.mkdir()
-        result, existed = _resolve_output_directory(str(existing_dir), debug=False)
+        result, existed = _resolve_output_directory(
+            str(existing_dir), debug=False
+        )
         assert existed is True
 
     def test_preexisted_flag_false(self, tmp_path):
@@ -284,7 +288,9 @@ class TestValidateResumeConfig:
         result = _validate_resume_config(tmp_path, mock_run_cfg, mock_env_spec)
         assert result == []
 
-    def test_model_provider_mismatch(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_model_provider_mismatch(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test detection of model provider mismatch."""
         (tmp_path / "config.yaml").write_text(
             yaml.dump(
@@ -329,14 +335,18 @@ class TestHandleResumeValidation:
         }
         return spec
 
-    def test_no_exit_when_not_resuming(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_no_exit_when_not_resuming(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test no exit when resume=False."""
         # Should not raise
         _handle_resume_validation(
             tmp_path, mock_run_cfg, mock_env_spec, resume=False, overwrite=False
         )
 
-    def test_no_exit_when_overwrite(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_no_exit_when_overwrite(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test no exit when overwrite=True."""
         # Write mismatched config
         (tmp_path / "config.yaml").write_text(
@@ -361,11 +371,17 @@ class TestHandleResumeValidation:
         )
         with pytest.raises(typer.Exit) as excinfo:
             _handle_resume_validation(
-                tmp_path, mock_run_cfg, mock_env_spec, resume=True, overwrite=False
+                tmp_path,
+                mock_run_cfg,
+                mock_env_spec,
+                resume=True,
+                overwrite=False,
             )
         assert excinfo.value.exit_code == 1
 
-    def test_no_exit_when_config_matches(self, tmp_path, mock_run_cfg, mock_env_spec):
+    def test_no_exit_when_config_matches(
+        self, tmp_path, mock_run_cfg, mock_env_spec
+    ):
         """Test no exit when config matches."""
         (tmp_path / "config.yaml").write_text(
             yaml.dump(
@@ -421,7 +437,9 @@ class TestHandleEarlyCompletion:
         )
         assert result is False
 
-    @patch("slop_code.entrypoints.commands.run_agent._create_checkpoint_results_and_summary")
+    @patch(
+        "slop_code.entrypoints.commands.run_agent._create_checkpoint_results_and_summary"
+    )
     def test_calls_summary_when_evaluate_true(self, mock_summary, tmp_path):
         """Test summary is generated when evaluate=True and nothing to do."""
         console = MagicMock()
@@ -436,7 +454,9 @@ class TestHandleEarlyCompletion:
         assert result is True
         mock_summary.assert_called_once()
 
-    @patch("slop_code.entrypoints.commands.run_agent._create_checkpoint_results_and_summary")
+    @patch(
+        "slop_code.entrypoints.commands.run_agent._create_checkpoint_results_and_summary"
+    )
     def test_no_summary_when_evaluate_false(self, mock_summary, tmp_path):
         """Test no summary when evaluate=False."""
         console = MagicMock()
@@ -597,7 +617,9 @@ class TestDiscoverProblems:
                         "description": f"Test problem {name}",
                         "category": "test",
                         "entry_file": "main.py",
-                        "checkpoints": {"checkpoint_1": {"version": 1, "order": 1}},
+                        "checkpoints": {
+                            "checkpoint_1": {"version": 1, "order": 1}
+                        },
                     }
                 )
             )
@@ -618,7 +640,9 @@ class TestDiscoverProblems:
                         "description": f"Test problem {name}",
                         "category": "test",
                         "entry_file": "main.py",
-                        "checkpoints": {"checkpoint_1": {"version": 1, "order": 1}},
+                        "checkpoints": {
+                            "checkpoint_1": {"version": 1, "order": 1}
+                        },
                     }
                 )
             )

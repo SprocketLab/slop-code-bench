@@ -96,6 +96,7 @@ def mock_model_def(mock_pricing):
 def mock_credential():
     """Standard credential for tests."""
     from slop_code.agent_runner.credentials import CredentialType
+
     return ProviderCredential(
         provider="openai",
         value="test-api-key",
@@ -138,6 +139,7 @@ class TestCodexConfig:
         assert dockerfile is not None
         assert "base-image:latest" in dockerfile
         assert "@openai/codex@2.5.0" in dockerfile
+
 
 class TestCodexAgent:
     """Tests for CodexAgent."""
@@ -251,7 +253,9 @@ class TestCodexAgent:
         assert agent._last_prompt == ""
         assert agent._last_command is None
 
-    def test_build_command_basic(self, tmp_path, mock_cost_limits, mock_pricing):
+    def test_build_command_basic(
+        self, tmp_path, mock_cost_limits, mock_pricing
+    ):
         """_build_command creates correct base command."""
         agent = CodexAgent(
             problem_name="test-problem",
@@ -326,7 +330,9 @@ class TestCodexAgent:
         config_idx = command.index("--config")
         assert 'model_reasoning_effort="high"' in command[config_idx + 1]
 
-    def test_build_command_with_extra_args(self, mock_cost_limits, mock_pricing):
+    def test_build_command_with_extra_args(
+        self, mock_cost_limits, mock_pricing
+    ):
         """_build_command appends extra_args."""
         agent = CodexAgent(
             problem_name="test-problem",
@@ -349,7 +355,9 @@ class TestCodexAgent:
         assert "--custom-flag" in command
         assert "value" in command
 
-    def test_save_artifacts_writes_files(self, tmp_path, mock_cost_limits, mock_pricing):
+    def test_save_artifacts_writes_files(
+        self, tmp_path, mock_cost_limits, mock_pricing
+    ):
         """save_artifacts writes prompt and trajectory files."""
         runtime = FakeRuntime()
         session = FakeSession(runtime=runtime, working_dir=tmp_path)

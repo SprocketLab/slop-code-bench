@@ -37,7 +37,9 @@ class TestCalculateFileMetrics:
             )
 
         def lint_fn(path: Path) -> LintMetrics:
-            return LintMetrics(errors=3, fixable=2, counts={"E501": 2, "E302": 1})
+            return LintMetrics(
+                errors=3, fixable=2, counts={"E501": 2, "E302": 1}
+            )
 
         def symbol_fn(path: Path) -> list[SymbolMetrics]:
             return [
@@ -154,7 +156,11 @@ class TestMeasureFiles:
         (tmp_path / "subdir" / "module2.py").write_text("# module 2")
         (tmp_path / "other.txt").write_text("not python")
 
-        results = list(measure_files(tmp_path, exclude_patterns=set(), entry_extensions={".py"}))
+        results = list(
+            measure_files(
+                tmp_path, exclude_patterns=set(), entry_extensions={".py"}
+            )
+        )
 
         # Should find 2 Python files
         assert len(results) == 2
@@ -187,7 +193,10 @@ class TestMeasureFiles:
         (tmp_path / "level1" / "level2").mkdir()
         (tmp_path / "level1" / "level2" / "file2.py").write_text("# level 2")
 
-        results = {path.name: metrics.depth for path, metrics in measure_files(tmp_path, exclude_patterns=set())}
+        results = {
+            path.name: metrics.depth
+            for path, metrics in measure_files(tmp_path, exclude_patterns=set())
+        }
 
         assert results["root.py"] == 1
         assert results["file1.py"] == 2
@@ -221,7 +230,9 @@ class TestMeasureFiles:
             (venv_path / "installed_package.py").write_text("# from venv")
 
         exclude_patterns = {".venv", "venv", "virtualenv", ".virtualenv"}
-        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+        results = list(
+            measure_files(tmp_path, exclude_patterns=exclude_patterns)
+        )
 
         # Should only find keep.py, not any files inside venv directories
         assert len(results) == 1
@@ -235,7 +246,9 @@ class TestMeasureFiles:
         (pycache / "module.cpython-312.pyc").write_text("compiled")
 
         exclude_patterns = {"__pycache__", "*.pyc"}
-        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+        results = list(
+            measure_files(tmp_path, exclude_patterns=exclude_patterns)
+        )
 
         assert len(results) == 1
         assert results[0][0].name == "module.py"
@@ -248,7 +261,9 @@ class TestMeasureFiles:
         (git_dir / "abc123").write_text("git object")
 
         exclude_patterns = {".git"}
-        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+        results = list(
+            measure_files(tmp_path, exclude_patterns=exclude_patterns)
+        )
 
         assert len(results) == 1
         assert results[0][0].name == "code.py"
@@ -261,7 +276,9 @@ class TestMeasureFiles:
         (node_modules / "index.py").write_text("# package")
 
         exclude_patterns = {"node_modules"}
-        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+        results = list(
+            measure_files(tmp_path, exclude_patterns=exclude_patterns)
+        )
 
         assert len(results) == 1
         assert results[0][0].name == "app.py"
@@ -276,7 +293,9 @@ class TestMeasureFiles:
             (env_path / "cached.py").write_text("# cached")
 
         exclude_patterns = {".tox", ".nox"}
-        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+        results = list(
+            measure_files(tmp_path, exclude_patterns=exclude_patterns)
+        )
 
         assert len(results) == 1
         assert results[0][0].name == "tests.py"
@@ -288,7 +307,9 @@ class TestMeasureFiles:
         (tmp_path / "other.cpython-312.pyc").write_text("compiled")
 
         exclude_patterns = {"*.pyc"}
-        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+        results = list(
+            measure_files(tmp_path, exclude_patterns=exclude_patterns)
+        )
 
         assert len(results) == 1
         assert results[0][0].name == "module.py"
@@ -298,12 +319,22 @@ class TestMeasureFiles:
         (tmp_path / "main.py").write_text("# main")
 
         # Create deeply nested structure inside .venv
-        deep_path = tmp_path / ".venv" / "lib" / "python3.12" / "site-packages" / "requests" / "adapters"
+        deep_path = (
+            tmp_path
+            / ".venv"
+            / "lib"
+            / "python3.12"
+            / "site-packages"
+            / "requests"
+            / "adapters"
+        )
         deep_path.mkdir(parents=True)
         (deep_path / "base.py").write_text("# adapter base")
 
         exclude_patterns = {".venv"}
-        results = list(measure_files(tmp_path, exclude_patterns=exclude_patterns))
+        results = list(
+            measure_files(tmp_path, exclude_patterns=exclude_patterns)
+        )
 
         assert len(results) == 1
         assert results[0][0].name == "main.py"
@@ -374,7 +405,9 @@ class TestMeasureSnapshotQuality:
         (tmp_path / "file1.py").write_text("# file 1")
         (tmp_path / "file2.py").write_text("# file 2")
 
-        snapshot, file_metrics_list = measure_snapshot_quality("file1.py", tmp_path)
+        snapshot, file_metrics_list = measure_snapshot_quality(
+            "file1.py", tmp_path
+        )
 
         # Should have 2 files in the list
         assert len(file_metrics_list) == 2
@@ -409,7 +442,9 @@ class TestMeasureSnapshotQuality:
         (tmp_path / "subdir").mkdir()
         (tmp_path / "subdir" / "also_keep.py").write_text("# also keep")
 
-        snapshot, file_metrics_list = measure_snapshot_quality("keep.py", tmp_path)
+        snapshot, file_metrics_list = measure_snapshot_quality(
+            "keep.py", tmp_path
+        )
 
         # Should include Python files but not .pyc files
         assert len(file_metrics_list) == 2
@@ -423,7 +458,9 @@ class TestMeasureSnapshotQuality:
         (tmp_path / "subdir").mkdir()
         (tmp_path / "subdir" / "nested.py").write_text("# nested")
 
-        snapshot, file_metrics_list = measure_snapshot_quality("root.py", tmp_path)
+        snapshot, file_metrics_list = measure_snapshot_quality(
+            "root.py", tmp_path
+        )
 
         assert len(file_metrics_list) == 2
         file_paths = {fm.file_path for fm in file_metrics_list}
@@ -437,7 +474,9 @@ class TestMeasureSnapshotQuality:
 
     def test_measure_snapshot_quality_empty_directory(self, tmp_path):
         """Test with empty directory returns zero metrics."""
-        snapshot, file_metrics_list = measure_snapshot_quality("main.py", tmp_path)
+        snapshot, file_metrics_list = measure_snapshot_quality(
+            "main.py", tmp_path
+        )
 
         assert len(file_metrics_list) == 0
         assert snapshot.file_count == 0
@@ -453,7 +492,9 @@ class TestMeasureSnapshotQuality:
         (tmp_path / "readme.md").write_text("# readme")
         (tmp_path / "data.json").write_text("{}")
 
-        snapshot, file_metrics_list = measure_snapshot_quality("code.py", tmp_path)
+        snapshot, file_metrics_list = measure_snapshot_quality(
+            "code.py", tmp_path
+        )
 
         # Should only analyze Python file
         assert len(file_metrics_list) == 1

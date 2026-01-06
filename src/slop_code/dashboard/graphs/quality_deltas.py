@@ -114,9 +114,9 @@ def build_delta_improvement_heatmap(context: ChartContext) -> go.Figure:
             text=text,
             texttemplate="%{text}",
             colorscale=[
-                [0, "#f8d7da"],   # light red
-                [0.5, "#fff3cd"], # light yellow
-                [1, "#2e8540"],   # green
+                [0, "#f8d7da"],  # light red
+                [0.5, "#fff3cd"],  # light yellow
+                [1, "#2e8540"],  # green
             ],
             zmin=0,
             zmax=100,
