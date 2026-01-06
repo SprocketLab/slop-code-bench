@@ -2,6 +2,7 @@ from slop_code.entrypoints.commands import backfill_categories
 from slop_code.entrypoints.commands import backfill_reports
 from slop_code.entrypoints.commands import carry_forward
 from slop_code.entrypoints.commands import combine_results
+from slop_code.entrypoints.commands import consolidate_runs
 from slop_code.entrypoints.commands import compress_artifacts
 from slop_code.entrypoints.commands import docker
 from slop_code.entrypoints.commands import eval_checkpoint

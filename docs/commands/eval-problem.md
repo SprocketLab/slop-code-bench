@@ -50,8 +50,8 @@ slop-code eval-problem [OPTIONS] SUBMISSION_PATH
 
 | Value | Description |
 |-------|-------------|
-| `OPENROUTER` | Use OpenRouter API |
-| `ANTHROPIC` | Use Anthropic API directly |
+| `OPENROUTER` | Use OpenRouter API (default) |
+| `BEDROCK` | Use AWS Bedrock API |
 
 ## Behavior
 

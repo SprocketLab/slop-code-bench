@@ -88,11 +88,12 @@ def test_legacy_format_still_works(entrypoint_argv):
 
 When multiple markers apply, priority determines GroupType:
 
-1. `error` - Always wins, maps to ERROR
-2. `regression` - Second priority, maps to REGRESSION
-3. Custom markers - Checked next
-4. `functionality` - Maps to FUNCTIONALITY
-5. No marker - Maps to CORE
+1. Prior checkpoint tests - Always REGRESSION (regardless of markers)
+2. `error` - Maps to ERROR (current checkpoint only)
+3. `regression` - Maps to REGRESSION
+4. Custom markers - Checked next
+5. `functionality` - Maps to FUNCTIONALITY
+6. No marker - Maps to CORE
 
 ```python
 # This is an ERROR test (error wins)
@@ -167,18 +168,21 @@ PytestRunner determines GroupType using these rules (in order):
 ```python
 def _determine_group_type(test, checkpoint_name):
     markers = test.get("markers", [])
+    is_current = test["file"] == f"test_{checkpoint_name}.py"
 
-    # 1. error marker always wins
+    # 1. prior checkpoint tests ALWAYS become regression
+    if not is_current:
+        return GroupType.REGRESSION
+
+    # 2. error marker wins for current checkpoint
     if "error" in markers:
         return GroupType.ERROR
 
-    # 2. regression marker or from prior checkpoint
+    # 3. explicit regression marker
     if "regression" in markers:
         return GroupType.REGRESSION
-    if test["file"] != f"test_{checkpoint_name}.py":
-        return GroupType.REGRESSION
 
-    # 3. custom markers from config
+    # 4. custom markers from config
     for marker in markers:
         if marker in custom_markers:
             return custom_markers[marker].group

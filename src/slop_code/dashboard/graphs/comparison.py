@@ -89,9 +89,16 @@ def build_problem_comparison_chart(
         # Use first row for legend info
         info = tracker.get_info(display_name, run_df.iloc[0])
 
-        x_vals = run_df[sort_col]
+        is_grouped = context.group_runs
 
         # Pre-calculate derived metrics
+        # Total Rubric Flags
+        run_df = run_df.copy()
+        if "rubric_total_flags" in run_df.columns:
+            run_df["_total_flags"] = run_df["rubric_total_flags"].fillna(0)
+        else:
+            run_df["_total_flags"] = 0
+
         # New Rubric Flags
         total_flags = run_df.get(
             "rubric_total_flags", pd.Series([0] * len(run_df))
@@ -116,104 +123,118 @@ def build_problem_comparison_chart(
             return (passed / total) * 100
 
         # Test Pass Rates
-        pass_rate_total = (run_df["passed_tests"] / run_df["total_tests"]) * 100
-        pass_rate_core = calc_pass_rate("core")
-        pass_rate_func = calc_pass_rate("functionality")
-        pass_rate_regr = calc_pass_rate("regression")
-        pass_rate_error = calc_pass_rate("error")
+        def add_pass_rate_col(prefix):
+            p_col = f"{prefix}_passed"
+            t_col = f"{prefix}_total"
 
-        # Output Tokens
-        output_tokens = run_df.get(
-            "output", pd.Series([0] * len(run_df))
-        ).fillna(0)
+            if p_col in run_df.columns:
+                passed = run_df[p_col].fillna(0)
+            else:
+                passed = 0
 
-        # Cost
-        costs = run_df.get("cost", pd.Series([0] * len(run_df))).fillna(0)
+            if t_col in run_df.columns:
+                total = run_df[t_col].fillna(1).replace(0, 1)
+            else:
+                total = 1
 
-        # Helper to add trace
-        def add_trace(y_data, row, col, show_legend=False):
+            run_df[f"_pr_{prefix}"] = (passed / total) * 100
+
+        add_pass_rate_col("total")
+        # passed_tests/total_tests is already there but let's be consistent
+        run_df["_pr_all"] = (
+            run_df["passed_tests"] / run_df["total_tests"].replace(0, 1)
+        ) * 100
+        add_pass_rate_col("core")
+        add_pass_rate_col("functionality")
+        add_pass_rate_col("regression")
+        add_pass_rate_col("error")
+
+        # Other derived metrics
+        def safe_div(a, b):
+            return (a / b.replace(0, 1)) * 100
+
+        run_df["_mass_top90_pct"] = safe_div(
+            run_df["mass.top90_count"],
+            run_df[["functions", "methods"]].sum(axis=1),
+        )
+        run_df["_delta_mass_top90_pct"] = safe_div(
+            run_df["delta.mass.complexity_added_top90_count"],
+            run_df[["functions", "methods"]].sum(axis=1),
+        )
+        run_df["_delta_mass_top75_pct"] = safe_div(
+            run_df["delta.mass.top75_mass"], run_df["mass.complexity"]
+        )
+        run_df["_delta_mass_pct"] = safe_div(
+            run_df["delta.mass.complexity"], run_df["mass.complexity"]
+        )
+
+        # Helper to add trace with potential aggregation
+        def add_trace(col, row, col_idx, show_legend=False):
+            if is_grouped:
+                # Group by checkpoint (idx)
+                stats = (
+                    run_df.groupby(sort_col)[col]
+                    .agg(["mean", "std"])
+                    .reset_index()
+                )
+                x = stats[sort_col]
+                y = stats["mean"]
+                error_y = dict(type="data", array=stats["std"], visible=True)
+            else:
+                x = run_df[sort_col]
+                y = run_df[col]
+                error_y = None
+
             fig.add_trace(
                 go.Scatter(
-                    x=x_vals,
-                    y=y_data,
+                    x=x,
+                    y=y,
+                    error_y=error_y,
                     mode="lines+markers",
                     name=info.variant,
                     legendgroup=info.model_name,
                     legendgrouptitle_text=info.group_title
                     if show_legend
                     else None,
-                    legendgrouptitle_font={"color": info.model_base_color},
+                    legendgrouptitle_font={"color": info.model_base_color}
+                    if show_legend
+                    else None,
                     line=dict(color=info.color),
                     showlegend=show_legend,
                 ),
                 row=row,
-                col=col,
+                col=col_idx,
             )
 
         # Row 1
-        add_trace(
-            run_df.get("loc", pd.Series([0] * len(run_df))).fillna(0),
-            1,
-            1,
-            show_legend=True,
-        )
-        add_trace(
-            run_df.get("lint_errors", pd.Series([0] * len(run_df))).fillna(0),
-            1,
-            2,
-        )
-        add_trace(
-            run_df.get(
-                "ast_grep_violations", pd.Series([0] * len(run_df))
-            ).fillna(0),
-            1,
-            3,
-        )
+        add_trace("loc", 1, 1, show_legend=True)
+        add_trace("lint_errors", 1, 2)
+        add_trace("ast_grep_violations", 1, 3)
 
         # Row 2
-        add_trace(run_df["cc_high_count"], 2, 1)
-        add_trace(total_flags, 2, 2)
-        add_trace(new_flags, 2, 3)
+        add_trace("cc_high_count", 2, 1)
+        add_trace("_total_flags", 2, 2)
+        add_trace("_new_flags", 2, 3)
 
         # Row 3
-        add_trace(output_tokens, 3, 1)
-        add_trace(costs, 3, 2)
-        add_trace(pass_rate_total, 3, 3)
+        add_trace("output", 3, 1)
+        add_trace("cost", 3, 2)
+        add_trace("_pr_all", 3, 3)
 
         # Row 4
-        add_trace(pass_rate_core, 4, 1)
-        add_trace(pass_rate_func, 4, 2)
-        add_trace(pass_rate_regr, 4, 3)
+        add_trace("_pr_core", 4, 1)
+        add_trace("_pr_functionality", 4, 2)
+        add_trace("_pr_regression", 4, 3)
 
         # Row 5
-        add_trace(pass_rate_error, 5, 1)
-        add_trace(
-            run_df["mass.top90_count"]
-            / run_df[["functions", "methods"]].sum(axis=1)
-            * 100,
-            5,
-            2,
-        )
-        add_trace(run_df["delta.mass.complexity_added_concentration"], 5, 3)
+        add_trace("_pr_error", 5, 1)
+        add_trace("_mass_top90_pct", 5, 2)
+        add_trace("delta.mass.complexity_added_concentration", 5, 3)
 
         # Row 6
-        add_trace(
-            run_df["delta.mass.complexity_added_top90_count"]
-            / run_df[["functions", "methods"]].sum(axis=1)
-            * 100,
-            6,
-            1,
-        )
-        add_trace(
-            run_df["delta.mass.top75_mass"] / run_df["mass.complexity"] * 100,
-            6,
-            2,
-        )
-        add_trace(
-            run_df["delta.mass.complexity"] / run_df["mass.complexity"] * 100,
-            6,
-            3,
-        )
+        add_trace("_delta_mass_top90_pct", 6, 1)
+        add_trace("_delta_mass_top75_pct", 6, 2)
+        add_trace("_delta_mass_pct", 6, 3)
 
     # Update y-axes titles
     fig.update_yaxes(title_text="Lines", row=1, col=1, gridcolor="lightgray")

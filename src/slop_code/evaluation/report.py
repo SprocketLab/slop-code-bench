@@ -33,10 +33,10 @@ class GroupType(str, Enum):
     - ERROR: Error-handling / edge-case tests
 
     In pytest-based evaluation:
-    - Unmarked tests in current checkpoint → CORE
+    - Tests from prior checkpoints → REGRESSION (regardless of markers)
+    - @pytest.mark.error → ERROR (current checkpoint only)
     - @pytest.mark.functionality → FUNCTIONALITY
-    - @pytest.mark.error → ERROR
-    - Tests from prior checkpoints (no error marker) → REGRESSION
+    - Unmarked tests in current checkpoint → CORE
     """
 
     CORE = "Core"

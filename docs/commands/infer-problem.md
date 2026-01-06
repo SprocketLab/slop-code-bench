@@ -42,7 +42,7 @@ slop-code infer-problem [OPTIONS] PROBLEM_NAME
 | `--provider-api-key-env` | string | - | Override API key environment variable |
 | `--thinking` | string | - | Thinking budget: none, low, medium, high |
 | `--max-thinking-tokens` | int | - | Maximum thinking tokens |
-| `-pass, --pass-policy` | enum | `ANY` | Policy to determine checkpoint pass |
+| `-pass, --pass-policy` | enum | `ANY` | Policy to determine checkpoint pass (any, any-case, all-cases, all-non-error-cases, core-cases, any-core-cases, all-core-cases) |
 | `--evaluate/--no-evaluate` | flag | true | Whether to run evaluation |
 
 ## Behavior

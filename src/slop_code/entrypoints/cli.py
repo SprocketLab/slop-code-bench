@@ -38,6 +38,7 @@ commands.inject_canary.register(utils_app, "inject-canary")
 commands.render_prompts.register(utils_app, "render-prompts")
 commands.migrate_evaluation_format.register(utils_app, "migrate-eval-format")
 commands.make_registry.register(utils_app, "make-registry")
+commands.consolidate_runs.register(utils_app, "consolidate-runs")
 metrics_app = typer.Typer(
     help="Commands for calculating metrics of submissions or files.",
 )

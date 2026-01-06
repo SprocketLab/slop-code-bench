@@ -192,14 +192,14 @@ class TestPytestRunner:
         )
         assert group_type == GroupType.REGRESSION
 
-    def test_determine_group_type_prior_error_still_error(self, pytest_runner):
-        """Error-marked tests from prior checkpoints are still ERROR."""
+    def test_determine_group_type_prior_error_becomes_regression(self, pytest_runner):
+        """Error-marked tests from prior checkpoints become REGRESSION."""
         group_type = pytest_runner._determine_group_type(
             test_checkpoint="checkpoint_1",  # Prior checkpoint
             markers=["error"],
             current_checkpoint="checkpoint_2",
         )
-        assert group_type == GroupType.ERROR
+        assert group_type == GroupType.REGRESSION
 
     def test_determine_group_type_prior_functionality_becomes_regression(
         self, pytest_runner

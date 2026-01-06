@@ -178,29 +178,30 @@ Tests are categorized using these rules (in priority order):
 def _determine_group_type(test, checkpoint_name, custom_markers):
     markers = test.get("tags", [])
     file_path = test.get("filePath", "")
+    is_current = file_path.endswith(f"test_{checkpoint_name}.py")
 
-    # 1. error marker always wins
+    # 1. prior checkpoint tests ALWAYS become regression (regardless of markers)
+    if not is_current:
+        return GroupType.REGRESSION
+
+    # 2. error marker wins for current checkpoint
     if "error" in markers:
         return GroupType.ERROR
 
-    # 2. regression marker or from prior checkpoint
+    # 3. explicit regression marker
     if "regression" in markers:
         return GroupType.REGRESSION
 
-    # Check if test is from prior checkpoint
-    if not file_path.endswith(f"test_{checkpoint_name}.py"):
-        return GroupType.REGRESSION
-
-    # 3. Custom markers from config
+    # 4. Custom markers from config
     for marker in markers:
         if marker in custom_markers:
             return custom_markers[marker].group
 
-    # 4. functionality marker
+    # 5. functionality marker
     if "functionality" in markers:
         return GroupType.FUNCTIONALITY
 
-    # 5. Default to CORE
+    # 6. Default to CORE
     return GroupType.CORE
 ```
 

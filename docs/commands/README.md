@@ -21,6 +21,7 @@ This section documents all commands available in the `slop-code` CLI.
 | [`docker`](docker.md) | Docker image building utilities |
 | [`problems`](problems.md) | Problem inspection and registry commands |
 | [`tools`](tools.md) | Interactive tools and case runners |
+| [`viz`](viz.md) | Visualization tools (diff viewer) |
 
 ## Global Options
 
@@ -111,6 +112,13 @@ slop-code problems status file_backup
 slop-code tools run-case -s outputs/snapshot -p file_backup -c 1 -e configs/environments/docker-python3.12-uv.yaml
 ```
 
+### Visualization
+
+```bash
+# Launch diff viewer for a run
+slop-code viz diff outputs/my_run
+```
+
 ## Documentation Index
 
 | Document | Description |
@@ -125,6 +133,7 @@ slop-code tools run-case -s outputs/snapshot -p file_backup -c 1 -e configs/envi
 | [docker.md](docker.md) | Docker image management |
 | [problems.md](problems.md) | Problem inspection commands |
 | [tools.md](tools.md) | Interactive tools |
+| [viz.md](viz.md) | Visualization tools |
 
 ## See Also
 

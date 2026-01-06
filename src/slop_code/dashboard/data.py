@@ -52,6 +52,8 @@ class ChartContext:
     run_summaries: pd.DataFrame
     color_map: dict[str, str]  # Gradient colors for bar/box charts
     base_color_map: dict[str, str]  # Provider base colors for scatter plots
+    group_runs: bool = False
+    common_problems_only: bool = False
 
 
 @dataclass
@@ -460,10 +462,15 @@ def load_config_metadata(run_dir: Path) -> dict[str, Any]:
     if summary:
         num_problems = summary.get("num_problems", 0)
 
+    model_display = get_readable_model(model)
+    agent_version = str(agent_cfg.get("version", ""))
+    if agent_version and agent_version.lower() not in ("none", "", "null"):
+        model_display = f"{model_display} v{agent_version}"
+
     return {
         "agent_type": agent_cfg["type"],
-        "agent_version": str(agent_cfg.get("version", "")),
-        "model_name": get_readable_model(model),
+        "agent_version": agent_version,
+        "model_name": model_display,
         "thinking": str(thinking),
         "prompt_template": Path(config.get("prompt_path", "unknown")).stem,
         "run_date": run_date,
@@ -573,7 +580,10 @@ def build_generic_color_map(display_names: list[str]) -> dict[str, str]:
 
 
 def build_chart_context(
-    runs: list[Path], use_generic_colors: bool = False
+    runs: list[Path],
+    use_generic_colors: bool = False,
+    group_runs: bool = False,
+    common_problems_only: bool = False,
 ) -> ChartContext:
     """Load all runs and prepare shared plotting context."""
     checkpoint_frames: list[pd.DataFrame] = []
@@ -593,6 +603,65 @@ def build_chart_context(
     )
     run_summaries = pd.DataFrame(summary_rows)
 
+    # --- Common Problems Filter ---
+    if common_problems_only and not checkpoints_df.empty:
+        # Find problems that exist in EVERY run
+        problem_sets = []
+        unique_run_paths = checkpoints_df["run_path"].unique()
+        for run_path in unique_run_paths:
+            probs = set(checkpoints_df[checkpoints_df["run_path"] == run_path]["problem"].unique())
+            problem_sets.append(probs)
+        
+        if problem_sets:
+            common_probs = set.intersection(*problem_sets)
+            checkpoints_df = checkpoints_df[checkpoints_df["problem"].isin(common_probs)].copy()
+            
+            # Re-calculate summary stats from the filtered checkpoints
+            # This ensures Overview bars reflect the subset
+            new_summaries = []
+            for run_path in unique_run_paths:
+                run_chkpts = checkpoints_df[checkpoints_df["run_path"] == run_path]
+                if run_chkpts.empty:
+                    continue
+                
+                # Basic metrics
+                total_chkpts = len(run_chkpts)
+                passed_chkpts = run_chkpts["passed_chkpt"].sum()
+                
+                all_probs = run_chkpts["problem"].unique()
+                solved_probs = run_chkpts[run_chkpts["passed_chkpt"]]["problem"].unique()
+                
+                # Get metadata from first row
+                meta = run_chkpts.iloc[0].to_dict()
+                
+                # Construct new summary row
+                summary_row = {
+                    "run_path": run_path,
+                    "model_name": meta["model_name"],
+                    "thinking": meta["thinking"],
+                    "agent_type": meta["agent_type"],
+                    "agent_version": meta["agent_version"],
+                    "prompt_template": meta["prompt_template"],
+                    "run_date": meta["run_date"],
+                    "run_timestamp": meta.get("run_timestamp", ""),
+                    "pct_checkpoints_solved": (passed_chkpts / total_chkpts * 100) if total_chkpts > 0 else 0,
+                    "pct_problems_partial": (len(solved_probs) / len(all_probs) * 100) if len(all_probs) > 0 else 0,
+                    "costs.total": run_chkpts["cost"].sum() if "cost" in run_chkpts.columns else 0,
+                    # We might miss some fields from result.json, but these are the main ones for Overview
+                }
+                
+                # Try to preserve other fields from original run_summaries if they exist
+                if not run_summaries.empty:
+                    orig_row = run_summaries[run_summaries["run_path"] == run_path]
+                    if not orig_row.empty:
+                        for col in run_summaries.columns:
+                            if col not in summary_row:
+                                summary_row[col] = orig_row.iloc[0][col]
+                
+                new_summaries.append(summary_row)
+            
+            run_summaries = pd.DataFrame(new_summaries)
+
     if not checkpoints_df.empty:
         checkpoints_df["display_name"] = checkpoints_df.apply(
             lambda row: get_display_annotation(row), axis=1
@@ -608,82 +677,48 @@ def build_chart_context(
             _get_thinking_sort_value
         )
 
+    # --- Grouping Logic for display names ---
+    if group_runs:
+        # When grouping, we want to use a name that represents the group (Model + Thinking)
+        def get_group_name(row):
+            model_name = row["model_name"]
+            thinking_enabled, thinking_display = _is_thinking_enabled(row)
+            name = model_name
+            if thinking_enabled:
+                name = f"{name} {thinking_display}"
+            return name
+
+        if not checkpoints_df.empty:
+            checkpoints_df["display_name"] = checkpoints_df.apply(get_group_name, axis=1)
+        if not run_summaries.empty:
+            run_summaries["display_name"] = run_summaries.apply(get_group_name, axis=1)
+
     # Prepare a list of tuples for sorting, then extract display_names in sorted order
     sortable_runs = []
+    sort_cols = ["model_name", "_thinking_sort_key", "prompt_template", "run_date"]
+    
     if not checkpoints_df.empty:
-        for _, row in (
-            checkpoints_df[
-                [
-                    "model_name",
-                    "_thinking_sort_key",
-                    "prompt_template",
-                    "run_date",
-                    "display_name",
-                ]
-            ]
-            .drop_duplicates()
-            .iterrows()
-        ):
-            sortable_runs.append(
-                (
-                    row["model_name"],
-                    row["_thinking_sort_key"],
-                    row["prompt_template"],
-                    row["run_date"],
-                    row["display_name"],
-                )
-            )
-    # Also add runs from run_summaries if they are not already in sortable_runs
-    # (they should be mostly overlapping with checkpoints_df but just in case)
+        unique_runs = checkpoints_df[sort_cols + ["display_name"]].drop_duplicates()
+        for _, row in unique_runs.iterrows():
+            sortable_runs.append(tuple(row[col] for col in sort_cols) + (row["display_name"],))
+
     if not run_summaries.empty:
-        for _, row in (
-            run_summaries[
-                [
-                    "model_name",
-                    "_thinking_sort_key",
-                    "prompt_template",
-                    "run_date",
-                    "display_name",
-                ]
-            ]
-            .drop_duplicates()
-            .iterrows()
-        ):
-            if (
-                row["model_name"],
-                row["_thinking_sort_key"],
-                row["prompt_template"],
-                row["run_date"],
-                row["display_name"],
-            ) not in sortable_runs:
-                sortable_runs.append(
-                    (
-                        row["model_name"],
-                        row["_thinking_sort_key"],
-                        row["prompt_template"],
-                        row["run_date"],
-                        row["display_name"],
-                    )
-                )
+        unique_sum_runs = run_summaries[sort_cols + ["display_name"]].drop_duplicates()
+        for _, row in unique_sum_runs.iterrows():
+            run_tuple = tuple(row[col] for col in sort_cols) + (row["display_name"],)
+            if run_tuple not in sortable_runs:
+                sortable_runs.append(run_tuple)
 
     # Sort the runs and extract display names
     sortable_runs.sort()
-    sorted_names = [run[4] for run in sortable_runs]
+    sorted_names = [run[-1] for run in sortable_runs]
 
     # Generate model groups and colors
     model_groups = {}
     if not checkpoints_df.empty:
-        model_groups.update(
-            dict(
-                zip(checkpoints_df["display_name"], checkpoints_df["model_name"])
-            )
-        )
+        model_groups.update(dict(zip(checkpoints_df["display_name"], checkpoints_df["model_name"])))
     if not run_summaries.empty:
-        model_groups.update(
-            dict(
-                zip(run_summaries["display_name"], run_summaries["model_name"])
-            )
-        )
+        model_groups.update(dict(zip(run_summaries["display_name"], run_summaries["model_name"])))
 
     unique_groups = sorted(list(set(model_groups.values())))
     palette = cycle(DEFAULT_COLOR_PALETTE)
@@ -694,15 +729,15 @@ def build_chart_context(
         base_color_map = color_map.copy()
     else:
         color_map = build_color_map(sorted_names, model_groups, group_colors)
-        base_color_map = build_base_color_map(
-            sorted_names, model_groups, group_colors
-        )
+        base_color_map = build_base_color_map(sorted_names, model_groups, group_colors)
 
     return ChartContext(
         checkpoints=checkpoints_df,
         run_summaries=run_summaries,
         color_map=color_map,
         base_color_map=base_color_map,
+        group_runs=group_runs,
+        common_problems_only=common_problems_only,
     )
 
 

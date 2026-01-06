@@ -40,7 +40,7 @@ slop-code eval-snapshot [OPTIONS] SNAPSHOT_DIR
 | `--rubric` | path | - | Path to rubric JSONL file |
 | `--rubric-model` | string | - | Model ID for rubric grading |
 | `--rubric-temperature` | float | 0.0 | Sampling temperature |
-| `--rubric-provider` | enum | `OPENROUTER` | LLM provider for grading |
+| `--rubric-provider` | enum | `OPENROUTER` | LLM provider for grading (OPENROUTER or BEDROCK) |
 | `--json` | flag | false | Output correctness results as JSON |
 
 **Global options** (apply to all commands):

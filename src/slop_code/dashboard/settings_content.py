@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from pathlib import Path
 
 import dash_bootstrap_components as dbc
 from dash import dcc
@@ -67,8 +66,8 @@ def build_hierarchical_run_selector(runs, selected_values, active_items=None):
             className="text-center p-5"
         )
 
-    # Group by Parent Directory (Model)
-    runs_by_parent = group_runs(runs, lambda r: Path(r["value"]).parent.name)
+    # Group by Model Name (including version if present)
+    runs_by_parent = group_runs(runs, lambda r: r["model_name"])
 
     outer_accordion_items = []
     for parent_dir in sorted(runs_by_parent.keys()):
@@ -199,8 +198,8 @@ def build_hierarchical_run_selector_single(runs, selected_value, active_items=No
             className="text-center p-5"
         )
 
-    # Group by Parent Directory (Model)
-    runs_by_parent = group_runs(runs, lambda r: Path(r["value"]).parent.name)
+    # Group by Model Name (including version if present)
+    runs_by_parent = group_runs(runs, lambda r: r["model_name"])
 
     outer_accordion_items = []
     for parent_dir in sorted(runs_by_parent.keys()):
@@ -309,6 +308,8 @@ def build_configuration_modal_content():
                                     options=[
                                         {"label": "Disable Provider Colors", "value": "disable_colors"},
                                         {"label": "Show Scatter Annotations", "value": "show_annotations"},
+                                        {"label": "Group Runs (Aggr/Error Bars)", "value": "group_runs"},
+                                        {"label": "Common Problems Only", "value": "common_problems_only"},
                                     ],
                                     value=[],
                                     id="appearance-options",

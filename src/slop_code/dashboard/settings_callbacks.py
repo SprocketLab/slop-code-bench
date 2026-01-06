@@ -40,29 +40,8 @@ def _manage_run_selection_logic(
     appearance_options = appearance_options or []
     disable_colors = ["disable_colors"] if "disable_colors" in appearance_options else []
     show_annotations = "show_annotations" in appearance_options
-
-    # --- Step 1: Check for "Filters Changed" ---
-    current_filters = {
-        "start_date": start_date,
-        "end_date": end_date,
-        "thinking_value": sorted(list(selected_thinking)),
-        "min_problems": min_problems,
-        "disable_colors": disable_colors,
-        "show_annotations": show_annotations
-    }
-
-    saved_filters_compare = {}
-    if saved_settings:
-        saved_filters_compare = {
-            "start_date": saved_settings.get("start_date"),
-            "end_date": saved_settings.get("end_date"),
-            "thinking_value": sorted(saved_settings.get("thinking_value", [])),
-            "min_problems": saved_settings.get("min_problems", 0),
-            "disable_colors": saved_settings.get("disable_colors", []),
-            "show_annotations": saved_settings.get("show_annotations", False)
-        }
-
-    filters_changed = current_filters != saved_filters_compare
+    group_runs = "group_runs" in appearance_options
+    common_problems_only = "common_problems_only" in appearance_options
 
     # --- Step 2: Apply Filters ---
     visible_runs = []
@@ -152,12 +131,6 @@ def _manage_run_selection_logic(
         # Flatten list of lists
         new_selection = [val for group in selected_values_groups if group for val in group]
 
-    elif filters_changed:
-        # If filters changed, reset to visible (or keep previous intersection?)
-        # Usually we reset to all visible matching filters, or keep existing.
-        # Here we default to all visible if filters changed.
-        new_selection = visible_run_values
-
     else:
         if current_selection is not None:
                 visible_set = set(visible_run_values)
@@ -178,7 +151,9 @@ def _manage_run_selection_logic(
         "thinking_value": list(selected_thinking),
         "min_problems": min_problems,
         "disable_colors": disable_colors,
-        "show_annotations": show_annotations
+        "show_annotations": show_annotations,
+        "group_runs": group_runs,
+        "common_problems_only": common_problems_only,
     }
 
     return run_selectors, new_selection, new_saved_settings
@@ -222,6 +197,8 @@ def register_settings_callbacks(app):
             min_problems = saved_settings.get("min_problems", min_problems)
             disable_colors = saved_settings.get("disable_colors", [])
             show_annotations = saved_settings.get("show_annotations", False)
+            group_runs = saved_settings.get("group_runs", False)
+            common_problems_only = saved_settings.get("common_problems_only", False)
 
         thinking_opts = [{"label": t, "value": t} for t in thinking_options]
 
@@ -230,6 +207,10 @@ def register_settings_callbacks(app):
             appearance_val.append("disable_colors")
         if show_annotations:
             appearance_val.append("show_annotations")
+        if group_runs:
+            appearance_val.append("group_runs")
+        if common_problems_only:
+            appearance_val.append("common_problems_only")
 
         return min_date, max_date, start_date, end_date, thinking_opts, thinking_value, min_problems, appearance_val
 

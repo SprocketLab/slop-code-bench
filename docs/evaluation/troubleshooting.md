@@ -208,11 +208,12 @@ pip search my-package  # Verify package exists
 ### Wrong GroupType Assignment
 
 **Check marker precedence:**
-1. `@pytest.mark.error` always wins
-2. Prior checkpoint tests → REGRESSION
-3. Custom markers from config
-4. `@pytest.mark.functionality` → FUNCTIONALITY
-5. Default → CORE
+1. Prior checkpoint tests → REGRESSION (regardless of markers)
+2. `@pytest.mark.error` → ERROR (current checkpoint only)
+3. `@pytest.mark.regression` → REGRESSION
+4. Custom markers from config
+5. `@pytest.mark.functionality` → FUNCTIONALITY
+6. Default → CORE
 
 ## Docker Issues
 

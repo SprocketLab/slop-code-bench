@@ -506,11 +506,11 @@ markers =
         group determination.
 
         Rules (in priority order):
-        1. If "error" marker present -> ERROR (always, regardless of checkpoint)
-        2. If "regression" marker present OR test is from prior checkpoint:
-           -> REGRESSION (explicit regression tests or tests from earlier checkpoints)
-        3. Check custom markers from problem config -> return their configured GroupType
-        4. If test is from current checkpoint:
+        1. If test is from prior checkpoint -> REGRESSION (regardless of markers)
+        2. If "error" marker present -> ERROR (current checkpoint only)
+        3. If "regression" marker present -> REGRESSION
+        4. Check custom markers from problem config -> return their configured GroupType
+        5. If test is from current checkpoint:
            - If "functionality" marker -> FUNCTIONALITY
            - If no marker -> CORE
 
@@ -543,26 +543,30 @@ markers =
             >>> runner._determine_group_type("checkpoint_1", ["error"], "checkpoint_1")
             GroupType.ERROR
 
-            >>> # Error test in prior checkpoint (still ERROR)
+            >>> # Error test in prior checkpoint (now REGRESSION, not ERROR)
             >>> runner._determine_group_type("checkpoint_1", ["error"], "checkpoint_2")
-            GroupType.ERROR
+            GroupType.REGRESSION
         """
         is_current = test_checkpoint == current_checkpoint
 
-        # RULE 1: Error marker always wins (highest priority)
+        # RULE 1: Prior checkpoint tests ALWAYS become regression (regardless of markers)
+        if not is_current:
+            return GroupType.REGRESSION
+
+        # RULE 2: Error marker for current checkpoint
         if "error" in markers:
             return GroupType.ERROR
 
-        # RULE 2: Explicit regression marker or prior checkpoint tests become regressions
-        if "regression" in markers or not is_current:
+        # RULE 3: Explicit regression marker
+        if "regression" in markers:
             return GroupType.REGRESSION
 
-        # RULE 3: Check custom markers from problem config
+        # RULE 4: Check custom markers from problem config
         for marker in markers:
             if marker in self.problem.markers:
                 return self.problem.markers[marker].group
 
-        # RULE 4: Current checkpoint tests
+        # RULE 5: Current checkpoint tests
         # If has functionality marker -> FUNCTIONALITY
         # Otherwise -> CORE
         if "functionality" in markers:

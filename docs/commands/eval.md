@@ -23,14 +23,14 @@ slop-code eval outputs/my_run --num-workers 4
 ## Usage
 
 ```bash
-slop-code eval [OPTIONS] AGENT_RUN_DIR
+slop-code eval [OPTIONS] RUN_DIR
 ```
 
 ## Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `AGENT_RUN_DIR` | Yes | Path to the inference directory |
+| `RUN_DIR` | Yes | Path to the run directory (outputs/<model_name>/<run_name>) |
 
 ## Options
 
@@ -47,9 +47,13 @@ slop-code eval [OPTIONS] AGENT_RUN_DIR
 
 | Value | Description |
 |-------|-------------|
-| `ALL_CASES` | Pass only if all test cases pass |
-| `ANY_CASE` | Pass if at least one case passes |
-| `MAJORITY` | Pass if majority of cases pass |
+| `any` | Pass if at least one case passes |
+| `any-case` | Same as `any` |
+| `all-cases` | Pass only if all test cases pass |
+| `all-non-error-cases` | Pass if all non-error cases pass |
+| `core-cases` | Pass if all core cases pass |
+| `any-core-cases` | Pass if any core case passes |
+| `all-core-cases` | Same as `core-cases` |
 
 ## Behavior
 

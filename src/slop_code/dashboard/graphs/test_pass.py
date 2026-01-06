@@ -61,26 +61,51 @@ def build_test_pass_rate_bars(context: ChartContext) -> go.Figure:
         run_df = df[df["display_name"] == display_name]
         info = tracker.get_info(display_name, run_df.iloc[0])
 
-        total_pass_rate = (
-            run_df["passed_tests"] / run_df["total_tests"]
-        ).mean() * 100
+        is_grouped = context.group_runs
 
-        fig.add_trace(
-            go.Bar(
-                y=[total_pass_rate],
-                name=info.variant,
-                legendgroup=info.model_name,
-                legendgrouptitle_text=info.group_title,
-                legendgrouptitle_font={"color": info.model_base_color},
-                marker={"color": info.color},
-                text=[f"{total_pass_rate:.1f}"],
-                textposition="inside",
-                textangle=0,
-                showlegend=True,
-            ),
-            row=1,
-            col=1,
-        )
+        def get_test_stats(passed_col, total_col):
+            if passed_col not in run_df.columns or total_col not in run_df.columns:
+                return 0, 0
+            
+            # Calculate pass rate per row (checkpoint)
+            rates = (run_df[passed_col] / run_df[total_col].replace(0, 1)) * 100
+            
+            if is_grouped:
+                # If grouped, run_df contains checkpoints from multiple runs.
+                # We want the mean of means per run.
+                run_means = run_df.groupby("run_path").apply(
+                    lambda g: (g[passed_col] / g[total_col].replace(0, 1)).mean() * 100
+                )
+                return run_means.mean(), run_means.std()
+            
+            return rates.mean(), 0
+
+        total_pass_rate, total_pass_std = get_test_stats("passed_tests", "total_tests")
+
+        def add_bar(y_val, std_val, r, c, show_legend=False):
+            error_y = None
+            if is_grouped:
+                error_y = dict(type="data", array=[std_val], visible=True)
+            
+            fig.add_trace(
+                go.Bar(
+                    y=[y_val],
+                    error_y=error_y,
+                    name=info.variant,
+                    legendgroup=info.model_name,
+                    legendgrouptitle_text=info.group_title if show_legend else None,
+                    legendgrouptitle_font={"color": info.model_base_color} if show_legend else None,
+                    marker={"color": info.color},
+                    text=[f"{y_val:.1f}"],
+                    textposition="inside",
+                    textangle=0,
+                    showlegend=show_legend,
+                ),
+                row=r,
+                col=c,
+            )
+
+        add_bar(total_pass_rate, total_pass_std, 1, 1, show_legend=True)
 
         layout_map = {
             "core": (1, 2),
@@ -93,28 +118,9 @@ def build_test_pass_rate_bars(context: ChartContext) -> go.Figure:
             r, c = layout_map[test_type]
             passed_col = f"{test_type}_passed"
             total_col = f"{test_type}_total"
-
-            if passed_col in run_df.columns and total_col in run_df.columns:
-                passed = run_df[passed_col].fillna(0)
-                total = run_df[total_col]
-                avg_pass_rate = (passed / total).mean() * 100
-            else:
-                avg_pass_rate = 0
-
-            fig.add_trace(
-                go.Bar(
-                    y=[avg_pass_rate],
-                    name=info.variant,
-                    legendgroup=info.model_name,
-                    marker={"color": info.color},
-                    text=[f"{avg_pass_rate:.1f}"],
-                    textposition="inside",
-                    textangle=0,
-                    showlegend=False,
-                ),
-                row=r,
-                col=c,
-            )
+            
+            avg_rate, std_rate = get_test_stats(passed_col, total_col)
+            add_bar(avg_rate, std_rate, r, c)
 
     fig.update_yaxes(
         title_text="Avg Pass %", row=1, col=1, gridcolor="lightgray"

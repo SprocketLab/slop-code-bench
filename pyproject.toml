@@ -63,6 +63,7 @@ dependencies = [
     "botocore[crt]>=1.42.9",
     "networkx[default,pydot]>=3.6.1",
     "pydot>=4.0.1",
+    "scikit-learn>=1.8.0",
 ]
 
 

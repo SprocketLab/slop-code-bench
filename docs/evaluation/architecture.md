@@ -112,24 +112,30 @@ The `_determine_group_type()` method implements categorization rules:
 
 ```python
 def _determine_group_type(test_checkpoint, markers, current_checkpoint):
-    # Rule 1: Error marker always wins
+    is_current = test_checkpoint == current_checkpoint
+
+    # Rule 1: Prior checkpoint tests ALWAYS become regression (regardless of markers)
+    if not is_current:
+        return GroupType.REGRESSION
+
+    # Rule 2: Error marker wins for current checkpoint
     if "error" in markers:
         return GroupType.ERROR
 
-    # Rule 2: Regression if from prior checkpoint or explicit marker
-    if "regression" in markers or test_checkpoint != current_checkpoint:
+    # Rule 3: Explicit regression marker
+    if "regression" in markers:
         return GroupType.REGRESSION
 
-    # Rule 3: Check custom markers from problem config
+    # Rule 4: Check custom markers from problem config
     for marker in markers:
         if marker in problem.markers:
             return problem.markers[marker].group
 
-    # Rule 4: Functionality marker
+    # Rule 5: Functionality marker
     if "functionality" in markers:
         return GroupType.FUNCTIONALITY
 
-    # Rule 5: Default to CORE
+    # Rule 6: Default to CORE
     return GroupType.CORE
 ```
 

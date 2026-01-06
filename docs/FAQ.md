@@ -67,9 +67,9 @@ Each run creates:
 
 ### How do I interpret pass policies?
 Pass policies determine what counts as "passing" an evaluation:
-- `all` - All test cases must pass
-- `majority` - More than 50% of test cases must pass
-- `any` - At least one test case must pass
+- `ALL_CASES` - All test cases must pass
+- `ANY_CASE` - At least one test case must pass
+- `MAJORITY` - More than 50% of test cases must pass
 
 ### What are checkpoints?
 Checkpoints represent stages of specification refinement. Problems have multiple checkpoints, each adding requirements or complexity. This tests how code quality evolves as specifications change.
@@ -204,7 +204,11 @@ Absolutely! Documentation improvements are very welcome. See the [Contributing G
 ## Advanced
 
 ### Can I run evaluations in parallel?
-Not currently supported, but planned for future releases.
+Yes, you can run evaluations with multiple workers:
+```bash
+slop-code eval outputs/my_run --num-workers 4
+```
+This speeds up evaluation by running multiple problems or checkpoints in parallel.
 
 ### How do I create custom metrics?
 Custom metrics require modifying the metrics system. This is not yet documented. See existing metrics in `src/slop_code/metrics/` for examples.

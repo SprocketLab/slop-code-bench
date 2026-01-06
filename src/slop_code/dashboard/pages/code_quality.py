@@ -44,10 +44,19 @@ layout = dbc.Container(
 )
 def update_quality_graph(selected_paths, filter_settings):
     disable_colors = False
+    group_runs = False
+    common_problems_only = False
     if filter_settings:
         disable_colors = bool(filter_settings.get("disable_colors", []))
+        group_runs = bool(filter_settings.get("group_runs", False))
+        common_problems_only = bool(filter_settings.get("common_problems_only", False))
 
-    context = build_context(selected_paths, use_generic_colors=disable_colors)
+    context = build_context(
+        selected_paths,
+        use_generic_colors=disable_colors,
+        group_runs=group_runs,
+        common_problems_only=common_problems_only,
+    )
     if context is None:
         return empty_figure()
     return build_quality_bars(context)
@@ -62,10 +71,19 @@ def update_quality_graph(selected_paths, filter_settings):
 )
 def update_graph_metrics_graph(selected_paths, filter_settings):
     disable_colors = False
+    group_runs = False
+    common_problems_only = False
     if filter_settings:
         disable_colors = bool(filter_settings.get("disable_colors", []))
+        group_runs = bool(filter_settings.get("group_runs", False))
+        common_problems_only = bool(filter_settings.get("common_problems_only", False))
 
-    context = build_context(selected_paths, use_generic_colors=disable_colors)
+    context = build_context(
+        selected_paths,
+        use_generic_colors=disable_colors,
+        group_runs=group_runs,
+        common_problems_only=common_problems_only,
+    )
     if context is None:
         return empty_figure()
     return build_graph_metrics_bars(context)

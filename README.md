@@ -120,6 +120,7 @@ This is early-stage software. Your contributions will shape its direction.
 | [✅ Evaluation System](docs/evaluation/README.md) | Test cases, adapters, loaders, and verifiers |
 | [💡 Problem Design](docs/contributing-problems/README.md) | What makes a good evaluation problem |
 | [⚠️ Known Issues](docs/KNOWN_ISSUES.md) | Current limitations and workarounds |
+| [📊 Commands](docs/commands/README.md) | CLI command reference (run, eval, metrics, viz, etc.) |
 
 ## Citing Us
 

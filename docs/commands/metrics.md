@@ -51,7 +51,7 @@ slop-code metrics static [OPTIONS] RUN_DIR
 | `-t, --type` | enum | `run` | Path type: `run` or `collection` |
 | `-p, --problem-name` | string | - | Filter to a specific problem |
 | `--just-static` | string | - | Scan directory as single snapshot with extension |
-| `-w, --workers` | int | 4 | Number of parallel workers (collection mode) |
+| `-w, --workers` | int | 4 | Number of parallel workers |
 
 ### Behavior
 
@@ -132,7 +132,7 @@ slop-code metrics judge [OPTIONS] RUN_DIR
 | Value | Description |
 |-------|-------------|
 | `OPENROUTER` | OpenRouter API (default) |
-| `ANTHROPIC` | Anthropic API directly |
+| `BEDROCK` | AWS Bedrock API |
 
 ### Examples
 

@@ -23,7 +23,10 @@ def empty_figure() -> go.Figure:
 
 
 def build_context(
-    selected_paths: Sequence[str] | None, use_generic_colors: bool = False
+    selected_paths: Sequence[str] | None,
+    use_generic_colors: bool = False,
+    group_runs: bool = False,
+    common_problems_only: bool = False,
 ) -> ChartContext | None:
     """Build a `ChartContext` from `selected-runs-store` paths.
 
@@ -33,4 +36,9 @@ def build_context(
     if not selected_paths:
         return None
     paths = [Path(path_str) for path_str in selected_paths]
-    return build_chart_context(paths, use_generic_colors=use_generic_colors)
+    return build_chart_context(
+        paths,
+        use_generic_colors=use_generic_colors,
+        group_runs=group_runs,
+        common_problems_only=common_problems_only,
+    )

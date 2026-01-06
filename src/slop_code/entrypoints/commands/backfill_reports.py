@@ -47,6 +47,18 @@ def _process_single_run_backfill(
     all_reports: list[dict] = []
     problems_processed = 0
 
+    # Backfill evaluation group types BEFORE generating reports
+    # This fixes Error tests from prior checkpoints to Regression
+    eval_files, eval_updated = _backfill_evaluation_group_types(
+        results_dir, logger
+    )
+    if eval_updated > 0:
+        logger.info(
+            "Fixed evaluation.json group types",
+            files_updated=eval_updated,
+            files_processed=eval_files,
+        )
+
     for p_dir in results_dir.iterdir():
         if not p_dir.is_dir() or p_dir.name in {"agent", "logs"}:
             continue
@@ -291,6 +303,250 @@ def _backfill_ast_grep_for_run(
             total_updated += updated
 
     return files_processed, total_violations, total_updated
+
+
+def _recategorize_evaluation_tests_dict_format(
+    data: dict, checkpoint_name: str, logger: Any
+) -> bool:
+    """Recategorize Error tests in new dict format (grouped by checkpoint-GroupType).
+
+    Args:
+        data: Parsed evaluation.json data (modified in place).
+        checkpoint_name: Current checkpoint name.
+        logger: Logger instance.
+
+    Returns:
+        True if changes were made, False otherwise.
+    """
+    tests = data["tests"]
+
+    # Find Error groups from prior checkpoints
+    keys_to_move: list[tuple[str, str]] = []
+
+    for key in list(tests.keys()):
+        if not key.endswith("-Error"):
+            continue
+
+        # Extract checkpoint from key: "checkpoint_1-Error" -> "checkpoint_1"
+        test_checkpoint = key.rsplit("-", 1)[0]
+
+        if test_checkpoint != checkpoint_name:
+            # This Error group is from a prior checkpoint - should be Regression
+            keys_to_move.append((key, test_checkpoint))
+
+    if not keys_to_move:
+        return False
+
+    # Move tests from Error to Regression buckets
+    for error_key, test_checkpoint in keys_to_move:
+        regression_key = f"{test_checkpoint}-Regression"
+        error_data = tests.pop(error_key)
+
+        # Merge into existing Regression bucket or create new one
+        if regression_key in tests:
+            tests[regression_key]["passed"].extend(error_data["passed"])
+            tests[regression_key]["failed"].extend(error_data["failed"])
+        else:
+            tests[regression_key] = error_data
+
+        logger.debug(
+            "Moved Error tests to Regression (dict format)",
+            from_key=error_key,
+            to_key=regression_key,
+            passed=len(error_data["passed"]),
+            failed=len(error_data["failed"]),
+        )
+
+    # Recalculate pass_counts and total_counts from tests dict
+    pass_counts: dict[str, int] = {}
+    total_counts: dict[str, int] = {}
+
+    for key, test_data in tests.items():
+        # Extract group type from key: "checkpoint_1-Regression" -> "Regression"
+        group_type = key.rsplit("-", 1)[1]
+        passed = len(test_data.get("passed", []))
+        failed = len(test_data.get("failed", []))
+        total = passed + failed
+
+        pass_counts[group_type] = pass_counts.get(group_type, 0) + passed
+        total_counts[group_type] = total_counts.get(group_type, 0) + total
+
+    data["pass_counts"] = pass_counts
+    data["total_counts"] = total_counts
+
+    return True
+
+
+def _recategorize_evaluation_tests_list_format(
+    data: dict, checkpoint_name: str, logger: Any
+) -> bool:
+    """Recategorize Error tests in old list format (individual test objects).
+
+    Args:
+        data: Parsed evaluation.json data (modified in place).
+        checkpoint_name: Current checkpoint name.
+        logger: Logger instance.
+
+    Returns:
+        True if changes were made, False otherwise.
+    """
+    tests = data["tests"]
+    changes_made = False
+    updated_count = 0
+
+    for test in tests:
+        test_checkpoint = test.get("checkpoint", "")
+        group_type = test.get("group_type", "")
+
+        # If this is an Error test from a prior checkpoint, change to Regression
+        if test_checkpoint != checkpoint_name and group_type == "Error":
+            test["group_type"] = "Regression"
+            changes_made = True
+            updated_count += 1
+
+    if not changes_made:
+        return False
+
+    logger.debug(
+        "Recategorized Error tests to Regression (list format)",
+        updated_count=updated_count,
+    )
+
+    # Recalculate pass_counts and total_counts from tests list
+    pass_counts: dict[str, int] = {}
+    total_counts: dict[str, int] = {}
+
+    for test in tests:
+        group_type = test.get("group_type", "Core")
+        status = test.get("status", "failed")
+
+        total_counts[group_type] = total_counts.get(group_type, 0) + 1
+        if status == "passed":
+            pass_counts[group_type] = pass_counts.get(group_type, 0) + 1
+
+    data["pass_counts"] = pass_counts
+    data["total_counts"] = total_counts
+
+    return True
+
+
+def _recategorize_evaluation_tests(eval_path: Path, logger: Any) -> bool:
+    """Recategorize Error tests from prior checkpoints to Regression.
+
+    Prior checkpoint tests with error markers should be REGRESSION, not ERROR.
+    This fixes evaluation.json files created before this logic change.
+
+    Supports both formats:
+    - New format: tests is a dict grouped by "checkpoint-GroupType" keys
+    - Old format: tests is a list of individual test objects
+
+    Args:
+        eval_path: Path to the evaluation.json file.
+        logger: Logger instance.
+
+    Returns:
+        True if changes were made, False otherwise.
+    """
+    try:
+        with eval_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning(
+            "Failed to read evaluation.json",
+            path=str(eval_path),
+            error=str(e),
+        )
+        return False
+
+    checkpoint_name = data.get("checkpoint_name")
+    if not checkpoint_name:
+        logger.warning(
+            "evaluation.json missing checkpoint_name",
+            path=str(eval_path),
+        )
+        return False
+
+    tests = data.get("tests")
+    if tests is None:
+        logger.warning(
+            "evaluation.json missing tests field",
+            path=str(eval_path),
+        )
+        return False
+
+    # Detect format and process accordingly
+    if isinstance(tests, dict):
+        # New format: {"checkpoint_1-Error": {"passed": [...], "failed": [...]}}
+        changes_made = _recategorize_evaluation_tests_dict_format(
+            data, checkpoint_name, logger
+        )
+    elif isinstance(tests, list):
+        # Old format: [{"id": "...", "checkpoint": "...", "group_type": "Error", ...}]
+        changes_made = _recategorize_evaluation_tests_list_format(
+            data, checkpoint_name, logger
+        )
+    else:
+        logger.warning(
+            "evaluation.json has invalid tests format",
+            path=str(eval_path),
+            tests_type=type(tests).__name__,
+        )
+        return False
+
+    if not changes_made:
+        return False
+
+    # Write atomically using temp file
+    try:
+        parent_dir = eval_path.parent
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=parent_dir,
+            suffix=".json.tmp",
+            delete=False,
+        ) as tmp:
+            json.dump(data, tmp, indent=2)
+            tmp_path = Path(tmp.name)
+
+        tmp_path.replace(eval_path)
+    except OSError as e:
+        logger.warning(
+            "Failed to write updated evaluation.json",
+            path=str(eval_path),
+            error=str(e),
+        )
+        return False
+
+    return True
+
+
+def _backfill_evaluation_group_types(
+    results_dir: Path, logger: Any
+) -> tuple[int, int]:
+    """Backfill evaluation.json files to fix Error->Regression categorization.
+
+    Prior checkpoint tests with error markers should be REGRESSION, not ERROR.
+    This function finds all evaluation.json files and recategorizes them.
+
+    Args:
+        results_dir: Path to the run directory.
+        logger: Logger instance.
+
+    Returns:
+        Tuple of (files_processed, files_updated).
+    """
+    files_processed = 0
+    files_updated = 0
+
+    # Find all evaluation.json files in checkpoint directories
+    pattern = "*/checkpoint_*/evaluation.json"
+    for eval_path in results_dir.glob(pattern):
+        files_processed += 1
+        if _recategorize_evaluation_tests(eval_path, logger):
+            files_updated += 1
+
+    return files_processed, files_updated
 
 
 def register(app: typer.Typer, name: str):

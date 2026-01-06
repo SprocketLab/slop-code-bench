@@ -11,10 +11,11 @@ This document tracks current limitations and known issues in SlopCodeBench. We'r
 ### Dashboard Documentation Missing
 - **Severity**: Medium
 - **Issue**: Dashboard functionality is undocumented
-- **Impact**: Users cannot use visualization features without reverse-engineering
-- **Status**: Documentation in progress
-- **Workaround**: See [GitHub Issues](https://github.com/SprocketLab/slop-code-bench/issues) or ask for help
+- **Impact**: Users cannot use advanced visualization features without reverse-engineering
+- **Status**: Partially documented (see `viz` command)
+- **Workaround**: Use `slop-code viz diff` for diff visualization. See [viz command documentation](commands/viz.md) for details.
 - **Tracking**: [Issue #TBD]
+- **Note**: The `viz diff` command provides an interactive diff viewer. Full dashboard documentation is still needed.
 
 ---
 
