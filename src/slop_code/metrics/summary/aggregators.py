@@ -164,10 +164,14 @@ def compute_pass_rates_stats(
     checkpoints: list[dict[str, Any]],
     problems: dict[str, list[dict[str, Any]]],
 ) -> PassRatesStats:
-    """Compute pass rate statistics by test type at checkpoint and problem levels."""
+    """Compute pass rate statistics by test type at checkpoint and problem levels.
+
+    Note: Checkpoints with no tests for a given type (e.g., no error tests) are
+    excluded from the average for that type.
+    """
     test_types = ["core", "total", "error", "functionality", "regression"]
 
-    def compute_pass_rates_by_type(chkpt: dict[str, Any]) -> dict[str, float]:
+    def compute_pass_rates_by_type(chkpt: dict[str, Any]) -> dict[str, float | None]:
         """Extract pass rates for all test types from a single checkpoint."""
         return {
             "total": compute_pass_rate(chkpt.get("passed_tests"), chkpt.get("total_tests")),
@@ -177,22 +181,29 @@ def compute_pass_rates_stats(
             },
         }
 
-    # Collect checkpoint-level pass rates
-    checkpoint_pass_rates = {t: [] for t in test_types}
+    def mean_excluding_none(values: list[float | None]) -> float:
+        """Compute mean of non-None values, returning 0.0 if all are None."""
+        valid = [v for v in values if v is not None]
+        return statistics.mean(valid) if valid else 0.0
+
+    # Collect checkpoint-level pass rates (excluding None for checkpoints with 0 tests)
+    checkpoint_pass_rates: dict[str, list[float | None]] = {t: [] for t in test_types}
     for chkpt in checkpoints:
         rates = compute_pass_rates_by_type(chkpt)
         for test_type in test_types:
             checkpoint_pass_rates[test_type].append(rates[test_type])
 
-    # Collect problem-level pass rates (mean across checkpoints per problem)
-    problem_pass_rates = {t: [] for t in test_types}
+    # Collect problem-level pass rates (mean across checkpoints per problem, excluding None)
+    problem_pass_rates: dict[str, list[float]] = {t: [] for t in test_types}
     for problem_chkpts in problems.values():
         for test_type in test_types:
             rates = [compute_pass_rates_by_type(c)[test_type] for c in problem_chkpts]
-            problem_pass_rates[test_type].append(safe_mean(rates))
+            problem_pass_rates[test_type].append(mean_excluding_none(rates))
 
     return PassRatesStats(
-        checkpoint=PassRatesByType(**{t: safe_mean(checkpoint_pass_rates[t]) for t in test_types}),
+        checkpoint=PassRatesByType(
+            **{t: mean_excluding_none(checkpoint_pass_rates[t]) for t in test_types}
+        ),
         problem=PassRatesByType(**{t: safe_mean(problem_pass_rates[t]) for t in test_types}),
     )
 

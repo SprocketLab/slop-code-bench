@@ -68,10 +68,14 @@ def compute_ratio_values(
     return ratios
 
 
-def compute_pass_rate(passed: float | None, total: float | None) -> float:
-    """Compute pass rate safely, returning 0.0 if total is 0 or missing."""
+def compute_pass_rate(passed: float | None, total: float | None) -> float | None:
+    """Compute pass rate safely.
+
+    Returns:
+        Pass rate as a float, or None if there are no tests (total=0 or missing).
+    """
     if not total or passed is None:
-        return 0.0
+        return None
     return passed / total
 
 
