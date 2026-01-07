@@ -9,35 +9,42 @@ import time
 import typing as tp
 from pathlib import Path
 
-from jinja2 import StrictUndefined, Template
+from jinja2 import StrictUndefined
+from jinja2 import Template
 
-from slop_code.agent_runner.agent import Agent, AgentConfigBase
+from slop_code.agent_runner.agent import Agent
+from slop_code.agent_runner.agent import AgentConfigBase
 from slop_code.agent_runner.credentials import ProviderCredential
 from slop_code.agent_runner.models import AgentCostLimits
 from slop_code.agent_runner.registry import register_agent
-from slop_code.agent_runner.trajectory import StepRole, TrajectoryStep
-from slop_code.common.llms import (
-    APIPricing,
-    ModelDefinition,
-    ThinkingPreset,
-    TokenUsage,
-)
-from slop_code.execution import (
-    DockerEnvironmentSpec,
-    EnvironmentSpecType,
-    LocalEnvironmentSpec,
-    Session,
-)
+from slop_code.agent_runner.trajectory import StepRole
+from slop_code.agent_runner.trajectory import TrajectoryStep
+from slop_code.common.llms import APIPricing
+from slop_code.common.llms import ModelDefinition
+from slop_code.common.llms import ThinkingPreset
+from slop_code.common.llms import TokenUsage
+from slop_code.execution import DockerEnvironmentSpec
+from slop_code.execution import EnvironmentSpecType
+from slop_code.execution import LocalEnvironmentSpec
+from slop_code.execution import Session
 
 # This needs to be done before the imports to avoid logging startup messages
 os.environ["MSWEA_SILENT_STARTUP"] = "1"
-from minisweagent.agents import default as miniswe_default  # pylint: disable=C0413
-from minisweagent.environments.docker import DockerEnvironment  # pylint: disable=C0413
-from minisweagent.environments.local import LocalEnvironment  # pylint: disable=C0413
+from minisweagent.agents import (
+    default as miniswe_default,  # pylint: disable=C0413
+)
+from minisweagent.environments.docker import (
+    DockerEnvironment,  # pylint: disable=C0413
+)
+from minisweagent.environments.local import (
+    LocalEnvironment,  # pylint: disable=C0413
+)
 from minisweagent.models import get_model  # pylint: disable=C0413
 from minisweagent.models import litellm_model  # pylint: disable=C0413
 from minisweagent.models import openrouter_model  # pylint: disable=C0413
-from minisweagent.models.utils.cache_control import set_cache_control  # pylint: disable=C0413
+from minisweagent.models.utils.cache_control import (
+    set_cache_control,  # pylint: disable=C0413
+)
 
 if tp.TYPE_CHECKING:
     from minisweagent import Model
@@ -392,7 +399,13 @@ class MiniSWEAgent(Agent):
         # Build model_kwargs
         model_kwargs: dict[str, tp.Any] = {}
 
-        # api_base -> model_kwargs.api_base
+        # Get endpoint from provider if specified in agent_specific
+        # Use credential.provider (from CLI) to allow provider override
+        endpoint = model.get_agent_endpoint("mini_swe", credential.provider)
+
+        # api_base: endpoint > agent_specific.api_base
+        if endpoint:
+            model_kwargs["api_base"] = endpoint.api_base
         if "api_base" in settings:
             model_kwargs["api_base"] = settings["api_base"]
 

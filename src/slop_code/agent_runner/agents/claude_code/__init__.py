@@ -1,6 +1,7 @@
 "Claude Code agent package."
 
-from .agent import ClaudeCodeAgent, ClaudeCodeConfig
+from .agent import ClaudeCodeAgent
+from .agent import ClaudeCodeConfig
 from .parser import ClaudeCodeParser
 
 ClaudeCodeExecutor = ClaudeCodeAgent

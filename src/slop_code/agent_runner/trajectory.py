@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Literal, Union
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Discriminator, Field
+from pydantic import BaseModel
+from pydantic import Discriminator
+from pydantic import Field
 
 
 class UserStep(BaseModel):
@@ -55,7 +57,7 @@ class ToolUseStep(BaseModel):
 
 
 TrajectoryStep = Annotated[
-    Union[UserStep, AgentStep, ThinkingStep, ToolUseStep],
+    UserStep | AgentStep | ThinkingStep | ToolUseStep,
     Discriminator("step_type"),
 ]
 

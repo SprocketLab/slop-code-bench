@@ -85,6 +85,35 @@ class LegendGroupInfo:
     model_base_color: str
 
 
+def nested_priority_merge(base: dict, override: dict) -> dict:
+    """Recursively merge two dictionaries with ``override`` precedence.
+
+    For nested dicts, merge continues recursively; for other types, values
+    from ``override`` replace those in ``base``.
+
+    Args:
+        base: Baseline mapping.
+        override: Mapping whose values take precedence.
+
+    Returns:
+        A new dictionary with merged results.
+    """
+    result: dict[str, Any] = {}
+    for key in base.keys() | override.keys():
+        if key in base and key in override:
+            v_base = base[key]
+            v_over = override[key]
+            if isinstance(v_base, dict) and isinstance(v_over, dict):
+                result[key] = nested_priority_merge(v_base, v_over)
+            else:
+                result[key] = v_over
+        elif key in override:
+            result[key] = override[key]
+        else:
+            result[key] = base[key]
+    return result
+
+
 # Helpers
 def hsl_to_hex(h: int, s: int, l: int) -> str:
     s = s / 100
@@ -711,6 +740,7 @@ def get_theme_layout(
     legend_y: float,
     title: str | None = None,
     subtitle: str | None = None,
+    overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Get base layout with theme-specific styling.
 
@@ -735,7 +765,7 @@ def get_theme_layout(
         if subtitle:
             title_text += f"<br><span style='font-size:16px;color:{t['axis_color']}'>{subtitle}</span>"
 
-    return {
+    base = {
         "title": (
             {
                 "text": title_text,
@@ -787,6 +817,7 @@ def get_theme_layout(
         "hovermode": "closest",
         "modebar": {"remove": ["zoom", "lasso2d", "select2d"]},
     }
+    return nested_priority_merge(base, overrides or {})
 
 
 # -----------------------------------------------------------------------------

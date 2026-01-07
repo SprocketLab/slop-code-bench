@@ -22,6 +22,9 @@ from slop_code.logging import get_logger
 
 logger = get_logger(__name__)
 
+# Schema version for evaluation.json - increment when making breaking changes
+EVALUATION_SCHEMA_VERSION = 1
+
 
 class GroupType(str, Enum):
     """Test categorization types for SCBench evaluation.
@@ -199,6 +202,12 @@ class CorrectnessResults(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid", use_enum_values=True)
+
+    # Schema version for compatibility checking
+    schema_version: int = Field(
+        default=EVALUATION_SCHEMA_VERSION,
+        description="Schema version for evaluation.json format compatibility",
+    )
 
     # Metadata
     problem_name: str = Field(description="Name of the problem")

@@ -11,15 +11,60 @@ import yaml
 
 from slop_code.common import PROBLEM_CONFIG_NAME
 from slop_code.entrypoints.commands.eval_run_dir import (
+    _can_upgrade_evaluation_schema,
+)
+from slop_code.entrypoints.commands.eval_run_dir import (
     _extract_eval_relevant_fields,
 )
 from slop_code.entrypoints.commands.eval_run_dir import (
     _has_evaluation_config_changed,
 )
 from slop_code.entrypoints.commands.eval_run_dir import (
+    _is_evaluation_schema_current,
+)
+from slop_code.entrypoints.commands.eval_run_dir import (
     _is_problem_fully_evaluated,
 )
+from slop_code.entrypoints.commands.eval_run_dir import (
+    _try_upgrade_problem_evaluations,
+)
+from slop_code.entrypoints.commands.eval_run_dir import (
+    _upgrade_evaluation_schema,
+)
+from slop_code.evaluation import EVALUATION_SCHEMA_VERSION
 from slop_code.evaluation import ProblemConfig
+
+
+def _create_valid_evaluation(
+    checkpoint_dir: Path,
+    problem_name: str = "test_problem",
+    checkpoint_name: str = "checkpoint_1",
+) -> None:
+    """Create a valid evaluation.json and evaluation/ directory for testing."""
+    eval_data = {
+        "schema_version": EVALUATION_SCHEMA_VERSION,
+        "problem_name": problem_name,
+        "problem_version": 1,
+        "checkpoint_name": checkpoint_name,
+        "checkpoint_version": 1,
+        "duration": 1.0,
+        "entrypoint": "python main.py",
+        "tests": {},
+        "pass_counts": {},
+        "total_counts": {},
+        "pytest_exit_code": 0,
+        "pytest_collected": 0,
+        "infrastructure_failure": False,
+    }
+    (checkpoint_dir / "evaluation.json").write_text(json.dumps(eval_data))
+
+    # Create evaluation directory with required files
+    eval_dir = checkpoint_dir / "evaluation"
+    eval_dir.mkdir()
+    (eval_dir / "stdout.txt").write_text("")
+    (eval_dir / "stderr.txt").write_text("")
+    (eval_dir / "report.json").write_text("{}")
+
 
 # =============================================================================
 # Helper Function Tests: _is_problem_fully_evaluated
@@ -37,7 +82,9 @@ class TestIsProblemFullyEvaluated:
         for i in [1, 2, 3]:
             checkpoint_dir = problem_dir / f"checkpoint_{i}"
             checkpoint_dir.mkdir()
-            (checkpoint_dir / "evaluation.json").write_text("{}")
+            _create_valid_evaluation(
+                checkpoint_dir, checkpoint_name=f"checkpoint_{i}"
+            )
 
         assert _is_problem_fully_evaluated(problem_dir) is True
 
@@ -48,10 +95,10 @@ class TestIsProblemFullyEvaluated:
         problem_dir = tmp_path / "test_problem"
         problem_dir.mkdir()
 
-        # checkpoint_1 has evaluation.json
+        # checkpoint_1 has valid evaluation
         checkpoint_1 = problem_dir / "checkpoint_1"
         checkpoint_1.mkdir()
-        (checkpoint_1 / "evaluation.json").write_text("{}")
+        _create_valid_evaluation(checkpoint_1, checkpoint_name="checkpoint_1")
 
         # checkpoint_2 does not have evaluation.json
         checkpoint_2 = problem_dir / "checkpoint_2"
@@ -82,10 +129,10 @@ class TestIsProblemFullyEvaluated:
         problem_dir = tmp_path / "test_problem"
         problem_dir.mkdir()
 
-        # Checkpoint with evaluation.json
+        # Checkpoint with valid evaluation
         checkpoint_1 = problem_dir / "checkpoint_1"
         checkpoint_1.mkdir()
-        (checkpoint_1 / "evaluation.json").write_text("{}")
+        _create_valid_evaluation(checkpoint_1, checkpoint_name="checkpoint_1")
 
         # Non-checkpoint directories (should be ignored)
         (problem_dir / "snapshot").mkdir()
@@ -343,14 +390,10 @@ class TestAutoSkipLogic:
         for i in [1, 2]:
             checkpoint_dir = problem_dir / f"checkpoint_{i}"
             checkpoint_dir.mkdir()
-            (checkpoint_dir / "evaluation.json").write_text(
-                json.dumps(
-                    {
-                        "problem_name": "test_problem",
-                        "checkpoint_name": f"checkpoint_{i}",
-                        "pytest_exit_code": 0,
-                    }
-                )
+            _create_valid_evaluation(
+                checkpoint_dir,
+                problem_name="test_problem",
+                checkpoint_name=f"checkpoint_{i}",
             )
 
         # Add saved problem config
@@ -491,7 +534,7 @@ class TestEdgeCases:
         # checkpoint_1 is evaluated
         checkpoint_1 = problem_dir / "checkpoint_1"
         checkpoint_1.mkdir()
-        (checkpoint_1 / "evaluation.json").write_text("{}")
+        _create_valid_evaluation(checkpoint_1, checkpoint_name="checkpoint_1")
 
         # checkpoint_2 is NOT evaluated
         checkpoint_2 = problem_dir / "checkpoint_2"
@@ -516,7 +559,11 @@ class TestEdgeCases:
         for i in [1, 2]:
             checkpoint_dir = problem_dir / f"checkpoint_{i}"
             checkpoint_dir.mkdir()
-            (checkpoint_dir / "evaluation.json").write_text("{}")
+            _create_valid_evaluation(
+                checkpoint_dir,
+                problem_name="test_problem",
+                checkpoint_name=f"checkpoint_{i}",
+            )
 
         # Saved config with old version
         saved_config = {
@@ -548,3 +595,143 @@ class TestEdgeCases:
                 should_skip = True
 
         assert should_skip is False, "Config change should prevent skip"
+
+
+# =============================================================================
+# Schema Version and Upgrade Tests
+# =============================================================================
+
+
+class TestSchemaValidation:
+    """Tests for schema version validation and upgrade logic."""
+
+    def _create_old_evaluation(
+        self, checkpoint_dir: Path, include_eval_dir: bool = True
+    ) -> None:
+        """Create an evaluation.json without schema_version but with all required fields."""
+        eval_data = {
+            "problem_name": "test_problem",
+            "problem_version": 1,
+            "checkpoint_name": "checkpoint_1",
+            "checkpoint_version": 1,
+            "duration": 1.0,
+            "entrypoint": "python main.py",
+            "tests": {},
+            "pass_counts": {},
+            "total_counts": {},
+            "pytest_exit_code": 0,
+            "pytest_collected": 0,
+            "infrastructure_failure": False,
+        }
+        (checkpoint_dir / "evaluation.json").write_text(json.dumps(eval_data))
+
+        if include_eval_dir:
+            eval_dir = checkpoint_dir / "evaluation"
+            eval_dir.mkdir()
+            (eval_dir / "stdout.txt").write_text("")
+            (eval_dir / "stderr.txt").write_text("")
+            (eval_dir / "report.json").write_text("{}")
+
+    def test_is_schema_current_returns_false_without_version(
+        self, tmp_path: Path
+    ) -> None:
+        """Schema without version is not current."""
+        checkpoint_dir = tmp_path / "checkpoint_1"
+        checkpoint_dir.mkdir()
+        self._create_old_evaluation(checkpoint_dir)
+
+        assert _is_evaluation_schema_current(checkpoint_dir) is False
+
+    def test_is_schema_current_returns_true_with_version(
+        self, tmp_path: Path
+    ) -> None:
+        """Schema with current version is current."""
+        checkpoint_dir = tmp_path / "checkpoint_1"
+        checkpoint_dir.mkdir()
+        _create_valid_evaluation(checkpoint_dir)
+
+        assert _is_evaluation_schema_current(checkpoint_dir) is True
+
+    def test_can_upgrade_returns_true_for_complete_old_schema(
+        self, tmp_path: Path
+    ) -> None:
+        """Old schema with all fields can be upgraded."""
+        checkpoint_dir = tmp_path / "checkpoint_1"
+        checkpoint_dir.mkdir()
+        self._create_old_evaluation(checkpoint_dir)
+
+        assert _can_upgrade_evaluation_schema(checkpoint_dir) is True
+
+    def test_can_upgrade_returns_false_without_eval_dir(
+        self, tmp_path: Path
+    ) -> None:
+        """Old schema without evaluation/ directory cannot be upgraded."""
+        checkpoint_dir = tmp_path / "checkpoint_1"
+        checkpoint_dir.mkdir()
+        self._create_old_evaluation(checkpoint_dir, include_eval_dir=False)
+
+        assert _can_upgrade_evaluation_schema(checkpoint_dir) is False
+
+    def test_can_upgrade_returns_false_with_missing_fields(
+        self, tmp_path: Path
+    ) -> None:
+        """Schema missing required fields cannot be upgraded."""
+        checkpoint_dir = tmp_path / "checkpoint_1"
+        checkpoint_dir.mkdir()
+
+        # Create incomplete evaluation.json
+        eval_data = {"problem_name": "test", "pytest_exit_code": 0}
+        (checkpoint_dir / "evaluation.json").write_text(json.dumps(eval_data))
+
+        assert _can_upgrade_evaluation_schema(checkpoint_dir) is False
+
+    def test_upgrade_adds_schema_version(self, tmp_path: Path) -> None:
+        """Upgrade adds schema_version to evaluation.json."""
+        checkpoint_dir = tmp_path / "checkpoint_1"
+        checkpoint_dir.mkdir()
+        self._create_old_evaluation(checkpoint_dir)
+
+        assert _upgrade_evaluation_schema(checkpoint_dir) is True
+
+        with (checkpoint_dir / "evaluation.json").open() as f:
+            data = json.load(f)
+        assert data["schema_version"] == EVALUATION_SCHEMA_VERSION
+
+    def test_try_upgrade_problem_succeeds_for_all_checkpoints(
+        self, tmp_path: Path
+    ) -> None:
+        """Successfully upgrade all checkpoints in a problem."""
+        problem_dir = tmp_path / "test_problem"
+        problem_dir.mkdir()
+
+        for i in [1, 2]:
+            checkpoint_dir = problem_dir / f"checkpoint_{i}"
+            checkpoint_dir.mkdir()
+            self._create_old_evaluation(checkpoint_dir)
+
+        assert _try_upgrade_problem_evaluations(problem_dir) is True
+
+        # Verify all checkpoints now have current schema
+        for i in [1, 2]:
+            assert _is_evaluation_schema_current(
+                problem_dir / f"checkpoint_{i}"
+            )
+
+    def test_try_upgrade_fails_if_one_checkpoint_missing_fields(
+        self, tmp_path: Path
+    ) -> None:
+        """Upgrade fails if any checkpoint can't be upgraded."""
+        problem_dir = tmp_path / "test_problem"
+        problem_dir.mkdir()
+
+        # checkpoint_1 can be upgraded
+        checkpoint_1 = problem_dir / "checkpoint_1"
+        checkpoint_1.mkdir()
+        self._create_old_evaluation(checkpoint_1)
+
+        # checkpoint_2 has incomplete data
+        checkpoint_2 = problem_dir / "checkpoint_2"
+        checkpoint_2.mkdir()
+        (checkpoint_2 / "evaluation.json").write_text("{}")
+
+        assert _try_upgrade_problem_evaluations(problem_dir) is False

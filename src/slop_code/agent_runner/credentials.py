@@ -3,12 +3,32 @@
 from __future__ import annotations
 
 import os
+import typing as tp
 from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar, Final
 
 from pydantic import BaseModel
 from pydantic import Field
+
+ApiFormat = tp.Literal["openai", "anthropic"]
+
+
+class EndpointDefinition(BaseModel):
+    """API endpoint configuration for a provider.
+
+    Endpoints allow providers to define multiple API access points with
+    different base URLs and API formats. This is useful for providers
+    like Zhipu that offer both OpenAI-compatible and Anthropic-compatible
+    endpoints.
+
+    Attributes:
+        api_base: Base URL for the API endpoint
+        api_format: API format - "openai" or "anthropic"
+    """
+
+    api_base: str
+    api_format: ApiFormat = "openai"
 
 
 class CredentialType(str, Enum):
@@ -51,6 +71,7 @@ class ProviderDefinition(BaseModel):
         env_var: Environment variable name (for env_var type)
         file_path: Default file path (for file type)
         description: Human-readable description for discoverability
+        endpoints: Named API endpoints for this provider
     """
 
     name: str
@@ -58,6 +79,18 @@ class ProviderDefinition(BaseModel):
     env_var: str | None = None
     file_path: str | None = None
     description: str = ""
+    endpoints: dict[str, EndpointDefinition] = Field(default_factory=dict)
+
+    def get_endpoint(self, name: str) -> EndpointDefinition | None:
+        """Get endpoint by name.
+
+        Args:
+            name: Endpoint name to look up
+
+        Returns:
+            EndpointDefinition if found, None otherwise
+        """
+        return self.endpoints.get(name)
 
 
 class ProviderCatalog:
@@ -122,12 +155,22 @@ class ProviderCatalog:
             return
 
         for name, config in data["providers"].items():
+            # Parse endpoints if present
+            endpoints: dict[str, EndpointDefinition] = {}
+            if "endpoints" in config:
+                for ep_name, ep_config in config["endpoints"].items():
+                    endpoints[ep_name] = EndpointDefinition(
+                        api_base=ep_config["api_base"],
+                        api_format=ep_config.get("api_format", "openai"),
+                    )
+
             provider = ProviderDefinition(
                 name=name,
                 credential_type=CredentialType(config["type"]),
                 env_var=config.get("env_var"),
                 file_path=config.get("file_path"),
                 description=config.get("description", ""),
+                endpoints=endpoints,
             )
             cls.register(provider)
 

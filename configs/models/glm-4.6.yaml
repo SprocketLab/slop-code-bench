@@ -9,7 +9,37 @@ aliases: []
 provider_slugs:
   openrouter: z-ai/glm-4.6
 
+# Endpoints are resolved from the CLI provider, not this config's provider.
+# Use --model zhipu-coding-plan/glm-4.6 to use ZAI coding plan endpoints.
 agent_specific:
+  mini_swe:
+    endpoint: openai
+    model_name: openai/glm-4.6
+    model_class: litellm
+    thinking_enabled: true
+
+  claude_code:
+    endpoint: anthropic
+    env_overrides:
+      ANTHROPIC_DEFAULT_SONNET_MODEL: glm-4.6
+      ANTHROPIC_DEFAULT_OPUS_MODEL: glm-4.6
+
   opencode:
-    model: z-ai/glm-4.6
-    provider: openrouter
+    endpoint: openai
+    provider_name: zai-coding-plan
+    model: glm-4.6
+    config:
+      "$schema": "https://opencode.ai/config.json"
+      provider:
+        zai-coding-plan:
+          models:
+            glm-4.6:
+              options:
+                thinking:
+                  type: "enabled"
+                stream_options:
+                  include_usage: true
+    thinking_enabled: true
+
+  codex:
+    thinking: high

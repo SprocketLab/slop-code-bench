@@ -12,7 +12,8 @@ import pandas as pd
 import typer
 
 from slop_code.common import CHECKPOINT_RESULTS_FILENAME
-from slop_code.logging import get_logger, setup_logging
+from slop_code.logging import get_logger
+from slop_code.logging import setup_logging
 
 logger = get_logger(__name__)
 
@@ -234,7 +235,7 @@ def consolidate_runs(
         # Check if any checkpoint is missing mass columns - skip entire run if so
         if checkpoint_records and check_mass_columns(checkpoint_records[0]):
             typer.echo(
-                typer.style(f"  SKIP: ", fg=typer.colors.YELLOW)
+                typer.style("  SKIP: ", fg=typer.colors.YELLOW)
                 + f"{rel_path} (missing mass.* columns)"
             )
             runs_missing_mass.add(run_id)
@@ -449,13 +450,13 @@ def discover_runs(runs_dir: Path) -> Iterator[tuple[Path, dict[str, Any]]]:
             if not all(k in result for k in REQUIRED_RESULT_FIELDS):
                 missing = [k for k in REQUIRED_RESULT_FIELDS if k not in result]
                 typer.echo(
-                    typer.style(f"  SKIP: ", fg=typer.colors.YELLOW)
+                    typer.style("  SKIP: ", fg=typer.colors.YELLOW)
                     + f"{rel_path} (result.json missing: {', '.join(missing)})"
                 )
                 continue
         except json.JSONDecodeError as e:
             typer.echo(
-                typer.style(f"  SKIP: ", fg=typer.colors.YELLOW)
+                typer.style("  SKIP: ", fg=typer.colors.YELLOW)
                 + f"{rel_path} (invalid result.json: {e})"
             )
             continue
@@ -472,7 +473,7 @@ def validate_config(config_path: Path, rel_path: Path) -> bool:
     """Check if config.yaml is valid against current schema."""
     if not config_path.exists():
         typer.echo(
-            typer.style(f"  SKIP: ", fg=typer.colors.YELLOW)
+            typer.style("  SKIP: ", fg=typer.colors.YELLOW)
             + f"{rel_path} (missing config.yaml)"
         )
         return False
@@ -484,7 +485,7 @@ def validate_config(config_path: Path, rel_path: Path) -> bool:
         return True
     except Exception as e:
         typer.echo(
-            typer.style(f"  SKIP: ", fg=typer.colors.YELLOW)
+            typer.style("  SKIP: ", fg=typer.colors.YELLOW)
             + f"{rel_path} (config.yaml invalid: {e})"
         )
         return False
@@ -507,7 +508,7 @@ def extract_timestamp(run_dir: Path) -> str:
 
 def check_mass_columns(record: dict[str, Any]) -> bool:
     """Check if expected mass.* columns are missing. Returns True if missing."""
-    present_mass_cols = [k for k in record.keys() if k.startswith("mass.")]
+    present_mass_cols = [k for k in record if k.startswith("mass.")]
     missing = set(EXPECTED_MASS_COLS) - set(present_mass_cols)
     return len(missing) > 0
 

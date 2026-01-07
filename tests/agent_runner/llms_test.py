@@ -593,18 +593,40 @@ class TestYAMLLoadedModels:
         # name is now the config filename, not internal_name
         assert by_alias.name == "opus-4.5"
 
-    def test_glm_coding_plan_has_agent_specific(self):
-        """Test that GLM-4.6-coding-plan has agent_specific settings."""
-        model = ModelCatalog.get("glm-4.6-coding-plan")
+    def test_glm_endpoint_resolution_with_provider_override(self):
+        """Test that GLM endpoint resolution works with provider override."""
+        model = ModelCatalog.get("glm-4.6")
         assert model is not None
+        assert model.provider == "zhipu"  # Config default is zhipu
 
         mini_swe_settings = model.get_agent_settings("mini_swe")
         assert mini_swe_settings is not None
         assert "model_name" in mini_swe_settings
+        assert mini_swe_settings.get("endpoint") == "openai"
 
         claude_code_settings = model.get_agent_settings("claude_code")
         assert claude_code_settings is not None
-        assert "base_url" in claude_code_settings
+        assert claude_code_settings.get("endpoint") == "anthropic"
+
+        # Without provider override, endpoints don't resolve (zhipu has no endpoints)
+        assert model.get_agent_endpoint("mini_swe") is None
+
+        # With zhipu-coding-plan provider override, endpoints resolve correctly
+        mini_swe_endpoint = model.get_agent_endpoint(
+            "mini_swe", provider_override="zhipu-coding-plan"
+        )
+        assert mini_swe_endpoint is not None
+        assert (
+            mini_swe_endpoint.api_base == "https://api.z.ai/api/coding/paas/v4"
+        )
+        assert mini_swe_endpoint.api_format == "openai"
+
+        claude_code_endpoint = model.get_agent_endpoint(
+            "claude_code", provider_override="zhipu-coding-plan"
+        )
+        assert claude_code_endpoint is not None
+        assert claude_code_endpoint.api_base == "https://api.z.ai/api/anthropic"
+        assert claude_code_endpoint.api_format == "anthropic"
 
     def test_glm_has_provider_slugs(self):
         """Test that GLM-4.6 has provider_slugs for openrouter."""

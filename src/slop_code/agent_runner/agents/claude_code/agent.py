@@ -9,26 +9,28 @@ import tempfile
 import typing as tp
 from pathlib import Path
 
-from pydantic import Field, JsonValue
+from pydantic import Field
+from pydantic import JsonValue
 
-from slop_code.agent_runner.agent import Agent, AgentConfigBase
-from slop_code.agent_runner.agents.cli_utils import (
-    AgentCommandResult,
-    stream_cli_command,
-)
-from slop_code.agent_runner.agents.utils import HOME_PATH, resolve_env_vars
+from slop_code.agent_runner.agent import Agent
+from slop_code.agent_runner.agent import AgentConfigBase
+from slop_code.agent_runner.agents.cli_utils import AgentCommandResult
+from slop_code.agent_runner.agents.cli_utils import stream_cli_command
+from slop_code.agent_runner.agents.utils import HOME_PATH
+from slop_code.agent_runner.agents.utils import resolve_env_vars
 from slop_code.agent_runner.credentials import ProviderCredential
-from slop_code.agent_runner.models import AgentCostLimits, AgentError
+from slop_code.agent_runner.models import AgentCostLimits
+from slop_code.agent_runner.models import AgentError
 from slop_code.agent_runner.registry import register_agent
 from slop_code.agent_runner.trajectory import TrajectoryStep
 from slop_code.common import mask_sensitive_values
-from slop_code.common.llms import (
-    APIPricing,
-    ModelDefinition,
-    ThinkingPreset,
-    TokenUsage,
-)
-from slop_code.execution import EnvironmentSpec, Session, StreamingRuntime
+from slop_code.common.llms import APIPricing
+from slop_code.common.llms import ModelDefinition
+from slop_code.common.llms import ThinkingPreset
+from slop_code.common.llms import TokenUsage
+from slop_code.execution import EnvironmentSpec
+from slop_code.execution import Session
+from slop_code.execution import StreamingRuntime
 from slop_code.execution.runtime import RuntimeResult
 from slop_code.logging import get_logger
 
@@ -197,17 +199,24 @@ class ClaudeCodeAgent(Agent):
         model_slug = model.get_model_slug(credential.provider)
 
         # Get agent-specific settings from model catalog
-        agent_settings = model.get_agent_settings("claude_code")
+        agent_settings = model.get_agent_settings("claude_code") or {}
 
-        # Apply agent-specific settings (config takes precedence)
+        # Get endpoint from provider if specified in agent_specific
+        # Use credential.provider (from CLI) to allow provider override
+        endpoint = model.get_agent_endpoint("claude_code", credential.provider)
+
+        # Resolve base_url: config > agent_settings > endpoint
         base_url = config.base_url
+        if base_url is None and "base_url" in agent_settings:
+            base_url = agent_settings["base_url"]
+        if base_url is None and endpoint:
+            base_url = endpoint.api_base
+
+        # Merge env_overrides
         env = dict(config.env)
-        if agent_settings:
-            if "base_url" in agent_settings and base_url is None:
-                base_url = agent_settings["base_url"]
-            if "env_overrides" in agent_settings:
-                # Config env wins on conflicts
-                env = {**agent_settings["env_overrides"], **env}
+        if "env_overrides" in agent_settings:
+            # Config env wins on conflicts
+            env = {**agent_settings["env_overrides"], **env}
 
         # Resolve thinking: CLI/config override > model default
         thinking: ThinkingPreset | None = thinking_preset
@@ -518,6 +527,12 @@ class ClaudeCodeAgent(Agent):
 
         # Set credential in environment
         env_overrides[self.credential.destination_key] = self.credential.value
+        # When using a non-Claude-Code credential, also set ANTHROPIC_AUTH_TOKEN
+        if self.credential.destination_key not in (
+            "ANTHROPIC_API_KEY",
+            "CLAUDE_CODE_OAUTH_TOKEN",
+        ):
+            env_overrides["ANTHROPIC_AUTH_TOKEN"] = self.credential.value
         if self.max_output_tokens is not None:
             env_overrides["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] = str(
                 self.max_output_tokens

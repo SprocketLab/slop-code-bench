@@ -31,6 +31,18 @@ providers:
     env_var: ZHIPU_API_KEY
     description: Zhipu AI API key for GLM models
 
+  zhipu-coding-plan:
+    type: env_var
+    env_var: ZHIPU_API_KEY
+    description: Zhipu AI API key for ZAI coding plan endpoints
+    endpoints:
+      openai:
+        api_base: https://api.z.ai/api/coding/paas/v4
+        api_format: openai
+      anthropic:
+        api_base: https://api.z.ai/api/anthropic
+        api_format: anthropic
+
   google:
     type: env_var
     env_var: GEMINI_API_KEY

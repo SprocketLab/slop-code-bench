@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Analyze agent trajectories from slop-code-bench runs.
 
 Parses JSONL trajectory files and computes:
@@ -90,7 +89,11 @@ class ThinkingMetrics(BaseModel):
     @computed_field
     @property
     def avg_tokens_per_block(self) -> float:
-        return self.total_tokens / self.block_count if self.block_count > 0 else 0.0
+        return (
+            self.total_tokens / self.block_count
+            if self.block_count > 0
+            else 0.0
+        )
 
 
 class ToolMetrics(BaseModel):
@@ -247,12 +250,18 @@ ERROR_OUTPUT_PATTERNS = [
 
 def is_test_command(command: str) -> bool:
     """Check if command is a test runner."""
-    return any(re.search(pattern, command, re.IGNORECASE) for pattern in TEST_COMMAND_PATTERNS)
+    return any(
+        re.search(pattern, command, re.IGNORECASE)
+        for pattern in TEST_COMMAND_PATTERNS
+    )
 
 
 def is_lint_command(command: str) -> bool:
     """Check if command is a linter."""
-    return any(re.search(pattern, command, re.IGNORECASE) for pattern in LINT_COMMAND_PATTERNS)
+    return any(
+        re.search(pattern, command, re.IGNORECASE)
+        for pattern in LINT_COMMAND_PATTERNS
+    )
 
 
 def has_error_indicators(output: str) -> bool:
@@ -316,7 +325,9 @@ def detect_bug_fix_cycles(events: list[ToolEvent]) -> BugFixMetrics:
     # Count edits after any failure
     last_was_failure = False
     for event in events:
-        if event.name == "Bash" and (event.exit_code != 0 or event.has_error_output):
+        if event.name == "Bash" and (
+            event.exit_code != 0 or event.has_error_output
+        ):
             last_was_failure = True
         elif event.name in ("Edit", "Write") and last_was_failure:
             metrics.edits_after_failure += 1
@@ -351,7 +362,11 @@ class CheckpointMetrics(BaseModel):
     @property
     def thinking_density(self) -> float:
         """Thinking tokens per action step."""
-        return self.thinking.total_tokens / self.step_count if self.step_count > 0 else 0.0
+        return (
+            self.thinking.total_tokens / self.step_count
+            if self.step_count > 0
+            else 0.0
+        )
 
 
 # =============================================================================
@@ -360,8 +375,26 @@ class CheckpointMetrics(BaseModel):
 
 
 # Keywords for content analysis
-PLANNING_WORDS = ["plan", "first", "then", "step", "next", "will", "should", "need to"]
-DEBUGGING_WORDS = ["error", "fix", "bug", "fail", "wrong", "issue", "problem", "debug"]
+PLANNING_WORDS = [
+    "plan",
+    "first",
+    "then",
+    "step",
+    "next",
+    "will",
+    "should",
+    "need to",
+]
+DEBUGGING_WORDS = [
+    "error",
+    "fix",
+    "bug",
+    "fail",
+    "wrong",
+    "issue",
+    "problem",
+    "debug",
+]
 EXPLORATION_WORDS = [
     "understand",
     "explore",
@@ -408,10 +441,18 @@ class TrajectoryParser(ABC):
         "tree",
     }
     IMPLEMENTATION_COMMANDS = {"echo", "mkdir", "cp", "mv", "rm", "touch"}
-    TEST_COMMANDS = {"pytest", "python -m pytest", "uv run pytest", "npm test", "cargo test"}
+    TEST_COMMANDS = {
+        "pytest",
+        "python -m pytest",
+        "uv run pytest",
+        "npm test",
+        "cargo test",
+    }
 
     @abstractmethod
-    def parse(self, jsonl_path: Path, problem: str, checkpoint: str) -> CheckpointMetrics:
+    def parse(
+        self, jsonl_path: Path, problem: str, checkpoint: str
+    ) -> CheckpointMetrics:
         """Parse a trajectory file and return metrics."""
         pass
 
@@ -467,7 +508,9 @@ class TrajectoryParser(ABC):
 
         return ActivityType.UNKNOWN
 
-    def update_activity(self, metrics: CheckpointMetrics, activity: ActivityType) -> None:
+    def update_activity(
+        self, metrics: CheckpointMetrics, activity: ActivityType
+    ) -> None:
         """Update activity counts in metrics."""
         if activity == ActivityType.EXPLORATION:
             metrics.activity.exploration_count += 1
@@ -478,16 +521,22 @@ class TrajectoryParser(ABC):
         else:
             metrics.activity.unknown_count += 1
 
-    def analyze_sequences(self, tool_sequence: list[str], metrics: CheckpointMetrics) -> None:
+    def analyze_sequences(
+        self, tool_sequence: list[str], metrics: CheckpointMetrics
+    ) -> None:
         """Analyze tool sequences for patterns."""
         # Compute n-grams
         for i in range(len(tool_sequence) - 1):
             bigram = f"{tool_sequence[i]} -> {tool_sequence[i + 1]}"
-            metrics.sequences.bigrams[bigram] = metrics.sequences.bigrams.get(bigram, 0) + 1
+            metrics.sequences.bigrams[bigram] = (
+                metrics.sequences.bigrams.get(bigram, 0) + 1
+            )
 
         for i in range(len(tool_sequence) - 2):
             trigram = f"{tool_sequence[i]} -> {tool_sequence[i + 1]} -> {tool_sequence[i + 2]}"
-            metrics.sequences.trigrams[trigram] = metrics.sequences.trigrams.get(trigram, 0) + 1
+            metrics.sequences.trigrams[trigram] = (
+                metrics.sequences.trigrams.get(trigram, 0) + 1
+            )
 
         # Detect fixed patterns
         for i in range(len(tool_sequence) - 1):
@@ -529,7 +578,9 @@ class TrajectoryParser(ABC):
 class ClaudeCodeParser(TrajectoryParser):
     """Parser for ClaudeCode JSONL format."""
 
-    def parse(self, jsonl_path: Path, problem: str, checkpoint: str) -> CheckpointMetrics:
+    def parse(
+        self, jsonl_path: Path, problem: str, checkpoint: str
+    ) -> CheckpointMetrics:
         metrics = CheckpointMetrics(
             problem=problem,
             checkpoint=checkpoint,
@@ -538,7 +589,9 @@ class ClaudeCodeParser(TrajectoryParser):
 
         tool_sequence: list[str] = []
         tool_events: list[ToolEvent] = []
-        pending_tool_events: dict[str, ToolEvent] = {}  # tool_use_id -> ToolEvent
+        pending_tool_events: dict[
+            str, ToolEvent
+        ] = {}  # tool_use_id -> ToolEvent
 
         with open(jsonl_path) as f:
             for line in f:
@@ -547,7 +600,11 @@ class ClaudeCodeParser(TrajectoryParser):
                 try:
                     data = json.loads(line)
                     self._process_event(
-                        data, metrics, tool_sequence, tool_events, pending_tool_events
+                        data,
+                        metrics,
+                        tool_sequence,
+                        tool_events,
+                        pending_tool_events,
                     )
                 except json.JSONDecodeError:
                     continue
@@ -593,8 +650,12 @@ class ClaudeCodeParser(TrajectoryParser):
         if usage:
             metrics.tokens.input_tokens += usage.get("input_tokens", 0)
             metrics.tokens.output_tokens += usage.get("output_tokens", 0)
-            metrics.tokens.cache_read_tokens += usage.get("cache_read_input_tokens", 0)
-            metrics.tokens.cache_write_tokens += usage.get("cache_creation_input_tokens", 0)
+            metrics.tokens.cache_read_tokens += usage.get(
+                "cache_read_input_tokens", 0
+            )
+            metrics.tokens.cache_write_tokens += usage.get(
+                "cache_creation_input_tokens", 0
+            )
 
         for block in content:
             block_type = block.get("type")
@@ -603,14 +664,20 @@ class ClaudeCodeParser(TrajectoryParser):
                 self._process_thinking(block, metrics)
             elif block_type == "tool_use":
                 self._process_tool_use(
-                    block, metrics, tool_sequence, tool_events, pending_tool_events
+                    block,
+                    metrics,
+                    tool_sequence,
+                    tool_events,
+                    pending_tool_events,
                 )
 
         # Track turns
         if message.get("stop_reason") in ("end_turn", "tool_use"):
             metrics.turn_count += 1
 
-    def _process_thinking(self, block: dict[str, Any], metrics: CheckpointMetrics) -> None:
+    def _process_thinking(
+        self, block: dict[str, Any], metrics: CheckpointMetrics
+    ) -> None:
         thinking_text = block.get("thinking", "")
         token_count = count_tokens(thinking_text)
 
@@ -637,7 +704,9 @@ class ClaudeCodeParser(TrajectoryParser):
         tool_input = block.get("input", {})
 
         metrics.step_count += 1
-        metrics.tools.counts[tool_name] = metrics.tools.counts.get(tool_name, 0) + 1
+        metrics.tools.counts[tool_name] = (
+            metrics.tools.counts.get(tool_name, 0) + 1
+        )
         tool_sequence.append(tool_name)
 
         # Create rich tool event
@@ -657,7 +726,9 @@ class ClaudeCodeParser(TrajectoryParser):
         event.activity_type = activity
         self.update_activity(metrics, activity)
 
-    def _classify_tool(self, tool_name: str, tool_input: dict[str, Any]) -> ActivityType:
+    def _classify_tool(
+        self, tool_name: str, tool_input: dict[str, Any]
+    ) -> ActivityType:
         if tool_name in self.EXPLORATION_TOOLS:
             return ActivityType.EXPLORATION
         if tool_name in self.IMPLEMENTATION_TOOLS:
@@ -714,10 +785,14 @@ class ClaudeCodeParser(TrajectoryParser):
                     if isinstance(tool_use_result, dict):
                         stderr = tool_use_result.get("stderr", "")
                         stdout = tool_use_result.get("stdout", "")
-                        if has_error_indicators(stderr) or has_error_indicators(stdout):
+                        if has_error_indicators(stderr) or has_error_indicators(
+                            stdout
+                        ):
                             event.has_error_output = True
                         # Try to extract exit code from interpretation
-                        interp = tool_use_result.get("returnCodeInterpretation", "")
+                        interp = tool_use_result.get(
+                            "returnCodeInterpretation", ""
+                        )
                         if "exit code" in interp.lower():
                             # Try to parse exit code from message
                             pass
@@ -726,7 +801,9 @@ class ClaudeCodeParser(TrajectoryParser):
 class CodexParser(TrajectoryParser):
     """Parser for Codex JSONL format."""
 
-    def parse(self, jsonl_path: Path, problem: str, checkpoint: str) -> CheckpointMetrics:
+    def parse(
+        self, jsonl_path: Path, problem: str, checkpoint: str
+    ) -> CheckpointMetrics:
         metrics = CheckpointMetrics(
             problem=problem,
             checkpoint=checkpoint,
@@ -742,7 +819,9 @@ class CodexParser(TrajectoryParser):
                     continue
                 try:
                     data = json.loads(line)
-                    self._process_event(data, metrics, tool_sequence, tool_events)
+                    self._process_event(
+                        data, metrics, tool_sequence, tool_events
+                    )
                 except json.JSONDecodeError:
                     continue
 
@@ -770,7 +849,9 @@ class CodexParser(TrajectoryParser):
             usage = data.get("usage", {})
             metrics.tokens.input_tokens += usage.get("input_tokens", 0)
             metrics.tokens.output_tokens += usage.get("output_tokens", 0)
-            metrics.tokens.cache_read_tokens += usage.get("cached_input_tokens", 0)
+            metrics.tokens.cache_read_tokens += usage.get(
+                "cached_input_tokens", 0
+            )
 
         elif event_type == "item.completed":
             item = data.get("item", {})
@@ -807,7 +888,9 @@ class CodexParser(TrajectoryParser):
 
             # Extract tool name from command
             tool_name = self._extract_tool_from_command(command)
-            metrics.tools.counts[tool_name] = metrics.tools.counts.get(tool_name, 0) + 1
+            metrics.tools.counts[tool_name] = (
+                metrics.tools.counts.get(tool_name, 0) + 1
+            )
             tool_sequence.append(tool_name)
 
             # Create rich tool event
@@ -820,7 +903,9 @@ class CodexParser(TrajectoryParser):
                 exit_code=exit_code,
                 is_test_command=is_test_command(unwrapped_cmd),
                 is_lint_command=is_lint_command(unwrapped_cmd),
-                has_error_output=has_error_indicators(output) if output else False,
+                has_error_output=has_error_indicators(output)
+                if output
+                else False,
             )
             tool_events.append(event)
 
@@ -843,7 +928,9 @@ class CodexParser(TrajectoryParser):
         elif item_type == "file_change":
             metrics.step_count += 1
             # Map to Edit for sequence tracking
-            metrics.tools.counts["Edit"] = metrics.tools.counts.get("Edit", 0) + 1
+            metrics.tools.counts["Edit"] = (
+                metrics.tools.counts.get("Edit", 0) + 1
+            )
             tool_sequence.append("Edit")
 
             # Create tool event for file change
@@ -916,7 +1003,9 @@ class CodexParser(TrajectoryParser):
 # =============================================================================
 
 
-def aggregate_checkpoints(checkpoints: list[CheckpointMetrics]) -> dict[str, Any]:
+def aggregate_checkpoints(
+    checkpoints: list[CheckpointMetrics],
+) -> dict[str, Any]:
     """Aggregate checkpoint metrics into problem-level summary."""
     if not checkpoints:
         return {}
@@ -929,13 +1018,22 @@ def aggregate_checkpoints(checkpoints: list[CheckpointMetrics]) -> dict[str, Any
         "checkpoint_count": len(checkpoints),
         "total_steps": sum(c.step_count for c in checkpoints),
         "total_turns": sum(c.turn_count for c in checkpoints),
-        "total_thinking_tokens": sum(c.thinking.total_tokens for c in checkpoints),
-        "avg_thinking_density": sum(c.thinking_density for c in checkpoints) / len(checkpoints),
-        "pass_rate": pass_count / total_with_result if total_with_result > 0 else None,
+        "total_thinking_tokens": sum(
+            c.thinking.total_tokens for c in checkpoints
+        ),
+        "avg_thinking_density": sum(c.thinking_density for c in checkpoints)
+        / len(checkpoints),
+        "pass_rate": pass_count / total_with_result
+        if total_with_result > 0
+        else None,
         "tool_counts": merge_counts([c.tools.counts for c in checkpoints]),
         "activity_breakdown": {
-            "exploration": sum(c.activity.exploration_count for c in checkpoints),
-            "implementation": sum(c.activity.implementation_count for c in checkpoints),
+            "exploration": sum(
+                c.activity.exploration_count for c in checkpoints
+            ),
+            "implementation": sum(
+                c.activity.implementation_count for c in checkpoints
+            ),
             "bug_fixing": sum(c.activity.bug_fixing_count for c in checkpoints),
             "unknown": sum(c.activity.unknown_count for c in checkpoints),
         },
@@ -946,23 +1044,47 @@ def aggregate_checkpoints(checkpoints: list[CheckpointMetrics]) -> dict[str, Any
             "thinking": sum(c.thinking.total_tokens for c in checkpoints),
         },
         "content_analysis": {
-            "planning_words": sum(c.thinking.planning_words for c in checkpoints),
-            "debugging_words": sum(c.thinking.debugging_words for c in checkpoints),
-            "exploration_words": sum(c.thinking.exploration_words for c in checkpoints),
+            "planning_words": sum(
+                c.thinking.planning_words for c in checkpoints
+            ),
+            "debugging_words": sum(
+                c.thinking.debugging_words for c in checkpoints
+            ),
+            "exploration_words": sum(
+                c.thinking.exploration_words for c in checkpoints
+            ),
         },
         "sequences": {
             "quick_fix": sum(c.sequences.quick_fix_count for c in checkpoints),
-            "exploratory_edit": sum(c.sequences.exploratory_edit_count for c in checkpoints),
-            "bug_fix_cycle": sum(c.sequences.bug_fix_cycle_count for c in checkpoints),
-            "exploration_run": sum(c.sequences.exploration_run_count for c in checkpoints),
+            "exploratory_edit": sum(
+                c.sequences.exploratory_edit_count for c in checkpoints
+            ),
+            "bug_fix_cycle": sum(
+                c.sequences.bug_fix_cycle_count for c in checkpoints
+            ),
+            "exploration_run": sum(
+                c.sequences.exploration_run_count for c in checkpoints
+            ),
         },
         "bug_fixes": {
-            "test_fix_retest": sum(c.bug_fixes.test_fix_retest for c in checkpoints),
-            "run_fix_rerun": sum(c.bug_fixes.run_fix_rerun for c in checkpoints),
-            "lint_fix_relint": sum(c.bug_fixes.lint_fix_relint for c in checkpoints),
-            "total_test_runs": sum(c.bug_fixes.total_test_runs for c in checkpoints),
-            "failed_test_runs": sum(c.bug_fixes.failed_test_runs for c in checkpoints),
-            "edits_after_failure": sum(c.bug_fixes.edits_after_failure for c in checkpoints),
+            "test_fix_retest": sum(
+                c.bug_fixes.test_fix_retest for c in checkpoints
+            ),
+            "run_fix_rerun": sum(
+                c.bug_fixes.run_fix_rerun for c in checkpoints
+            ),
+            "lint_fix_relint": sum(
+                c.bug_fixes.lint_fix_relint for c in checkpoints
+            ),
+            "total_test_runs": sum(
+                c.bug_fixes.total_test_runs for c in checkpoints
+            ),
+            "failed_test_runs": sum(
+                c.bug_fixes.failed_test_runs for c in checkpoints
+            ),
+            "edits_after_failure": sum(
+                c.bug_fixes.edits_after_failure for c in checkpoints
+            ),
         },
     }
 
@@ -976,55 +1098,97 @@ def aggregate_problems(problems: dict[str, dict[str, Any]]) -> dict[str, Any]:
     total_steps = sum(p["total_steps"] for p in problems.values())
 
     # Calculate pass rate across all problems
-    pass_rates = [p["pass_rate"] for p in problems.values() if p["pass_rate"] is not None]
+    pass_rates = [
+        p["pass_rate"] for p in problems.values() if p["pass_rate"] is not None
+    ]
     avg_pass_rate = sum(pass_rates) / len(pass_rates) if pass_rates else None
 
     return {
         "problem_count": len(problems),
         "checkpoint_count": total_checkpoints,
         "total_steps": total_steps,
-        "mean_steps_per_checkpoint": total_steps / total_checkpoints if total_checkpoints > 0 else 0,
+        "mean_steps_per_checkpoint": total_steps / total_checkpoints
+        if total_checkpoints > 0
+        else 0,
         "avg_pass_rate": avg_pass_rate,
         "avg_thinking_density": (
-            sum(p["avg_thinking_density"] for p in problems.values()) / len(problems)
+            sum(p["avg_thinking_density"] for p in problems.values())
+            / len(problems)
         ),
-        "tool_counts": merge_counts([p["tool_counts"] for p in problems.values()]),
+        "tool_counts": merge_counts(
+            [p["tool_counts"] for p in problems.values()]
+        ),
         "activity_breakdown": {
-            "exploration": sum(p["activity_breakdown"]["exploration"] for p in problems.values()),
-            "implementation": sum(
-                p["activity_breakdown"]["implementation"] for p in problems.values()
+            "exploration": sum(
+                p["activity_breakdown"]["exploration"]
+                for p in problems.values()
             ),
-            "bug_fixing": sum(p["activity_breakdown"]["bug_fixing"] for p in problems.values()),
-            "unknown": sum(p["activity_breakdown"]["unknown"] for p in problems.values()),
+            "implementation": sum(
+                p["activity_breakdown"]["implementation"]
+                for p in problems.values()
+            ),
+            "bug_fixing": sum(
+                p["activity_breakdown"]["bug_fixing"] for p in problems.values()
+            ),
+            "unknown": sum(
+                p["activity_breakdown"]["unknown"] for p in problems.values()
+            ),
         },
         "tokens": {
             "input": sum(p["tokens"]["input"] for p in problems.values()),
             "output": sum(p["tokens"]["output"] for p in problems.values()),
-            "cache_read": sum(p["tokens"]["cache_read"] for p in problems.values()),
+            "cache_read": sum(
+                p["tokens"]["cache_read"] for p in problems.values()
+            ),
             "thinking": sum(p["tokens"]["thinking"] for p in problems.values()),
         },
         "content_analysis": {
-            "planning_words": sum(p["content_analysis"]["planning_words"] for p in problems.values()),
+            "planning_words": sum(
+                p["content_analysis"]["planning_words"]
+                for p in problems.values()
+            ),
             "debugging_words": sum(
-                p["content_analysis"]["debugging_words"] for p in problems.values()
+                p["content_analysis"]["debugging_words"]
+                for p in problems.values()
             ),
             "exploration_words": sum(
-                p["content_analysis"]["exploration_words"] for p in problems.values()
+                p["content_analysis"]["exploration_words"]
+                for p in problems.values()
             ),
         },
         "sequences": {
-            "quick_fix": sum(p["sequences"]["quick_fix"] for p in problems.values()),
-            "exploratory_edit": sum(p["sequences"]["exploratory_edit"] for p in problems.values()),
-            "bug_fix_cycle": sum(p["sequences"]["bug_fix_cycle"] for p in problems.values()),
-            "exploration_run": sum(p["sequences"]["exploration_run"] for p in problems.values()),
+            "quick_fix": sum(
+                p["sequences"]["quick_fix"] for p in problems.values()
+            ),
+            "exploratory_edit": sum(
+                p["sequences"]["exploratory_edit"] for p in problems.values()
+            ),
+            "bug_fix_cycle": sum(
+                p["sequences"]["bug_fix_cycle"] for p in problems.values()
+            ),
+            "exploration_run": sum(
+                p["sequences"]["exploration_run"] for p in problems.values()
+            ),
         },
         "bug_fixes": {
-            "test_fix_retest": sum(p["bug_fixes"]["test_fix_retest"] for p in problems.values()),
-            "run_fix_rerun": sum(p["bug_fixes"]["run_fix_rerun"] for p in problems.values()),
-            "lint_fix_relint": sum(p["bug_fixes"]["lint_fix_relint"] for p in problems.values()),
-            "total_test_runs": sum(p["bug_fixes"]["total_test_runs"] for p in problems.values()),
-            "failed_test_runs": sum(p["bug_fixes"]["failed_test_runs"] for p in problems.values()),
-            "edits_after_failure": sum(p["bug_fixes"]["edits_after_failure"] for p in problems.values()),
+            "test_fix_retest": sum(
+                p["bug_fixes"]["test_fix_retest"] for p in problems.values()
+            ),
+            "run_fix_rerun": sum(
+                p["bug_fixes"]["run_fix_rerun"] for p in problems.values()
+            ),
+            "lint_fix_relint": sum(
+                p["bug_fixes"]["lint_fix_relint"] for p in problems.values()
+            ),
+            "total_test_runs": sum(
+                p["bug_fixes"]["total_test_runs"] for p in problems.values()
+            ),
+            "failed_test_runs": sum(
+                p["bug_fixes"]["failed_test_runs"] for p in problems.values()
+            ),
+            "edits_after_failure": sum(
+                p["bug_fixes"]["edits_after_failure"] for p in problems.values()
+            ),
         },
     }
 
@@ -1117,7 +1281,9 @@ def extract_from_tar(tar_path: Path) -> Path | None:
                     tar.extract(member, tar_path.parent)
                     return tar_path.parent / member.name
     except Exception as e:
-        err_console.print(f"[yellow]Warning: Failed to extract {tar_path}: {e}[/yellow]")
+        err_console.print(
+            f"[yellow]Warning: Failed to extract {tar_path}: {e}[/yellow]"
+        )
     return None
 
 
@@ -1150,8 +1316,12 @@ def render_summary_table(summary: dict[str, Any], title: str) -> Table:
     table.add_row("Problems", str(summary["problem_count"]))
     table.add_row("Checkpoints", str(summary["checkpoint_count"]))
     table.add_row("Total Steps", str(summary["total_steps"]))
-    table.add_row("Mean Steps/Checkpoint", f"{summary['mean_steps_per_checkpoint']:.1f}")
-    table.add_row("Mean Thinking Density", f"{summary['avg_thinking_density']:.1f}")
+    table.add_row(
+        "Mean Steps/Checkpoint", f"{summary['mean_steps_per_checkpoint']:.1f}"
+    )
+    table.add_row(
+        "Mean Thinking Density", f"{summary['avg_thinking_density']:.1f}"
+    )
 
     if summary.get("avg_pass_rate") is not None:
         table.add_row("Pass Rate", f"{100 * summary['avg_pass_rate']:.1f}%")
@@ -1163,13 +1333,16 @@ def render_summary_table(summary: dict[str, Any], title: str) -> Table:
     total_activities = sum(activities.values())
     if total_activities > 0:
         table.add_row(
-            "Exploration %", f"{100 * activities['exploration'] / total_activities:.1f}%"
+            "Exploration %",
+            f"{100 * activities['exploration'] / total_activities:.1f}%",
         )
         table.add_row(
-            "Implementation %", f"{100 * activities['implementation'] / total_activities:.1f}%"
+            "Implementation %",
+            f"{100 * activities['implementation'] / total_activities:.1f}%",
         )
         table.add_row(
-            "Bug Fixing %", f"{100 * activities['bug_fixing'] / total_activities:.1f}%"
+            "Bug Fixing %",
+            f"{100 * activities['bug_fixing'] / total_activities:.1f}%",
         )
 
     table.add_section()
@@ -1185,8 +1358,12 @@ def render_summary_table(summary: dict[str, Any], title: str) -> Table:
         table.add_row("Test Failures", str(failed_tests))
         table.add_row("Test→Fix→Retest Cycles", str(test_fix_cycles))
         if bug_fixes.get("run_fix_rerun", 0) > 0:
-            table.add_row("Run→Fix→Rerun Cycles", str(bug_fixes["run_fix_rerun"]))
-        table.add_row("Edits After Failure", str(bug_fixes.get("edits_after_failure", 0)))
+            table.add_row(
+                "Run→Fix→Rerun Cycles", str(bug_fixes["run_fix_rerun"])
+            )
+        table.add_row(
+            "Edits After Failure", str(bug_fixes.get("edits_after_failure", 0))
+        )
 
     table.add_section()
 
@@ -1198,7 +1375,9 @@ def render_summary_table(summary: dict[str, Any], title: str) -> Table:
     table.add_section()
 
     # Top tools
-    tool_counts = sorted(summary["tool_counts"].items(), key=lambda x: -x[1])[:8]
+    tool_counts = sorted(summary["tool_counts"].items(), key=lambda x: -x[1])[
+        :8
+    ]
     for tool, count in tool_counts:
         table.add_row(f"  {tool}", str(count))
 
@@ -1228,7 +1407,10 @@ def render_comparison_table(runs: dict[str, dict[str, Any]]) -> Table:
     }
 
     def add_metric_row(
-        label: str, key_path: list[str], fmt: str = "{}", metric_key: str | None = None
+        label: str,
+        key_path: list[str],
+        fmt: str = "{}",
+        metric_key: str | None = None,
     ):
         raw_values = []
         for summary in runs.values():
@@ -1282,9 +1464,15 @@ def render_comparison_table(runs: dict[str, dict[str, Any]]) -> Table:
     for summary in runs.values():
         total = sum(summary["activity_breakdown"].values())
         if total > 0:
-            summary["_exp_pct"] = summary["activity_breakdown"]["exploration"] / total
-            summary["_impl_pct"] = summary["activity_breakdown"]["implementation"] / total
-            summary["_bug_pct"] = summary["activity_breakdown"]["bug_fixing"] / total
+            summary["_exp_pct"] = (
+                summary["activity_breakdown"]["exploration"] / total
+            )
+            summary["_impl_pct"] = (
+                summary["activity_breakdown"]["implementation"] / total
+            )
+            summary["_bug_pct"] = (
+                summary["activity_breakdown"]["bug_fixing"] / total
+            )
         else:
             summary["_exp_pct"] = summary["_impl_pct"] = summary["_bug_pct"] = 0
 
@@ -1330,7 +1518,9 @@ def render_comparison_table(runs: dict[str, dict[str, Any]]) -> Table:
 
     for tool in top_tools:
         # Get raw values for this tool
-        raw_values = [s.get("tool_counts", {}).get(tool, 0) for s in runs.values()]
+        raw_values = [
+            s.get("tool_counts", {}).get(tool, 0) for s in runs.values()
+        ]
         formatted = []
         for val in raw_values:
             formatted.append(str(val) if val else "-")
@@ -1370,7 +1560,9 @@ def render_checkpoint_table(metrics: CheckpointMetrics) -> Table:
 
 @app.command()
 def main(
-    run_dirs: Annotated[list[Path], typer.Argument(help="Run directories to analyze")],
+    run_dirs: Annotated[
+        list[Path], typer.Argument(help="Run directories to analyze")
+    ],
     agent: Annotated[
         str | None, typer.Option(help="Force agent type: claude_code or codex")
     ] = None,
@@ -1378,13 +1570,18 @@ def main(
         Path | None, typer.Option("-o", "--output", help="Output JSON file")
     ] = None,
     verbose: Annotated[
-        bool, typer.Option("-v", "--verbose", help="Show per-checkpoint details")
+        bool,
+        typer.Option("-v", "--verbose", help="Show per-checkpoint details"),
     ] = False,
     problems: Annotated[
-        list[str] | None, typer.Option("--problem", help="Filter to specific problems")
+        list[str] | None,
+        typer.Option("--problem", help="Filter to specific problems"),
     ] = None,
     no_compare: Annotated[
-        bool, typer.Option("--no-compare", help="Show individual tables instead of comparison")
+        bool,
+        typer.Option(
+            "--no-compare", help="Show individual tables instead of comparison"
+        ),
     ] = False,
 ):
     """Analyze agent trajectories from slop-code-bench runs.
@@ -1400,7 +1597,9 @@ def main(
 
     for run_dir in run_dirs:
         if not run_dir.exists():
-            err_console.print(f"[yellow]Warning: {run_dir} does not exist[/yellow]")
+            err_console.print(
+                f"[yellow]Warning: {run_dir} does not exist[/yellow]"
+            )
             continue
 
         # Skip hidden directories and non-directories
@@ -1416,15 +1615,21 @@ def main(
         trajectories = discover_trajectories(run_dir)
 
         if not trajectories:
-            err_console.print(f"[yellow]Warning: No trajectories in {run_dir}[/yellow]")
+            err_console.print(
+                f"[yellow]Warning: No trajectories in {run_dir}[/yellow]"
+            )
             continue
 
         # Filter problems if specified
         if problems:
-            trajectories = {k: v for k, v in trajectories.items() if k in problems}
+            trajectories = {
+                k: v for k, v in trajectories.items() if k in problems
+            }
 
         if not trajectories:
-            err_console.print(f"[yellow]Warning: No matching problems in {run_dir}[/yellow]")
+            err_console.print(
+                f"[yellow]Warning: No matching problems in {run_dir}[/yellow]"
+            )
             continue
 
         run_results: dict[str, Any] = {"problems": {}, "checkpoints": []}
@@ -1438,7 +1643,9 @@ def main(
                     if agent:
                         agent_type = AgentType(agent)
                     else:
-                        agent_type = TrajectoryParser.detect_agent_type(jsonl_path)
+                        agent_type = TrajectoryParser.detect_agent_type(
+                            jsonl_path
+                        )
 
                     # Get appropriate parser
                     parser: TrajectoryParser
@@ -1447,7 +1654,9 @@ def main(
                     else:
                         parser = CodexParser()
 
-                    metrics = parser.parse(jsonl_path, problem_name, checkpoint_name)
+                    metrics = parser.parse(
+                        jsonl_path, problem_name, checkpoint_name
+                    )
 
                     # Load evaluation result
                     checkpoint_dir = jsonl_path.parent.parent
@@ -1465,7 +1674,9 @@ def main(
                     )
 
             if checkpoint_metrics:
-                run_results["problems"][problem_name] = aggregate_checkpoints(checkpoint_metrics)
+                run_results["problems"][problem_name] = aggregate_checkpoints(
+                    checkpoint_metrics
+                )
 
         run_results["summary"] = aggregate_problems(run_results["problems"])
 
@@ -1491,7 +1702,9 @@ def main(
         for run_name, results in all_results.items():
             if results.get("summary"):
                 console.print()
-                console.print(render_summary_table(results["summary"], run_name))
+                console.print(
+                    render_summary_table(results["summary"], run_name)
+                )
 
 
 if __name__ == "__main__":

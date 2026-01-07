@@ -7,20 +7,26 @@ pricing:
   cache_write: 0.75
 aliases: []
 
+# Endpoints are resolved from the CLI provider, not this config's provider.
+# Use --model zhipu-coding-plan/glm-4.7 to use ZAI coding plan endpoints.
 agent_specific:
   mini_swe:
+    endpoint: openai
     model_name: openai/glm-4.7
     model_class: litellm
-    api_base: https://api.z.ai/api/coding/paas/v4
     thinking_enabled: true
 
   claude_code:
-    base_url: https://api.z.ai/api/anthropic
+    endpoint: anthropic
     env_overrides:
       ANTHROPIC_DEFAULT_SONNET_MODEL: glm-4.7
       ANTHROPIC_DEFAULT_OPUS_MODEL: glm-4.7
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: glm-4.5-air
 
   opencode:
+    endpoint: openai
+    provider_name: zai-coding-plan
+    model: glm-4.7
     config:
       "$schema": "https://opencode.ai/config.json"
       provider:
@@ -32,8 +38,6 @@ agent_specific:
                   type: "enabled"
                 stream_options:
                   include_usage: true
-    model: glm-4.7
-    provider: zai-coding-plan
     thinking_enabled: true
 
   codex:

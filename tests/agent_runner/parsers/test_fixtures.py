@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 
 def get_claude_init() -> dict:
     """Get realistic Claude Code init message."""

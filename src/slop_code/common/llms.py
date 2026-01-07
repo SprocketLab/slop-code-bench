@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import typing as tp
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import yaml
 from pydantic import BaseModel
@@ -13,6 +13,9 @@ from pydantic import ValidationError
 from pydantic import model_validator
 
 from slop_code.logging import get_logger
+
+if TYPE_CHECKING:
+    from slop_code.agent_runner.credentials import EndpointDefinition
 
 ThinkingPreset = tp.Literal["none", "disabled", "low", "medium", "high"]
 
@@ -201,6 +204,37 @@ class ModelDefinition(BaseModel):
         if agent_type is None:
             return None
         return self.agent_specific.get(agent_type)
+
+    def get_agent_endpoint(
+        self, agent_type: str, provider_override: str | None = None
+    ) -> EndpointDefinition | None:
+        """Get endpoint for agent from provider, based on agent_specific.endpoint.
+
+        Looks up the endpoint name from agent_specific settings, then resolves
+        it against the provider's endpoint definitions.
+
+        Args:
+            agent_type: Agent type key (e.g., "claude_code", "mini_swe")
+            provider_override: Optional provider to use instead of model's default.
+                This allows CLI provider (e.g., zhipu-coding-plan) to override
+                the model config's provider (e.g., zhipu).
+
+        Returns:
+            EndpointDefinition if found, None otherwise
+        """
+        from slop_code.agent_runner.credentials import ProviderCatalog
+
+        settings = self.get_agent_settings(agent_type)
+        if not settings or "endpoint" not in settings:
+            return None
+
+        endpoint_name = settings["endpoint"]
+        provider_name = provider_override or self.provider
+        provider_def = ProviderCatalog.get(provider_name)
+        if provider_def is None:
+            return None
+
+        return provider_def.get_endpoint(endpoint_name)
 
 
 class ModelCatalog:

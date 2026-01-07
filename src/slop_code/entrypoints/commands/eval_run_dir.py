@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -19,6 +20,7 @@ from slop_code.entrypoints.commands import common
 from slop_code.entrypoints.config import loader as config_loader
 from slop_code.entrypoints.evaluation.metrics import update_results_jsonl
 from slop_code.entrypoints.utils import display_and_save_summary
+from slop_code.evaluation import EVALUATION_SCHEMA_VERSION
 from slop_code.evaluation import ProblemConfig
 from slop_code.evaluation import get_available_problems
 from slop_code.logging import get_logger
@@ -26,8 +28,137 @@ from slop_code.logging import get_logger
 logger = get_logger(__name__)
 
 
+REQUIRED_EVAL_FIELDS = [
+    "problem_name",
+    "problem_version",
+    "checkpoint_name",
+    "checkpoint_version",
+    "tests",
+    "pass_counts",
+    "total_counts",
+    "pytest_exit_code",
+    "pytest_collected",
+    "infrastructure_failure",
+]
+
+REQUIRED_EVAL_DIR_FILES = ["stdout.txt", "stderr.txt", "report.json"]
+
+
+def _is_evaluation_schema_current(checkpoint_dir: Path) -> bool:
+    """Check if evaluation.json has current schema version and evaluation/ dir is valid."""
+    eval_path = checkpoint_dir / "evaluation.json"
+    eval_dir = checkpoint_dir / "evaluation"
+
+    if not eval_path.exists():
+        return False
+
+    try:
+        with eval_path.open() as f:
+            data = json.load(f)
+
+        # Check schema version
+        schema_version = data.get("schema_version")
+        if schema_version is None or schema_version < EVALUATION_SCHEMA_VERSION:
+            return False
+
+        # Check required fields exist
+        if not all(field in data for field in REQUIRED_EVAL_FIELDS):
+            return False
+
+        # Check evaluation/ directory has required files
+        if not eval_dir.exists() or not eval_dir.is_dir():
+            return False
+
+        return all((eval_dir / f).exists() for f in REQUIRED_EVAL_DIR_FILES)
+    except (OSError, json.JSONDecodeError):
+        return False
+
+
+def _can_upgrade_evaluation_schema(checkpoint_dir: Path) -> bool:
+    """Check if evaluation.json can be upgraded by just adding schema_version.
+
+    Returns True if evaluation.json exists with all required fields but lacks
+    schema_version (or has an older version), and the evaluation/ directory
+    has all required files.
+    """
+    eval_path = checkpoint_dir / "evaluation.json"
+    eval_dir = checkpoint_dir / "evaluation"
+
+    if not eval_path.exists():
+        return False
+
+    try:
+        with eval_path.open() as f:
+            data = json.load(f)
+
+        # Check required fields exist (excluding schema_version)
+        if not all(field in data for field in REQUIRED_EVAL_FIELDS):
+            return False
+
+        # Check evaluation/ directory has required files
+        if not eval_dir.exists() or not eval_dir.is_dir():
+            return False
+
+        if not all((eval_dir / f).exists() for f in REQUIRED_EVAL_DIR_FILES):
+            return False
+
+        # Upgradeable if schema_version is missing or outdated
+        schema_version = data.get("schema_version")
+        return (
+            schema_version is None or schema_version < EVALUATION_SCHEMA_VERSION
+        )
+    except (OSError, json.JSONDecodeError):
+        return False
+
+
+def _upgrade_evaluation_schema(checkpoint_dir: Path) -> bool:
+    """Add or update schema_version in evaluation.json.
+
+    Returns True if successful, False otherwise.
+    """
+    eval_path = checkpoint_dir / "evaluation.json"
+
+    try:
+        with eval_path.open() as f:
+            data = json.load(f)
+
+        data["schema_version"] = EVALUATION_SCHEMA_VERSION
+
+        with eval_path.open("w") as f:
+            json.dump(data, f, indent=2)
+
+        return True
+    except (OSError, json.JSONDecodeError):
+        return False
+
+
+def _try_upgrade_problem_evaluations(problem_dir: Path) -> bool:
+    """Try to upgrade all checkpoint evaluations in a problem directory.
+
+    Returns True if all checkpoints were successfully upgraded, False otherwise.
+    """
+    checkpoint_dirs = [
+        d
+        for d in problem_dir.iterdir()
+        if d.is_dir() and d.name.startswith("checkpoint_")
+    ]
+    if not checkpoint_dirs:
+        return False
+
+    all_upgraded = True
+    for checkpoint_dir in checkpoint_dirs:
+        if _can_upgrade_evaluation_schema(checkpoint_dir):
+            if not _upgrade_evaluation_schema(checkpoint_dir):
+                all_upgraded = False
+        elif not _is_evaluation_schema_current(checkpoint_dir):
+            # Not upgradeable and not current - can't upgrade this problem
+            all_upgraded = False
+
+    return all_upgraded
+
+
 def _is_problem_fully_evaluated(problem_dir: Path) -> bool:
-    """Check if all checkpoints in a problem directory have evaluation.json."""
+    """Check if all checkpoints have valid, current-schema evaluation.json."""
     checkpoint_dirs = sorted(
         d
         for d in problem_dir.iterdir()
@@ -35,7 +166,36 @@ def _is_problem_fully_evaluated(problem_dir: Path) -> bool:
     )
     if not checkpoint_dirs:
         return False
-    return all((d / "evaluation.json").exists() for d in checkpoint_dirs)
+    return all(
+        (d / "evaluation.json").exists() and _is_evaluation_schema_current(d)
+        for d in checkpoint_dirs
+    )
+
+
+def _has_outdated_evaluation_schema(problem_dir: Path) -> bool:
+    """Check if problem has evaluation.json files that are outdated.
+
+    Returns True if at least one checkpoint has evaluation.json but with
+    outdated schema (missing version or older version number).
+    """
+    checkpoint_dirs = [
+        d
+        for d in problem_dir.iterdir()
+        if d.is_dir() and d.name.startswith("checkpoint_")
+    ]
+    if not checkpoint_dirs:
+        return False
+
+    for checkpoint_dir in checkpoint_dirs:
+        eval_path = checkpoint_dir / "evaluation.json"
+        if not eval_path.exists():
+            continue
+
+        # Has evaluation.json but check if schema is current
+        if not _is_evaluation_schema_current(checkpoint_dir):
+            return True
+
+    return False
 
 
 def _write_problem_and_checkpoint_configs(
@@ -240,20 +400,46 @@ def evaluate_agent_run(
                 problem_dir=str(problem_dir),
             )
             continue
-        if auto_skip_evaluated and _is_problem_fully_evaluated(problem_dir):
-            source_config = valid_problems[problem_name]
-            if _has_evaluation_config_changed(problem_dir, source_config):
-                logger.info(
-                    "Re-evaluating due to config change",
-                    problem_name=problem_name,
-                )
-            else:
-                logger.info(
-                    "Skipping already-evaluated problem",
-                    problem_name=problem_name,
-                )
-                skipped_count += 1
-                continue
+        if auto_skip_evaluated:
+            # Check if fully evaluated with current schema
+            if _is_problem_fully_evaluated(problem_dir):
+                source_config = valid_problems[problem_name]
+                if _has_evaluation_config_changed(problem_dir, source_config):
+                    logger.info(
+                        "Re-evaluating due to config change",
+                        problem_name=problem_name,
+                    )
+                else:
+                    logger.info(
+                        "Skipping already-evaluated problem",
+                        problem_name=problem_name,
+                    )
+                    skipped_count += 1
+                    continue
+            # Try to upgrade schema if evaluation exists but is outdated
+            elif _has_outdated_evaluation_schema(problem_dir):
+                if _try_upgrade_problem_evaluations(problem_dir):
+                    # Successfully upgraded - now check if we can skip
+                    source_config = valid_problems[problem_name]
+                    if _has_evaluation_config_changed(
+                        problem_dir, source_config
+                    ):
+                        logger.info(
+                            "Re-evaluating due to config change",
+                            problem_name=problem_name,
+                        )
+                    else:
+                        logger.info(
+                            "Upgraded evaluation schema and skipping",
+                            problem_name=problem_name,
+                        )
+                        skipped_count += 1
+                        continue
+                else:
+                    logger.info(
+                        "Re-evaluating due to incompatible evaluation schema",
+                        problem_name=problem_name,
+                    )
         logger.info(
             "Adding problem to evaluation",
             problem_name=problem_name,

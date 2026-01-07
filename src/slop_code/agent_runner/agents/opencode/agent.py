@@ -9,24 +9,24 @@ import tempfile
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import Field, JsonValue
+from pydantic import Field
+from pydantic import JsonValue
 
-from slop_code.agent_runner.agent import Agent, AgentConfigBase
+from slop_code.agent_runner.agent import Agent
+from slop_code.agent_runner.agent import AgentConfigBase
 from slop_code.agent_runner.agents.utils import HOME_PATH
-from slop_code.agent_runner.credentials import (
-    CredentialType,
-    ProviderCredential,
-)
-from slop_code.agent_runner.models import AgentCostLimits, AgentError
+from slop_code.agent_runner.credentials import CredentialType
+from slop_code.agent_runner.credentials import ProviderCredential
+from slop_code.agent_runner.models import AgentCostLimits
+from slop_code.agent_runner.models import AgentError
 from slop_code.agent_runner.registry import register_agent
 from slop_code.common import deep_merge as _deep_merge
-from slop_code.common.llms import (
-    APIPricing,
-    ModelDefinition,
-    ThinkingPreset,
-    TokenUsage,
-)
-from slop_code.execution import Session, StreamingRuntime
+from slop_code.common.llms import APIPricing
+from slop_code.common.llms import ModelDefinition
+from slop_code.common.llms import ThinkingPreset
+from slop_code.common.llms import TokenUsage
+from slop_code.execution import Session
+from slop_code.execution import StreamingRuntime
 
 STEP_FINISH_TYPE = "step_finish"
 
@@ -105,6 +105,10 @@ class OpenCodeAgent(Agent):
         # Get agent-specific settings from model catalog
         agent_settings = model.get_agent_settings("opencode") or {}
 
+        # Get endpoint from provider if specified in agent_specific
+        # Use credential.provider (from CLI) to allow provider override
+        endpoint = model.get_agent_endpoint("opencode", credential.provider)
+
         # Get provider name from agent_specific (required)
         provider = agent_settings.get("provider_name")
         if provider is None:
@@ -122,6 +126,19 @@ class OpenCodeAgent(Agent):
             opencode_config = _deep_merge(
                 agent_settings["config"], opencode_config
             )
+
+        # Inject endpoint api_base into provider config if endpoint is specified
+        if endpoint:
+            # Ensure provider config section exists
+            if "provider" not in opencode_config:
+                opencode_config["provider"] = {}
+            if provider not in opencode_config["provider"]:
+                opencode_config["provider"][provider] = {}
+            # Set base_url from endpoint if not already set
+            if "base_url" not in opencode_config["provider"][provider]:
+                opencode_config["provider"][provider]["base_url"] = (
+                    endpoint.api_base
+                )
 
         # Merge env (agent_specific base, YAML env overrides)
         env = dict(config.env)

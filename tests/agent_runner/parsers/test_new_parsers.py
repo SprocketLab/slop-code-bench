@@ -4,24 +4,18 @@ from pathlib import Path
 
 import pytest
 
-from slop_code.agent_runner.trajectory import (
-    AgentStep,
-    ThinkingStep,
-    ToolUseStep,
-    Trajectory,
-    UserStep,
-)
-from slop_code.agent_runner.trajectory_parsing import (
-    parse_trajectory,
-    ParseError,
-)
 from slop_code.agent_runner.agents.claude_code.parser import ClaudeCodeParser
 from slop_code.agent_runner.agents.codex.parser import CodexParser
 from slop_code.agent_runner.agents.gemini.parser import GeminiParser
 from slop_code.agent_runner.agents.miniswe.parser import MinisweParser
 from slop_code.agent_runner.agents.opencode.parser import OpenCodeParser
 from slop_code.agent_runner.agents.openhands.parser import OpenHandsParser
-
+from slop_code.agent_runner.trajectory import AgentStep
+from slop_code.agent_runner.trajectory import ThinkingStep
+from slop_code.agent_runner.trajectory import ToolUseStep
+from slop_code.agent_runner.trajectory import UserStep
+from slop_code.agent_runner.trajectory_parsing import ParseError
+from slop_code.agent_runner.trajectory_parsing import parse_trajectory
 
 # Path to test fixtures
 FIXTURES_DIR = Path(__file__).parent / "fixtures"

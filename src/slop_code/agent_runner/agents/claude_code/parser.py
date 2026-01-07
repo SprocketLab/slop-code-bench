@@ -5,17 +5,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from slop_code.agent_runner.trajectory import (
-    AgentStep,
-    ThinkingStep,
-    ToolUseStep,
-    Trajectory,
-    TrajectoryStep,
-)
-from slop_code.agent_runner.trajectory_parsing import (
-    ParseError,
-    TrajectoryParser,
-)
+from slop_code.agent_runner.trajectory import AgentStep
+from slop_code.agent_runner.trajectory import ThinkingStep
+from slop_code.agent_runner.trajectory import ToolUseStep
+from slop_code.agent_runner.trajectory import Trajectory
+from slop_code.agent_runner.trajectory import TrajectoryStep
+from slop_code.agent_runner.trajectory_parsing import ParseError
+from slop_code.agent_runner.trajectory_parsing import TrajectoryParser
 
 
 class ClaudeCodeParser(TrajectoryParser):

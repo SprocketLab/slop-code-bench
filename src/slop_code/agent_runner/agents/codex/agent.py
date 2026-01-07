@@ -11,30 +11,24 @@ from pathlib import Path
 from jinja2 import Template
 from pydantic import Field
 
-from slop_code.agent_runner.agent import Agent, AgentConfigBase
-from slop_code.agent_runner.agents.cli_utils import (
-    AgentCommandResult,
-    stream_cli_command,
-)
+from slop_code.agent_runner.agent import Agent
+from slop_code.agent_runner.agent import AgentConfigBase
+from slop_code.agent_runner.agents.cli_utils import AgentCommandResult
+from slop_code.agent_runner.agents.cli_utils import stream_cli_command
 from slop_code.agent_runner.agents.utils import HOME_PATH
-from slop_code.agent_runner.credentials import (
-    CredentialType,
-    ProviderCredential,
-)
-from slop_code.agent_runner.models import AgentCostLimits, AgentError
+from slop_code.agent_runner.credentials import CredentialType
+from slop_code.agent_runner.credentials import ProviderCredential
+from slop_code.agent_runner.models import AgentCostLimits
+from slop_code.agent_runner.models import AgentError
 from slop_code.agent_runner.registry import register_agent
-from slop_code.common.llms import (
-    APIPricing,
-    ModelDefinition,
-    ThinkingPreset,
-    TokenUsage,
-)
-from slop_code.execution import (
-    DockerEnvironmentSpec,
-    EnvironmentSpec,
-    Session,
-    StreamingRuntime,
-)
+from slop_code.common.llms import APIPricing
+from slop_code.common.llms import ModelDefinition
+from slop_code.common.llms import ThinkingPreset
+from slop_code.common.llms import TokenUsage
+from slop_code.execution import DockerEnvironmentSpec
+from slop_code.execution import EnvironmentSpec
+from slop_code.execution import Session
+from slop_code.execution import StreamingRuntime
 from slop_code.logging import get_logger
 
 log = get_logger(__name__)
