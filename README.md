@@ -126,12 +126,10 @@ This is early-stage software. Your contributions will shape its direction.
 
 If you found this useful, please cite us as:
 ```bibtex
-@misc{slopcodebench,
-  title        = {SlopCodeBench: Measuring Code Erosion Under Iterative Specification Refinement},
-  author       = {Gabriel Orlanski and Devjeet Roy and Alexander Yun and 
-                  Changho Shin and Alex Gu and Albert Ge and 
-                  Dyah Adila and Aws Albarghouthi and Frederic Sala},
-  year         = {2025},
-  howpublished = {\url{https://github.com/SprocketLab/slop-code-bench}},
+@software{Orlanski_SlopCodeBench_Measuring_Code,
+ author = {Orlanski, Gabriel and Roy, Devjeet and Yun, Alexander and Shin, Changho and Gu, Alex and Ge, Albert and Adila, Dyah and Albarghouthi, Aws and Sala, Frederic},
+ license = {MIT},
+ title = {{SlopCodeBench: Measuring Code Erosion Under Iterative Specification Refinement}},
+ url = {https://github.com/SprocketLab/slop-code-bench}
 }
 ```
