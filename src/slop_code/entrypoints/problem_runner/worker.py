@@ -139,6 +139,9 @@ def run_agent_on_problem(
         skip_evaluation=config.disable_evaluation,
         verbose=config.verbosity > 0,
         image=config.image,
+        agent_type=config.agent_config.type,
+        agent_version=config.agent_config.version,
+        model_name=config.model_def.name,
     )
 
     return runner.run_agent(

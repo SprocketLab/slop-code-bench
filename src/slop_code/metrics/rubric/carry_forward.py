@@ -26,12 +26,34 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from slop_code.common import DIFF_FILENAME
 from slop_code.common import RUBRIC_FILENAME
 from slop_code.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def _to_int_or_none(value: Any) -> int | None:
+    """Convert value to int, handling strings and None.
+
+    LLM APIs sometimes return JSON with numeric values as strings.
+    This ensures we always get proper integers for line numbers.
+
+    Args:
+        value: Value to convert (may be int, str, or None).
+
+    Returns:
+        Integer value or None if conversion fails or value is None.
+    """
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
 
 HUNK_HEADER_PATTERN = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 
@@ -235,7 +257,7 @@ def _grade_matches(
         if new_grade.get("file_name") != file_name:
             continue
 
-        new_grade_start = new_grade.get("start", 0)
+        new_grade_start = _to_int_or_none(new_grade.get("start")) or 0
         if abs(new_grade_start - new_start) <= tolerance:
             return True
 
@@ -287,8 +309,8 @@ def carry_forward_grades(
     )
 
     for grade in file_prev_grades:
-        start = grade.get("start")
-        end = grade.get("end")
+        start = _to_int_or_none(grade.get("start"))
+        end = _to_int_or_none(grade.get("end"))
 
         if start is None:
             continue

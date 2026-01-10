@@ -172,3 +172,18 @@ class AgentRunSpec(BaseModel):
         bool,
         Field(description="Whether to compress agent artifacts into a tar.gz"),
     ] = False
+    agent_type: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Agent type identifier for prompt templates",
+        ),
+    ] = None
+    agent_version: Annotated[
+        str | None,
+        Field(default=None, description="Agent version for prompt templates"),
+    ] = None
+    model_name: Annotated[
+        str | None,
+        Field(default=None, description="Model name for prompt templates"),
+    ] = None

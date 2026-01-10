@@ -393,7 +393,7 @@ class TestWasteEdgeCases:
         )
 
         symbols = get_symbols(source)
-        metrics = calculate_waste_metrics(source, symbols)
+        calculate_waste_metrics(source, symbols)
 
         # decorated is called once
 
@@ -409,7 +409,7 @@ class TestWasteEdgeCases:
         )
 
         symbols = get_symbols(source)
-        metrics = calculate_waste_metrics(source, symbols)
+        calculate_waste_metrics(source, symbols)
 
         # Just ensure no crashes
 

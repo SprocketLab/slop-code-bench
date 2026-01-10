@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "SlopCodeBench: Measuring Code Erosion Under Iterative Specification Refinement"
+type: software
+authors:
+  - family-names: Orlanski
+    given-names: Gabriel
+  - family-names: Roy
+    given-names: Devjeet
+  - family-names: Yun
+    given-names: Alexander
+  - family-names: Shin
+    given-names: Changho
+  - family-names: Gu
+    given-names: Alex
+  - family-names: Ge
+    given-names: Albert
+  - family-names: Adila
+    given-names: Dyah
+  - family-names: Albarghouthi
+    given-names: Aws
+  - family-names: Sala
+    given-names: Frederic
+year: 2025
+url: "https://www.scbench.ai"
+repository-code: "https://github.com/SprocketLab/slop-code-bench"
+license: MIT
+keywords:
+  - coding-agents
+  - benchmark
+  - evaluation
+  - specification-refinement
+  - code-quality
+abstract: >-
+  SlopCodeBench evaluates coding agents under iterative specification
+  refinement: the agent implements a spec, then extends its own code as
+  the spec changes. This exposes behaviors that single-shot benchmarks
+  cannot measure, including path dependence, non-convergence, and
+  trade-offs between explicit handling and structural stability.

@@ -135,6 +135,65 @@ def test_get_task_for_checkpoint_renders_prompt_and_writes_file(
     )
 
 
+def test_get_task_for_checkpoint_includes_agent_info_in_context(
+    tmp_path: Path,
+) -> None:
+    """Test that agent_type, agent_version, and model_name are available in templates."""
+    spec_text = "Test spec"
+    environment = Mock()
+    environment.format_entry_file.return_value = "main.py"
+    environment.get_command.return_value = "python main.py"
+
+    template = (
+        "Agent: {{ agent_type }} v{{ agent_version }} | "
+        "Model: {{ model_name }} | "
+        "{{ spec }}"
+    )
+
+    prompt = runner.get_task_for_checkpoint(
+        checkpoint_name="checkpoint_1",
+        spec_text=spec_text,
+        template=template,
+        entry_file="main.py",
+        environment=environment,
+        is_first_checkpoint=True,
+        output_path=tmp_path,
+        agent_type="claude_code",
+        agent_version="2.0.51",
+        model_name="opus-4.5",
+    )
+
+    expected = "Agent: claude_code v2.0.51 | Model: opus-4.5 | Test spec"
+    assert prompt == expected
+
+
+def test_get_task_for_checkpoint_handles_none_agent_version(
+    tmp_path: Path,
+) -> None:
+    """Test that None agent_version renders as empty string."""
+    environment = Mock()
+    environment.format_entry_file.return_value = "main.py"
+    environment.get_command.return_value = "python main.py"
+
+    template = "Agent: {{ agent_type }}{% if agent_version %}-{{ agent_version }}{% endif %}"
+
+    prompt = runner.get_task_for_checkpoint(
+        checkpoint_name="checkpoint_1",
+        spec_text="spec",
+        template=template,
+        entry_file="main.py",
+        environment=environment,
+        is_first_checkpoint=True,
+        output_path=tmp_path,
+        agent_type="gemini",
+        agent_version=None,
+        model_name="gemini-2.0",
+    )
+
+    # agent_version is converted to "" when None, so conditional is false
+    assert prompt == "Agent: gemini"
+
+
 def test_create_agent_session_uses_static_assets_and_environment() -> None:
     problem_config = Mock()
     problem_config.path = Path("/problem")

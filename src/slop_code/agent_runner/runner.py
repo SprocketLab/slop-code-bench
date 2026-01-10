@@ -125,6 +125,9 @@ def get_task_for_checkpoint(
     *,
     is_first_checkpoint: bool,
     output_path: Path,
+    agent_type: str | None = None,
+    agent_version: str | None = None,
+    model_name: str | None = None,
 ) -> str:
     """Generate the task prompt for a specific checkpoint.
 
@@ -138,6 +141,9 @@ def get_task_for_checkpoint(
         environment: Environment specification for command generation
         is_first_checkpoint: Whether this is the first checkpoint
         output_path: Directory where the prompt should be saved
+        agent_type: Agent type identifier for prompt templates
+        agent_version: Agent version for prompt templates
+        model_name: Model name for prompt templates
 
     Returns:
         Rendered prompt string for the agent
@@ -147,9 +153,15 @@ def get_task_for_checkpoint(
         checkpoint=checkpoint_name,
         is_first=is_first_checkpoint,
     )
+    context = {
+        "is_continuation": not is_first_checkpoint,
+        "agent_type": agent_type,
+        "agent_version": agent_version or "",
+        "model_name": model_name,
+    }
     prompt = common.render_prompt(
         spec_text=spec_text,
-        context={"is_continuation": not is_first_checkpoint},
+        context=context,
         prompt_template=template,
         entry_file=environment.format_entry_file(entry_file),
         entry_command=environment.get_command(entry_file, is_agent_run=True),
@@ -331,6 +343,9 @@ def run_checkpoint(
     *,
     is_first_checkpoint: bool = True,
     compress_artifacts: bool = False,
+    agent_type: str | None = None,
+    agent_version: str | None = None,
+    model_name: str | None = None,
 ) -> tuple[Path, CheckpointInferenceResult | None, SnapshotDiff]:
     task = get_task_for_checkpoint(
         checkpoint_name=checkpoint.name,
@@ -340,6 +355,9 @@ def run_checkpoint(
         environment=environment,
         is_first_checkpoint=is_first_checkpoint,
         output_path=save_dir,
+        agent_type=agent_type,
+        agent_version=agent_version,
+        model_name=model_name,
     )
     snapshot_dir, result, diff = _run_inference(
         checkpoint_name=checkpoint.name,
@@ -628,6 +646,9 @@ class AgentRunner:
             replay_path=self.replay_path,
             is_first_checkpoint=is_first_checkpoint,
             compress_artifacts=compress,
+            agent_type=self.run_spec.agent_type,
+            agent_version=self.run_spec.agent_version,
+            model_name=self.run_spec.model_name,
         )
         reporting.save_agent_checkpoint_info(
             checkpoint_save_dir,
