@@ -150,13 +150,14 @@ def compute_mass_metrics(
     Returns:
         Dict with mass metrics:
         - mass.{metric}: Total mass for each metric type
+        - mass.{metric}_concentration: Gini coefficient of mass distribution
         - mass.top50_count, mass.top75_count, mass.top90_count: Distribution
         - mass.high_cc: Mass in functions with CC > 10
         - mass.high_cc_pct: Percentage of mass in high CC functions
     """
-    # Collect mass per metric
+    # Collect mass per metric (track individual masses for concentration)
     mass_totals: dict[str, float] = dict.fromkeys(MASS_METRICS, 0.0)
-    complexity_masses: list[float] = []
+    mass_lists: dict[str, list[float]] = {m: [] for m in MASS_METRICS}
     high_cc_mass = 0.0
 
     for sym in symbol_iter:
@@ -172,20 +173,23 @@ def compute_mass_metrics(
             baseline = BASELINES.get(metric, 0)
             mass = calc_mass(value, statements, baseline)
             mass_totals[metric] += mass
+            mass_lists[metric].append(mass)
 
-            # Track complexity specifically for distribution
-            if metric == "complexity":
-                complexity_masses.append(mass)
-                if complexity > HIGH_CC_THRESHOLD:
-                    high_cc_mass += mass
+            # Track high CC mass for complexity metric
+            if metric == "complexity" and complexity > HIGH_CC_THRESHOLD:
+                high_cc_mass += mass
 
     total_complexity_mass = mass_totals["complexity"]
+    complexity_masses = mass_lists["complexity"]
 
     # Build result with clean key names
     result: dict[str, Any] = {}
     for metric in MASS_METRICS:
         key = KEY_NAMES[metric]
         result[f"mass.{key}"] = round(mass_totals[metric], 2)
+        result[f"mass.{key}_concentration"] = round(
+            _compute_gini_coefficient(mass_lists[metric]), 3
+        )
 
     # Add distribution metrics
     result.update(_compute_top_n_distribution(complexity_masses))

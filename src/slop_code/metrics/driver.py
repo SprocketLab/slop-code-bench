@@ -175,21 +175,34 @@ def _normalized_complexity(cc_values: list[int], max_cc: int = 50) -> float:
     return (sum_sq - best_sum_sq) / (worst_sum_sq - best_sum_sq)
 
 
-def _concentration_score(cc_values: list[int]) -> float:
-    """Compute concentration score (0 = uniform, 1 = all in one function)."""
-    if len(cc_values) <= 1:
-        return 0.0
-    total = sum(cc_values)
-    if total == 0:
+def _concentration_score(values: list[int]) -> float:
+    """Compute Gini coefficient for value distribution.
+
+    Measures inequality in distribution:
+    - 0 = perfectly uniform (all functions have equal value)
+    - 1 = maximum concentration (all value in one function)
+
+    Args:
+        values: List of metric values (e.g., complexity, nesting depth).
+
+    Returns:
+        Gini coefficient in [0, 1].
+    """
+    non_zero = [v for v in values if v > 0]
+
+    if len(non_zero) <= 1:
         return 0.0
 
-    n = len(cc_values)
-    shares = [cc / total for cc in cc_values]
-    hhi = sum(s**2 for s in shares)
+    sorted_vals = sorted(non_zero)
+    n = len(sorted_vals)
+    total = sum(sorted_vals)
 
-    # Normalize: HHI ranges from 1/n to 1
-    min_hhi = 1 / n
-    return (hhi - min_hhi) / (1 - min_hhi)
+    if total < 1e-9:
+        return 0.0
+
+    # Gini formula: (2 * sum(i * val[i]) - (n+1) * total) / (n * total)
+    weighted_sum = sum((i + 1) * val for i, val in enumerate(sorted_vals))
+    return (2 * weighted_sum - (n + 1) * total) / (n * total)
 
 
 def _compute_function_stats(

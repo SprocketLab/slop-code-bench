@@ -330,7 +330,8 @@ def compute_composite_scores(
         lint_per_loc = chkpt.get("lint_per_loc", 0.0) or 0.0
         if total_callables > 0:
             high_complex = (
-                chkpt.get("cc_high_count", 0) + chkpt.get("cc_extreme_count", 0)
+                chkpt.get("cc_high_count", 0)
+                + chkpt.get("cc_extreme_count", 0) * 2
             ) / total_callables
             erosion_values.append(high_complex + lint_per_loc)
 
