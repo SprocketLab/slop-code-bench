@@ -146,16 +146,19 @@ def compute_progress_bins(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def compute_progress_metric(df: pd.DataFrame, metric_col: str) -> pd.DataFrame:
+def compute_progress_metric(
+    df: pd.DataFrame, metric_col: str, num_bins: int = 5
+) -> pd.DataFrame:
     """Compute progress % and aggregate metric by model.
 
     Progress = checkpoint_idx / total_checkpoints for that problem.
-    Bins into 5 buckets (0.2, 0.4, 0.6, 0.8, 1.0) and averages.
+    Bins into buckets and averages.
     If multiple checkpoints from same problem fall in same bin, take the later one.
 
     Args:
         df: Filtered checkpoints DataFrame with 'cp_num' column
         metric_col: Column name to aggregate
+        num_bins: Number of progress bins (default 5 = 20% bins, use 10 for 10% bins)
 
     Returns:
         DataFrame with columns: model, progress_bin, {metric_col}
@@ -164,8 +167,11 @@ def compute_progress_metric(df: pd.DataFrame, metric_col: str) -> pd.DataFrame:
     df = df.copy()
     df["max_cp"] = df["problem"].map(max_cp)
     df["progress"] = df["cp_num"] / df["max_cp"]
-    df["progress_bin"] = np.ceil(df["progress"] * 5) / 5  # 20% bins
-    df.loc[df["progress_bin"] == 0, "progress_bin"] = 0.2  # Move 0 to first bin
+    bin_size = 1.0 / num_bins
+    df["progress_bin"] = np.ceil(df["progress"] * num_bins) / num_bins
+    df.loc[df["progress_bin"] == 0, "progress_bin"] = (
+        bin_size  # Move 0 to first bin
+    )
 
     # If multiple checkpoints from same problem in same bin, take the later one
     df = df.sort_values("cp_num", ascending=False)

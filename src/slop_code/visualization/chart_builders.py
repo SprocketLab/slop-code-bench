@@ -288,6 +288,7 @@ class ProgressLineChartConfig:
         title: Chart title
         width: Figure width
         height: Figure height
+        num_bins: Number of progress bins (default 5 = 20% bins)
     """
 
     metric_col: str
@@ -295,6 +296,7 @@ class ProgressLineChartConfig:
     title: str
     width: int = GRAPH_WIDTH
     height: int = GRAPH_HEIGHT
+    num_bins: int = 5
 
 
 class ProgressLineChartBuilder:
@@ -325,7 +327,9 @@ class ProgressLineChartBuilder:
             color_map = MODEL_COLORS
 
         high = filter_high_thinking_checkpoints(checkpoints)
-        progress_data = compute_progress_metric(high, self.config.metric_col)
+        progress_data = compute_progress_metric(
+            high, self.config.metric_col, num_bins=self.config.num_bins
+        )
 
         fig = go.Figure()
 

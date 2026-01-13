@@ -202,6 +202,12 @@ def _build_metrics_from_snapshot(
         "branches_concentration": functions["branches_concentration"],
         "control_mean": functions["control_mean"],
         "control_concentration": functions["control_concentration"],
+        # Size concentration (Gini for LOC and statements across functions)
+        "lines_concentration": functions.get("lines_concentration", 0.0),
+        "statements_mean": functions.get("statements_mean", 0.0),
+        "statements_concentration": functions.get(
+            "statements_concentration", 0.0
+        ),
         # AST-grep
         "ast_grep_violations": ast_grep["violations"],
         # Source file tracking

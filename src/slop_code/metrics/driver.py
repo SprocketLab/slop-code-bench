@@ -209,6 +209,7 @@ def _compute_function_stats(
     cc_values: list[int],
     depth_values: list[int],
     lines_values: list[int],
+    statements_values: list[int],
     control_blocks_values: list[int],
     branches_values: list[int],
     comparisons_values: list[int],
@@ -241,9 +242,17 @@ def _compute_function_stats(
     # Depth stats
     depth_max = max(depth_values) if depth_values else 0
 
-    # Lines stats
+    # Lines stats (LOC per function)
     lines_sum = sum(lines_values)
     lines_mean = statistics.mean(lines_values) if lines_values else 0.0
+    lines_concentration = _concentration_score(lines_values)
+
+    # Statements stats (statements per function)
+    statements_sum = sum(statements_values)
+    statements_mean = (
+        statistics.mean(statements_values) if statements_values else 0.0
+    )
+    statements_concentration = _concentration_score(statements_values)
 
     # Control blocks
     control_blocks_sum = sum(control_blocks_values)
@@ -280,6 +289,10 @@ def _compute_function_stats(
         depth_max=depth_max,
         lines_sum=lines_sum,
         lines_mean=lines_mean,
+        lines_concentration=lines_concentration,
+        statements_sum=statements_sum,
+        statements_mean=statements_mean,
+        statements_concentration=statements_concentration,
         control_blocks_sum=control_blocks_sum,
         # Distribution stats
         nesting_mean=nesting_mean,
@@ -392,6 +405,7 @@ def compute_aggregates(
     func_cc: list[int] = []
     func_depth: list[int] = []
     func_lines: list[int] = []
+    func_statements: list[int] = []
     func_control_blocks: list[int] = []
     func_branches: list[int] = []
     func_comparisons: list[int] = []
@@ -412,6 +426,7 @@ def compute_aggregates(
                 func_cc.append(sym.complexity)
                 func_depth.append(sym.max_nesting_depth)
                 func_lines.append(sym.lines)
+                func_statements.append(sym.statements)
                 func_control_blocks.append(sym.control_blocks)
                 func_branches.append(sym.branches)
                 func_comparisons.append(sym.comparisons)
@@ -426,6 +441,7 @@ def compute_aggregates(
         func_cc,
         func_depth,
         func_lines,
+        func_statements,
         func_control_blocks,
         func_branches,
         func_comparisons,

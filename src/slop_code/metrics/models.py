@@ -342,9 +342,14 @@ class FunctionStats(BaseModel):
     cc_concentration: float = 0.0
     # Depth stats
     depth_max: int = 0
-    # Lines stats
+    # Lines stats (LOC per function)
     lines_sum: int = 0
     lines_mean: float = 0.0
+    lines_concentration: float = 0.0
+    # Statements stats (statements per function)
+    statements_sum: int = 0
+    statements_mean: float = 0.0
+    statements_concentration: float = 0.0
     # Control blocks
     control_blocks_sum: int = 0
 
