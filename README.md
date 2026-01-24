@@ -4,6 +4,7 @@
   [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
   [![GitHub stars](https://img.shields.io/github/stars/SprocketLab/slop-code-bench)](https://github.com/SprocketLab/slop-code-bench/stargazers)
+  [![DOI](https://zenodo.org/badge/1118434028.svg)](https://doi.org/10.5281/zenodo.18357192)
 
   [🌐 Website](https://www.scbench.ai) | [📝 Blog Post](https://gabeorlanski.github.io/posts/slop-code-bench)
 </div>
