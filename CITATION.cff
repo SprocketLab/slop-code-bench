@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "SlopCodeBench: Measuring Code Erosion Under Iterative Specification Refinement"
-type: software
+type: Software
 authors:
   - family-names: Orlanski
     given-names: Gabriel
@@ -21,7 +21,8 @@ authors:
     given-names: Aws
   - family-names: Sala
     given-names: Frederic
-year: 2025
+doi: 10.5281/zenodo.18405900
+date-released: 2025-12-18
 url: "https://www.scbench.ai"
 repository-code: "https://github.com/SprocketLab/slop-code-bench"
 license: MIT
