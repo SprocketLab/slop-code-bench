@@ -884,6 +884,8 @@ def _create_task_config(
     live_progress: bool,
     image_name: str,
     resume: bool,
+    *,
+    concurrent_evaluation: bool = False,
 ) -> problem_runner.RunTaskConfig:
     """Create task configuration for problem execution.
 
@@ -921,6 +923,7 @@ def _create_task_config(
         verbosity=verbosity,
         debug=debug,
         disable_evaluation=not evaluate,
+        concurrent_evaluation=concurrent_evaluation,
         live_progress=live_progress,
         image=image_name,
         resume=resume,
@@ -1115,6 +1118,14 @@ def run_agent(
         True,  # noqa: FBT003
         "--evaluate/--no-evaluate",
         help="Whether to run evaluation",
+    ),
+    concurrent_evaluation: bool = typer.Option(  # noqa: FBT001, FBT002
+        False,  # noqa: FBT003
+        "--concurrent-evaluation/--no-concurrent-evaluation",
+        help="Evaluate each checkpoint concurrently with the next "
+        "checkpoint's solve (at most one solve + one eval at a time) so eval "
+        "doesn't block progress. Scores unchanged for the ANY_CASE pass "
+        "policy; cannot early-stop on test failures.",
     ),
     live_progress: bool = typer.Option(  # noqa: FBT001, FBT002
         True,  # noqa: FBT003
@@ -1406,6 +1417,7 @@ def run_agent(
         verbosity=ctx.obj.verbosity,
         debug=ctx.obj.debug,
         evaluate=evaluate,
+        concurrent_evaluation=concurrent_evaluation,
         live_progress=live_progress,
         image_name=image_name,
         resume=is_resuming,

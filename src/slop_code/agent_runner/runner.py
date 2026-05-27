@@ -470,6 +470,10 @@ class AgentRunner:
         )
         self.progress_thread: threading.Thread | None = None
         self.results: list[AgentCheckpointSummary] = []
+        # Concurrent-eval bookkeeping (eval overlaps the next solve).
+        # Guards record_checkpoint_result against the background eval thread.
+        self._metrics_lock = threading.Lock()
+        self._eval_reports: dict[str, CorrectnessResults] = {}
 
     @property
     def session(self) -> Session:
@@ -683,7 +687,9 @@ class AgentRunner:
         did_fail_tests = (
             summary.passed_policy is not None and not summary.passed_policy
         )
-        if self.run_spec.skip_evaluation:
+        if self.run_spec.skip_evaluation or self.run_spec.concurrent_evaluation:
+            # No inline eval results to gate on (eval runs concurrently with
+            # the next solve); agent errors / rate limits below still stop it.
             did_fail_tests = False
         if did_fail_tests and self.run_spec.pass_policy != PassPolicy.ANY_CASE:
             logger.info(
@@ -778,11 +784,19 @@ class AgentRunner:
                 )
                 self.metrics_tracker.state = AgentStateEnum.HIT_RATE_LIMITED
                 rate_limited = True
-            if self.run_spec.skip_evaluation or result is None:
-                # Record checkpoint with no evaluation for progress tracking
-                self.metrics_tracker.record_checkpoint_result(
-                    checkpoint.name, None
-                )
+            if (
+                self.run_spec.skip_evaluation
+                or self.run_spec.concurrent_evaluation
+                or result is None
+            ):
+                # Skip inline evaluation. For concurrent_evaluation a background
+                # thread evaluates the snapshot concurrently with the next
+                # solve (see _run_problem / _eval_one); record None now for
+                # progress and let the eval thread overwrite it.
+                with self._metrics_lock:
+                    self.metrics_tracker.record_checkpoint_result(
+                        checkpoint.name, None
+                    )
                 return AgentCheckpointSummary.from_results(
                     checkpoint_name=checkpoint.name,
                     path=checkpoint_save_dir,
@@ -918,6 +932,70 @@ class AgentRunner:
             evaluation_result=evaluation_result,
         )
 
+    def _eval_one(
+        self,
+        checkpoint: CheckpointConfig,
+        summary: AgentCheckpointSummary,
+    ) -> None:
+        """Evaluate one solved snapshot (concurrent mode; runs in a thread).
+
+        Spawns its own eval container; the snapshot is an immutable per-
+        checkpoint copy, so this is safe to run concurrently with the next
+        checkpoint's solve. At most one of these runs at a time (the caller
+        joins the previous one first), so solve stays <=1 checkpoint ahead of
+        eval and in-flight containers are bounded to 2 (this eval + 1 solve).
+        """
+        try:
+            report, _ = evaluate_agent_snapshot(
+                checkpoint=checkpoint,
+                save_dir=summary.path,
+                snapshot_dir=summary.snapshot_dir,
+                problem=self.run_spec.problem,
+                environment=self.run_spec.environment,
+            )
+        except Exception:  # noqa: BLE001
+            logger.error(
+                "Concurrent evaluation failed",
+                checkpoint=checkpoint.name,
+                exc_info=True,
+            )
+            return
+        with self._metrics_lock:
+            self._eval_reports[checkpoint.name] = report
+            self.metrics_tracker.record_checkpoint_result(
+                checkpoint.name, report
+            )
+
+    def _merge_eval_reports(
+        self, results: list[AgentCheckpointSummary]
+    ) -> list[AgentCheckpointSummary]:
+        """Fold concurrent eval reports back into the checkpoint summaries.
+
+        Call after the background eval thread has been joined. Summaries with
+        no report (errored solve, or eval that failed) are left as-is.
+        """
+        if not self.run_spec.concurrent_evaluation:
+            return results
+        merged: list[AgentCheckpointSummary] = []
+        for summary in results:
+            report = self._eval_reports.get(summary.checkpoint_name)
+            if report is None:
+                merged.append(summary)
+                continue
+            merged.append(
+                AgentCheckpointSummary.from_results(
+                    checkpoint_name=summary.checkpoint_name,
+                    path=summary.path,
+                    snapshot_dir=summary.snapshot_dir,
+                    artifacts=summary.artifacts,
+                    usage=summary.usage,
+                    had_error=summary.had_error,
+                    pass_policy=self.run_spec.pass_policy,
+                    evaluation_result=report,
+                )
+            )
+        return merged
+
     def _run_problem(self) -> list[AgentCheckpointSummary]:
         """Iterate through checkpoints, skipping completed ones if resuming."""
         # Determine checkpoints to skip when resuming
@@ -933,6 +1011,10 @@ class AgentRunner:
         )
 
         results = []
+        # Concurrent mode: a single rolling background eval thread. The previous
+        # one is joined before the next starts, so solve stays <=1 checkpoint
+        # ahead of eval and at most 2 containers (1 solve + 1 eval) run at once.
+        pending_eval: threading.Thread | None = None
         for idx, (checkpoint, checkpoint_save_dir) in enumerate(
             get_checkpoints(self.run_spec.problem, self.output_path)
         ):
@@ -986,9 +1068,35 @@ class AgentRunner:
                 checkpoint_name=summary.checkpoint_name,
             )
 
+            # Concurrent mode: evaluate this checkpoint in the background while
+            # the next one solves. Join the previous eval first (backpressure:
+            # solve stays <=1 ahead, bounding in-flight containers to 2).
+            if (
+                self.run_spec.concurrent_evaluation
+                and not summary.had_error
+                and summary.snapshot_dir is not None
+            ):
+                if pending_eval is not None:
+                    pending_eval.join()
+                pending_eval = threading.Thread(
+                    target=self._eval_one,
+                    args=(checkpoint, summary),
+                    name=f"eval-{checkpoint.name}",
+                    daemon=True,
+                )
+                pending_eval.start()
+
             # Check for early termination
             if self._should_early_stop(summary):
-                return results
+                if pending_eval is not None:
+                    pending_eval.join()
+                return self._merge_eval_reports(results)
+
+        # Concurrent eval: wait for the final background eval, then fold all
+        # reports into the summaries (no-op when concurrent eval is off).
+        if pending_eval is not None:
+            pending_eval.join()
+        results = self._merge_eval_reports(results)
 
         logger.info(
             "All checkpoints completed successfully",

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import queue
+import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import Mock
@@ -404,6 +406,7 @@ def test_run_problem_resume_does_not_treat_first_executed_as_checkpoint_1(
         "checkpoint_3": Mock(),
     }
     run_spec.skip_evaluation = True
+    run_spec.concurrent_evaluation = False
     run_spec.pass_policy = Mock()
 
     resume_info = ResumeInfo(
@@ -479,6 +482,7 @@ def test_run_problem_resume_does_not_double_count_prior_usage(
         "checkpoint_3": Mock(),
     }
     run_spec.skip_evaluation = True
+    run_spec.concurrent_evaluation = False
     run_spec.pass_policy = Mock()
 
     resume_info = ResumeInfo(
@@ -554,6 +558,7 @@ def test_run_problem_resume_does_not_duplicate_preloaded_checkpoint_results(
     }
     run_spec.compress_artifacts = False
     run_spec.skip_evaluation = True
+    run_spec.concurrent_evaluation = False
     run_spec.pass_policy = Mock()
 
     resume_info = ResumeInfo(
@@ -618,3 +623,95 @@ def test_run_problem_resume_does_not_duplicate_preloaded_checkpoint_results(
         "checkpoint_2",
         "checkpoint_3",
     ]
+
+
+def test_run_problem_concurrent_eval_bounds_inflight(tmp_path):
+    """Concurrent eval runs in a rolling background thread.
+
+    Verifies: every checkpoint is evaluated, AT MOST ONE eval is in flight at
+    a time (so in-flight containers stay bounded to 1 solve + 1 eval), reports
+    are merged back into the summaries, and the run does not deadlock.
+    """
+    agent = Mock(spec=Agent)
+    agent.usage = _usage()
+
+    run_spec = Mock()
+    run_spec.problem = Mock()
+    run_spec.problem.name = "prob"
+    run_spec.problem.checkpoints = {
+        f"checkpoint_{i}": Mock() for i in range(1, 5)
+    }
+    run_spec.skip_evaluation = False
+    run_spec.concurrent_evaluation = True
+    run_spec.environment = Mock()
+    run_spec.pass_policy = Mock()
+    run_spec.pass_policy.check.return_value = True
+
+    ar = runner.AgentRunner(
+        run_spec=run_spec,
+        agent=agent,
+        output_path=tmp_path,
+        progress_queue=queue.Queue(),
+    )
+
+    names = [f"checkpoint_{i}" for i in range(1, 5)]
+    checkpoints = [(StubCheckpoint(n, ""), tmp_path / n) for n in names]
+
+    def make_summary(name: str) -> Mock:
+        s = Mock()
+        s.checkpoint_name = name
+        s.had_error = False
+        s.passed_policy = None
+        s.snapshot_dir = tmp_path / name / "snapshot"
+        s.path = tmp_path / name
+        s.artifacts = tmp_path / name / "artifacts"
+        s.usage = _usage()
+        return s
+
+    solved: list[str] = []
+
+    def fake_run_checkpoint(checkpoint, save_dir, is_first):  # noqa: ANN001
+        solved.append(checkpoint.name)
+        time.sleep(0.02)  # let an eval overlap the next solve
+        return make_summary(checkpoint.name)
+
+    inflight = {"cur": 0, "max": 0}
+    lock = threading.Lock()
+    evaluated: list[str] = []
+
+    def fake_eval(*, checkpoint, save_dir, snapshot_dir, problem, environment):  # noqa: ANN001
+        with lock:
+            inflight["cur"] += 1
+            inflight["max"] = max(inflight["max"], inflight["cur"])
+        time.sleep(0.05)
+        with lock:
+            inflight["cur"] -= 1
+            evaluated.append(checkpoint.name)
+        return (Mock(), None)
+
+    with (
+        patch(
+            "slop_code.agent_runner.runner.get_checkpoints",
+            return_value=iter(checkpoints),
+        ),
+        patch.object(
+            runner.AgentRunner,
+            "_run_checkpoint",
+            side_effect=fake_run_checkpoint,
+        ),
+        patch(
+            "slop_code.agent_runner.runner.evaluate_agent_snapshot",
+            side_effect=fake_eval,
+        ),
+        patch.object(runner.MetricsTracker, "record_checkpoint_result"),
+        patch.object(runner.MetricsTracker, "finish_checkpoint"),
+    ):
+        results = ar._run_problem()
+
+    assert solved == names
+    assert sorted(evaluated) == sorted(names)
+    # The core guarantee: never more than one eval running at once.
+    assert inflight["max"] == 1
+    # Reports folded back; one summary per checkpoint.
+    assert len(results) == 4
+    assert all(n in ar._eval_reports for n in names)
