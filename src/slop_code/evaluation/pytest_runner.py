@@ -265,6 +265,7 @@ markers =
         "pytest-json-ctrf",  # CTRF JSON report plugin
         "pytest-json-report",  # Detailed failure reports
         "pytest-timeout",  # Session-level timeout support
+        "pytest-xdist",  # Parallel test execution across workers
         "jsonschema",  # JSON schema validation (for test cases)
         "deepdiff",  # Deep comparison utilities
     ]
@@ -287,6 +288,21 @@ markers =
     def _quote_args(self, extra_args: list[str] | None) -> list[str]:
         return [shlex.quote(arg) for arg in extra_args or []]
 
+    def _build_xdist_args(self) -> list[str]:
+        """Parallel-execution flags from ``SCBENCH_PYTEST_WORKERS``.
+
+        Opt-in: serial by default (unset / ``0`` / ``1``); set to ``auto``
+        (all cores) or ``<N>`` to parallelize. Tests are independent
+        (per-test ``tmp_path`` + session-scoped read-only fixtures), so
+        ``--dist=loadgroup`` is safe and keeps same-module cases together.
+        """
+        import os
+
+        workers = os.environ.get("SCBENCH_PYTEST_WORKERS", "1").strip()
+        if workers in ("", "0", "1"):
+            return []
+        return [f"-n={workers}", "--dist=loadgroup"]
+
     def _build_pytest_command(
         self,
         extra_args: list[str] | None = None,
@@ -299,6 +315,7 @@ markers =
 
         cmd_parts = [
             *self._build_pytest_base_parts(),
+            *self._build_xdist_args(),
             *timeout_args,
             *self._build_common_pytest_args(),
             f"--ctrf={CTRF_REPORT_REL_PATH}",
