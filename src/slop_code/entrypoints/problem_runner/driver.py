@@ -157,7 +157,8 @@ def _run_problems(
         "Starting run problems queue monitor", problem_names=problem_names
     )
     with concurrent.futures.ProcessPoolExecutor(
-        max_workers=num_workers
+        max_workers=num_workers,
+        max_tasks_per_child=1,
     ) as executor:
         futures = [
             executor.submit(

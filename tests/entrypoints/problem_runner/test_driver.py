@@ -1,16 +1,31 @@
 from __future__ import annotations
 
 import json
+import queue
+from concurrent.futures import Future
+from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 from slop_code.agent_runner import AgentStateEnum
 from slop_code.common import EVALUATION_FILENAME
 from slop_code.common import INFERENCE_RESULT_FILENAME
+from slop_code.entrypoints.problem_runner import driver
 from slop_code.entrypoints.problem_runner.driver import (
     _prepopulate_completed_states,
 )
+from slop_code.entrypoints.problem_runner.driver import _run_problems
+from slop_code.entrypoints.problem_runner.models import TaskResult
 from slop_code.entrypoints.problem_runner.state import ProblemStateTracker
 from slop_code.evaluation import GroupType
+
+if TYPE_CHECKING:
+    from slop_code.entrypoints.problem_runner.models import RunTaskConfig
+
+
+@dataclass(frozen=True)
+class _Config:
+    run_dir: Path
 
 
 def _write_checkpoint_artifacts(
@@ -65,15 +80,8 @@ def _write_checkpoint_artifacts(
         json.dump(evaluation, f)
 
 
-def _make_config(run_dir: Path):
-    # Minimal duck-typed stand-in: _prepopulate_completed_states only reads
-    # config.run_dir, so a tiny object suffices.
-    class _Cfg:
-        pass
-
-    cfg = _Cfg()
-    cfg.run_dir = run_dir
-    return cfg
+def _make_config(run_dir: Path) -> RunTaskConfig:
+    return cast("RunTaskConfig", _Config(run_dir=run_dir))
 
 
 def test_prepopulate_loads_cost_and_passed_counts(tmp_path: Path) -> None:
@@ -179,3 +187,55 @@ def test_prepopulate_empty_completed_list_is_noop(tmp_path: Path) -> None:
     assert state.state == AgentStateEnum.PENDING
     assert state.overall_usage is None
     assert state.total_checkpoints_evaluated == 0
+
+
+def test_run_problems_recycles_workers_between_problems(
+    monkeypatch,
+) -> None:
+    executor_kwargs: dict[str, int | None] = {}
+
+    class FakeExecutor:
+        def __init__(
+            self,
+            *,
+            max_workers: int | None = None,
+            max_tasks_per_child: int | None = None,
+        ) -> None:
+            executor_kwargs["max_workers"] = max_workers
+            executor_kwargs["max_tasks_per_child"] = max_tasks_per_child
+
+        def __enter__(self) -> FakeExecutor:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            pass
+
+        def submit(
+            self,
+            fn: object,
+            problem_name: str,
+            config: object,
+            progress_queue: queue.Queue,
+        ) -> Future[TaskResult]:
+            future: Future[TaskResult] = Future()
+            future.set_result(
+                TaskResult(problem_name=problem_name, success=True)
+            )
+            return future
+
+    monkeypatch.setattr(
+        driver.concurrent.futures, "ProcessPoolExecutor", FakeExecutor
+    )
+
+    results = _run_problems(
+        ["p1", "p2"],
+        cast("RunTaskConfig", object()),
+        num_workers=3,
+        progress_queue=queue.Queue(),
+        progress_display=None,
+        problem_states=ProblemStateTracker(["p1", "p2"], {}),
+    )
+
+    assert [result.problem_name for result in results] == ["p1", "p2"]
+    assert executor_kwargs["max_workers"] == 3
+    assert executor_kwargs["max_tasks_per_child"] == 1
