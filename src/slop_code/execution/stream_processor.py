@@ -98,8 +98,8 @@ def process_stream(
         tuple[Literal["stdout", "stderr", "finished"], str | None]
     ] = queue.Queue()
     thread = start_stream_pump(stream, event_queue, stop_event)
-    stdout = ""
-    stderr = ""
+    stdout_parts: list[str] = []
+    stderr_parts: list[str] = []
     setup_stdout = ""
     setup_stderr = ""
     yielding_stdout = yield_only_after is None
@@ -110,34 +110,32 @@ def process_stream(
         kind: Literal["stdout", "stderr"],
         payload: str,
     ) -> Iterator[RuntimeEvent]:
-        nonlocal stdout, stderr, setup_stdout, setup_stderr
+        nonlocal stdout_parts, stderr_parts, setup_stdout, setup_stderr
         nonlocal yielding_stdout, yielding_stderr
 
         if kind == "stdout":
-            stdout += payload
-            if (
-                not yielding_stdout
-                and yield_only_after
-                and yield_only_after in stdout
-            ):
-                yielding_stdout = True
-                setup_stdout, stdout = stdout.split(yield_only_after, 1)
-                payload = stdout
+            stdout_parts.append(payload)
+            if not yielding_stdout and yield_only_after:
+                stdout = "".join(stdout_parts)
+                if yield_only_after in stdout:
+                    yielding_stdout = True
+                    setup_stdout, stdout = stdout.split(yield_only_after, 1)
+                    stdout_parts = [stdout]
+                    payload = stdout
 
             if yielding_stdout and payload.strip():
                 yield RuntimeEvent(kind="stdout", text=payload)
             return
 
         if kind == "stderr":
-            stderr += payload
-            if (
-                not yielding_stderr
-                and yield_only_after
-                and yield_only_after in stderr
-            ):
-                yielding_stderr = True
-                setup_stderr, stderr = stderr.split(yield_only_after, 1)
-                payload = stderr
+            stderr_parts.append(payload)
+            if not yielding_stderr and yield_only_after:
+                stderr = "".join(stderr_parts)
+                if yield_only_after in stderr:
+                    yielding_stderr = True
+                    setup_stderr, stderr = stderr.split(yield_only_after, 1)
+                    stderr_parts = [stderr]
+                    payload = stderr
 
             if yielding_stderr and payload.strip():
                 yield RuntimeEvent(kind="stderr", text=payload)
@@ -196,8 +194,8 @@ def process_stream(
     )
     return RuntimeResult(
         exit_code=exit_code,
-        stdout=stdout,
-        stderr=stderr,
+        stdout="".join(stdout_parts),
+        stderr="".join(stderr_parts),
         setup_stdout=setup_stdout,
         setup_stderr=setup_stderr,
         elapsed=elapsed,

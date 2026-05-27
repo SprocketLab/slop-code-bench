@@ -56,37 +56,49 @@ def stream_cli_command(
         parse_stderr: If True, also parse stderr lines through the parser
     """
     env = dict(env or {})
-    stdout_buffer = ""
-    stderr_buffer = ""
-    stdout = stderr = ""
+    stdout_buffer_parts: list[str] = []
+    stderr_buffer_parts: list[str] = []
+    stdout_parts: list[str] = []
+    stderr_parts: list[str] = []
     start = time.monotonic()
     result: RuntimeResult | None = None
 
     for event in runtime.stream(command=command, env=env, timeout=timeout):
         if event.kind == "stdout":
-            stdout += event.text or ""
-            stdout_buffer += event.text or ""
-            while "\n" in stdout_buffer:
-                line, stdout_buffer = stdout_buffer.split("\n", 1)
-                line = line.strip()
-                if not line:
-                    continue
-                yield parser(line)
-        elif event.kind == "stderr":
-            stderr += event.text or ""
-            if parse_stderr:
-                stderr_buffer += event.text or ""
-                while "\n" in stderr_buffer:
-                    line, stderr_buffer = stderr_buffer.split("\n", 1)
+            chunk = event.text or ""
+            stdout_parts.append(chunk)
+            stdout_buffer_parts.append(chunk)
+            if "\n" in chunk:
+                stdout_buffer = "".join(stdout_buffer_parts)
+                while "\n" in stdout_buffer:
+                    line, stdout_buffer = stdout_buffer.split("\n", 1)
                     line = line.strip()
                     if not line:
                         continue
                     yield parser(line)
+                stdout_buffer_parts = [stdout_buffer] if stdout_buffer else []
+        elif event.kind == "stderr":
+            chunk = event.text or ""
+            stderr_parts.append(chunk)
+            if parse_stderr:
+                stderr_buffer_parts.append(chunk)
+                if "\n" in chunk:
+                    stderr_buffer = "".join(stderr_buffer_parts)
+                    while "\n" in stderr_buffer:
+                        line, stderr_buffer = stderr_buffer.split("\n", 1)
+                        line = line.strip()
+                        if not line:
+                            continue
+                        yield parser(line)
+                    stderr_buffer_parts = (
+                        [stderr_buffer] if stderr_buffer else []
+                    )
         elif event.kind == "finished":
             result = event.result
             break
 
     # Flush remaining stdout buffer
+    stdout_buffer = "".join(stdout_buffer_parts)
     for line in stdout_buffer.split("\n"):
         line = line.strip()
         if not line:
@@ -95,6 +107,7 @@ def stream_cli_command(
 
     # Flush remaining stderr buffer if parsing stderr
     if parse_stderr:
+        stderr_buffer = "".join(stderr_buffer_parts)
         for line in stderr_buffer.split("\n"):
             line = line.strip()
             if not line:
@@ -104,8 +117,8 @@ def stream_cli_command(
     if result is None:
         result = RuntimeResult(
             exit_code=0,
-            stdout=stdout,
-            stderr=stderr,
+            stdout="".join(stdout_parts),
+            stderr="".join(stderr_parts),
             setup_stdout="",
             setup_stderr="",
             elapsed=time.monotonic() - start,
