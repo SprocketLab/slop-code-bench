@@ -688,8 +688,7 @@ class AgentRunner:
             summary.passed_policy is not None and not summary.passed_policy
         )
         if self.run_spec.skip_evaluation or self.run_spec.concurrent_evaluation:
-            # No inline eval results to gate on (eval runs concurrently with
-            # the next solve); agent errors / rate limits below still stop it.
+            # No inline eval results to gate on; agent errors below still stop the run.
             did_fail_tests = False
         if did_fail_tests and self.run_spec.pass_policy != PassPolicy.ANY_CASE:
             logger.info(
@@ -789,10 +788,7 @@ class AgentRunner:
                 or self.run_spec.concurrent_evaluation
                 or result is None
             ):
-                # Skip inline evaluation. For concurrent_evaluation a background
-                # thread evaluates the snapshot concurrently with the next
-                # solve (see _run_problem / _eval_one); record None now for
-                # progress and let the eval thread overwrite it.
+                # Skip inline eval; concurrent mode's bg thread overwrites later.
                 with self._metrics_lock:
                     self.metrics_tracker.record_checkpoint_result(
                         checkpoint.name, None
@@ -937,13 +933,11 @@ class AgentRunner:
         checkpoint: CheckpointConfig,
         summary: AgentCheckpointSummary,
     ) -> None:
-        """Evaluate one solved snapshot (concurrent mode; runs in a thread).
+        """Evaluate one solved snapshot in a background thread (concurrent mode).
 
-        Spawns its own eval container; the snapshot is an immutable per-
-        checkpoint copy, so this is safe to run concurrently with the next
-        checkpoint's solve. At most one of these runs at a time (the caller
-        joins the previous one first), so solve stays <=1 checkpoint ahead of
-        eval and in-flight containers are bounded to 2 (this eval + 1 solve).
+        Snapshot is an immutable per-cp copy, so safe to run alongside the next
+        solve. Caller joins the previous thread first, bounding in-flight
+        containers to 2 (1 solve + 1 eval).
         """
         try:
             report, _ = evaluate_agent_snapshot(
@@ -1011,9 +1005,7 @@ class AgentRunner:
         )
 
         results = []
-        # Concurrent mode: a single rolling background eval thread. The previous
-        # one is joined before the next starts, so solve stays <=1 checkpoint
-        # ahead of eval and at most 2 containers (1 solve + 1 eval) run at once.
+        # Rolling background eval thread; previous joined before next starts.
         pending_eval: threading.Thread | None = None
         for idx, (checkpoint, checkpoint_save_dir) in enumerate(
             get_checkpoints(self.run_spec.problem, self.output_path)
@@ -1068,9 +1060,8 @@ class AgentRunner:
                 checkpoint_name=summary.checkpoint_name,
             )
 
-            # Concurrent mode: evaluate this checkpoint in the background while
-            # the next one solves. Join the previous eval first (backpressure:
-            # solve stays <=1 ahead, bounding in-flight containers to 2).
+            # Spawn this cp's eval in the bg; join prior one first (bounds
+            # in-flight containers to 2).
             if (
                 self.run_spec.concurrent_evaluation
                 and not summary.had_error
@@ -1092,8 +1083,7 @@ class AgentRunner:
                     pending_eval.join()
                 return self._merge_eval_reports(results)
 
-        # Concurrent eval: wait for the final background eval, then fold all
-        # reports into the summaries (no-op when concurrent eval is off).
+        # Wait for the final bg eval and fold reports (no-op when off).
         if pending_eval is not None:
             pending_eval.join()
         results = self._merge_eval_reports(results)
