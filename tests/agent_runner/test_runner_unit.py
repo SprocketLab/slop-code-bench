@@ -22,6 +22,7 @@ from slop_code.agent_runner.resume import ResumeInfo
 from slop_code.common import INFERENCE_RESULT_FILENAME
 from slop_code.common import PROMPT_FILENAME
 from slop_code.common.llms import TokenUsage
+from slop_code.evaluation.report import PassPolicy
 
 
 class StubCheckpoint:
@@ -715,3 +716,122 @@ def test_run_problem_concurrent_eval_bounds_inflight(tmp_path):
     # Reports folded back; one summary per checkpoint.
     assert len(results) == 4
     assert all(n in ar._eval_reports for n in names)
+
+
+def test_run_problem_concurrent_eval_records_failure_and_continues(
+    tmp_path: Path,
+) -> None:
+    """Concurrent eval that raises must record into `_failed_evals`, warn at
+    the next cp boundary + at end-of-run, and let subsequent cps proceed.
+    """
+    agent = Mock(spec=Agent)
+    agent.usage = _usage()
+
+    run_spec = Mock()
+    run_spec.problem = Mock()
+    run_spec.problem.name = "prob"
+    run_spec.problem.checkpoints = {
+        "checkpoint_1": Mock(),
+        "checkpoint_2": Mock(),
+        "checkpoint_3": Mock(),
+    }
+    run_spec.skip_evaluation = False
+    run_spec.concurrent_evaluation = True
+    # Use a real PassPolicy so _merge_eval_reports can rebuild summaries via
+    # AgentCheckpointSummary.from_results (which validates with pydantic).
+    run_spec.pass_policy = PassPolicy.ANY_CASE
+
+    ar = runner.AgentRunner(
+        run_spec=run_spec,
+        agent=agent,
+        output_path=tmp_path,
+        progress_queue=queue.Queue(),
+        resume_info=None,
+    )
+
+    checkpoints = [
+        (StubCheckpoint(f"checkpoint_{i}", ""), tmp_path / f"checkpoint_{i}")
+        for i in (1, 2, 3)
+    ]
+
+    def make_summary(cp_name: str) -> Mock:
+        s = Mock()
+        s.passed_policy = True  # so _should_early_stop doesn't fire
+        s.had_error = False
+        s.checkpoint_name = cp_name
+        s.snapshot_dir = tmp_path / f"{cp_name}_snap"  # truthy => eval queued
+        s.path = tmp_path / cp_name
+        s.artifacts = []
+        s.usage = _usage()
+        return s
+
+    summaries = {f"checkpoint_{i}": make_summary(f"checkpoint_{i}") for i in (1, 2, 3)}
+    eval_calls: list[str] = []
+
+    def make_report() -> Mock:
+        """Minimal mock report that record_checkpoint_result can sum over."""
+        r = Mock()
+        r.pass_counts = {"Core": 1}
+        r.total_counts = {"Core": 1}
+        return r
+
+    def eval_snapshot_side_effect(*, checkpoint, **_kwargs):
+        eval_calls.append(checkpoint.name)
+        if checkpoint.name == "checkpoint_1":
+            raise RuntimeError("boom: simulated eval failure")
+        return (make_report(), Mock())
+
+    with (
+        patch(
+            "slop_code.agent_runner.runner.get_checkpoints",
+            return_value=iter(checkpoints),
+        ),
+        patch.object(
+            runner.AgentRunner,
+            "_run_checkpoint",
+            side_effect=lambda ckpt, *_a, **_kw: summaries[ckpt.name],
+        ),
+        patch(
+            "slop_code.agent_runner.runner.evaluate_agent_snapshot",
+            side_effect=eval_snapshot_side_effect,
+        ),
+        # Bypass _merge_eval_reports — it rebuilds pydantic-validated
+        # summaries which is orthogonal to what we're testing.
+        patch.object(
+            runner.AgentRunner,
+            "_merge_eval_reports",
+            side_effect=lambda r: r,
+        ),
+        patch.object(runner.logger, "warning") as mock_warning,
+    ):
+        ar._run_problem()
+
+    # 1. cp1's failure is recorded with the exception text; cp2/cp3 are not.
+    assert "checkpoint_1" in ar._failed_evals
+    assert "boom" in ar._failed_evals["checkpoint_1"]
+    assert "checkpoint_2" not in ar._failed_evals
+    assert "checkpoint_3" not in ar._failed_evals
+
+    # 2. Subsequent cps still ran — all 3 evals were attempted in order.
+    assert eval_calls == ["checkpoint_1", "checkpoint_2", "checkpoint_3"]
+
+    # 3. Boundary warning fired exactly once for cp1 (at cp2's boundary).
+    boundary_warnings = [
+        call for call in mock_warning.call_args_list
+        if call.args
+        and "Concurrent eval failed for earlier checkpoint" in call.args[0]
+        and call.kwargs.get("checkpoint") == "checkpoint_1"
+    ]
+    assert len(boundary_warnings) == 1, (
+        f"expected 1 boundary warning for cp1, got "
+        f"{len(boundary_warnings)}: {boundary_warnings}"
+    )
+
+    # 4. End-of-run summary warning lists cp1 as a failed eval.
+    summary_warnings = [
+        call for call in mock_warning.call_args_list
+        if call.args and "Run completed with concurrent eval failures" in call.args[0]
+    ]
+    assert len(summary_warnings) == 1
+    assert summary_warnings[0].kwargs.get("failed_checkpoints") == ["checkpoint_1"]
+    assert summary_warnings[0].kwargs.get("count") == 1

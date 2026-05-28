@@ -474,6 +474,9 @@ class AgentRunner:
         # Guards record_checkpoint_result against the background eval thread.
         self._metrics_lock = threading.Lock()
         self._eval_reports: dict[str, CorrectnessResults] = {}
+        # Checkpoints whose concurrent eval raised. Surfaced at each cp boundary
+        # in _run_problem so failures don't stay hidden until end-of-run.
+        self._failed_evals: dict[str, str] = {}
 
     @property
     def session(self) -> Session:
@@ -947,12 +950,14 @@ class AgentRunner:
                 problem=self.run_spec.problem,
                 environment=self.run_spec.environment,
             )
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             logger.error(
                 "Concurrent evaluation failed",
                 checkpoint=checkpoint.name,
                 exc_info=True,
             )
+            with self._metrics_lock:
+                self._failed_evals[checkpoint.name] = repr(exc)
             return
         with self._metrics_lock:
             self._eval_reports[checkpoint.name] = report
@@ -1007,6 +1012,8 @@ class AgentRunner:
         results = []
         # Rolling background eval thread; previous joined before next starts.
         pending_eval: threading.Thread | None = None
+        # Failed evals already surfaced; tracked to avoid re-logging.
+        reported_fails: set[str] = set()
         for idx, (checkpoint, checkpoint_save_dir) in enumerate(
             get_checkpoints(self.run_spec.problem, self.output_path)
         ):
@@ -1033,6 +1040,20 @@ class AgentRunner:
                     )
                 continue
 
+            # Surface any concurrent-eval failures that completed since the
+            # last cp boundary so a broken eval is visible at the next
+            # iteration, not silently absent until end-of-run.
+            with self._metrics_lock:
+                new_fails = set(self._failed_evals) - reported_fails
+            for cp_name in new_fails:
+                logger.warning(
+                    "Concurrent eval failed for earlier checkpoint "
+                    "(run continues; final report will show missing eval)",
+                    checkpoint=cp_name,
+                    error=self._failed_evals[cp_name],
+                )
+            reported_fails.update(new_fails)
+
             logger.info(
                 "Running checkpoint",
                 checkpoint=checkpoint.name,
@@ -1043,11 +1064,20 @@ class AgentRunner:
             self.metrics_tracker.current_checkpoint = checkpoint.name
             self.metrics_tracker.checkpoint_started = datetime.now()
 
-            summary = self._run_checkpoint(
-                checkpoint,
-                checkpoint_save_dir,
-                idx == 0,
-            )
+            try:
+                summary = self._run_checkpoint(
+                    checkpoint,
+                    checkpoint_save_dir,
+                    idx == 0,
+                )
+            except BaseException:
+                # Solve raised — make sure any in-flight eval container is
+                # joined before the exception propagates, so its session
+                # cleanup runs. Daemon threads don't run finally on process
+                # shutdown, which would otherwise strand a docker container.
+                if pending_eval is not None:
+                    pending_eval.join()
+                raise
             results.append(summary)
             self.metrics_tracker.finish_checkpoint(self.agent.usage)
 
@@ -1087,6 +1117,16 @@ class AgentRunner:
         if pending_eval is not None:
             pending_eval.join()
         results = self._merge_eval_reports(results)
+
+        # End-of-run summary of any concurrent-eval failures. They've already
+        # been logged at the cp boundary, but a single summary line at the
+        # end makes them easy to grep from chain logs.
+        if self._failed_evals:
+            logger.warning(
+                "Run completed with concurrent eval failures",
+                failed_checkpoints=sorted(self._failed_evals.keys()),
+                count=len(self._failed_evals),
+            )
 
         logger.info(
             "All checkpoints completed successfully",
