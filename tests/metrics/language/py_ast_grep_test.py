@@ -7,12 +7,16 @@ Tests all functions in slop_code.metrics.languages.python.ast_grep including:
 
 from __future__ import annotations
 
+import collections
+import json
 import shutil
+import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+import yaml
 
 from slop_code.metrics.languages.python import AST_GREP_RULES_DIR
 from slop_code.metrics.languages.python import AST_GREP_RULES_PATH
@@ -619,3 +623,91 @@ def check_value(x):
         # - bare except with pass
         # - comparing to True
         # - if/else returning True/False
+
+
+# =============================================================================
+# Shipped Ruleset Integrity Tests
+# =============================================================================
+
+
+class TestSlopRulesFileIntegrity:
+    """Tests that the shipped ``slop_rules.yaml`` is well-formed."""
+
+    def test_rule_ids_are_unique(self) -> None:
+        """Every rule id in the shipped ruleset must appear exactly once.
+
+        Duplicate ids make :func:`build_ast_grep_rules_lookup`
+        non-deterministic (the last occurrence silently wins the
+        weight / ``min_file_count`` used to score every match of that id) and
+        inflate ``rules_checked``.
+        """
+        with AST_GREP_RULES_PATH.open(encoding="utf-8") as handle:
+            ids = [
+                doc["id"]
+                for doc in yaml.safe_load_all(handle)
+                if doc and "id" in doc
+            ]
+
+        duplicates = {
+            rule_id: count
+            for rule_id, count in collections.Counter(ids).items()
+            if count > 1
+        }
+        assert not duplicates, f"Duplicate rule ids in slop_rules.yaml: {duplicates}"
+
+    @pytest.mark.skipif(
+        not shutil.which("sg"), reason="ast-grep (sg) not installed"
+    )
+    def test_frozen_micro_dataclass_matches_tiny_not_large(
+        self, tmp_path: Path
+    ) -> None:
+        """``frozen-micro-dataclass`` must fire on a tiny frozen dataclass but
+        not on a larger one.
+
+        Regression test: the original regex required ``\\n`` after every field
+        followed by ``$``, but the ``decorated_definition`` node ends at the
+        last field with no trailing newline, so the rule matched nothing.
+        """
+        tiny = _write(
+            tmp_path,
+            "tiny.py",
+            "from dataclasses import dataclass\n\n"
+            "@dataclass(frozen=True, slots=True)\n"
+            "class Report:\n"
+            "    name: str\n"
+            "    value: float\n",
+        )
+        large = _write(
+            tmp_path,
+            "large.py",
+            "from dataclasses import dataclass\n\n"
+            "@dataclass(frozen=True)\n"
+            "class Report:\n"
+            "    a: str\n    b: int\n    c: int\n    d: int\n    e: int\n",
+        )
+
+        def fired_rule_ids(source: Path) -> set[str]:
+            # Call sg directly so the assertion targets the rule's regex,
+            # independent of the min_file_count scoring filter applied by
+            # calculate_ast_grep_metrics.
+            result = subprocess.run(  # noqa: S603
+                [  # noqa: S607
+                    "sg",
+                    "scan",
+                    "--json=stream",
+                    "-r",
+                    str(AST_GREP_RULES_PATH),
+                    str(source),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            return {
+                json.loads(line)["ruleId"]
+                for line in result.stdout.splitlines()
+                if line.strip()
+            }
+
+        assert "frozen-micro-dataclass" in fired_rule_ids(tiny)
+        assert "frozen-micro-dataclass" not in fired_rule_ids(large)
