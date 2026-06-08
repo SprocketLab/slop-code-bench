@@ -175,6 +175,7 @@ def run_agent_on_problem(
         environment=config.env_spec,
         pass_policy=config.pass_policy,
         skip_evaluation=config.disable_evaluation,
+        concurrent_evaluation=config.concurrent_evaluation,
         verbose=config.verbosity > 0,
         image=config.image,
         agent_type=config.agent_config.type,

@@ -170,6 +170,18 @@ class AgentRunSpec(BaseModel):
             description="Whether to skip evaluation and force all checkpoints to run."
         ),
     ] = False
+    concurrent_evaluation: Annotated[
+        bool,
+        Field(
+            description="Evaluate each checkpoint concurrently with the next "
+            "checkpoint's solve, instead of serially between checkpoints, so "
+            "eval no longer blocks progress. At most one solve and one eval "
+            "run at a time. Eval results never feed the agent, so scores are "
+            "unchanged for the ANY_CASE pass policy. Trade-off: cannot "
+            "early-stop on test failures (a checkpoint's eval finishes during "
+            "the next solve); agent errors and rate limits still stop the run."
+        ),
+    ] = False
     verbose: Annotated[
         bool, Field(description="Whether to print verbose output")
     ] = False
