@@ -171,6 +171,9 @@ def _build_collect_cmd(
         "pytest",
         "--collect-only",
         "-q",
+        # Exclude an agent-authored conftest.py at the workspace root from
+        # collection (SCBench's own conftest lives inside WORKSPACE_TEST_DIR).
+        f"--confcutdir={WORKSPACE_TEST_DIR}",
         f"--entrypoint={shlex.quote(entrypoint)}",
         f"--checkpoint={shlex.quote(checkpoint_name)}",
     ]

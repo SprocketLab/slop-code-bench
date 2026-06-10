@@ -301,6 +301,10 @@ markers =
             *self._build_pytest_base_parts(),
             *timeout_args,
             *self._build_common_pytest_args(),
+            # Limit conftest discovery to the eval test dir so an agent-authored
+            # conftest.py at the workspace root can't break collection (SCBench's
+            # own conftest lives inside WORKSPACE_TEST_DIR and still loads).
+            f"--confcutdir={WORKSPACE_TEST_DIR}",
             f"--ctrf={CTRF_REPORT_REL_PATH}",
             "--json-report",
             f"--json-report-file={PYTEST_REPORT_REL_PATH}",
