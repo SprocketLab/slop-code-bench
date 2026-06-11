@@ -285,6 +285,9 @@ class TestPytestRunner:
         assert "checkpoint_2" in cmd
         # Static assets are now passed via env vars, not CLI
         assert "--static-assets" not in cmd
+        # confcutdir keeps an agent-authored conftest.py at the workspace root
+        # from being loaded during collection (which would abort the run).
+        assert "--confcutdir=.evaluation_tests" in cmd
         assert "--ctrf=.scbench/ctrf-report.json" in cmd
         assert "--json-report" in cmd
         assert "--json-report-file=.scbench/pytest-report.json" in cmd
