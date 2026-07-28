@@ -21,6 +21,13 @@ from slop_code.metrics.checkpoint.extractors import get_rubric_metrics
 
 logger = get_logger(__name__)
 
+# `scb-check` owns the composite quality scores, and its rule set changes
+# between releases, so an unpinned `uvx` invocation makes verbosity
+# incomparable across runs. Bump this deliberately; the value is recorded
+# with every checkpoint so past results stay interpretable.
+SCB_CHECK_VERSION = "0.2.0"
+SCB_CHECK_VERSION_KEY = "scb_check_version"
+
 
 def _number(value: Any) -> float | None:
     if isinstance(value, bool):
@@ -70,7 +77,7 @@ def _get_scb_check_metrics(checkpoint_dir: Path) -> dict[str, Any]:
 
     command = [
         "uvx",
-        "scb-check",
+        f"scb-check=={SCB_CHECK_VERSION}",
         "check",
         "--report",
         "--include-all",
@@ -102,7 +109,9 @@ def _get_scb_check_metrics(checkpoint_dir: Path) -> dict[str, Any]:
         )
         return {}
 
-    return _scb_check_metrics_from_report(report)
+    metrics = _scb_check_metrics_from_report(report)
+    metrics[SCB_CHECK_VERSION_KEY] = SCB_CHECK_VERSION
+    return metrics
 
 
 def get_checkpoint_metrics(

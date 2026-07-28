@@ -875,13 +875,16 @@ class TestGetCheckpointMetrics:
         assert commands == [
             [
                 "uvx",
-                "scb-check",
+                f"scb-check=={checkpoint_driver.SCB_CHECK_VERSION}",
                 "check",
                 "--report",
                 "--include-all",
                 str(tmp_path / "snapshot"),
             ]
         ]
+        assert (
+            result["scb_check_version"] == checkpoint_driver.SCB_CHECK_VERSION
+        )
         assert result["verbosity"] == pytest.approx(0.5)
         assert result["erosion"] == pytest.approx(0.2)
         assert result["cloned_sloc_lines"] == 10
@@ -929,6 +932,7 @@ class TestGetCheckpointMetrics:
         assert "verbosity" not in result
         assert "erosion" not in result
         assert "cloned_pct" not in result
+        assert "scb_check_version" not in result
 
 
 class TestComputeCheckpointDelta:
