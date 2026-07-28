@@ -17,9 +17,6 @@ from slop_code.metrics.languages.python.line_metrics import calculate_mi
 from slop_code.metrics.languages.python.lint_metrics import (
     calculate_lint_metrics,
 )
-from slop_code.metrics.languages.python.redundancy import (
-    calculate_redundancy_metrics,
-)
 from slop_code.metrics.languages.python.symbols import get_symbols
 from slop_code.metrics.languages.python.type_check import (
     calculate_type_check_metrics,
@@ -37,7 +34,6 @@ register_language(
         lint=calculate_lint_metrics,
         symbol=get_symbols,
         mi=calculate_mi,
-        redundancy=calculate_redundancy_metrics,
         waste=calculate_waste_metrics,
         type_check=calculate_type_check_metrics,
     ),
@@ -53,8 +49,6 @@ __all__ = [
     "calculate_lint_metrics",
     # Symbol extraction
     "get_symbols",
-    # Redundancy detection
-    "calculate_redundancy_metrics",
     # Waste detection
     "calculate_waste_metrics",
     # Type check metrics

@@ -174,15 +174,3 @@ EXPRESSION_NODE_TYPES = frozenset(
         "generator_expression",
     }
 )
-
-CLONE_NODE_TYPES = frozenset(
-    {
-        "function_definition",
-        "if_statement",
-        "for_statement",
-        "while_statement",
-        "with_statement",
-        "try_statement",
-        "match_statement",
-    }
-)

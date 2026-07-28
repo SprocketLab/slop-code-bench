@@ -5,7 +5,9 @@ last_updated: 2025-12-17
 
 # Metrics System Documentation
 
-The metrics system automatically measures code quality for agent submissions, tracking everything from lines of code to cyclomatic complexity to code clones.
+The metrics system automatically measures code quality for agent submissions,
+tracking everything from lines of code and cyclomatic complexity to clone
+coverage reported by `scb-check`.
 
 ## 30-Second Overview
 
@@ -14,7 +16,7 @@ When an agent completes a checkpoint, the metrics system analyzes the submitted 
 - **Lint metrics**: Ruff errors and violations
 - **Complexity metrics**: Cyclomatic complexity (A-F ratings), nesting depth
 - **Composite quality**: Verbosity and erosion from pinned `scb-check`
-- **Code quality**: Waste detection (trivial wrappers, single-use functions), code clones
+- **Code quality**: Waste detection (trivial wrappers, single-use functions)
 - **Dependencies**: Graph metrics for import relationships
 
 Results are saved to JSON/JSONL files in each checkpoint's `quality_analysis/` directory.
@@ -51,7 +53,7 @@ Results are saved to JSON/JSONL files in each checkpoint's `quality_analysis/` d
 | **Maintainability Index (MI)** | Composite score of code maintainability (A >= 19) |
 | **Verbosity** | Code-bloat score produced by pinned `scb-check` |
 | **Waste** | Abstraction inefficiencies (trivial wrappers, single-use functions) |
-| **Clones** | Duplicate code blocks detected via AST hashing |
+| **Clones** | Clone coverage reported by pinned `scb-check` |
 | **Delta Metrics** | Percentage changes between checkpoints |
 | **Pass Rate** | Percentage of tests passing by category (CORE, FUNCTIONALITY, etc.) |
 | **Solve Rate** | Percentage of checkpoints/problems meeting success criteria |
@@ -63,7 +65,7 @@ Results are saved to JSON/JSONL files in each checkpoint's `quality_analysis/` d
 - **Lint errors**: Lower is better
 - **Verbosity**: Lower is better
 - **Waste metrics**: Fewer trivial wrappers and single-use functions
-- **Clone ratio**: Lower percentage means less duplication
+- **Cloned percentage**: Lower `scb-check` percentage means less duplication
 
 ### Where do I find metrics for my run?
 

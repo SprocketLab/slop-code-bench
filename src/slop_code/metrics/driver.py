@@ -7,20 +7,12 @@ and file-level metrics aggregation.
 
 from __future__ import annotations
 
-import ast
 import fnmatch
 import json
 from collections import Counter
 from collections.abc import Callable
 from collections.abc import Generator
 from pathlib import Path
-from token import COMMENT
-from token import DEDENT
-from token import ENDMARKER
-from token import INDENT
-from token import NEWLINE
-from token import NL
-from tokenize import generate_tokens
 
 from slop_code.common import RUBRIC_FILENAME
 from slop_code.logging import get_logger
@@ -35,22 +27,12 @@ from slop_code.metrics.models import GraphMetrics
 from slop_code.metrics.models import LineCountMetrics
 from slop_code.metrics.models import LintMetrics
 from slop_code.metrics.models import MetricsThresholds
-from slop_code.metrics.models import RedundancyAggregates
 from slop_code.metrics.models import SnapshotMetrics
 from slop_code.metrics.models import SymbolAggregates
 from slop_code.metrics.models import WasteAggregates
 from slop_code.metrics.quality_io import save_quality_metrics
 
 logger = get_logger(__name__)
-
-IGNORED_SLOC_TOKEN_TYPES = {
-    COMMENT,
-    DEDENT,
-    ENDMARKER,
-    INDENT,
-    NEWLINE,
-    NL,
-}
 
 
 def _calculate_file_metrics(
@@ -80,7 +62,6 @@ def _calculate_file_metrics(
     imports = extract_imports(file_path) if file_path.suffix == ".py" else []
     import_count = len(imports)
     global_count = sum(1 for symbol in symbols if symbol.type == "variable")
-    redundancy = language.redundancy(file_path) if language.redundancy else None
     waste = language.waste(file_path, symbols) if language.waste else None
     type_check = language.type_check(file_path) if language.type_check else None
     return FileMetrics(
@@ -92,7 +73,6 @@ def _calculate_file_metrics(
         is_entry_language=is_entry_language,
         import_count=import_count,
         global_count=global_count,
-        redundancy=redundancy,
         waste=waste,
         type_check=type_check,
     )
@@ -150,7 +130,6 @@ class _AggregateResult:
         classes: ClassStats,
         complexity: ComplexityAggregates,
         waste: WasteAggregates,
-        redundancy: RedundancyAggregates,
     ):
         self.file_count = file_count
         self.symbols = symbols
@@ -158,86 +137,10 @@ class _AggregateResult:
         self.classes = classes
         self.complexity = complexity
         self.waste = waste
-        self.redundancy = redundancy
 
 
 HIGH_CC_THRESHOLD = 10
 EXTREME_CC_THRESHOLD = 30
-
-
-def _iter_docstring_ranges(tree: ast.AST) -> list[tuple[int, int]]:
-    """Return inclusive docstring line ranges for a parsed Python AST."""
-    ranges: list[tuple[int, int]] = []
-    for node in ast.walk(tree):
-        body = getattr(node, "body", None)
-        if not isinstance(body, list) or not body:
-            continue
-        first = body[0]
-        if not isinstance(first, ast.Expr):
-            continue
-        value = first.value
-        if not isinstance(value, ast.Constant) or not isinstance(
-            value.value, str
-        ):
-            continue
-        if value.lineno is None or value.end_lineno is None:
-            continue
-        ranges.append((value.lineno, value.end_lineno))
-    return ranges
-
-
-def _python_sloc_lines(source_path: Path) -> set[int]:
-    """Return 1-indexed SLOC lines for a Python source file."""
-    source = source_path.read_text()
-    source_lines = source.splitlines(keepends=True)
-    sloc_lines: set[int] = set()
-    for token in generate_tokens(iter(source_lines).__next__):
-        if token.type not in IGNORED_SLOC_TOKEN_TYPES:
-            sloc_lines.add(token.start[0])
-
-    tree = ast.parse(source)
-    for start, end in _iter_docstring_ranges(tree):
-        for line_no in range(start, end + 1):
-            sloc_lines.discard(line_no)
-    return sloc_lines
-
-
-def _fallback_sloc_lines(source_path: Path) -> set[int]:
-    """Return an approximate 1-indexed SLOC line set for non-Python files."""
-    sloc_lines: set[int] = set()
-    for line_no, line in enumerate(
-        source_path.read_text().splitlines(), start=1
-    ):
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#"):
-            sloc_lines.add(line_no)
-    return sloc_lines
-
-
-def _get_sloc_lines(source_path: Path) -> set[int]:
-    """Return 1-indexed SLOC lines for a source file."""
-    try:
-        if source_path.suffix == ".py":
-            return _python_sloc_lines(source_path)
-        return _fallback_sloc_lines(source_path)
-    except (OSError, SyntaxError, UnicodeDecodeError):
-        return _fallback_sloc_lines(source_path)
-
-
-def _collect_clone_sloc_lines(
-    fm: FileMetrics, sloc_lines: set[int]
-) -> set[int]:
-    """Return the clone-covered SLOC lines for a file."""
-    if fm.redundancy is None:
-        return set()
-
-    cloned_lines: set[int] = set()
-    for clone in fm.redundancy.clones:
-        for start, end in clone.locations:
-            for line_no in range(start, end + 1):
-                if line_no in sloc_lines:
-                    cloned_lines.add(line_no)
-    return cloned_lines
 
 
 def _normalized_complexity(cc_values: list[int], max_cc: int = 50) -> float:
@@ -380,15 +283,12 @@ def _compute_class_stats(
 
 def compute_aggregates(
     file_metrics: dict[str, FileMetrics],
-    source_files: set[str] | None,
-    snapshot_dir: Path,
     thresholds: MetricsThresholds | None = None,
 ) -> _AggregateResult:
     """Compute aggregate metrics from file metrics in a single pass.
 
     Args:
         file_metrics: Dictionary mapping file paths to their metrics.
-        source_files: Set of source file paths traced from entrypoint, or None.
         thresholds: Configurable thresholds for metrics (uses defaults if None).
 
     Returns:
@@ -426,11 +326,6 @@ def compute_aggregates(
         single_use_functions=0,
         trivial_wrappers=0,
     )
-    redundancy = RedundancyAggregates(
-        clone_lines=0,
-        clone_ratio_sum=0.0,
-        files_with_clones=0,
-    )
     # Collect raw values for function/class stats computation
     func_cc: list[int] = []
     func_depth: list[int] = []
@@ -438,15 +333,10 @@ def compute_aggregates(
     class_method_counts: list[int] = []
     class_attribute_counts: list[int] = []
     # Single pass through all files
-    for path_str, fm in file_metrics.items():
+    for fm in file_metrics.values():
         symbols.update(fm)
         complexity.update(fm, thresholds)
         waste.update(fm)
-        redundancy.update(fm)
-        source_path = snapshot_dir / path_str
-        sloc_lines = _get_sloc_lines(source_path)
-        clone_sloc_lines = _collect_clone_sloc_lines(fm, sloc_lines)
-        redundancy.cloned_sloc_lines += len(clone_sloc_lines)
 
         # Collect function/method metrics
         for sym in fm.symbols:
@@ -479,7 +369,6 @@ def compute_aggregates(
         classes=classes,
         complexity=complexity,
         waste=waste,
-        redundancy=redundancy,
     )
 
 
@@ -614,7 +503,7 @@ def measure_snapshot_quality(
         graph_metrics = compute_graph_metrics(dependency_graph)
 
     # Compute aggregates using the dedicated function
-    agg = compute_aggregates(files_metrics, traced_source_files, snapshot_dir)
+    agg = compute_aggregates(files_metrics)
 
     # Build file list for JSONL output
     file_metrics_list = list(files_metrics.values())
@@ -628,7 +517,6 @@ def measure_snapshot_quality(
         classes=agg.classes,
         complexity=agg.complexity,
         waste=agg.waste,
-        redundancy=agg.redundancy,
         graph=graph_metrics,
         source_files=traced_source_files,
     )

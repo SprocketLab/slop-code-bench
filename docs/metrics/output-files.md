@@ -104,13 +104,6 @@ Aggregated metrics for the entire snapshot. This is the primary file for checkpo
     "trivial_wrappers": 1,
     "single_method_classes": 0
   },
-  "redundancy": {
-    "clone_instances": 4,
-    "clone_lines": 32,
-    "cloned_sloc_lines": 24,
-    "clone_ratio_sum": 0.03,
-    "files_with_clones": 2
-  },
   "graph": {
     "node_count": 8,
     "edge_count": 15,
@@ -133,7 +126,6 @@ Aggregated metrics for the entire snapshot. This is the primary file for checkpo
 | `classes` | Class statistics |
 | `complexity` | CC and MI distributions |
 | `waste` | Abstraction waste counts |
-| `redundancy` | Code clone aggregates, including filtered cloned SLOC |
 | `graph` | Dependency graph metrics (optional) |
 
 ## files.jsonl
@@ -163,12 +155,6 @@ Per-file metrics in JSON Lines format (one JSON object per line).
   "is_entry_language": true,
   "import_count": 8,
   "global_count": 0,
-  "redundancy": {
-    "clones": [...],
-    "total_clone_instances": 2,
-    "clone_lines": 16,
-    "clone_ratio": 0.13
-  },
   "waste": {
     "single_use_functions": [...],
     "trivial_wrappers": [...],

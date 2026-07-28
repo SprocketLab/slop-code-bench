@@ -142,14 +142,12 @@ Per function/method, radon scale.
 | `lint_fixable` | Auto-fixable violations |
 | `lint_per_loc` | `lint_errors / loc` |
 
-### Redundancy & Waste
+### `scb-check` & Waste
 
 | Key | Description |
 |-----|-------------|
-| `clone_lines` | Total duplicated lines |
 | `cloned_sloc_lines` | Duplicated SLOC lines reported by `scb-check` |
 | `cloned_pct` | `scb-check` clone LOC / total LOC |
-| `clone_ratio` | Cloned SLOC / file SLOC (per-file metric; aggregated separately) |
 | `verbosity_flagged_sloc_lines` | Verbosity-flagged SLOC reported by `scb-check` |
 | `verbosity_flagged_pct` | `scb-check` flagged LOC / total LOC |
 | `single_use_functions` | Functions called only once |

@@ -424,7 +424,6 @@ def _build_metric_specs(
             "cc.",
             "symbols.",
             "waste.",
-            "redundancy.",
             "lines.",
             "imports.",
             "normalized.",

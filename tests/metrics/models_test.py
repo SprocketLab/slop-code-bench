@@ -19,7 +19,6 @@ from slop_code.metrics.models import FunctionStats
 from slop_code.metrics.models import LanguageSpec
 from slop_code.metrics.models import LineCountMetrics
 from slop_code.metrics.models import LintMetrics
-from slop_code.metrics.models import RedundancyAggregates
 from slop_code.metrics.models import SnapshotMetrics
 from slop_code.metrics.models import SnapshotQualityReport
 from slop_code.metrics.models import SymbolAggregates
@@ -152,11 +151,6 @@ def _create_snapshot_from_files(
         waste=WasteAggregates(
             single_use_functions=0,
             trivial_wrappers=0,
-        ),
-        redundancy=RedundancyAggregates(
-            clone_lines=0,
-            clone_ratio_sum=0.0,
-            files_with_clones=0,
         ),
         source_files=source_files,
     )

@@ -125,19 +125,17 @@ Detects potential over-abstraction or unnecessary indirection.
 - Trivial wrappers add cognitive overhead without benefit
 - Single-method classes might be better as functions
 
-## Redundancy Metrics
+## Clone Metrics
 
-Detects duplicate code using AST hashing.
+Clone coverage comes exclusively from the pinned `scb-check` report.
 
 | Metric | Description |
 |--------|-------------|
-| `clone_instances` | Total duplicate code blocks |
-| `clone_lines` | Lines of code in duplicates |
-| `clone_ratio` | Percentage of code that's duplicated |
-| `files_with_clones` | Number of files containing duplicates |
+| `cloned_sloc_lines` | Source lines covered by clones |
+| `cloned_pct` | Clone LOC divided by total LOC |
 
 **Interpretation:**
-- High `clone_ratio` (> 10%) suggests refactoring opportunities
+- High `cloned_pct` suggests refactoring opportunities
 - Duplicates often indicate missing abstractions
 
 ## Graph Metrics
@@ -197,7 +195,7 @@ the exact checker release used for the checkpoint scores.
 | `cc_max` | < 15 | > 30 |
 | `lint_errors` | 0 | > 10 |
 | `verbosity` | Lower relative to comparable runs | Higher relative to comparable runs |
-| `clone_ratio` | < 5% | > 15% |
+| `cloned_pct` | < 5% | > 15% |
 | `trivial_wrappers` | 0 | > 3 |
 | `cyclic_dependency_mass` | 0 | > 0.1 |
 

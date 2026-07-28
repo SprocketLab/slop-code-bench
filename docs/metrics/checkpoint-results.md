@@ -157,7 +157,6 @@ This file contains aggregated metrics across the entire checkpoint. It's organiz
 | **classes** | count, method_counts_mean, attribute_counts_mean | Class structure |
 | **complexity** | cc_ratings, mi_ratings, cc_max, cc_mean | Complexity distribution |
 | **waste** | single_use_functions, trivial_wrappers, single_method_classes | Abstraction efficiency |
-| **redundancy** | clone_instances, clone_lines, clone_ratio_sum, cloned_sloc_lines | Code duplication |
 | **graph** | node_count, edge_count, cyclic_dependency_mass | Dependency analysis |
 
 Example excerpt:
@@ -205,7 +204,6 @@ Example excerpt:
 - See [Interpreting Results](interpreting-results.md) for detailed metric meanings
 - High `cc_max` (>20) indicates complex functions that need review
 - Positive `waste` metrics suggest over-abstraction
-- `clone_ratio` > 10% indicates duplication opportunities
 
 ### files.jsonl
 
@@ -223,8 +221,6 @@ Per-file metrics, one JSON object per line:
   "depth": 1,
   "is_entry_language": true,
   "symbol_count": 42,
-  "clone_instances": 8,
-  "clone_lines": 30,
   "single_use_count": 5,
   "trivial_wrapper_count": 0,
   "single_method_class_count": 1
@@ -234,7 +230,7 @@ Per-file metrics, one JSON object per line:
 **Use this to:**
 - Identify which files have the most complexity or violations
 - Compare file-level metrics across checkpoints
-- Spot files with many clones or waste patterns
+- Spot files with high complexity or waste patterns
 
 ### symbols.jsonl
 
@@ -519,6 +515,6 @@ For detailed interpretation of specific metrics, see [Interpreting Results](inte
 
 - **Correctness**: Are all CORE tests passing? Are REGRESSION tests still passing?
 - **Complexity**: Is `cc_max` under control? Are most functions rated A/B?
-- **Duplication**: Is `clone_ratio` under 10%? Any patterns in cloned code?
+- **Duplication**: Is the `scb-check` `cloned_pct` trending upward?
 - **Violations**: Are critical violations (weight 3-4) being addressed?
 - **Trends**: Are delta metrics improving or degrading? Is code growing too fast?

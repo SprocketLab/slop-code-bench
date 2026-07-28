@@ -239,7 +239,7 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
             elif sym_type == "type_alias":
                 type_alias_count += 1
 
-    # Waste/redundancy aggregates
+    # Waste aggregates
     total_single_use_functions = sum(
         f.get("waste", {}).get("single_use_count", 0)
         for f in files_data.values()
@@ -247,18 +247,6 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
     total_trivial_wrappers = sum(
         f.get("waste", {}).get("trivial_wrapper_count", 0)
         for f in files_data.values()
-    )
-    total_clone_lines = sum(
-        f.get("redundancy", {}).get("clone_lines", 0)
-        for f in files_data.values()
-    )
-    clone_ratio_sum = sum(
-        f.get("redundancy", {}).get("clone_ratio", 0)
-        for f in files_data.values()
-        if f.get("redundancy")
-    )
-    files_with_clones = sum(
-        1 for f in files_data.values() if f.get("redundancy")
     )
     total_imports = sum(f.get("import_count", 0) for f in files_data.values())
     max_imports = max(
@@ -359,11 +347,6 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
             "trivial_wrappers": total_trivial_wrappers,
             "unused_variables": 0,
         },
-        "redundancy": {
-            "clone_lines": total_clone_lines,
-            "clone_ratio_sum": clone_ratio_sum,
-            "files_with_clones": files_with_clones,
-        },
         "source_files": None,
     }
 
@@ -396,11 +379,6 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
                 "import_count": fm.get("import_count", 0),
                 "global_count": fm.get("global_count", 0),
                 "symbol_count": len(fm["symbols"]),
-                "clone_instances": fm.get("redundancy", {}).get(
-                    "total_clone_instances", 0
-                ),
-                "clone_lines": fm.get("redundancy", {}).get("clone_lines", 0),
-                "clone_ratio": fm.get("redundancy", {}).get("clone_ratio", 0.0),
                 "single_use_count": fm.get("waste", {}).get(
                     "single_use_count", 0
                 ),
@@ -514,11 +492,6 @@ class TestGetQualityMetrics:
                     "trivial_wrapper_count": 0,
                     "single_method_class_count": 0,
                 },
-                "redundancy": {
-                    "total_clone_instances": 2,
-                    "clone_lines": 10,
-                    "clone_ratio": 0.1,
-                },
                 "import_count": 5,
                 "global_count": 1,
             },
@@ -613,12 +586,6 @@ class TestGetQualityMetrics:
         assert result["trivial_wrappers"] == 0
         assert "single_method_classes" not in result
 
-    def test_redundancy_namespace(self, sample_quality_file: Path):
-        result = get_quality_metrics(sample_quality_file)
-
-        assert result["clone_lines"] == 10
-        assert "clone_instances" not in result
-
     def test_globals_namespace(self, sample_quality_file: Path):
         result = get_quality_metrics(sample_quality_file)
 
@@ -633,21 +600,6 @@ class TestGetQualityMetrics:
         assert "attributes_per_class" not in result
         assert result["lint_per_loc"] == pytest.approx(3 / 150)
 
-    def test_exposes_cloned_pct_for_later_analysis(
-        self, sample_quality_file: Path
-    ):
-        overall_path = (
-            sample_quality_file / QUALITY_DIR / QUALITY_METRIC_SAVENAME
-        )
-        overall = json.loads(overall_path.read_text())
-        overall["redundancy"]["cloned_sloc_lines"] = 9
-        overall_path.write_text(json.dumps(overall))
-
-        result = get_quality_metrics(sample_quality_file)
-
-        assert result["cloned_sloc_lines"] == 9
-        assert result["cloned_pct"] == pytest.approx(9 / 150)
-
     def test_missing_file(self, tmp_path: Path):
         result = get_quality_metrics(tmp_path)
         assert result == {}
@@ -657,7 +609,6 @@ class TestGetQualityMetrics:
 
         removed_fields = {
             "branches_mean",
-            "clone_instances",
             "comparisons_mean",
             "control_mean",
             "single_method_classes",
@@ -874,6 +825,7 @@ class TestGetCheckpointMetrics:
         assert result["total_tests"] == 1
         assert "verbosity" not in result
         assert "erosion" not in result
+        assert "cloned_sloc_lines" not in result
         assert "cloned_pct" not in result
         assert "scb_check_version" not in result
 
@@ -988,7 +940,6 @@ class TestComputeCheckpointDelta:
 
         removed_delta_keys = {
             "delta.cc_high_count",
-            "delta.clone_instances",
             "delta.comparisons",
             "delta.functions",
             "delta.lint_errors",

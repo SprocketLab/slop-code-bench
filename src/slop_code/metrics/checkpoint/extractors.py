@@ -101,7 +101,7 @@ def _build_metrics_from_snapshot(
 
     Args:
         snapshot: Dict from SnapshotMetrics.model_dump() with nested fields:
-            - lines, lint, symbols, functions, classes, waste, redundancy, etc.
+            - lines, lint, symbols, functions, classes, waste, etc.
         distributions: Pre-computed distribution metrics from file iteration.
 
     Returns:
@@ -114,7 +114,6 @@ def _build_metrics_from_snapshot(
     symbols = snapshot["symbols"]
     functions = snapshot["functions"]
     waste = snapshot["waste"]
-    redundancy = snapshot["redundancy"]
     source_loc = lines["loc"]
     total_loc = lines["total_lines"]
 
@@ -150,17 +149,11 @@ def _build_metrics_from_snapshot(
         "single_use_functions": waste["single_use_functions"],
         "trivial_wrappers": waste["trivial_wrappers"],
         "unused_variables": waste.get("unused_variables", 0),
-        # Redundancy
-        "clone_lines": redundancy["clone_lines"],
-        "cloned_sloc_lines": redundancy.get("cloned_sloc_lines", 0),
     }
 
     # Per-LOC normalized metrics
     if total_loc > 0:
         result["lint_per_loc"] = lint["errors"] / total_loc
-        result["cloned_pct"] = (
-            redundancy.get("cloned_sloc_lines", 0) / total_loc
-        )
 
     # Graph metrics (optional, may be None for non-Python)
     if graph := snapshot.get("graph"):
@@ -294,7 +287,6 @@ def get_quality_metrics(
         - files.*: File change counts
         - symbols.*: Symbol type counts and complexity ratings
         - waste.*: Abstraction waste metrics
-        - redundancy.*: Code clone metrics
     """
     if thresholds is None:
         thresholds = MetricsThresholds()

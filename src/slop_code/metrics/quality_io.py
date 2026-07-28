@@ -73,12 +73,6 @@ def save_quality_metrics(
                 "import_count": fm.import_count,
                 "global_count": fm.global_count,
                 "symbol_count": len(fm.symbols),
-                "clone_lines": fm.redundancy.clone_lines
-                if fm.redundancy
-                else 0,
-                "clone_ratio": (
-                    fm.redundancy.clone_ratio if fm.redundancy else 0.0
-                ),
                 "single_use_count": (
                     fm.waste.single_use_count if fm.waste else 0
                 ),

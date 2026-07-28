@@ -84,8 +84,8 @@ One JSON object per line, one line per checkpoint across all problems.
   "cc_std": 6.372353102110006,
   "cc_high_count": 5,
   "cc_extreme_count": 0,
-  "clone_instances": 0,
-  "clone_lines": 0,
+  "cloned_sloc_lines": 0,
+  "cloned_pct": 0.0,
   "verbosity": 0.26,
   "erosion": 0.11,
   "scb_check_version": "0.1.3",
@@ -136,7 +136,7 @@ One JSON object per line, one line per checkpoint across all problems.
 - `cc_std`: Standard deviation of complexity
 - `cc_high_count`: Functions with CC > 10
 - `cc_extreme_count`: Functions with CC > 30
-- `clone_instances`: Duplicate code blocks
+- `cloned_sloc_lines` / `cloned_pct`: Clone coverage from `scb-check`
 - `verbosity`: Code-bloat score from `scb-check`
 - `erosion`: Structural-degradation score from `scb-check`
 - `scb_check_version`: Pinned `scb-check` release that produced the scores

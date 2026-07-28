@@ -230,30 +230,8 @@ class FileMetrics(BaseModel):
     is_entry_language: bool = False
     import_count: int = 0
     global_count: int = 0
-    redundancy: RedundancyMetrics | None = None
     waste: WasteMetrics | None = None
     type_check: TypeCheckMetrics | None = None
-
-
-class CodeClone(BaseModel):
-    """A group of duplicate code blocks with identical AST structure."""
-
-    ast_hash: str
-    locations: list[tuple[int, int]]
-    node_type: str
-    line_count: int
-
-
-class RedundancyMetrics(BaseModel):
-    """Per-file redundancy analysis results.
-
-    Clones are measured in lines (deduplicated by line number).
-    """
-
-    clones: list[CodeClone]
-    total_clone_instances: int
-    clone_lines: int
-    clone_ratio: float
 
 
 class SingleUseFunction(BaseModel):
@@ -442,22 +420,6 @@ class WasteAggregates(BaseModel):
             self.unused_variables += fm.waste.unused_variable_count
 
 
-class RedundancyAggregates(BaseModel):
-    """Aggregate redundancy/clone detection metrics."""
-
-    clone_lines: int
-    clone_ratio_sum: float
-    files_with_clones: int
-    cloned_sloc_lines: int = 0
-
-    def update(self, fm: FileMetrics) -> None:
-        """Update aggregates from a FileMetrics instance."""
-        if fm.redundancy:
-            self.clone_lines += fm.redundancy.clone_lines
-            self.clone_ratio_sum += fm.redundancy.clone_ratio
-            self.files_with_clones += 1
-
-
 class TypeCheckAggregates(BaseModel):
     """Aggregate type checking metrics."""
 
@@ -511,7 +473,6 @@ class SnapshotMetrics(BaseModel):
         classes: Pre-computed statistics for classes.
         complexity: CC and MI rating distributions and stats.
         waste: Waste detection totals.
-        redundancy: Clone detection totals.
         graph: Dependency graph metrics (None if not computed).
         source_files: Relative paths of files traced from the entrypoint.
     """
@@ -524,7 +485,6 @@ class SnapshotMetrics(BaseModel):
     classes: ClassStats
     complexity: ComplexityAggregates
     waste: WasteAggregates
-    redundancy: RedundancyAggregates
     graph: GraphMetrics | None = None
     source_files: set[str] | None = None
 
@@ -572,7 +532,6 @@ class LanguageSpec(BaseModel):
     lint: Callable[[Path], LintMetrics]
     symbol: Callable[[Path], list[SymbolMetrics]]
     mi: Callable[[Path], float]
-    redundancy: Callable[[Path], RedundancyMetrics] | None = None
     waste: Callable[[Path, list[SymbolMetrics]], WasteMetrics] | None = None
     type_check: Callable[[Path], TypeCheckMetrics] | None = None
 
