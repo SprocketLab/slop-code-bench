@@ -11,7 +11,6 @@ from slop_code.metrics.driver import measure_files
 from slop_code.metrics.driver import measure_snapshot_quality
 from slop_code.metrics.languages import EXT_TO_LANGUAGE
 from slop_code.metrics.languages import LANGUAGE_REGISTRY
-from slop_code.metrics.models import AstGrepViolation
 from slop_code.metrics.models import CodeClone
 from slop_code.metrics.models import FileMetrics
 from slop_code.metrics.models import LanguageSpec
@@ -434,7 +433,7 @@ class TestMeasureSnapshotQuality:
         assert snapshot.lint.counts["E501"] == 2  # 1 + 1
         assert snapshot.lint.counts["E302"] == 2  # 1 + 1
 
-    def test_measure_snapshot_quality_tracks_clone_and_union_sloc_coverage(
+    def test_measure_snapshot_quality_tracks_clone_sloc_coverage(
         self, tmp_path, monkeypatch
     ):
         source = tmp_path / "file1.py"
@@ -479,16 +478,6 @@ class TestMeasureSnapshotQuality:
                     clone_lines=6,
                     clone_ratio=1.0,
                 ),
-                ast_grep_violations=[
-                    AstGrepViolation(
-                        rule_id="rule-a",
-                        severity="warning",
-                        line=5,
-                        column=0,
-                        end_line=7,
-                        end_column=0,
-                    )
-                ],
             )
 
         monkeypatch.setattr(
@@ -499,7 +488,6 @@ class TestMeasureSnapshotQuality:
         snapshot, _ = measure_snapshot_quality("file1.py", tmp_path)
 
         assert snapshot.redundancy.cloned_sloc_lines == 6
-        assert snapshot.verbosity_flagged_sloc_lines == 6
 
     def test_measure_snapshot_quality_excludes_patterns(self, tmp_path):
         """Test that default exclude patterns are applied.

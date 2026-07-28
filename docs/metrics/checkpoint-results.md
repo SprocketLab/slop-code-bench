@@ -158,8 +158,6 @@ This file contains aggregated metrics across the entire checkpoint. It's organiz
 | **complexity** | cc_ratings, mi_ratings, cc_max, cc_mean | Complexity distribution |
 | **waste** | single_use_functions, trivial_wrappers, single_method_classes | Abstraction efficiency |
 | **redundancy** | clone_instances, clone_lines, clone_ratio_sum, cloned_sloc_lines | Code duplication |
-| **ast_grep** | violations, category_counts, category_weighted | Slop-rule violations |
-| **root** | verbosity_flagged_sloc_lines | Union coverage used by verbosity |
 | **graph** | node_count, edge_count, cyclic_dependency_mass | Dependency analysis |
 
 Example excerpt:
@@ -225,7 +223,6 @@ Per-file metrics, one JSON object per line:
   "depth": 1,
   "is_entry_language": true,
   "symbol_count": 42,
-  "ast_grep_violation_count": 103,
   "clone_instances": 8,
   "clone_lines": 30,
   "single_use_count": 5,
@@ -274,38 +271,6 @@ Per-function/class/method metrics, one JSON object per line:
 - Understand function dependencies (`variables_defined`, `variables_used`)
 - Find functions with high `raise_count` (error-prone)
 
-### ast_grep.jsonl
-
-AST-grep pattern violations, one per line:
-
-```json
-{
-  "rule_id": "complex-tuple-type",
-  "severity": "warning",
-  "category": "types",
-  "subcategory": "types",
-  "weight": 2,
-  "line": 256,
-  "column": 15,
-  "end_line": 256,
-  "end_column": 39,
-  "file_path": "industry.py"
-}
-```
-
-| Field | Meaning |
-|-------|---------|
-| `rule_id` | Name of the pattern that was violated |
-| `category` | Always `slop` for the built-in ruleset |
-| `weight` | Severity: 1 (minor) to 4 (critical) |
-| `line` / `column` | Location in source code |
-
-**Use this to:**
-- Filter violations by category (e.g., safety violations)
-- Prioritize fixes by weight (focus on weight 3-4)
-- Identify specific patterns to improve
-- See [Interpreting Results](interpreting-results.md) for category details
-
 ## Delta Metrics
 
 Delta metrics measure how quality changes between consecutive checkpoints. They're included in the checkpoint-level metrics.
@@ -315,9 +280,7 @@ Delta metrics measure how quality changes between consecutive checkpoints. They'
 | Metric | Formula | Interpretation |
 |--------|---------|-----------------|
 | `delta.loc` | `(curr_loc - prev_loc) / prev_loc * 100` | % change in code size |
-| `delta.lint_errors` | Same formula | % change in lint errors |
-| `delta.ast_grep_violations` | Same formula | % change in violations |
-| `delta.cc_high_count` | Same formula | % change in complex functions |
+| `delta.verbosity` | Same formula | % change in the `scb-check` verbosity score |
 | `delta.churn_ratio` | `(added + removed) / prev_total` | Code churn as % of prior size |
 
 **Special cases:**
@@ -435,8 +398,7 @@ checkpoint_N/
 ├── quality_analysis/                  # Code quality metrics
 │   ├── overall_quality.json           # Aggregate quality metrics
 │   ├── files.jsonl                    # Per-file metrics
-│   ├── symbols.jsonl                  # Per-function/class metrics
-│   └── ast_grep.jsonl                 # Pattern violations
+│   └── symbols.jsonl                  # Per-function/class metrics
 ├── evaluation/                        # Test artifacts
 │   ├── stdout.txt                     # Pytest output
 │   ├── stderr.txt                     # Pytest errors
@@ -523,12 +485,10 @@ def checkpoint_health(checkpoint_dir):
     # Check requirements
     core_passes = eval_results['pass_counts'].get('Core', 0) == eval_results['total_counts'].get('Core', 0)
     high_complexity = quality['complexity']['cc_max'] > 20
-    too_many_violations = quality['ast_grep']['violations'] > 50
 
     return {
         'requirements_met': core_passes,
         'high_complexity': high_complexity,
-        'too_many_violations': too_many_violations,
         'loc': quality['lines']['loc'],
         'lint_errors': quality['lint']['errors']
     }
@@ -549,10 +509,7 @@ def quality_delta(checkpoint_dir, prior_dir):
 
     # Calculate deltas
     loc_delta = (curr['lines']['loc'] - prev['lines']['loc']) / prev['lines']['loc'] * 100
-    violations_delta = (curr['ast_grep']['violations'] - prev['ast_grep']['violations']) / prev['ast_grep']['violations'] * 100
-
     print(f"LOC change: {loc_delta:.1f}%")
-    print(f"Violations change: {violations_delta:.1f}%")
     print(f"Complexity max: {prev['complexity']['cc_max']} → {curr['complexity']['cc_max']}")
 ```
 

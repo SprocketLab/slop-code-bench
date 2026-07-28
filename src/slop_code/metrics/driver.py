@@ -27,7 +27,6 @@ from slop_code.logging import get_logger
 from slop_code.metrics.checkpoint.mass import compute_top20_share
 from slop_code.metrics.languages import get_language_by_extension
 from slop_code.metrics.languages.python import extract_imports
-from slop_code.metrics.models import AstGrepAggregates
 from slop_code.metrics.models import ClassStats
 from slop_code.metrics.models import ComplexityAggregates
 from slop_code.metrics.models import FileMetrics
@@ -84,7 +83,6 @@ def _calculate_file_metrics(
     redundancy = language.redundancy(file_path) if language.redundancy else None
     waste = language.waste(file_path, symbols) if language.waste else None
     type_check = language.type_check(file_path) if language.type_check else None
-    ast_grep = language.ast_grep(file_path) if language.ast_grep else None
     return FileMetrics(
         symbols=symbols,
         lines=line_metrics,
@@ -97,8 +95,6 @@ def _calculate_file_metrics(
         redundancy=redundancy,
         waste=waste,
         type_check=type_check,
-        ast_grep_violations=ast_grep.violations if ast_grep else [],
-        ast_grep_rules_checked=ast_grep.rules_checked if ast_grep else 0,
     )
 
 
@@ -155,8 +151,6 @@ class _AggregateResult:
         complexity: ComplexityAggregates,
         waste: WasteAggregates,
         redundancy: RedundancyAggregates,
-        ast_grep: AstGrepAggregates,
-        verbosity_flagged_sloc_lines: int,
     ):
         self.file_count = file_count
         self.symbols = symbols
@@ -165,8 +159,6 @@ class _AggregateResult:
         self.complexity = complexity
         self.waste = waste
         self.redundancy = redundancy
-        self.ast_grep = ast_grep
-        self.verbosity_flagged_sloc_lines = verbosity_flagged_sloc_lines
 
 
 HIGH_CC_THRESHOLD = 10
@@ -246,20 +238,6 @@ def _collect_clone_sloc_lines(
                 if line_no in sloc_lines:
                     cloned_lines.add(line_no)
     return cloned_lines
-
-
-def _collect_ast_grep_sloc_lines(
-    fm: FileMetrics, sloc_lines: set[int]
-) -> set[int]:
-    """Return the AST-grep-covered SLOC lines for a file."""
-    flagged_lines: set[int] = set()
-    for violation in fm.ast_grep_violations:
-        start = violation.line + 1
-        end = violation.end_line + 1
-        for line_no in range(start, end + 1):
-            if line_no in sloc_lines:
-                flagged_lines.add(line_no)
-    return flagged_lines
 
 
 def _normalized_complexity(cc_values: list[int], max_cc: int = 50) -> float:
@@ -453,35 +431,22 @@ def compute_aggregates(
         clone_ratio_sum=0.0,
         files_with_clones=0,
     )
-    ast_grep = AstGrepAggregates(
-        violations=0,
-        rules_checked=0,
-        counts={},
-    )
-
     # Collect raw values for function/class stats computation
     func_cc: list[int] = []
     func_depth: list[int] = []
     func_lines: list[int] = []
     class_method_counts: list[int] = []
     class_attribute_counts: list[int] = []
-    verbosity_flagged_sloc_lines = 0
-
     # Single pass through all files
     for path_str, fm in file_metrics.items():
         symbols.update(fm)
         complexity.update(fm, thresholds)
         waste.update(fm)
         redundancy.update(fm)
-        ast_grep.update(fm)
         source_path = snapshot_dir / path_str
         sloc_lines = _get_sloc_lines(source_path)
         clone_sloc_lines = _collect_clone_sloc_lines(fm, sloc_lines)
-        ast_grep_sloc_lines = _collect_ast_grep_sloc_lines(fm, sloc_lines)
         redundancy.cloned_sloc_lines += len(clone_sloc_lines)
-        verbosity_flagged_sloc_lines += len(
-            clone_sloc_lines | ast_grep_sloc_lines
-        )
 
         # Collect function/method metrics
         for sym in fm.symbols:
@@ -515,8 +480,6 @@ def compute_aggregates(
         complexity=complexity,
         waste=waste,
         redundancy=redundancy,
-        ast_grep=ast_grep,
-        verbosity_flagged_sloc_lines=verbosity_flagged_sloc_lines,
     )
 
 
@@ -666,8 +629,6 @@ def measure_snapshot_quality(
         complexity=agg.complexity,
         waste=agg.waste,
         redundancy=agg.redundancy,
-        ast_grep=agg.ast_grep,
-        verbosity_flagged_sloc_lines=agg.verbosity_flagged_sloc_lines,
         graph=graph_metrics,
         source_files=traced_source_files,
     )

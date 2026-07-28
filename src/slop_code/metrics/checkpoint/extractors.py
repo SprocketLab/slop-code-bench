@@ -94,19 +94,6 @@ def _compute_distributions(
     }
 
 
-def _extract_ast_grep_categories(ast_grep: dict) -> dict[str, int]:
-    """Extract AST-grep violation counts for the slop ruleset.
-
-    Args:
-        ast_grep: AST-grep metrics dictionary.
-
-    Returns:
-        Dictionary with the single exported slop violation count.
-    """
-    category_counts = ast_grep.get("category_counts", {})
-    return {"sg_slop_violations": category_counts.get("slop", 0)}
-
-
 def _build_metrics_from_snapshot(
     snapshot: dict, distributions: dict[str, Any]
 ) -> dict[str, Any]:
@@ -128,7 +115,6 @@ def _build_metrics_from_snapshot(
     functions = snapshot["functions"]
     waste = snapshot["waste"]
     redundancy = snapshot["redundancy"]
-    ast_grep = snapshot["ast_grep"]
     source_loc = lines["loc"]
     total_loc = lines["total_lines"]
 
@@ -167,25 +153,13 @@ def _build_metrics_from_snapshot(
         # Redundancy
         "clone_lines": redundancy["clone_lines"],
         "cloned_sloc_lines": redundancy.get("cloned_sloc_lines", 0),
-        # AST-grep
-        "ast_grep_violations": ast_grep["violations"],
-        "verbosity_flagged_sloc_lines": snapshot.get(
-            "verbosity_flagged_sloc_lines", 0
-        ),
     }
-
-    # Add AST-grep category counts
-    result.update(_extract_ast_grep_categories(ast_grep))
 
     # Per-LOC normalized metrics
     if total_loc > 0:
         result["lint_per_loc"] = lint["errors"] / total_loc
-        result["violation_pct"] = ast_grep.get("violation_lines", 0) / total_loc
         result["cloned_pct"] = (
             redundancy.get("cloned_sloc_lines", 0) / total_loc
-        )
-        result["verbosity_flagged_pct"] = (
-            snapshot.get("verbosity_flagged_sloc_lines", 0) / total_loc
         )
 
     # Graph metrics (optional, may be None for non-Python)
@@ -321,7 +295,6 @@ def get_quality_metrics(
         - symbols.*: Symbol type counts and complexity ratings
         - waste.*: Abstraction waste metrics
         - redundancy.*: Code clone metrics
-        - ast_grep.*: AST-grep violation metrics
     """
     if thresholds is None:
         thresholds = MetricsThresholds()

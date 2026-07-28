@@ -31,7 +31,7 @@ def build_checkpoint_delta_boxplot(context: ChartContext) -> go.Figure:
         subplot_titles=[
             "LOC",
             "Lint",
-            "AST Grep Rules",
+            "Verbosity",
             "Rubric",
             "Novel Flags",
             "High Complexity Symbols",
@@ -41,7 +41,7 @@ def build_checkpoint_delta_boxplot(context: ChartContext) -> go.Figure:
     metrics = [
         ("lines_delta_pct", 1, 1),
         ("lint_delta_pct", 1, 2),
-        ("ast_grep_delta_pct", 1, 3),
+        ("verbosity_delta_pct", 1, 3),
         ("rubric_delta_pct", 2, 1),
         ("rubric_non_carryover", 2, 2),
         ("complex_delta_pct", 2, 3),

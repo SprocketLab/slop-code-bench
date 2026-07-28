@@ -122,12 +122,12 @@ layout = dbc.Container(
                     dbc.Card(
                         [
                             dbc.CardHeader(
-                                "AST-grep Violations Comparison",
+                                "Verbosity Comparison",
                                 className="fw-bold",
                             ),
                             dbc.CardBody(
                                 loading_graph(
-                                    "h2h-ast-grep-scatter", height="400px"
+                                    "h2h-verbosity-scatter", height="400px"
                                 )
                             ),
                         ],
@@ -162,7 +162,7 @@ layout = dbc.Container(
 @callback(
     [
         Output("h2h-lint-scatter", "figure"),
-        Output("h2h-ast-grep-scatter", "figure"),
+        Output("h2h-verbosity-scatter", "figure"),
         Output("h2h-complexity-scatter", "figure"),
     ],
     [Input("h2h-run-a", "value"), Input("h2h-run-b", "value")],
@@ -214,11 +214,11 @@ def update_quality(run_a_path, run_b_path):
         run_a_path,
         run_b_path,
     )
-    ast_grep_fig = make_quality_scatter_checkpoint_level(
+    verbosity_fig = make_quality_scatter_checkpoint_level(
         df_chk,
-        "ast_grep_violations",
-        "AST-grep Violations per Checkpoint",
-        "Violations",
+        "verbosity",
+        "Verbosity per Checkpoint",
+        "Verbosity",
         name_a,
         name_b,
         run_a_path,
@@ -235,4 +235,4 @@ def update_quality(run_a_path, run_b_path):
         run_b_path,
     )
 
-    return lint_fig, ast_grep_fig, comp_fig
+    return lint_fig, verbosity_fig, comp_fig

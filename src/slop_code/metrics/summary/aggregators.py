@@ -295,12 +295,10 @@ def compute_ratios_stats(checkpoints: list[dict[str, Any]]) -> RatiosStats:
         checkpoints, "rubric_total_flags", "loc"
     )
     lint_ratios = compute_ratio_values(checkpoints, "lint_errors", "loc")
-    violation_pct_values = extract_metric_values(checkpoints, "violation_pct")
 
     return RatiosStats(
         rubric=compute_metric_stats(rubric_ratios),
         lint=compute_metric_stats(lint_ratios),
-        violation_pct=compute_metric_stats(violation_pct_values),
     )
 
 

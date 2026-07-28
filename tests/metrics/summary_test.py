@@ -28,7 +28,7 @@ class TestRunSummaryDeltaRemoval:
                 "idx": 1,
                 "strict_pass_rate": 0.8,
                 "delta.loc": 50.0,
-                "delta.ast_grep_violations": -20.0,
+                "delta.verbosity": -20.0,
                 "delta.churn_ratio": 0.1,
             }
         ]
@@ -486,7 +486,6 @@ class TestRunSummaryCompositeScores:
                 "isolated_pass_rate": 1.0,
                 "verbosity": 0.95,
                 "erosion": 0.6,
-                "ast_grep_violations": 999,
                 "rubric_total_flags": 999,
                 "mass.high_cc_pct": 0.01,
             }

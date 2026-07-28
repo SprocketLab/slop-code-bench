@@ -8,7 +8,6 @@ from types import SimpleNamespace
 
 import pytest
 
-from slop_code.common import AST_GREP_QUALITY_SAVENAME
 from slop_code.common import FILES_QUALITY_SAVENAME
 from slop_code.common import QUALITY_DIR
 from slop_code.common import QUALITY_METRIC_SAVENAME
@@ -125,7 +124,6 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
     - quality_analysis/overall_quality.json
     - quality_analysis/files.jsonl (flat file metrics)
     - quality_analysis/symbols.jsonl (flat symbol metrics)
-    - quality_analysis/ast_grep.jsonl (flat AST-grep violations)
     """
     # Compute aggregates from file data
     file_count = len(files_data)
@@ -241,7 +239,7 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
             elif sym_type == "type_alias":
                 type_alias_count += 1
 
-    # Waste/redundancy/ast_grep aggregates
+    # Waste/redundancy aggregates
     total_single_use_functions = sum(
         f.get("waste", {}).get("single_use_count", 0)
         for f in files_data.values()
@@ -261,21 +259,6 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
     )
     files_with_clones = sum(
         1 for f in files_data.values() if f.get("redundancy")
-    )
-    total_ast_grep_violations = sum(
-        f.get("ast_grep", {}).get("total_violations", 0)
-        for f in files_data.values()
-    )
-    total_ast_grep_violation_lines = sum(
-        f.get("ast_grep", {}).get("violation_lines", 0)
-        for f in files_data.values()
-    )
-    ast_grep_rules_checked = max(
-        (
-            f.get("ast_grep", {}).get("rules_checked", 0)
-            for f in files_data.values()
-        ),
-        default=0,
     )
     total_imports = sum(f.get("import_count", 0) for f in files_data.values())
     max_imports = max(
@@ -381,12 +364,6 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
             "clone_ratio_sum": clone_ratio_sum,
             "files_with_clones": files_with_clones,
         },
-        "ast_grep": {
-            "violations": total_ast_grep_violations,
-            "violation_lines": total_ast_grep_violation_lines,
-            "rules_checked": ast_grep_rules_checked,
-            "counts": {},
-        },
         "source_files": None,
     }
 
@@ -401,7 +378,7 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
     # Write flat files.jsonl
     with (quality_dir / FILES_QUALITY_SAVENAME).open("w") as f:
         for file_path, fm in files_data.items():
-            # Create flat file metrics (no nested symbols/ast_grep lists)
+            # Create flat file metrics (no nested symbol lists)
             flat_fm = {
                 "file_path": file_path,
                 "loc": fm["lines"]["loc"],
@@ -419,12 +396,6 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
                 "import_count": fm.get("import_count", 0),
                 "global_count": fm.get("global_count", 0),
                 "symbol_count": len(fm["symbols"]),
-                "ast_grep_violation_count": fm.get("ast_grep", {}).get(
-                    "total_violations", 0
-                ),
-                "ast_grep_rules_checked": fm.get("ast_grep", {}).get(
-                    "rules_checked", 0
-                ),
                 "clone_instances": fm.get("redundancy", {}).get(
                     "total_clone_instances", 0
                 ),
@@ -470,12 +441,6 @@ def _create_quality_test_files(tmp_path: Path, files_data: dict) -> Path:
                     "attribute_count": s.get("attribute_count"),
                 }
                 f.write(json.dumps(flat_sym) + "\n")
-
-    # Write flat ast_grep.jsonl (empty for most tests, but structure is there)
-    with (quality_dir / AST_GREP_QUALITY_SAVENAME).open("w") as f:
-        # AST-grep violations are typically from the ast_grep field in files_data
-        # For now we just create an empty file (violations are aggregated)
-        pass
 
     return tmp_path
 
@@ -553,12 +518,6 @@ class TestGetQualityMetrics:
                     "total_clone_instances": 2,
                     "clone_lines": 10,
                     "clone_ratio": 0.1,
-                },
-                "ast_grep": {
-                    "total_violations": 3,
-                    "violation_lines": 5,
-                    "rules_checked": 33,
-                    "counts": {"bare-except": 2, "len-comparison": 1},
                 },
                 "import_count": 5,
                 "global_count": 1,
@@ -660,12 +619,6 @@ class TestGetQualityMetrics:
         assert result["clone_lines"] == 10
         assert "clone_instances" not in result
 
-    def test_ast_grep_namespace(self, sample_quality_file: Path):
-        result = get_quality_metrics(sample_quality_file)
-
-        assert result["ast_grep_violations"] == 3
-        assert result["sg_slop_violations"] == 0
-
     def test_globals_namespace(self, sample_quality_file: Path):
         result = get_quality_metrics(sample_quality_file)
 
@@ -679,10 +632,8 @@ class TestGetQualityMetrics:
         assert "methods_per_class" not in result
         assert "attributes_per_class" not in result
         assert result["lint_per_loc"] == pytest.approx(3 / 150)
-        assert result["violation_pct"] == pytest.approx(5 / 150)
-        assert "ast_grep_per_loc" not in result
 
-    def test_exposes_cloned_and_union_pct_for_later_analysis(
+    def test_exposes_cloned_pct_for_later_analysis(
         self, sample_quality_file: Path
     ):
         overall_path = (
@@ -690,15 +641,12 @@ class TestGetQualityMetrics:
         )
         overall = json.loads(overall_path.read_text())
         overall["redundancy"]["cloned_sloc_lines"] = 9
-        overall["verbosity_flagged_sloc_lines"] = 14
         overall_path.write_text(json.dumps(overall))
 
         result = get_quality_metrics(sample_quality_file)
 
         assert result["cloned_sloc_lines"] == 9
         assert result["cloned_pct"] == pytest.approx(9 / 150)
-        assert result["verbosity_flagged_sloc_lines"] == 14
-        assert result["verbosity_flagged_pct"] == pytest.approx(14 / 150)
 
     def test_missing_file(self, tmp_path: Path):
         result = get_quality_metrics(tmp_path)
@@ -708,7 +656,6 @@ class TestGetQualityMetrics:
         result = get_quality_metrics(sample_quality_file)
 
         removed_fields = {
-            "ast_grep_violation_lines",
             "branches_mean",
             "clone_instances",
             "comparisons_mean",
@@ -822,7 +769,7 @@ class TestGetCheckpointMetrics:
         # May also include erosion metrics with default values
         assert "erosion_velocity" in result or len(result) == 2
 
-    def test_uses_scb_check_report_for_composite_quality_numbers(
+    def test_uses_pinned_scb_check_0_1_3_report_for_composite_quality_numbers(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
         (tmp_path / "snapshot").mkdir()
@@ -841,9 +788,7 @@ class TestGetCheckpointMetrics:
             "get_quality_metrics",
             lambda checkpoint_dir: {
                 "loc": 100,
-                "verbosity_flagged_pct": 0.01,
                 "mass.high_cc_pct": 0.99,
-                "cloned_pct": 0.01,
             },
         )
         monkeypatch.setattr(
@@ -872,19 +817,18 @@ class TestGetCheckpointMetrics:
 
         result = get_checkpoint_metrics(tmp_path)
 
+        assert checkpoint_driver.SCB_CHECK_VERSION == "0.1.3"
         assert commands == [
             [
                 "uvx",
-                f"scb-check=={checkpoint_driver.SCB_CHECK_VERSION}",
+                "scb-check==0.1.3",
                 "check",
                 "--report",
                 "--include-all",
                 str(tmp_path / "snapshot"),
             ]
         ]
-        assert (
-            result["scb_check_version"] == checkpoint_driver.SCB_CHECK_VERSION
-        )
+        assert result["scb_check_version"] == "0.1.3"
         assert result["verbosity"] == pytest.approx(0.5)
         assert result["erosion"] == pytest.approx(0.2)
         assert result["cloned_sloc_lines"] == 10
@@ -948,65 +892,65 @@ class TestComputeCheckpointDelta:
         """Test percentage change calculation."""
         prev = {
             "loc": 100,
-            "ast_grep_violations": 5,
+            "verbosity": 0.2,
             "total_lines": 120,
         }
         curr = {
             "loc": 150,
-            "ast_grep_violations": 10,
+            "verbosity": 0.4,
             "lines_added": 20,
             "lines_removed": 10,
         }
         result = compute_checkpoint_delta(prev, curr)
 
         assert result["delta.loc"] == 50.0  # (150-100)/100 * 100
-        assert result["delta.ast_grep_violations"] == 100.0
+        assert result["delta.verbosity"] == 100.0
 
     def test_zero_prev_returns_inf(self):
         """Test handling of zero previous values."""
         prev = {
-            "ast_grep_violations": 0,
+            "verbosity": 0,
             "total_lines": 100,
         }
         curr = {
-            "ast_grep_violations": 5,
+            "verbosity": 0.5,
             "lines_added": 10,
             "lines_removed": 5,
         }
         result = compute_checkpoint_delta(prev, curr)
 
         # Should be inf when prev is 0 but curr > 0
-        assert result["delta.ast_grep_violations"] == float("inf")
+        assert result["delta.verbosity"] == float("inf")
 
     def test_zero_both_returns_zero(self):
         """Test handling when both prev and curr are zero."""
         prev = {
-            "ast_grep_violations": 0,
+            "verbosity": 0,
             "total_lines": 100,
         }
         curr = {
-            "ast_grep_violations": 0,
+            "verbosity": 0,
             "lines_added": 0,
             "lines_removed": 0,
         }
         result = compute_checkpoint_delta(prev, curr)
 
-        assert result["delta.ast_grep_violations"] == 0.0
+        assert result["delta.verbosity"] == 0.0
 
     def test_negative_delta(self):
         """Test negative percentage changes."""
         prev = {
-            "ast_grep_violations": 10,
+            "verbosity": 0.4,
             "total_lines": 100,
         }
         curr = {
-            "ast_grep_violations": 5,
+            "verbosity": 0.2,
             "lines_added": 10,
             "lines_removed": 5,
         }
         result = compute_checkpoint_delta(prev, curr)
 
-        assert result["delta.ast_grep_violations"] == -50.0
+        assert result["delta.verbosity"] == -50.0
 
     def test_churn_ratio(self):
         """Test churn ratio calculation."""
@@ -1028,19 +972,19 @@ class TestComputeCheckpointDelta:
         """Test that all expected delta keys are present in output."""
         prev = {
             "loc": 100,
-            "ast_grep_violations": 10,
+            "verbosity": 0.2,
             "total_lines": 120,
         }
         curr = {
             "loc": 150,
-            "ast_grep_violations": 12,
+            "verbosity": 0.3,
             "lines_added": 20,
             "lines_removed": 10,
         }
         result = compute_checkpoint_delta(prev, curr)
 
         assert "delta.loc" in result
-        assert "delta.ast_grep_violations" in result
+        assert "delta.verbosity" in result
         assert "delta.churn_ratio" in result
 
         removed_delta_keys = {

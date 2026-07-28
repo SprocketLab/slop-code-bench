@@ -26,7 +26,7 @@ layout = dbc.Container(
             [
                 dbc.Col(loading_graph("ra-lint-dist", height="350px"), md=4),
                 dbc.Col(
-                    loading_graph("ra-ast-grep-dist", height="350px"), md=4
+                    loading_graph("ra-verbosity-dist", height="350px"), md=4
                 ),
                 dbc.Col(loading_graph("ra-complex-dist", height="350px"), md=4),
             ],
@@ -74,7 +74,7 @@ def build_histogram(df, col, title, color):
 @callback(
     [
         Output("ra-lint-dist", "figure"),
-        Output("ra-ast-grep-dist", "figure"),
+        Output("ra-verbosity-dist", "figure"),
         Output("ra-complex-dist", "figure"),
         Output("ra-func-loc-dist", "figure"),
         Output("ra-cmp-loc-dist", "figure"),
@@ -97,8 +97,8 @@ def update_quality(run_path):
     lint_hist = build_histogram(
         df, "lint_errors", "Lint Errors Distribution", "#d62728"
     )
-    ast_grep_hist = build_histogram(
-        df, "ast_grep_violations", "AST-grep Violations Distribution", "#ff7f0e"
+    verbosity_hist = build_histogram(
+        df, "verbosity", "Verbosity Distribution", "#ff7f0e"
     )
     comp_hist = build_histogram(
         df, "cc_high_count", "Complexity Distribution", "#9467bd"
@@ -147,7 +147,7 @@ def update_quality(run_path):
 
     return (
         lint_hist,
-        ast_grep_hist,
+        verbosity_hist,
         comp_hist,
         func_loc_hist,
         cmp_loc_hist,

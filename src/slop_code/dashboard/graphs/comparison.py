@@ -35,7 +35,7 @@ def build_problem_comparison_chart(
         subplot_titles=(
             "LOC",
             "Lint Errors",
-            "AST-grep Violations",
+            "Verbosity",
             "High Complexity",
             "Total Rubric Flags",
             "New Rubric Flags",
@@ -48,7 +48,7 @@ def build_problem_comparison_chart(
             "Pass Rate: Error (%)",
             "Mass: CC",
             "Δ LOC (%)",
-            "Δ AST-grep (%)",
+            "Δ Verbosity (%)",
             "Δ Churn Ratio",
             "CC Concentration",
             "Mass: CC",
@@ -153,9 +153,7 @@ def build_problem_comparison_chart(
         zeroes = pd.Series([0.0] * len(run_df), index=run_df.index)
         run_df["_mass_cc"] = run_df.get("mass.cc", zeroes)
         run_df["_delta_loc"] = run_df.get("delta.loc", zeroes)
-        run_df["_delta_ast_grep"] = run_df.get(
-            "delta.ast_grep_violations", zeroes
-        )
+        run_df["_delta_verbosity"] = run_df.get("delta.verbosity", zeroes)
         run_df["_delta_churn_ratio"] = run_df.get("delta.churn_ratio", zeroes)
         run_df["_cc_concentration"] = run_df.get("cc_concentration", zeroes)
 
@@ -200,7 +198,7 @@ def build_problem_comparison_chart(
         # Row 1
         add_trace("loc", 1, 1, show_legend=True)
         add_trace("lint_errors", 1, 2)
-        add_trace("ast_grep_violations", 1, 3)
+        add_trace("verbosity", 1, 3)
 
         # Row 2
         add_trace("cc_high_count", 2, 1)
@@ -223,16 +221,14 @@ def build_problem_comparison_chart(
         add_trace("_delta_loc", 5, 3)
 
         # Row 6
-        add_trace("_delta_ast_grep", 6, 1)
+        add_trace("_delta_verbosity", 6, 1)
         add_trace("_delta_churn_ratio", 6, 2)
         add_trace("_cc_concentration", 6, 3)
 
     # Update y-axes titles
     fig.update_yaxes(title_text="Lines", row=1, col=1, gridcolor="lightgray")
     fig.update_yaxes(title_text="Errors", row=1, col=2, gridcolor="lightgray")
-    fig.update_yaxes(
-        title_text="Violations", row=1, col=3, gridcolor="lightgray"
-    )
+    fig.update_yaxes(title_text="Score", row=1, col=3, gridcolor="lightgray")
 
     fig.update_yaxes(title_text="Count", row=2, col=1, gridcolor="lightgray")
     fig.update_yaxes(title_text="Flags", row=2, col=2, gridcolor="lightgray")

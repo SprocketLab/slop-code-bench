@@ -9,7 +9,7 @@ from slop_code.dashboard.graphs.common import get_base_layout
 
 METRICS = [
     ("lint_delta_pct", "Lint Δ%"),
-    ("ast_grep_delta_pct", "AST-grep Δ%"),
+    ("verbosity_delta_pct", "Verbosity Δ%"),
     ("rubric_delta_pct", "Rubric Δ%"),
     ("complex_delta_pct", "Complexity Δ%"),
     ("rubric_non_carryover", "Novel Flags (count)"),

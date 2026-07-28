@@ -84,12 +84,12 @@ layout = dbc.Container(
                     dbc.Card(
                         [
                             dbc.CardHeader(
-                                "AST-grep Violations Trajectory",
+                                "Verbosity Trajectory",
                                 className="fw-bold",
                             ),
                             dbc.CardBody(
                                 loading_graph(
-                                    "h2h-ast-grep-trajectory", height="400px"
+                                    "h2h-verbosity-trajectory", height="400px"
                                 )
                             ),
                         ],
@@ -110,7 +110,7 @@ layout = dbc.Container(
         Output("h2h-loc-trajectory", "figure"),
         Output("h2h-complexity-trajectory", "figure"),
         Output("h2h-lint-trajectory", "figure"),
-        Output("h2h-ast-grep-trajectory", "figure"),
+        Output("h2h-verbosity-trajectory", "figure"),
     ],
     [Input("h2h-run-a", "value"), Input("h2h-run-b", "value")],
 )
@@ -148,8 +148,8 @@ def update_evolution(run_a_path, run_b_path):
     state_cols = ["loc", "cc_high_count"]
     if "lint_errors" in df_a_raw.columns:
         state_cols.append("lint_errors")
-    if "ast_grep_violations" in df_a_raw.columns:
-        state_cols.append("ast_grep_violations")
+    if "verbosity" in df_a_raw.columns:
+        state_cols.append("verbosity")
 
     # 1. Add Progress (Create Scatter Data)
     def add_progress(df):
@@ -283,11 +283,11 @@ def update_evolution(run_a_path, run_b_path):
         "lint_errors", "Avg Lint Errors per Progress Step", "Errors"
     )
 
-    # 4. AST-grep Violations
-    ast_grep_traj = make_trajectory(
-        "ast_grep_violations",
-        "Avg AST-grep Violations per Progress Step",
-        "Violations",
+    # 4. Verbosity
+    verbosity_traj = make_trajectory(
+        "verbosity",
+        "Avg Verbosity per Progress Step",
+        "Verbosity",
     )
 
-    return loc_traj, comp_traj, lint_traj, ast_grep_traj
+    return loc_traj, comp_traj, lint_traj, verbosity_traj

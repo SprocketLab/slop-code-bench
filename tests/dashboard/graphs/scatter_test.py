@@ -35,7 +35,6 @@ def test_aggregate_erosion_vs_solve_uses_saved_verbosity_mean():
                     "verbosity.mean": 0.75,
                     "erosion.mean": 55.0,
                     "ratios.rubric.mean": 10.0,
-                    "ratios.violation_pct.mean": 20.0,
                     "ratios.lint.mean": 30.0,
                     "pct_checkpoints_solved": 80.0,
                 }
@@ -65,7 +64,6 @@ def test_aggregate_erosion_vs_problem_test_pass_rate_uses_saved_erosion_mean():
                     "verbosity.mean": 0.75,
                     "erosion.mean": 55.0,
                     "ratios.rubric.mean": 10.0,
-                    "ratios.violation_pct.mean": 20.0,
                     "ratios.lint.mean": 30.0,
                     "pass_rates.problem.total": 0.6,
                 }

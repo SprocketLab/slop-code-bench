@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 # between releases, so an unpinned `uvx` invocation makes verbosity
 # incomparable across runs. Bump this deliberately; the value is recorded
 # with every checkpoint so past results stay interpretable.
-SCB_CHECK_VERSION = "0.2.0"
+SCB_CHECK_VERSION = "0.1.3"
 SCB_CHECK_VERSION_KEY = "scb_check_version"
 
 

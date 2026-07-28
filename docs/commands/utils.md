@@ -108,8 +108,7 @@ slop-code utils backfill-reports [OPTIONS] RESULTS_DIR
 2. Loads problem configuration for each
 3. Generates report entries for each checkpoint
 4. Updates `checkpoint_results.jsonl`
-5. Backfills AST-grep category data
-6. Generates `result.json` summary
+5. Generates `result.json` summary
 
 ### Examples
 

@@ -86,9 +86,9 @@ One JSON object per line, one line per checkpoint across all problems.
   "cc_extreme_count": 0,
   "clone_instances": 0,
   "clone_lines": 0,
-  "ast_grep_violations": 35,
-  "sg_slop_violations": 35,
-  "ast_grep_per_loc": 0.08139534883720931,
+  "verbosity": 0.26,
+  "erosion": 0.11,
+  "scb_check_version": "0.1.3",
   "lint_per_loc": 0.1883720930232558
 }
 ```
@@ -137,9 +137,9 @@ One JSON object per line, one line per checkpoint across all problems.
 - `cc_high_count`: Functions with CC > 10
 - `cc_extreme_count`: Functions with CC > 30
 - `clone_instances`: Duplicate code blocks
-- `ast_grep_violations`: Total pattern violations
-- `sg_slop_violations`: Slop-rule violation count
-- `ast_grep_per_loc`: Violations per line of code
+- `verbosity`: Code-bloat score from `scb-check`
+- `erosion`: Structural-degradation score from `scb-check`
+- `scb_check_version`: Pinned `scb-check` release that produced the scores
 - `lint_per_loc`: Lint errors per line of code
 
 **Use cases:**
@@ -246,15 +246,12 @@ Complete aggregated statistics across all checkpoints and problems.
     "mi_ratings": {"A": 8, "B": 1, "C": 0}
   },
   "ratios": {
-    "ast_grep_per_loc": {"mean": 0.092, "stddev": 0.045, ...},
     "lint_per_loc": {"mean": 0.156, "stddev": 0.034, ...},
     "rubric_per_loc": {"mean": 0.034, "stddev": 0.019, ...}
   },
   "delta": {
     "loc": {"mean": 23.5, "stddev": 15.2, ...},
-    "lint_errors": {"mean": -12.3, "stddev": 24.5, ...},
-    "ast_grep_violations": {"mean": 18.4, "stddev": 31.2, ...},
-    "cc_high_count": {"mean": 5.2, "stddev": 8.1, ...},
+    "verbosity": {"mean": 18.4, "stddev": 31.2, ...},
     "churn_ratio": {"mean": 0.38, "stddev": 0.21, ...}
   },
   "composite_scores": {

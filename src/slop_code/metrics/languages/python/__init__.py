@@ -7,14 +7,6 @@ analysis, and import tracing using radon, ruff, and tree-sitter.
 
 from __future__ import annotations
 
-from slop_code.metrics.languages.python.ast_grep import AST_GREP_RULES_DIR
-from slop_code.metrics.languages.python.ast_grep import AST_GREP_RULES_PATH
-from slop_code.metrics.languages.python.ast_grep import _get_ast_grep_rules_dir
-from slop_code.metrics.languages.python.ast_grep import _get_ast_grep_rules_path
-from slop_code.metrics.languages.python.ast_grep import _is_sg_available
-from slop_code.metrics.languages.python.ast_grep import (
-    calculate_ast_grep_metrics,
-)
 from slop_code.metrics.languages.python.constants import EXTENSIONS
 from slop_code.metrics.languages.python.imports import extract_imports
 from slop_code.metrics.languages.python.imports import trace_source_files
@@ -48,14 +40,11 @@ register_language(
         redundancy=calculate_redundancy_metrics,
         waste=calculate_waste_metrics,
         type_check=calculate_type_check_metrics,
-        ast_grep=calculate_ast_grep_metrics,
     ),
 )
 
 __all__ = [
     # Constants
-    "AST_GREP_RULES_DIR",
-    "AST_GREP_RULES_PATH",
     "EXTENSIONS",
     # Line metrics
     "calculate_line_metrics",
@@ -70,11 +59,6 @@ __all__ = [
     "calculate_waste_metrics",
     # Type check metrics
     "calculate_type_check_metrics",
-    # AST-grep metrics
-    "calculate_ast_grep_metrics",
-    "_get_ast_grep_rules_dir",
-    "_get_ast_grep_rules_path",
-    "_is_sg_available",
     # Import extraction and tracing
     "extract_imports",
     "trace_source_files",
