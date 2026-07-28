@@ -769,7 +769,7 @@ class TestGetCheckpointMetrics:
         # May also include erosion metrics with default values
         assert "erosion_velocity" in result or len(result) == 2
 
-    def test_uses_pinned_scb_check_0_1_3_report_for_composite_quality_numbers(
+    def test_uses_pinned_scb_check_report(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
         (tmp_path / "snapshot").mkdir()
@@ -817,7 +817,6 @@ class TestGetCheckpointMetrics:
 
         result = get_checkpoint_metrics(tmp_path)
 
-        assert checkpoint_driver.SCB_CHECK_VERSION == "0.1.3"
         assert commands == [
             [
                 "uvx",

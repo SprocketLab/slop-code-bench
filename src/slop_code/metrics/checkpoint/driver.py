@@ -26,7 +26,6 @@ logger = get_logger(__name__)
 # incomparable across runs. Bump this deliberately; the value is recorded
 # with every checkpoint so past results stay interpretable.
 SCB_CHECK_VERSION = "0.1.3"
-SCB_CHECK_VERSION_KEY = "scb_check_version"
 
 
 def _number(value: Any) -> float | None:
@@ -110,7 +109,7 @@ def _get_scb_check_metrics(checkpoint_dir: Path) -> dict[str, Any]:
         return {}
 
     metrics = _scb_check_metrics_from_report(report)
-    metrics[SCB_CHECK_VERSION_KEY] = SCB_CHECK_VERSION
+    metrics["scb_check_version"] = SCB_CHECK_VERSION
     return metrics
 
 
