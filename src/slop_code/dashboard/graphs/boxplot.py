@@ -26,12 +26,12 @@ def build_checkpoint_delta_boxplot(context: ChartContext) -> go.Figure:
     fig = make_subplots(
         rows=2,
         cols=3,
+        specs=[[{}, {}, {}], [{}, {}, None]],
         vertical_spacing=0.1,
         horizontal_spacing=0.05,
         subplot_titles=[
             "LOC",
             "Lint",
-            "Verbosity",
             "Rubric",
             "Novel Flags",
             "High Complexity Symbols",
@@ -41,10 +41,9 @@ def build_checkpoint_delta_boxplot(context: ChartContext) -> go.Figure:
     metrics = [
         ("lines_delta_pct", 1, 1),
         ("lint_delta_pct", 1, 2),
-        ("verbosity_delta_pct", 1, 3),
-        ("rubric_delta_pct", 2, 1),
-        ("rubric_non_carryover", 2, 2),
-        ("complex_delta_pct", 2, 3),
+        ("rubric_delta_pct", 1, 3),
+        ("rubric_non_carryover", 2, 1),
+        ("complex_delta_pct", 2, 2),
     ]
 
     variation_info = analyze_model_variations(df)
@@ -105,11 +104,8 @@ def build_checkpoint_delta_boxplot(context: ChartContext) -> go.Figure:
     fig.update_yaxes(row=1, col=3, gridcolor="lightgray")
     fig.update_yaxes(row=2, col=1, gridcolor="lightgray")
     fig.update_yaxes(row=2, col=2, gridcolor="lightgray")
-    fig.update_yaxes(row=2, col=3, gridcolor="lightgray")
-
-    for r in [1, 2]:
-        for c in [1, 2, 3]:
-            fig.update_xaxes(row=r, col=c, showticklabels=False)
+    for _, row, col in metrics:
+        fig.update_xaxes(row=row, col=col, showticklabels=False)
 
     for annotation in fig.layout.annotations:
         annotation.y = annotation.y + 0.05

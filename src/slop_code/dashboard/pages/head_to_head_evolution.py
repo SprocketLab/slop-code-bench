@@ -78,24 +78,7 @@ layout = dbc.Container(
                         ],
                         className="mb-4 shadow-sm border-0 h-100",
                     ),
-                    md=6,
-                ),
-                dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader(
-                                "Verbosity Trajectory",
-                                className="fw-bold",
-                            ),
-                            dbc.CardBody(
-                                loading_graph(
-                                    "h2h-verbosity-trajectory", height="400px"
-                                )
-                            ),
-                        ],
-                        className="mb-4 shadow-sm border-0 h-100",
-                    ),
-                    md=6,
+                    md=12,
                 ),
             ]
         ),
@@ -110,12 +93,11 @@ layout = dbc.Container(
         Output("h2h-loc-trajectory", "figure"),
         Output("h2h-complexity-trajectory", "figure"),
         Output("h2h-lint-trajectory", "figure"),
-        Output("h2h-verbosity-trajectory", "figure"),
     ],
     [Input("h2h-run-a", "value"), Input("h2h-run-b", "value")],
 )
 def update_evolution(run_a_path, run_b_path):
-    default_outs = [empty_figure()] * 4
+    default_outs = [empty_figure()] * 3
     if not run_a_path or not run_b_path:
         return default_outs
 
@@ -148,8 +130,6 @@ def update_evolution(run_a_path, run_b_path):
     state_cols = ["loc", "cc_high_count"]
     if "lint_errors" in df_a_raw.columns:
         state_cols.append("lint_errors")
-    if "verbosity" in df_a_raw.columns:
-        state_cols.append("verbosity")
 
     # 1. Add Progress (Create Scatter Data)
     def add_progress(df):
@@ -283,11 +263,4 @@ def update_evolution(run_a_path, run_b_path):
         "lint_errors", "Avg Lint Errors per Progress Step", "Errors"
     )
 
-    # 4. Verbosity
-    verbosity_traj = make_trajectory(
-        "verbosity",
-        "Avg Verbosity per Progress Step",
-        "Verbosity",
-    )
-
-    return loc_traj, comp_traj, lint_traj, verbosity_traj
+    return loc_traj, comp_traj, lint_traj

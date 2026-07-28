@@ -30,12 +30,11 @@ def build_problem_comparison_chart(
     df = df.sort_values(sort_col)
 
     fig = make_subplots(
-        rows=6,
-        cols=3,
+        rows=4,
+        cols=4,
         subplot_titles=(
             "LOC",
             "Lint Errors",
-            "Verbosity",
             "High Complexity",
             "Total Rubric Flags",
             "New Rubric Flags",
@@ -48,10 +47,8 @@ def build_problem_comparison_chart(
             "Pass Rate: Error (%)",
             "Mass: CC",
             "Δ LOC (%)",
-            "Δ Verbosity (%)",
             "Δ Churn Ratio",
             "CC Concentration",
-            "Mass: CC",
         ),
         shared_xaxes=True,
         vertical_spacing=0.06,
@@ -107,21 +104,7 @@ def build_problem_comparison_chart(
         carried_over = run_df.get(
             "rubric_carried_over", pd.Series([0] * len(run_df))
         ).fillna(0)
-        new_flags = total_flags - carried_over
-
-        # Complexity
-        complexity = run_df["cc_high_count"]
-
-        # Helper for test pass rates
-        def calc_pass_rate(prefix):
-            passed = run_df.get(
-                f"{prefix}_passed", pd.Series([0] * len(run_df))
-            ).fillna(0)
-            total = run_df.get(
-                f"{prefix}_total", pd.Series([1] * len(run_df))
-            ).fillna(1)
-            total = total.replace(0, 1)
-            return (passed / total) * 100
+        run_df["_new_flags"] = total_flags - carried_over
 
         # Test Pass Rates
         def add_pass_rate_col(prefix):
@@ -140,8 +123,6 @@ def build_problem_comparison_chart(
 
             run_df[f"_pr_{prefix}"] = (passed / total) * 100
 
-        add_pass_rate_col("total")
-        # passed_tests/total_tests is already there but let's be consistent
         run_df["_pr_all"] = (
             run_df["passed_tests"] / run_df["total_tests"].replace(0, 1)
         ) * 100
@@ -153,7 +134,6 @@ def build_problem_comparison_chart(
         zeroes = pd.Series([0.0] * len(run_df), index=run_df.index)
         run_df["_mass_cc"] = run_df.get("mass.cc", zeroes)
         run_df["_delta_loc"] = run_df.get("delta.loc", zeroes)
-        run_df["_delta_verbosity"] = run_df.get("delta.verbosity", zeroes)
         run_df["_delta_churn_ratio"] = run_df.get("delta.churn_ratio", zeroes)
         run_df["_cc_concentration"] = run_df.get("cc_concentration", zeroes)
 
@@ -198,73 +178,63 @@ def build_problem_comparison_chart(
         # Row 1
         add_trace("loc", 1, 1, show_legend=True)
         add_trace("lint_errors", 1, 2)
-        add_trace("verbosity", 1, 3)
+        add_trace("cc_high_count", 1, 3)
+        add_trace("_total_flags", 1, 4)
 
         # Row 2
-        add_trace("cc_high_count", 2, 1)
-        add_trace("_total_flags", 2, 2)
-        add_trace("_new_flags", 2, 3)
+        add_trace("_new_flags", 2, 1)
+        add_trace("output", 2, 2)
+        add_trace("cost", 2, 3)
+        add_trace("_pr_all", 2, 4)
 
         # Row 3
-        add_trace("output", 3, 1)
-        add_trace("cost", 3, 2)
-        add_trace("_pr_all", 3, 3)
+        add_trace("_pr_core", 3, 1)
+        add_trace("_pr_functionality", 3, 2)
+        add_trace("_pr_regression", 3, 3)
+        add_trace("_pr_error", 3, 4)
 
         # Row 4
-        add_trace("_pr_core", 4, 1)
-        add_trace("_pr_functionality", 4, 2)
-        add_trace("_pr_regression", 4, 3)
-
-        # Row 5
-        add_trace("_pr_error", 5, 1)
-        add_trace("_mass_cc", 5, 2)
-        add_trace("_delta_loc", 5, 3)
-
-        # Row 6
-        add_trace("_delta_verbosity", 6, 1)
-        add_trace("_delta_churn_ratio", 6, 2)
-        add_trace("_cc_concentration", 6, 3)
+        add_trace("_mass_cc", 4, 1)
+        add_trace("_delta_loc", 4, 2)
+        add_trace("_delta_churn_ratio", 4, 3)
+        add_trace("_cc_concentration", 4, 4)
 
     # Update y-axes titles
     fig.update_yaxes(title_text="Lines", row=1, col=1, gridcolor="lightgray")
     fig.update_yaxes(title_text="Errors", row=1, col=2, gridcolor="lightgray")
-    fig.update_yaxes(title_text="Score", row=1, col=3, gridcolor="lightgray")
-
-    fig.update_yaxes(title_text="Count", row=2, col=1, gridcolor="lightgray")
-    fig.update_yaxes(title_text="Flags", row=2, col=2, gridcolor="lightgray")
+    fig.update_yaxes(title_text="Count", row=1, col=3, gridcolor="lightgray")
+    fig.update_yaxes(title_text="Flags", row=1, col=4, gridcolor="lightgray")
     fig.update_yaxes(
-        title_text="New Flags", row=2, col=3, gridcolor="lightgray"
+        title_text="New Flags", row=2, col=1, gridcolor="lightgray"
+    )
+    fig.update_yaxes(title_text="Tokens", row=2, col=2, gridcolor="lightgray")
+    fig.update_yaxes(title_text="Cost ($)", row=2, col=3, gridcolor="lightgray")
+    fig.update_yaxes(
+        title_text="%", row=2, col=4, gridcolor="lightgray", range=[0, 105]
     )
 
-    fig.update_yaxes(title_text="Tokens", row=3, col=1, gridcolor="lightgray")
-    fig.update_yaxes(title_text="Cost ($)", row=3, col=2, gridcolor="lightgray")
-    fig.update_yaxes(
-        title_text="%", row=3, col=3, gridcolor="lightgray", range=[0, 105]
-    )
-
-    for r, c in [(4, 1), (4, 2), (4, 3), (5, 1)]:
+    for col in range(1, 5):
         fig.update_yaxes(
-            title_text="%", row=r, col=c, gridcolor="lightgray", range=[0, 105]
+            title_text="%",
+            row=3,
+            col=col,
+            gridcolor="lightgray",
+            range=[0, 105],
         )
-    fig.update_yaxes(title_text="Mass", row=5, col=2, gridcolor="lightgray")
-    fig.update_yaxes(title_text="%", row=5, col=3, gridcolor="lightgray")
-    fig.update_yaxes(title_text="%", row=6, col=1, gridcolor="lightgray")
-    fig.update_yaxes(title_text="Ratio", row=6, col=2, gridcolor="lightgray")
+    fig.update_yaxes(title_text="Mass", row=4, col=1, gridcolor="lightgray")
+    fig.update_yaxes(title_text="%", row=4, col=2, gridcolor="lightgray")
+    fig.update_yaxes(title_text="Ratio", row=4, col=3, gridcolor="lightgray")
     fig.update_yaxes(
-        title_text="Ratio", row=6, col=3, gridcolor="lightgray", range=[0, 1]
+        title_text="Ratio", row=4, col=4, gridcolor="lightgray", range=[0, 1]
     )
 
     # Update x-axes titles (only bottom row needs labels)
-    for col in range(1, 4):
+    for col in range(1, 5):
         fig.update_xaxes(
-            title_text="Checkpoint", row=5, col=col, gridcolor="lightgray"
+            title_text="Checkpoint", row=4, col=col, gridcolor="lightgray"
         )
 
-    fig.update_layout(
-        **get_base_layout(
-            None, 1400, 1.0, f"Problem: {problem}"
-        )  # Increased height for more rows
-    )
+    fig.update_layout(**get_base_layout(None, 1100, 1.0, f"Problem: {problem}"))
     fig.update_layout(legend=GROUPED_VERTICAL_LEGEND)
 
     return fig

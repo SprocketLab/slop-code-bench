@@ -116,24 +116,7 @@ layout = dbc.Container(
                         ],
                         className="mb-4 shadow-sm border-0 h-100",
                     ),
-                    md=4,
-                ),
-                dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader(
-                                "Verbosity Comparison",
-                                className="fw-bold",
-                            ),
-                            dbc.CardBody(
-                                loading_graph(
-                                    "h2h-verbosity-scatter", height="400px"
-                                )
-                            ),
-                        ],
-                        className="mb-4 shadow-sm border-0 h-100",
-                    ),
-                    md=4,
+                    md=6,
                 ),
                 dbc.Col(
                     dbc.Card(
@@ -149,7 +132,7 @@ layout = dbc.Container(
                         ],
                         className="mb-4 shadow-sm border-0 h-100",
                     ),
-                    md=4,
+                    md=6,
                 ),
             ]
         ),
@@ -162,13 +145,12 @@ layout = dbc.Container(
 @callback(
     [
         Output("h2h-lint-scatter", "figure"),
-        Output("h2h-verbosity-scatter", "figure"),
         Output("h2h-complexity-scatter", "figure"),
     ],
     [Input("h2h-run-a", "value"), Input("h2h-run-b", "value")],
 )
 def update_quality(run_a_path, run_b_path):
-    default_outs = [empty_figure()] * 3
+    default_outs = [empty_figure()] * 2
     if not run_a_path or not run_b_path:
         return default_outs
 
@@ -195,12 +177,6 @@ def update_quality(run_a_path, run_b_path):
     name_a = get_display_annotation(row_a).split(" - ")[0]
     name_b = get_display_annotation(row_b).split(" - ")[0]
 
-    def short_label(name):
-        return (name[:20] + "..") if len(name) > 20 else name
-
-    label_a = short_label(name_a)
-    label_b = short_label(name_b)
-
     # Calculate complexity column on the full df_chk for accurate lookup
     df_chk["_complex"] = df_chk["cc_high_count"]
 
@@ -209,16 +185,6 @@ def update_quality(run_a_path, run_b_path):
         "lint_errors",
         "Lint Errors per Checkpoint",
         "Errors",
-        name_a,
-        name_b,
-        run_a_path,
-        run_b_path,
-    )
-    verbosity_fig = make_quality_scatter_checkpoint_level(
-        df_chk,
-        "verbosity",
-        "Verbosity per Checkpoint",
-        "Verbosity",
         name_a,
         name_b,
         run_a_path,
@@ -235,4 +201,4 @@ def update_quality(run_a_path, run_b_path):
         run_b_path,
     )
 
-    return lint_fig, verbosity_fig, comp_fig
+    return lint_fig, comp_fig
