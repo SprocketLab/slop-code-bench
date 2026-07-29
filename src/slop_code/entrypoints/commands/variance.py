@@ -65,8 +65,6 @@ _T_CRIT_95: dict[int, float] = {
 CV_SUMMARY_METRICS: dict[str, str] = {
     "Pass rate": "strict_pass_rate.cv",
     "Lint": "lint_per_loc.cv",
-    "Violation %": "violation_pct.cv",
-    "Lint+Violation %": "normalized.lint_violation_pct.cv",
     "LOC": "lines.loc.cv",
     "High CC count": "cc.high_count.cv",
 }
@@ -86,7 +84,7 @@ CORE_CI_DERIVATIONS: set[str] = {
 
 DELTA_CI_METRICS: dict[str, str] = {
     "delta.loc": "LOC delta",
-    "delta.ast_grep_violations": "Slop delta",
+    "delta.verbosity": "Verbosity delta",
     "delta.churn_ratio": "Churn ratio",
 }
 CI_METRIC_LABELS: dict[str, str] = {
@@ -297,13 +295,6 @@ def _metric_value(row: dict[str, Any], name: str) -> float | None:
             return None
         return float(flags) / float(loc)
 
-    if name == "normalized.lint_violation_pct":
-        lint = row.get("lint_per_loc")
-        violation_pct = row.get("violation_pct")
-        if not _is_number(lint) or not _is_number(violation_pct):
-            return None
-        return float(lint) + float(violation_pct)
-
     if name.startswith("tests.") and name.endswith(".pass_rate"):
         bucket = name.split(".")[1]
         if bucket == "total":
@@ -395,7 +386,6 @@ def _build_metric_specs(
             "duration",
             "steps",
             "lint_per_loc",
-            "violation_pct",
             "loc",
             "lines.churn",
             "lines.added",
@@ -406,10 +396,8 @@ def _build_metric_specs(
             "delta.cc_mean",
             "delta.cc_max",
             "delta.loc",
-            "delta.ast_grep_violations",
             "delta.churn_ratio",
             "lint_errors",
-            "ast_grep_violations",
             "rubric_total_flags",
         ]
         specs = [MetricSpec(name=k) for k in base_keys]
@@ -436,7 +424,6 @@ def _build_metric_specs(
             "cc.",
             "symbols.",
             "waste.",
-            "redundancy.",
             "lines.",
             "imports.",
             "normalized.",

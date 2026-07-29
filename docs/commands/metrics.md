@@ -59,7 +59,7 @@ Calculates for each checkpoint:
 - Lines of code (LOC), total lines
 - Cyclomatic complexity (mean, max, high count)
 - Maintainability index
-- AST-grep "slop" violations
+- `scb-check` verbosity and erosion scores
 - Lint errors
 
 Results saved to:
@@ -253,9 +253,9 @@ slop-code metrics variance [OPTIONS] PRESET RUNS_DIR
 
 | Preset | Metrics Included |
 |--------|------------------|
-| `base` | Pass rate, cost, duration, LOC, lint, slop, CC |
+| `base` | Pass rate, cost, duration, LOC, lint, verbosity, CC |
 | `tests` | Pass rates by test bucket (core, error, functionality) |
-| `quality` | Quality metrics on the reduced surface: slop, rubric, CC, graph metrics, `mass.cc`, `mass.high_cc_pct`, and the surviving deltas (`delta.loc`, `delta.ast_grep_violations`, `delta.churn_ratio`) |
+| `quality` | Quality metrics on the reduced surface: verbosity, rubric, CC, graph metrics, `mass.cc`, `mass.high_cc_pct`, and the surviving deltas (`delta.loc`, `delta.verbosity`, `delta.churn_ratio`) |
 
 ### Behavior
 

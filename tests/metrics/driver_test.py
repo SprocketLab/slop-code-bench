@@ -11,13 +11,10 @@ from slop_code.metrics.driver import measure_files
 from slop_code.metrics.driver import measure_snapshot_quality
 from slop_code.metrics.languages import EXT_TO_LANGUAGE
 from slop_code.metrics.languages import LANGUAGE_REGISTRY
-from slop_code.metrics.models import AstGrepViolation
-from slop_code.metrics.models import CodeClone
 from slop_code.metrics.models import FileMetrics
 from slop_code.metrics.models import LanguageSpec
 from slop_code.metrics.models import LineCountMetrics
 from slop_code.metrics.models import LintMetrics
-from slop_code.metrics.models import RedundancyMetrics
 from slop_code.metrics.models import SymbolMetrics
 
 
@@ -433,73 +430,6 @@ class TestMeasureSnapshotQuality:
         assert snapshot.lint.fixable == 2  # 1 + 1
         assert snapshot.lint.counts["E501"] == 2  # 1 + 1
         assert snapshot.lint.counts["E302"] == 2  # 1 + 1
-
-    def test_measure_snapshot_quality_tracks_clone_and_union_sloc_coverage(
-        self, tmp_path, monkeypatch
-    ):
-        source = tmp_path / "file1.py"
-        source.write_text(
-            '"""doc"""\n'
-            "def alpha():\n"
-            "    value = 1\n"
-            "    return value\n"
-            "\n"
-            "def beta():\n"
-            "    value = 1\n"
-            "    return value\n"
-        )
-
-        def fake_calculate(
-            file_path: Path, depth: int, *, is_entry_language: bool = False
-        ) -> FileMetrics:
-            assert file_path == source
-            return FileMetrics(
-                symbols=[],
-                lines=LineCountMetrics(
-                    total_lines=8,
-                    loc=6,
-                    comments=1,
-                    multi_comment=1,
-                    single_comment=0,
-                ),
-                lint=LintMetrics(errors=0, fixable=0, counts={}),
-                mi=25.0,
-                depth=depth,
-                is_entry_language=is_entry_language,
-                redundancy=RedundancyMetrics(
-                    clones=[
-                        CodeClone(
-                            ast_hash="clone",
-                            locations=[(2, 4), (6, 8)],
-                            node_type="function_definition",
-                            line_count=3,
-                        )
-                    ],
-                    total_clone_instances=2,
-                    clone_lines=6,
-                    clone_ratio=1.0,
-                ),
-                ast_grep_violations=[
-                    AstGrepViolation(
-                        rule_id="rule-a",
-                        severity="warning",
-                        line=5,
-                        column=0,
-                        end_line=7,
-                        end_column=0,
-                    )
-                ],
-            )
-
-        monkeypatch.setattr(
-            "slop_code.metrics.driver._calculate_file_metrics",
-            fake_calculate,
-        )
-
-        snapshot, _ = measure_snapshot_quality("file1.py", tmp_path)
-
-        assert snapshot.redundancy.cloned_sloc_lines == 6
-        assert snapshot.verbosity_flagged_sloc_lines == 6
 
     def test_measure_snapshot_quality_excludes_patterns(self, tmp_path):
         """Test that default exclude patterns are applied.

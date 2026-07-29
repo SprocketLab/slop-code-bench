@@ -230,32 +230,8 @@ class FileMetrics(BaseModel):
     is_entry_language: bool = False
     import_count: int = 0
     global_count: int = 0
-    redundancy: RedundancyMetrics | None = None
     waste: WasteMetrics | None = None
     type_check: TypeCheckMetrics | None = None
-    ast_grep_violations: list[AstGrepViolation] = []
-    ast_grep_rules_checked: int = 0
-
-
-class CodeClone(BaseModel):
-    """A group of duplicate code blocks with identical AST structure."""
-
-    ast_hash: str
-    locations: list[tuple[int, int]]
-    node_type: str
-    line_count: int
-
-
-class RedundancyMetrics(BaseModel):
-    """Per-file redundancy analysis results.
-
-    Clones are measured in lines (deduplicated by line number).
-    """
-
-    clones: list[CodeClone]
-    total_clone_instances: int
-    clone_lines: int
-    clone_ratio: float
 
 
 class SingleUseFunction(BaseModel):
@@ -311,48 +287,6 @@ class TypeCheckMetrics(BaseModel):
     errors: int
     warnings: int
     counts: dict[str, int]  # rule_id -> count
-
-
-class AstGrepViolation(BaseModel):
-    """A single AST-grep pattern violation.
-
-    Attributes:
-        rule_id: The rule identifier (e.g., "bare-except-pass").
-        severity: Severity level (warning, error, info, hint).
-        category: Overall category from rule filename (e.g., "verbosity", "safety").
-        subcategory: Sub-category from rule metadata.category field.
-        weight: Rule weight from metadata (1-4, higher = more important).
-        line: Starting line number from ast-grep output (0-indexed).
-        column: Starting column number (0-indexed).
-        end_line: Ending line number from ast-grep output (0-indexed).
-        end_column: Ending column number (0-indexed).
-    """
-
-    rule_id: str
-    severity: str
-    category: str = ""
-    subcategory: str = "unknown"
-    weight: int = 1
-    line: int
-    column: int
-    end_line: int
-    end_column: int
-
-
-class AstGrepMetrics(BaseModel):
-    """AST-grep pattern detection results.
-
-    Attributes:
-        violations: List of individual violations found.
-        total_violations: Total number of violations.
-        counts: Mapping of rule_id to violation count.
-        rules_checked: Number of rules that were applied.
-    """
-
-    violations: list[AstGrepViolation]
-    total_violations: int
-    counts: dict[str, int]
-    rules_checked: int
 
 
 class FunctionStats(BaseModel):
@@ -486,52 +420,6 @@ class WasteAggregates(BaseModel):
             self.unused_variables += fm.waste.unused_variable_count
 
 
-class RedundancyAggregates(BaseModel):
-    """Aggregate redundancy/clone detection metrics."""
-
-    clone_lines: int
-    clone_ratio_sum: float
-    files_with_clones: int
-    cloned_sloc_lines: int = 0
-
-    def update(self, fm: FileMetrics) -> None:
-        """Update aggregates from a FileMetrics instance."""
-        if fm.redundancy:
-            self.clone_lines += fm.redundancy.clone_lines
-            self.clone_ratio_sum += fm.redundancy.clone_ratio
-            self.files_with_clones += 1
-
-
-class AstGrepAggregates(BaseModel):
-    """Aggregate AST-grep pattern violation metrics."""
-
-    violations: int
-    rules_checked: int
-    counts: dict[str, int] = {}
-    weighted: int = 0
-    violation_lines: int = 0
-    category_counts: dict[str, int] = {}
-    category_weighted: dict[str, int] = {}
-
-    def update(self, fm: FileMetrics) -> None:
-        """Update aggregates from a FileMetrics instance."""
-        if fm.ast_grep_violations:
-            self.violations += len(fm.ast_grep_violations)
-            flagged_lines: set[int] = set()
-            for v in fm.ast_grep_violations:
-                self.counts[v.rule_id] = self.counts.get(v.rule_id, 0) + 1
-                self.weighted += v.weight
-                flagged_lines.update(range(v.line, v.end_line + 1))
-                self.category_counts[v.category] = (
-                    self.category_counts.get(v.category, 0) + 1
-                )
-                self.category_weighted[v.category] = (
-                    self.category_weighted.get(v.category, 0) + v.weight
-                )
-            self.violation_lines += len(flagged_lines)
-        self.rules_checked = max(self.rules_checked, fm.ast_grep_rules_checked)
-
-
 class TypeCheckAggregates(BaseModel):
     """Aggregate type checking metrics."""
 
@@ -585,8 +473,6 @@ class SnapshotMetrics(BaseModel):
         classes: Pre-computed statistics for classes.
         complexity: CC and MI rating distributions and stats.
         waste: Waste detection totals.
-        redundancy: Clone detection totals.
-        ast_grep: AST-grep pattern violation totals.
         graph: Dependency graph metrics (None if not computed).
         source_files: Relative paths of files traced from the entrypoint.
     """
@@ -599,9 +485,6 @@ class SnapshotMetrics(BaseModel):
     classes: ClassStats
     complexity: ComplexityAggregates
     waste: WasteAggregates
-    redundancy: RedundancyAggregates
-    ast_grep: AstGrepAggregates
-    verbosity_flagged_sloc_lines: int = 0
     graph: GraphMetrics | None = None
     source_files: set[str] | None = None
 
@@ -615,8 +498,6 @@ class SnapshotQualityReport(BaseModel):
     lint_fixable: int
     cc_counts: dict[Literal["A", "B", "C", "D", "E", "F"], int]
     mi: dict[Literal["A", "B", "C"], int]
-    ast_grep_violations: int = 0
-    ast_grep_rules_checked: int = 0
     graph: GraphMetrics | None = None
 
     @classmethod
@@ -631,8 +512,6 @@ class SnapshotQualityReport(BaseModel):
             lint_fixable=snapshot_metrics.lint.fixable,
             cc_counts=snapshot_metrics.complexity.cc_ratings,
             mi=snapshot_metrics.complexity.mi_ratings,
-            ast_grep_violations=snapshot_metrics.ast_grep.violations,
-            ast_grep_rules_checked=snapshot_metrics.ast_grep.rules_checked,
             graph=snapshot_metrics.graph,
         )
 
@@ -653,10 +532,8 @@ class LanguageSpec(BaseModel):
     lint: Callable[[Path], LintMetrics]
     symbol: Callable[[Path], list[SymbolMetrics]]
     mi: Callable[[Path], float]
-    redundancy: Callable[[Path], RedundancyMetrics] | None = None
     waste: Callable[[Path, list[SymbolMetrics]], WasteMetrics] | None = None
     type_check: Callable[[Path], TypeCheckMetrics] | None = None
-    ast_grep: Callable[[Path], AstGrepMetrics] | None = None
 
 
 # -----------------------------------------------------------------------------
@@ -767,7 +644,6 @@ class RatiosStats(BaseModel):
 
     rubric: MetricStats = Field(default_factory=MetricStats)
     lint: MetricStats = Field(default_factory=MetricStats)
-    violation_pct: MetricStats = Field(default_factory=MetricStats)
 
 
 class RunSummary(BaseModel):
@@ -820,7 +696,7 @@ class RunSummary(BaseModel):
         default_factory=CyclomaticComplexityStats
     )
 
-    # Quality ratios (per LOC): {rubric, lint, ast_grep}
+    # Quality ratios (per LOC): {rubric, lint}
     ratios: RatiosStats = Field(default_factory=RatiosStats)
 
     # Composite quality scores

@@ -5,7 +5,7 @@ last_updated: 2025-12-17
 
 # Metrics Configuration
 
-This guide explains how to configure metrics thresholds and AST-grep rules.
+This guide explains how to configure metric thresholds.
 
 ## Metrics Thresholds
 
@@ -48,121 +48,6 @@ MI ratings are also fixed:
 | A | >= 19 | Highly maintainable |
 | B | 10-19 | Moderately maintainable |
 | C | < 10 | Difficult to maintain |
-
-## AST-grep Rules
-
-AST-grep rules detect code patterns using structural matching on the AST.
-
-### Rule Location
-
-Rules are stored in `configs/slop_rules.yaml`.
-
-### Rule Format
-
-Each rule is a YAML document with this structure:
-
-```yaml
----
-id: rule-identifier
-language: python
-severity: warning  # warning, error, info, hint
-message: "Human-readable description of the issue"
-metadata:
-  weight: 2        # Severity weight (1-4)
-  category: slop   # Slop rule family
-rule:
-  kind: identifier  # AST node type to match
-  regex: "_list$"   # Pattern to match
-```
-
-### Rule Weights
-
-Weights indicate severity for weighted scoring:
-
-| Weight | Meaning | Examples |
-|--------|---------|----------|
-| 1 | Style preference | Verbose identifiers, redundant expressions |
-| 2 | Best practice | Generic variable names, missing type hints |
-| 3 | Likely problem | Deep nesting, complex conditionals |
-| 4 | Bug or security risk | Bare except, dangerous patterns |
-
-### Example Rules
-
-**Manual sum loop** (`slop_rules.yaml`):
-```yaml
----
-id: manual-sum-loop
-language: python
-severity: warning
-message: Manual accumulation loop - use sum(...) instead of a throwaway counter variable
-metadata:
-  weight: 4
-  category: slop
-rule:
-  kind: for_statement
-  pattern: "for $ITEM in $ITER:\n    $TOTAL += $EXPR\n"
-```
-
-**Redundant guard with same return** (`slop_rules.yaml`):
-```yaml
----
-id: redundant-guard-same-return
-language: python
-severity: warning
-message: Guard returning the same expression in both paths adds dead ceremony
-metadata:
-  weight: 4
-  category: slop
-rule:
-  pattern: "if $COND: return $RET return $RET "
-```
-
-### Overriding Rules File
-
-Set the `AST_GREP_RULES_PATH` environment variable to use a different rules file:
-
-```bash
-export AST_GREP_RULES_PATH=/path/to/custom/slop_rules.yaml
-slop-code run ...
-```
-
-### Writing Custom Rules
-
-1. Edit `configs/slop_rules.yaml` or point `AST_GREP_RULES_PATH` at a custom file
-2. Use ast-grep pattern syntax for matching
-3. Assign an appropriate weight
-
-**Pattern reference:**
-
-| Pattern | Matches |
-|---------|---------|
-| `$VAR` | Any single node |
-| `$$$` | Zero or more nodes |
-| `kind: function_definition` | Specific AST node type |
-| `regex: "pattern"` | Node text matching regex |
-| `has:` | Node contains child matching pattern |
-| `inside:` | Node is inside parent matching pattern |
-
-For full pattern documentation, see [ast-grep docs](https://ast-grep.github.io/).
-
-### Testing Rules
-
-Test a rule against your code:
-
-```bash
-# Using ast-grep directly
-sg -p 'def $FUNC($$$): pass' -l python path/to/code/
-
-# Scan with rules
-sg scan --rule /path/to/rule.yaml path/to/code/
-```
-
-## Disabling Metrics
-
-Currently, all metrics run by default. To exclude specific categories from analysis:
-
-1. **Edit `configs/slop_rules.yaml`**: Remove rules you do not want to count
-2. **Filter in analysis**: Post-process results to exclude unwanted metrics
 
 ## Metric Computation Options
 

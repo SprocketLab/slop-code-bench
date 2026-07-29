@@ -355,11 +355,6 @@ def render_summary_table(summary: RunSummary, console: Console) -> None:
             "Mean lint:loc",
             summary.ratios.lint.format_display(4),
         )
-    if summary.ratios.violation_pct.count > 0:
-        table.add_row(
-            "Mean violation pct",
-            summary.ratios.violation_pct.format_display(4),
-        )
     if summary.verbosity.count > 0:
         table.add_row(
             "Mean verbosity score",

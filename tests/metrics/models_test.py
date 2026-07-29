@@ -12,8 +12,6 @@ from slop_code.metrics.languages import LANGUAGE_REGISTRY
 from slop_code.metrics.languages import get_language
 from slop_code.metrics.languages import get_language_by_extension
 from slop_code.metrics.languages import register_language
-from slop_code.metrics.models import AstGrepAggregates
-from slop_code.metrics.models import AstGrepViolation
 from slop_code.metrics.models import ClassStats
 from slop_code.metrics.models import ComplexityAggregates
 from slop_code.metrics.models import FileMetrics
@@ -21,7 +19,6 @@ from slop_code.metrics.models import FunctionStats
 from slop_code.metrics.models import LanguageSpec
 from slop_code.metrics.models import LineCountMetrics
 from slop_code.metrics.models import LintMetrics
-from slop_code.metrics.models import RedundancyAggregates
 from slop_code.metrics.models import SnapshotMetrics
 from slop_code.metrics.models import SnapshotQualityReport
 from slop_code.metrics.models import SymbolAggregates
@@ -155,12 +152,6 @@ def _create_snapshot_from_files(
             single_use_functions=0,
             trivial_wrappers=0,
         ),
-        redundancy=RedundancyAggregates(
-            clone_lines=0,
-            clone_ratio_sum=0.0,
-            files_with_clones=0,
-        ),
-        ast_grep=AstGrepAggregates(violations=0, rules_checked=0),
         source_files=source_files,
     )
 
@@ -449,95 +440,6 @@ class TestSnapshotQualityReport:
             "F": 0,
         }
         assert report.mi == {"A": 0, "B": 0, "C": 0}
-        assert report.ast_grep_violations == 0
-        assert report.ast_grep_rules_checked == 0
-
-
-def test_ast_grep_aggregates_count_unique_flagged_lines_per_file():
-    aggregates = AstGrepAggregates(violations=0, rules_checked=0)
-    file_metrics = FileMetrics(
-        symbols=[],
-        lines=LineCountMetrics(
-            total_lines=20,
-            loc=15,
-            comments=2,
-            multi_comment=1,
-            single_comment=1,
-        ),
-        lint=LintMetrics(errors=0, fixable=0, counts={}),
-        mi=20.0,
-        depth=1,
-        ast_grep_violations=[
-            AstGrepViolation(
-                rule_id="rule-a",
-                severity="warning",
-                line=10,
-                column=0,
-                end_line=12,
-                end_column=0,
-            ),
-            AstGrepViolation(
-                rule_id="rule-b",
-                severity="warning",
-                line=12,
-                column=0,
-                end_line=13,
-                end_column=0,
-            ),
-            AstGrepViolation(
-                rule_id="rule-c",
-                severity="warning",
-                line=10,
-                column=0,
-                end_line=10,
-                end_column=0,
-            ),
-        ],
-    )
-
-    aggregates.update(file_metrics)
-
-    assert aggregates.violations == 3
-    assert aggregates.violation_lines == 4
-
-    def test_from_snapshot_metrics_with_ast_grep(self):
-        """Test AST-grep metrics from aggregates are included in report."""
-        files = {
-            "file.py": FileMetrics(
-                symbols=[],
-                lines=LineCountMetrics(
-                    total_lines=10,
-                    loc=8,
-                    comments=1,
-                    multi_comment=0,
-                    single_comment=1,
-                ),
-                lint=LintMetrics(errors=0, fixable=0, counts={}),
-                mi=20.0,
-                depth=1,
-            ),
-        }
-        snapshot = _create_snapshot_from_files(files)
-        # Set ast_grep values directly on the ast_grep aggregate section
-        snapshot = snapshot.model_copy(
-            update={
-                "ast_grep": AstGrepAggregates(violations=15, rules_checked=34)
-            }
-        )
-
-        report = SnapshotQualityReport.from_snapshot_metrics(snapshot)
-
-        assert report.ast_grep_violations == 15
-        assert report.ast_grep_rules_checked == 34
-
-    def test_from_snapshot_metrics_no_ast_grep(self):
-        """Test report with no AST-grep metrics defaults to zero."""
-        snapshot = _create_snapshot_from_files({})
-
-        report = SnapshotQualityReport.from_snapshot_metrics(snapshot)
-
-        assert report.ast_grep_violations == 0
-        assert report.ast_grep_rules_checked == 0
 
 
 class TestLanguageRegistry:

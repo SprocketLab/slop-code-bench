@@ -11,7 +11,6 @@ from slop_code.common.common import deep_merge
 from slop_code.common.common import mask_sensitive_values
 from slop_code.common.constants import AGENT_DIR_NAME
 from slop_code.common.constants import AGENT_TAR_FILENAME
-from slop_code.common.constants import AST_GREP_QUALITY_SAVENAME
 from slop_code.common.constants import CHECKPOINT_CONFIG_NAME
 from slop_code.common.constants import CHECKPOINT_RESULTS_FILENAME
 from slop_code.common.constants import CONFIG_FILENAME
@@ -70,7 +69,6 @@ __all__ = [
     "QUALITY_DIR",
     "QUALITY_METRIC_SAVENAME",
     "SYMBOLS_QUALITY_SAVENAME",
-    "AST_GREP_QUALITY_SAVENAME",
     "EVALUATION_FILENAME",
     "VERIFIER_REPORT_FILENAME",
     "SUMMARY_FILENAME",

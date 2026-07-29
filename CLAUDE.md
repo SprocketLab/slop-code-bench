@@ -247,7 +247,7 @@ markers:  # Custom pytest markers beyond built-ins
 ### Quality Metrics
 - Language-specific parsers extract AST information
 - Metrics: cyclomatic complexity, duplication, code churn, maintainability index
-- ast-grep rules in `configs/ast-grep-rules/` for pattern-based analysis
+- Pinned `scb-check` reports the composite verbosity and erosion scores
 - LLM judge for subjective quality assessment via rubric templates
 
 ### Logging and Debugging
@@ -344,4 +344,3 @@ Skills are invoked with `/skill-name <args>`. See `.claude/skills/` for full doc
 - `docs/evaluation-tests/stateful-testing.md` - State across checkpoints and modules
 - `docs/evaluation-tests/complex-parametrization.md` - Loading cases from JSON, YAML, directories
 - `docs/evaluation-tests/debugging-workflows.md` - Debugging test failures and workflows
-

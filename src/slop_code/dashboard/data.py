@@ -848,10 +848,6 @@ def compute_problem_deltas(df: pd.DataFrame) -> pd.DataFrame:
                         prev_row.get("lint_errors", 0),
                         curr_row.get("lint_errors", 0),
                     ),
-                    "ast_grep_delta_pct": _safe_delta_pct(
-                        prev_row.get("ast_grep_violations", 0),
-                        curr_row.get("ast_grep_violations", 0),
-                    ),
                     "complex_delta_pct": _safe_delta_pct(
                         prev_row["cc_high_count"],
                         curr_row["cc_high_count"],

@@ -86,12 +86,13 @@ Understand how SlopCodeBench manages workspaces, executes code in different envi
 ### [metrics/](metrics/)
 **Code quality measurement and analysis**
 
-Learn about SlopCodeBench's 7-category metric system for measuring code quality, including interpretation, configuration, and output formats.
+Learn about SlopCodeBench's code quality metrics, including interpretation,
+configuration, and output formats.
 
 **Key files:**
 - [metrics/README.md](metrics/README.md) - Overview and metric categories
 - [metrics/interpreting-results.md](metrics/interpreting-results.md) - Explanation of each metric
-- [metrics/configuration.md](metrics/configuration.md) - Thresholds and AST-grep rules
+- [metrics/configuration.md](metrics/configuration.md) - Metric configuration
 
 ## Support Files
 

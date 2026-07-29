@@ -125,48 +125,18 @@ Detects potential over-abstraction or unnecessary indirection.
 - Trivial wrappers add cognitive overhead without benefit
 - Single-method classes might be better as functions
 
-## Redundancy Metrics
+## Clone Metrics
 
-Detects duplicate code using AST hashing.
+Clone coverage comes exclusively from the pinned `scb-check` report.
 
 | Metric | Description |
 |--------|-------------|
-| `clone_instances` | Total duplicate code blocks |
-| `clone_lines` | Lines of code in duplicates |
-| `clone_ratio` | Percentage of code that's duplicated |
-| `files_with_clones` | Number of files containing duplicates |
+| `cloned_sloc_lines` | Source lines covered by clones |
+| `cloned_pct` | Clone LOC divided by total LOC |
 
 **Interpretation:**
-- High `clone_ratio` (> 10%) suggests refactoring opportunities
+- High `cloned_pct` suggests refactoring opportunities
 - Duplicates often indicate missing abstractions
-
-## AST-grep Violations
-
-Pattern-based detection of code quality issues across 7 categories.
-
-### Categories
-
-| Category | Description | Example Rules |
-|----------|-------------|---------------|
-| **slop** | Unnecessary code surface | Verbose loops, redundant guards, needless materialization, broad `Any`/`object` typing |
-
-### Metrics
-
-| Metric | Description |
-|--------|-------------|
-| `ast_grep_violations` | Total violations found |
-| `sg_slop_violations` | Slop-rule violation count |
-| `ast_grep_per_loc` | Violations per line of code |
-
-### Rule Weights
-
-Each rule has a weight (1-4) indicating severity:
-- **Weight 1**: Minor issues, style preferences
-- **Weight 2**: Moderate issues, best practice violations
-- **Weight 3**: Significant issues, likely problems
-- **Weight 4**: Critical issues, bugs or security risks
-
-The `weighted` metric sums (violations * weight) for prioritized scoring.
 
 ## Graph Metrics
 
@@ -192,11 +162,8 @@ Percentage changes between consecutive checkpoints.
 | Metric | Description | Formula |
 |--------|-------------|---------|
 | `delta.loc` | LOC change | `(curr - prev) / prev * 100` |
-| `delta.lint_errors` | Lint error change | Same formula |
-| `delta.ast_grep_violations` | Violation change | Same formula |
-| `delta.cc_high_count` | Complex function change | Same formula |
+| `delta.verbosity` | `scb-check` verbosity change | Same formula |
 | `delta.churn_ratio` | Code churn | `(added + removed) / prev_total` |
-| `delta.new_violations_per_loc` | New violations rate | `(total - carried_over) / loc` |
 
 **Interpretation:**
 - Positive delta: Metric increased (often worse)
@@ -206,30 +173,17 @@ Percentage changes between consecutive checkpoints.
 
 ## Composite Summary Scores
 
-High-level scores that combine multiple metrics for quick comparison across runs.
+High-level scores reported by the pinned `scb-check` release and aggregated
+across checkpoints.
 
 ### Verbosity Score
 
-Measures code bloat and over-abstraction.
-
-**Formula:**
-```python
-verbosity = mean(verbosity_flagged_pct)
-```
-
-Lower is better. High values indicate that a large share of SLOC is covered by
-duplicate code or AST-grep verbosity flags, with overlapping lines counted once.
+Measures code bloat and over-abstraction. Lower is better.
 
 ### Erosion Score
 
-Measures structural degradation (high-complexity mass concentration).
-
-**Formula:**
-```python
-erosion = mean(mass.high_cc_pct)
-```
-
-Lower is better. High values indicate structural decay and accumulating technical debt.
+Measures structural degradation. Lower is better. `scb_check_version` records
+the exact checker release used for the checkpoint scores.
 
 ## Summary: What Good Code Looks Like
 
@@ -240,8 +194,8 @@ Lower is better. High values indicate structural decay and accumulating technica
 | CC ratings | Mostly A/B | Multiple D/E/F |
 | `cc_max` | < 15 | > 30 |
 | `lint_errors` | 0 | > 10 |
-| `ast_grep_violations` | < 5 | > 20 |
-| `clone_ratio` | < 5% | > 15% |
+| `verbosity` | Lower relative to comparable runs | Higher relative to comparable runs |
+| `cloned_pct` | < 5% | > 15% |
 | `trivial_wrappers` | 0 | > 3 |
 | `cyclic_dependency_mass` | 0 | > 0.1 |
 
