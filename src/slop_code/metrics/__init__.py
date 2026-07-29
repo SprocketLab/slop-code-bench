@@ -30,8 +30,6 @@ from slop_code.metrics.languages import get_language_by_extension
 
 # Models - Quality
 # Models - Summary
-from slop_code.metrics.models import AstGrepMetrics
-from slop_code.metrics.models import AstGrepViolation
 from slop_code.metrics.models import CostsStats
 from slop_code.metrics.models import CyclomaticComplexityStats
 from slop_code.metrics.models import FileMetrics
@@ -79,8 +77,6 @@ __all__ = [
     "load_checkpoint_data",
     "save_summary_json",
     # Models - Quality
-    "AstGrepMetrics",
-    "AstGrepViolation",
     "FileMetrics",
     "LineCountMetrics",
     "LintMetrics",

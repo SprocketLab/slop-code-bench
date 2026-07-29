@@ -24,11 +24,8 @@ layout = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col(loading_graph("ra-lint-dist", height="350px"), md=4),
-                dbc.Col(
-                    loading_graph("ra-ast-grep-dist", height="350px"), md=4
-                ),
-                dbc.Col(loading_graph("ra-complex-dist", height="350px"), md=4),
+                dbc.Col(loading_graph("ra-lint-dist", height="350px"), md=6),
+                dbc.Col(loading_graph("ra-complex-dist", height="350px"), md=6),
             ],
             className="mb-4",
         ),
@@ -74,7 +71,6 @@ def build_histogram(df, col, title, color):
 @callback(
     [
         Output("ra-lint-dist", "figure"),
-        Output("ra-ast-grep-dist", "figure"),
         Output("ra-complex-dist", "figure"),
         Output("ra-func-loc-dist", "figure"),
         Output("ra-cmp-loc-dist", "figure"),
@@ -85,20 +81,17 @@ def build_histogram(df, col, title, color):
 )
 def update_quality(run_path):
     if not run_path:
-        return [empty_figure()] * 7
+        return [empty_figure()] * 6
 
     context = build_context([run_path])
     if context is None or context.checkpoints.empty:
-        return [empty_figure()] * 7
+        return [empty_figure()] * 6
 
     df = context.checkpoints
 
     # Histograms
     lint_hist = build_histogram(
         df, "lint_errors", "Lint Errors Distribution", "#d62728"
-    )
-    ast_grep_hist = build_histogram(
-        df, "ast_grep_violations", "AST-grep Violations Distribution", "#ff7f0e"
     )
     comp_hist = build_histogram(
         df, "cc_high_count", "Complexity Distribution", "#9467bd"
@@ -147,7 +140,6 @@ def update_quality(run_path):
 
     return (
         lint_hist,
-        ast_grep_hist,
         comp_hist,
         func_loc_hist,
         cmp_loc_hist,

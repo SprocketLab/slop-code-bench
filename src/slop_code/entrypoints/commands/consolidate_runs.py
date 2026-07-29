@@ -81,8 +81,6 @@ CODE_STATS_COLS = KEY_COLS + [
 COMPLEXITY_PREFIXES = [
     "cc_",
     "lint_",
-    "ast_grep_",
-    "sg_",
 ]
 
 # Mass cols (important complexity metrics - warn if missing)
@@ -134,7 +132,7 @@ def consolidate_runs(
         bool,
         typer.Option(
             "--skip-quality",
-            help="Skip quality analysis files (files.jsonl, symbols.jsonl, ast_grep.jsonl)",
+            help="Skip quality analysis files (files.jsonl, symbols.jsonl)",
         ),
     ] = False,
     skip_rubric: Annotated[
@@ -193,7 +191,6 @@ def consolidate_runs(
     all_runs: list[dict[str, Any]] = []
     all_quality_files: list[dict[str, Any]] = []
     all_quality_symbols: list[dict[str, Any]] = []
-    all_ast_violations: list[dict[str, Any]] = []
     all_evaluations: list[dict[str, Any]] = []
     all_rubric: list[dict[str, Any]] = []
     runs_missing_mass: set[str] = set()  # Track runs missing mass columns
@@ -272,16 +269,6 @@ def consolidate_runs(
                             record["checkpoint"] = checkpoint
                             all_quality_symbols.append(record)
 
-                    # Load ast_grep.jsonl
-                    ast_grep_path = quality_dir / "ast_grep.jsonl"
-                    if ast_grep_path.exists():
-                        for record in load_jsonl(ast_grep_path):
-                            record["setup"] = setup
-                            record["run_id"] = run_id
-                            record["problem"] = problem
-                            record["checkpoint"] = checkpoint
-                            all_ast_violations.append(record)
-
             # Process evaluation.json if not skipped
             if not skip_evaluations:
                 problem = checkpoint_record.get("problem")
@@ -357,17 +344,6 @@ def consolidate_runs(
         )
         typer.echo(f"  quality_symbols.csv.gz: {len(df)} rows (compressed)")
 
-    if all_ast_violations:
-        df = pd.DataFrame(all_ast_violations)
-        df.to_csv(
-            output_dir / "quality_ast_violations.csv.gz",
-            index=False,
-            compression="gzip",
-        )
-        typer.echo(
-            f"  quality_ast_violations.csv.gz: {len(df)} rows (compressed)"
-        )
-
     # Write evaluations
     if all_evaluations:
         df = pd.DataFrame(all_evaluations)
@@ -388,7 +364,6 @@ def consolidate_runs(
         "checkpoints": len(all_checkpoints),
         "quality_files": len(all_quality_files),
         "quality_symbols": len(all_quality_symbols),
-        "ast_violations": len(all_ast_violations),
         "evaluations": len(all_evaluations),
         "rubric_entries": len(all_rubric),
     }
@@ -794,11 +769,6 @@ def generate_manifest(
             "quality_symbols.csv.gz": {
                 "description": "Per-symbol metrics from symbols.jsonl (gzip compressed)",
                 "key_columns": KEY_COLS + ["name", "type", "file_path"],
-                "compressed": True,
-            },
-            "quality_ast_violations.csv.gz": {
-                "description": "AST-grep rule violations (gzip compressed)",
-                "key_columns": KEY_COLS + ["rule_id", "file_path"],
                 "compressed": True,
             },
             "evaluations.csv.gz": {

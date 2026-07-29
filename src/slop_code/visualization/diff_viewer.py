@@ -447,13 +447,11 @@ with col_ov1:
 with col_ov2:
     st.subheader("Quality Analysis")
     if quality_data:
-        ast_grep = quality_data.get("ast_grep", {})
         lint = quality_data.get("lint", {})
         complexity = quality_data.get("complexity", {})
         lines = quality_data.get("lines", {})
 
         metrics = {
-            "Violations (AST)": ast_grep.get("violations"),
             "Lint Errors": lint.get("errors"),
             "Complexity (CC Sum)": complexity.get("cc_sum"),
             "LOC": lines.get("loc"),

@@ -5,7 +5,9 @@ last_updated: 2025-12-17
 
 # Metrics System Documentation
 
-The metrics system automatically measures code quality for agent submissions, tracking everything from lines of code to cyclomatic complexity to code clones.
+The metrics system automatically measures code quality for agent submissions,
+tracking everything from lines of code and cyclomatic complexity to clone
+coverage reported by `scb-check`.
 
 ## 30-Second Overview
 
@@ -13,8 +15,8 @@ When an agent completes a checkpoint, the metrics system analyzes the submitted 
 - **Line metrics**: LOC, comments, total lines
 - **Lint metrics**: Ruff errors and violations
 - **Complexity metrics**: Cyclomatic complexity (A-F ratings), nesting depth
-- **Pattern violations**: AST-grep rule violations across 7 categories
-- **Code quality**: Waste detection (trivial wrappers, single-use functions), code clones
+- **Composite quality**: Verbosity and erosion from pinned `scb-check`
+- **Code quality**: Waste detection (trivial wrappers, single-use functions)
 - **Dependencies**: Graph metrics for import relationships
 
 Results are saved to JSON/JSONL files in each checkpoint's `quality_analysis/` directory.
@@ -38,7 +40,7 @@ Results are saved to JSON/JSONL files in each checkpoint's `quality_analysis/` d
 - **Looking at output files?** See [Output Files Reference](output-files.md) - file locations and formats
 
 ### Configuration
-- **Adjusting thresholds?** Read [Configuration Guide](configuration.md) - thresholds and AST-grep rules
+- **Adjusting thresholds?** Read [Configuration Guide](configuration.md)
 
 ## Core Concepts
 
@@ -49,9 +51,9 @@ Results are saved to JSON/JSONL files in each checkpoint's `quality_analysis/` d
 | **LOC** | Lines of code (source lines, excluding blanks) |
 | **Cyclomatic Complexity (CC)** | Number of independent paths through code (A=1-5, F=41+) |
 | **Maintainability Index (MI)** | Composite score of code maintainability (A >= 19) |
-| **AST-grep Violations** | Pattern-based slop-rule violations from `configs/slop_rules.yaml` |
+| **Verbosity** | Code-bloat score produced by pinned `scb-check` |
 | **Waste** | Abstraction inefficiencies (trivial wrappers, single-use functions) |
-| **Clones** | Duplicate code blocks detected via AST hashing |
+| **Clones** | Clone coverage reported by pinned `scb-check` |
 | **Delta Metrics** | Percentage changes between checkpoints |
 | **Pass Rate** | Percentage of tests passing by category (CORE, FUNCTIONALITY, etc.) |
 | **Solve Rate** | Percentage of checkpoints/problems meeting success criteria |
@@ -61,9 +63,9 @@ Results are saved to JSON/JSONL files in each checkpoint's `quality_analysis/` d
 ### What metrics indicate good code quality?
 - **CC ratings**: More A/B ratings, fewer D/E/F
 - **Lint errors**: Lower is better
-- **AST-grep violations**: Lower is better (especially safety/complexity categories)
+- **Verbosity**: Lower is better
 - **Waste metrics**: Fewer trivial wrappers and single-use functions
-- **Clone ratio**: Lower percentage means less duplication
+- **Cloned percentage**: Lower `scb-check` percentage means less duplication
 
 ### Where do I find metrics for my run?
 
@@ -76,8 +78,7 @@ outputs/run_name/problem_name/checkpoint_N/
 ├── quality_analysis/
 │   ├── overall_quality.json              # Aggregated snapshot metrics
 │   ├── files.jsonl                       # Per-file metrics
-│   ├── symbols.jsonl                     # Per-function/class metrics
-│   └── ast_grep.jsonl                    # Pattern violations
+│   └── symbols.jsonl                     # Per-function/class metrics
 └── evaluation/
     ├── stdout.txt, stderr.txt, report.json  # Test artifacts
 ```
@@ -94,8 +95,7 @@ Use checkpoint-level files for detailed analysis of a specific checkpoint. Use r
 ### How do I compare checkpoints?
 Delta metrics (prefixed with `delta.`) show percentage changes:
 - `delta.loc`: Lines of code change
-- `delta.lint_errors`: Lint error change
-- `delta.ast_grep_violations`: Violation change
+- `delta.verbosity`: Verbosity score change
 - `delta.churn_ratio`: Code churn (lines added + removed / prior total)
 
 ## Code Location
@@ -109,7 +109,6 @@ Delta metrics (prefixed with `delta.`) show percentage changes:
   - `CorrectnessResults`: Test result model
   - `GroupType`: Test categorization (CORE, FUNCTIONALITY, REGRESSION, ERROR)
   - `PassPolicy`: Success criteria
-- **AST-grep rules**: `configs/slop_rules.yaml`
 - **Main entry points**:
   - Snapshot quality: `slop_code.metrics.driver.measure_snapshot_quality()`
   - Checkpoint metrics: `slop_code.metrics.checkpoint.driver.get_checkpoint_metrics()`

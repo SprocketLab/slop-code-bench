@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import traceback
-from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from dataclasses import field
@@ -14,7 +13,6 @@ import typer
 import yaml
 from pydantic import ValidationError
 from rich.console import Console
-from rich.table import Table
 
 from slop_code.common import CHECKPOINT_RESULTS_FILENAME
 from slop_code.common import CONFIG_FILENAME
@@ -45,8 +43,6 @@ class RunProcessingResult:
 
     run_dir: Path
     success: bool
-    slop_rule_counts: Counter[str] = field(default_factory=Counter)
-    slop_rows: list[tuple[str, str, int, int]] = field(default_factory=list)
     all_reports: list[dict] = field(default_factory=list)
     report_errors: list[tuple[str, str]] = field(default_factory=list)
     total_checkpoints: int = 0
@@ -78,8 +74,6 @@ def _process_single_run_worker(
     log = setup_logging(log_dir=None, verbosity=0)
 
     try:
-        slop_rule_counts: Counter[str] = Counter()
-        slop_rows: list[tuple[str, str, int, int]] = []
         all_reports: list[dict] = []
         report_errors: list[tuple[str, str]] = []
         total_checkpoints = 0
@@ -138,22 +132,9 @@ def _process_single_run_worker(
             total_checkpoints += len(checkpoint_results)
             total_files_saved += files_saved
 
-            for checkpoint_name, metrics in checkpoint_results.items():
-                slop_rule_counts.update(metrics.ast_grep.counts)
-                slop_rows.append(
-                    (
-                        problem_dir.name,
-                        checkpoint_name,
-                        metrics.ast_grep.violations,
-                        metrics.ast_grep.rules_checked,
-                    )
-                )
-
         return RunProcessingResult(
             run_dir=run_dir,
             success=True,
-            slop_rule_counts=slop_rule_counts,
-            slop_rows=slop_rows,
             all_reports=all_reports,
             report_errors=report_errors,
             total_checkpoints=total_checkpoints,
@@ -184,8 +165,6 @@ def _process_single_run(
     problem_name: str | None,
     console: Console,
 ) -> tuple[
-    Counter[str],
-    list[tuple[str, str, int, int]],
     list[dict],
     list[tuple[str, str]],
     int,
@@ -200,11 +179,9 @@ def _process_single_run(
         console: Rich console for output.
 
     Returns:
-        Tuple of (slop_rule_counts, slop_rows, all_reports, report_errors,
-                  total_checkpoints, total_files_saved)
+        Tuple of (all_reports, report_errors, total_checkpoints,
+        total_files_saved).
     """
-    slop_rule_counts: Counter[str] = Counter()
-    slop_rows: list[tuple[str, str, int, int]] = []
     all_reports: list[dict] = []
     report_errors: list[tuple[str, str]] = []
     total_checkpoints = 0
@@ -216,8 +193,6 @@ def _process_single_run(
     if not problems:
         console.print(f"[red]No problems found in {run_dir}[/red]")
         return (
-            slop_rule_counts,
-            slop_rows,
             all_reports,
             report_errors,
             total_checkpoints,
@@ -232,8 +207,6 @@ def _process_single_run(
                 f"[red]Problem '{problem_name}' not found in {run_dir}[/red]"
             )
             return (
-                slop_rule_counts,
-                slop_rows,
                 all_reports,
                 report_errors,
                 total_checkpoints,
@@ -280,20 +253,7 @@ def _process_single_run(
             f"{files_saved} files saved"
         )
 
-        for checkpoint_name, metrics in checkpoint_results.items():
-            slop_rule_counts.update(metrics.ast_grep.counts)
-            slop_rows.append(
-                (
-                    problem_dir.name,
-                    checkpoint_name,
-                    metrics.ast_grep.violations,
-                    metrics.ast_grep.rules_checked,
-                )
-            )
-
     return (
-        slop_rule_counts,
-        slop_rows,
         all_reports,
         report_errors,
         total_checkpoints,
@@ -381,20 +341,15 @@ def static_metrics(
             )
             raise typer.Exit(1)
 
-        slop_rule_counts: Counter[str] = Counter()
-        slop_rows: list[tuple[str, str, int, int]] = []
         _run_extension_scan(
             console,
             run_dir,
             just_static_extension,
-            slop_rule_counts,
-            slop_rows,
         )
         console.print(
             "[green]Done. Saved quality metrics for 1 snapshot "
-            "(2 files).[/green]"
+            "(3 files).[/green]"
         )
-        _print_slop_summary(console, slop_rows, slop_rule_counts)
         return
 
     # Handle collection mode
@@ -469,10 +424,6 @@ def static_metrics(
                     f"[green]Saved quality metrics for {result.total_checkpoints} "
                     f"checkpoints ({result.total_files_saved} files).[/green]"
                 )
-                _print_slop_summary(
-                    console, result.slop_rows, result.slop_rule_counts
-                )
-
                 update_results_jsonl(report_file, result.all_reports)
                 console.print(
                     f"Backfilled reports for {len(result.all_reports)} "
@@ -537,8 +488,6 @@ def static_metrics(
 
     # Single run mode (default)
     (
-        slop_rule_counts,
-        slop_rows,
         all_reports,
         report_errors,
         total_checkpoints,
@@ -555,8 +504,6 @@ def static_metrics(
         f"[green]Done. Saved quality metrics for {total_checkpoints} "
         f"checkpoints ({total_files_saved} files).[/green]"
     )
-    _print_slop_summary(console, slop_rows, slop_rule_counts)
-
     update_results_jsonl(report_file, all_reports)
     console.print(
         f"Backfilled reports for {len(all_reports)} checkpoint(s) at "
@@ -607,8 +554,6 @@ def _run_extension_scan(
     console: Console,
     run_dir: Path,
     raw_extension: str,
-    slop_rule_counts: Counter[str],
-    slop_rows: list[tuple[str, str, int, int]],
 ) -> None:
     extension = _normalize_extension(raw_extension)
     language = get_language_by_extension(extension)
@@ -641,46 +586,3 @@ def _run_extension_scan(
         f"Scanned snapshot at {run_dir} "
         f"({len(file_metrics_list)} files, entry {entry_file.name})"
     )
-
-    slop_rule_counts.update(quality_result.ast_grep.counts)
-    slop_rows.append(
-        (
-            run_dir.name,
-            "snapshot",
-            quality_result.ast_grep.violations,
-            quality_result.ast_grep.rules_checked,
-        )
-    )
-
-
-def _print_slop_summary(
-    console: Console,
-    slop_rows: list[tuple[str, str, int, int]],
-    slop_rule_counts: Counter[str],
-) -> None:
-    if slop_rule_counts:
-        table = Table(title="Slop Violations by Rule")
-        table.add_column("Rule")
-        table.add_column("Count", justify="right")
-        for rule_id, count in sorted(
-            slop_rule_counts.items(), key=lambda item: (-item[1], item[0])
-        ):
-            table.add_row(rule_id, str(count))
-        console.print(table)
-    else:
-        console.print("[green]No slop violations detected.[/green]")
-
-    if slop_rows:
-        table = Table(title="Slop Violations by Checkpoint")
-        table.add_column("Problem")
-        table.add_column("Checkpoint")
-        table.add_column("Violations", justify="right")
-        table.add_column("Rules Checked", justify="right")
-        for problem, checkpoint, violations, rules_checked in slop_rows:
-            table.add_row(
-                problem,
-                checkpoint,
-                str(violations),
-                str(rules_checked),
-            )
-        console.print(table)

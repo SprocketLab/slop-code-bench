@@ -47,7 +47,7 @@ layout = dbc.Container(
                     dbc.Tabs(
                         tabs,
                         id="scatter-tabs",
-                        active_tab="verbosity_vs_solve",
+                        active_tab="high_complexity_vs_solve",
                         className="nav-fill border-0",
                     ),
                     className="bg-light",

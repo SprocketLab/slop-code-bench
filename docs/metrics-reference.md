@@ -37,8 +37,8 @@ P1 = sum(c1_p1, c2_p1),  P2 = sum(c1_p2, c2_p2, c3_p2)  →  MetricStats
 | Solves more? | `pct_problems_solved`, `pct_checkpoints_solved` |
 | Meets core spec? | `pct_checkpoints_core_solved`, `pass_rates.checkpoint.core` |
 | Breaks prior work? | `pass_rates.checkpoint.regression` |
-| Cleaner code? | `ratios.lint.mean`, `ratios.ast_grep.mean`, `verbosity.mean` |
-| Quality degrades? | `delta.loc`, `delta.ast_grep_violations`, `delta.churn_ratio`, `erosion.mean` |
+| Cleaner code? | `ratios.lint.mean`, `verbosity.mean` |
+| Quality degrades? | `delta.loc`, `delta.verbosity`, `delta.churn_ratio`, `erosion.mean` |
 | Cheaper end-to-end? | `costs.problem.mean`, `costs.total` |
 | Fewer steps? | `steps.checkpoint.mean` |
 
@@ -142,25 +142,14 @@ Per function/method, radon scale.
 | `lint_fixable` | Auto-fixable violations |
 | `lint_per_loc` | `lint_errors / loc` |
 
-### AST-Grep Violations
-
-Rules in `configs/slop_rules.yaml`, weighted 1-4 per rule.
+### `scb-check` & Waste
 
 | Key | Description |
 |-----|-------------|
-| `ast_grep_violations` | Total violations |
-| `violation_pct` | AST-grep flagged lines / `loc` |
-
-### Redundancy & Waste
-
-| Key | Description |
-|-----|-------------|
-| `clone_lines` | Total duplicated lines |
-| `cloned_sloc_lines` | Duplicated SLOC lines after filtering comments/docstrings |
-| `cloned_pct` | `cloned_sloc_lines / loc` |
-| `clone_ratio` | Cloned SLOC / file SLOC (per-file metric; aggregated separately) |
-| `verbosity_flagged_sloc_lines` | SLOC lines flagged by clone or AST-grep coverage union |
-| `verbosity_flagged_pct` | `verbosity_flagged_sloc_lines / loc` |
+| `cloned_sloc_lines` | Duplicated SLOC lines reported by `scb-check` |
+| `cloned_pct` | `scb-check` clone LOC / total LOC |
+| `verbosity_flagged_sloc_lines` | Verbosity-flagged SLOC reported by `scb-check` |
+| `verbosity_flagged_pct` | `scb-check` flagged LOC / total LOC |
 | `single_use_functions` | Functions called only once |
 | `trivial_wrappers` | Functions that just delegate to another |
 | `unused_variables` | Variables assigned but never read |
@@ -206,7 +195,7 @@ Present for all checkpoints after the first.
 | Key | Description |
 |-----|-------------|
 | `delta.loc` | % change in LOC |
-| `delta.ast_grep_violations` | % change in AST-grep violations |
+| `delta.verbosity` | % change in the `scb-check` verbosity score |
 | `delta.churn_ratio` | `(lines_added + lines_removed) / prior_total_lines` |
 
 ---
@@ -268,23 +257,11 @@ Checkpoints with zero tests for a type are excluded from that type's average.
 | Key | Type | Description |
 |-----|------|-------------|
 | `cc.high_count`, `cc.high_mean`, `cc.max` | MetricStats | CC stats across checkpoints |
-| `ratios.rubric`, `ratios.lint`, `ratios.ast_grep` | MetricStats | `metric / loc` per checkpoint |
+| `ratios.rubric`, `ratios.lint` | MetricStats | `metric / loc` per checkpoint |
 
 ### Composite Scores
 
-**Verbosity** (code bloat):
-```
-verbosity_flagged_pct
-```
-
-**Erosion** (structural degradation):
-```
-mass.high_cc_pct
-```
-
-Where:
-- `loc` is the repo's non-blank, non-comment LOC metric
-- `verbosity_flagged_pct` is the SLOC coverage of
-  `duplicate_lines ∪ ast_grep_flagged_lines`
-
-Both are `MetricStats` over per-checkpoint values.
+`verbosity` and `erosion` come directly from the report emitted by the pinned
+`scb-check` release. `scb_check_version` records the release used for each
+successful checkpoint measurement. Both scores are aggregated as `MetricStats`
+over per-checkpoint values.

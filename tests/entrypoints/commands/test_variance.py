@@ -42,27 +42,6 @@ def test_discovers_runs_nested_under_model_dirs(tmp_path: Path) -> None:
     assert discovered == sorted([run_a, run_b])
 
 
-def test_metric_value_combines_lint_and_violation_pct() -> None:
-    row = {
-        "lint_per_loc": 0.2,
-        "violation_pct": 0.3,
-    }
-
-    value = _metric_value(row, "normalized.lint_violation_pct")
-
-    assert value == 0.5
-
-
-def test_metric_value_combines_lint_and_violation_pct_missing_returns_none() -> (
-    None
-):
-    row = {"lint_per_loc": 0.2}
-
-    value = _metric_value(row, "normalized.lint_violation_pct")
-
-    assert value is None
-
-
 def test_metric_value_reads_strict_and_isolated_pass_rates() -> None:
     row = {
         "strict_pass_rate": 0.7,
@@ -79,8 +58,6 @@ def test_render_problem_cv_summary_splits_tables() -> None:
         "sample": {
             "Pass rate": [0.3],
             "Lint": [0.1],
-            "Violation %": [0.2],
-            "Lint+Violation %": [0.4],
             "LOC": [0.5],
         }
     }
@@ -88,8 +65,6 @@ def test_render_problem_cv_summary_splits_tables() -> None:
         "sample": {
             "Pass rate": [0.05],
             "Lint": [0.01],
-            "Violation %": [0.02],
-            "Lint+Violation %": [0.04],
             "LOC": [0.05],
         }
     }
@@ -157,10 +132,10 @@ def test_collect_ci_entries_canonicalizes_metric_names() -> None:
     record = {
         "problem": "prob",
         "run_count": 2,
-        "final.delta.ast_grep_violations.ci95_low": 0.4,
-        "final.delta.ast_grep_violations.ci95_high": 0.6,
-        "delta.ast_grep_violations.final.ci95_low": 0.5,
-        "delta.ast_grep_violations.final.ci95_high": 0.7,
+        "final.delta.verbosity.ci95_low": 0.4,
+        "final.delta.verbosity.ci95_high": 0.6,
+        "delta.verbosity.final.ci95_low": 0.5,
+        "delta.verbosity.final.ci95_high": 0.7,
     }
     key = RunGroupKey(
         model="m",

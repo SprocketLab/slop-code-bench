@@ -22,8 +22,7 @@ outputs/run_name/problem_name/checkpoint_N/
 ├── quality_analysis/
 │   ├── overall_quality.json         # Snapshot-level aggregates
 │   ├── files.jsonl                  # Per-file metrics (one JSON per line)
-│   ├── symbols.jsonl                # Per-symbol metrics (one JSON per line)
-│   └── ast_grep.jsonl               # Pattern violations (one per line)
+│   └── symbols.jsonl                # Per-symbol metrics (one JSON per line)
 ├── diff.json                        # File change statistics
 ├── rubric.jsonl                     # Rubric grading results
 └── ...
@@ -105,22 +104,6 @@ Aggregated metrics for the entire snapshot. This is the primary file for checkpo
     "trivial_wrappers": 1,
     "single_method_classes": 0
   },
-  "redundancy": {
-    "clone_instances": 4,
-    "clone_lines": 32,
-    "cloned_sloc_lines": 24,
-    "clone_ratio_sum": 0.03,
-    "files_with_clones": 2
-  },
-  "ast_grep": {
-    "violations": 8,
-    "rules_checked": 137,
-    "counts": {"manual-sum-loop": 2, "guard-return-none": 3},
-    "weighted": 12,
-    "category_counts": {"slop": 8},
-    "category_weighted": {"slop": 12}
-  },
-  "verbosity_flagged_sloc_lines": 29,
   "graph": {
     "node_count": 8,
     "edge_count": 15,
@@ -143,9 +126,6 @@ Aggregated metrics for the entire snapshot. This is the primary file for checkpo
 | `classes` | Class statistics |
 | `complexity` | CC and MI distributions |
 | `waste` | Abstraction waste counts |
-| `redundancy` | Code clone aggregates, including filtered cloned SLOC |
-| `ast_grep` | Slop-rule violation aggregates |
-| `verbosity_flagged_sloc_lines` | Union of cloned SLOC and AST-grep-flagged SLOC |
 | `graph` | Dependency graph metrics (optional) |
 
 ## files.jsonl
@@ -175,12 +155,6 @@ Per-file metrics in JSON Lines format (one JSON object per line).
   "is_entry_language": true,
   "import_count": 8,
   "global_count": 0,
-  "redundancy": {
-    "clones": [...],
-    "total_clone_instances": 2,
-    "clone_lines": 16,
-    "clone_ratio": 0.13
-  },
   "waste": {
     "single_use_functions": [...],
     "trivial_wrappers": [...],
@@ -188,20 +162,7 @@ Per-file metrics in JSON Lines format (one JSON object per line).
     "single_use_count": 1,
     "trivial_wrapper_count": 0,
     "single_method_class_count": 0
-  },
-  "ast_grep_violations": [
-    {
-      "rule_id": "manual-sum-loop",
-      "severity": "warning",
-      "category": "slop",
-      "weight": 4,
-      "line": 45,
-      "column": 4,
-      "end_line": 45,
-      "end_column": 15
-    }
-  ],
-  "ast_grep_rules_checked": 21
+  }
 }
 ```
 
@@ -342,7 +303,8 @@ metrics = get_checkpoint_metrics(
 # Access specific values
 print(f"LOC: {metrics['loc']}")
 print(f"CC max: {metrics['cc_max']}")
-print(f"AST-grep violations: {metrics['ast_grep_violations']}")
+print(f"Verbosity: {metrics['verbosity']}")
+print(f"scb-check version: {metrics['scb_check_version']}")
 print(f"Pass rate: {metrics['pass_rate']:.1%}")
 ```
 
@@ -360,7 +322,6 @@ snapshot = measure_snapshot_quality(
 print(f"Files: {snapshot.file_count}")
 print(f"Total LOC: {snapshot.lines.loc}")
 print(f"CC max: {snapshot.functions.cc_max}")
-print(f"AST-grep violations: {snapshot.ast_grep.violations}")
 ```
 
 ### Run-Level Metrics

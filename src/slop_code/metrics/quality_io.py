@@ -9,7 +9,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from slop_code.common import AST_GREP_QUALITY_SAVENAME
 from slop_code.common import FILES_QUALITY_SAVENAME
 from slop_code.common import QUALITY_DIR
 from slop_code.common import QUALITY_METRIC_SAVENAME
@@ -32,7 +31,6 @@ def save_quality_metrics(
     - overall_quality.json: Aggregate snapshot metrics
     - files.jsonl: Flat file metrics (one row per file)
     - symbols.jsonl: Symbol metrics with file_path (one row per symbol)
-    - ast_grep.jsonl: AST-grep violations with file_path (one row per violation)
 
     Args:
         save_dir: Directory to save quality_analysis/ into.
@@ -75,14 +73,6 @@ def save_quality_metrics(
                 "import_count": fm.import_count,
                 "global_count": fm.global_count,
                 "symbol_count": len(fm.symbols),
-                "ast_grep_violation_count": len(fm.ast_grep_violations),
-                "ast_grep_rules_checked": fm.ast_grep_rules_checked,
-                "clone_lines": fm.redundancy.clone_lines
-                if fm.redundancy
-                else 0,
-                "clone_ratio": (
-                    fm.redundancy.clone_ratio if fm.redundancy else 0.0
-                ),
                 "single_use_count": (
                     fm.waste.single_use_count if fm.waste else 0
                 ),
@@ -101,15 +91,6 @@ def save_quality_metrics(
         for fm in file_metrics:
             for sym in fm.symbols:
                 data = sym.model_dump(mode="json")
-                data["file_path"] = fm.file_path
-                f.write(json.dumps(data) + "\n")
-    files_saved += 1
-
-    # Save AST-grep violations with file_path
-    with (quality_dir / AST_GREP_QUALITY_SAVENAME).open("w") as f:
-        for fm in file_metrics:
-            for v in fm.ast_grep_violations:
-                data = v.model_dump(mode="json")
                 data["file_path"] = fm.file_path
                 f.write(json.dumps(data) + "\n")
     files_saved += 1

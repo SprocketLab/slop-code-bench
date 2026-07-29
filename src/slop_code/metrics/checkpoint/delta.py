@@ -13,7 +13,7 @@ from typing import Any
 # Only keys that are actually consumed by dashboard/summary/variance.
 DELTA_METRIC_KEYS: tuple[str, ...] = (
     "loc",
-    "ast_grep_violations",
+    "verbosity",
 )
 
 

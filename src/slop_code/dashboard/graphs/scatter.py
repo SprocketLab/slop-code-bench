@@ -247,39 +247,6 @@ def _aggregate_scatter_metrics(
     return metrics
 
 
-def aggregate_erosion_vs_solve(
-    context: ChartContext,
-    solve_type: Literal["all", "iso", "core"] = "all",
-    include_lint: bool = True,
-    include_rubric: bool = True,
-    include_ast_grep: bool = True,
-) -> list[ScatterMetrics]:
-    return _aggregate_scatter_metrics(
-        context,
-        lambda df: df["verbosity.mean"].fillna(0).mean(),
-        solve_type=solve_type,
-    )
-
-
-def aggregate_lint_ast_grep_vs_solve(
-    context: ChartContext,
-) -> list[ScatterMetrics]:
-    return _aggregate_scatter_metrics(
-        context,
-        lambda df: (
-            df[
-                [
-                    "ratios.violation_pct.mean",
-                    "ratios.lint.mean",
-                ]
-            ]
-            .fillna(0)
-            .sum(axis=1)
-            .mean()
-        ),
-    )
-
-
 def aggregate_high_complexity_vs_solve(
     context: ChartContext,
 ) -> list[ScatterMetrics]:
@@ -321,13 +288,6 @@ def aggregate_cost_per_problem(context: ChartContext) -> list[ScatterMetrics]:
     return _aggregate_scatter_metrics(context, compute_cost_per_problem)
 
 
-def aggregate_ast_grep_vs_solve(context: ChartContext) -> list[ScatterMetrics]:
-    return _aggregate_scatter_metrics(
-        context,
-        lambda df: df["ratios.violation_pct.mean"].fillna(0).mean(),
-    )
-
-
 def aggregate_lint_vs_solve(context: ChartContext) -> list[ScatterMetrics]:
     return _aggregate_scatter_metrics(
         context, lambda df: df["ratios.lint.mean"].fillna(0).mean()
@@ -337,28 +297,6 @@ def aggregate_lint_vs_solve(context: ChartContext) -> list[ScatterMetrics]:
 def aggregate_rubric_vs_solve(context: ChartContext) -> list[ScatterMetrics]:
     return _aggregate_scatter_metrics(
         context, lambda df: df["ratios.rubric.mean"].fillna(0).mean()
-    )
-
-
-def aggregate_erosion_vs_problem_test_pass_rate(
-    context: ChartContext,
-) -> list[ScatterMetrics]:
-    return _aggregate_scatter_metrics(
-        context,
-        x_value_fn=lambda df: df["erosion.mean"].fillna(0).mean(),
-        y_value_fn=lambda df: df["pass_rates.problem.total"].fillna(0).mean()
-        * 100,
-    )
-
-
-def aggregate_erosion_vs_checkpoint_test_pass_rate(
-    context: ChartContext,
-) -> list[ScatterMetrics]:
-    return _aggregate_scatter_metrics(
-        context,
-        x_value_fn=lambda df: df["erosion.mean"].fillna(0).mean(),
-        y_value_fn=lambda df: df["pass_rates.checkpoint.total"].fillna(0).mean()
-        * 100,
     )
 
 
@@ -387,9 +325,6 @@ class ScatterChartRenderer:
             # If not provided, track locally for this call only
             # (standard single-plot behavior)
             seen_models = set()
-            track_globally = False
-        else:
-            track_globally = True
 
         for m in metrics:
             is_first_for_model = m.model_name not in seen_models
@@ -467,44 +402,10 @@ class ScatterChartConfig:
 
 
 SCATTER_CHARTS: dict[str, ScatterChartConfig] = {
-    "verbosity_vs_solve": ScatterChartConfig(
-        aggregator=lambda context: aggregate_erosion_vs_solve(
-            context,
-            include_lint=False,
-            include_ast_grep=True,
-            include_rubric=True,
-        ),
-        x_axis=AxisConfig("Verbosity Score", "log"),
-        y_axis=AxisConfig("% Checkpoints Solved"),
-    ),
-    "verbosity_vs_core_solve": ScatterChartConfig(
-        aggregator=lambda context: aggregate_erosion_vs_solve(
-            context, "core", include_lint=False
-        ),
-        x_axis=AxisConfig("Verbosity Score", "log"),
-        y_axis=AxisConfig("% Checkpoints Core Solved"),
-    ),
-    "verbosity_vs_iso_solve": ScatterChartConfig(
-        aggregator=lambda context: aggregate_erosion_vs_solve(
-            context, "iso", include_lint=False
-        ),
-        x_axis=AxisConfig("Verbosity Score", "log"),
-        y_axis=AxisConfig("% Checkpoints ISO Solved"),
-    ),
     "high_complexity_vs_solve": ScatterChartConfig(
         aggregator=aggregate_high_complexity_vs_solve,
         x_axis=AxisConfig("High Complexity", "log"),
         y_axis=AxisConfig("% Checkpoints Solved"),
-    ),
-    "erosion_vs_problem_test_pass_rate": ScatterChartConfig(
-        aggregator=aggregate_erosion_vs_problem_test_pass_rate,
-        x_axis=AxisConfig("Erosion Score", "log"),
-        y_axis=AxisConfig("% Problem Test Pass Rate"),
-    ),
-    "erosion_vs_checkpoint_test_pass_rate": ScatterChartConfig(
-        aggregator=aggregate_erosion_vs_checkpoint_test_pass_rate,
-        x_axis=AxisConfig("Erosion Score", "log"),
-        y_axis=AxisConfig("% Checkpoint Test Pass Rate"),
     ),
     "cost_vs_solve": ScatterChartConfig(
         aggregator=aggregate_cost_vs_solve,
@@ -524,11 +425,6 @@ SCATTER_CHARTS: dict[str, ScatterChartConfig] = {
     "lint_vs_solve": ScatterChartConfig(
         aggregator=aggregate_lint_vs_solve,
         x_axis=AxisConfig("Lint Errors", "log"),
-        y_axis=AxisConfig("% Checkpoints Solved"),
-    ),
-    "ast_grep_vs_solve": ScatterChartConfig(
-        aggregator=aggregate_ast_grep_vs_solve,
-        x_axis=AxisConfig("AST Grep Errors", "log"),
         y_axis=AxisConfig("% Checkpoints Solved"),
     ),
     "rubric_vs_solve": ScatterChartConfig(
