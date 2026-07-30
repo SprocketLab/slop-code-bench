@@ -11,10 +11,6 @@ checkpoints:
 description: Simple inventory API used to debug agent runner behaviour.
 difficulty: Easy
 entry_file: inventory_service
-loader:
-  entrypoint: load_checkpoint
-  path: loader.py
-  type: script
 name: inventory_api_debug_problem
 tags:
 - debug

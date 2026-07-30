@@ -68,6 +68,7 @@ __all__ = [
     "EnvironmentSpecType",
     "LocalEnvironmentSpec",
     "DockerEnvironmentSpec",
+    "DockerConfig",
     # Execution models
     "ExecutionError",
     # Snapshot models

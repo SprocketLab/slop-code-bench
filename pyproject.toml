@@ -96,6 +96,7 @@ dev = [
     "pytest-asyncio>=1.2.0",
     "ty>=0.0.14",
     "vulture>=2.16",
+    "pre-commit>=4.6.1",
 ]
 openhands = [
     "openhands-agent-server>=1.0.0a5",

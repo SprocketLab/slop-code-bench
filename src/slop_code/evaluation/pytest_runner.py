@@ -89,8 +89,10 @@ COLLECTION_LINE_PATTERN = re.compile(r"collected (\d+) items?")
 
 
 def _as_dict(value: object) -> _JsonObject | None:
-    if isinstance(value, dict):
-        return value
+    if isinstance(value, dict) and all(
+        isinstance(key, str) for key in value
+    ):
+        return {key: item for key, item in value.items() if isinstance(key, str)}
     return None
 
 

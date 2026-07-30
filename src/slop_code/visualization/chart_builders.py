@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -22,6 +22,9 @@ from slop_code.visualization.data_transforms import (
 from slop_code.visualization.data_transforms import format_model_display_name
 from slop_code.visualization.graph_utils import FONT_FAMILY_IMPACT
 from slop_code.visualization.graph_utils import get_theme
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 def apply_graph_style(
