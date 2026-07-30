@@ -8,12 +8,12 @@ import streamlit.components.v1 as components
 
 # Try importing pygments
 try:
-    import pygments
     from pygments import highlight
-    from pygments.formatters import HtmlFormatter
-    from pygments.lexers import TextLexer
+    from pygments.formatters.html import HtmlFormatter
     from pygments.lexers import get_lexer_for_filename
     from pygments.lexers import guess_lexer
+    from pygments.lexers.special import TextLexer
+    from pygments.util import ClassNotFound
 
     HAS_PYGMENTS = True
 except ImportError:
@@ -22,11 +22,11 @@ except ImportError:
 st.set_page_config(layout="wide", page_title="Diff Viewer")
 
 
-def load_json(path):
+def load_json(path: Path) -> dict | None:
     try:
-        with open(path) as f:
+        with path.open() as f:
             return json.load(f)
-    except Exception:
+    except (OSError, json.JSONDecodeError):
         return None
 
 
@@ -72,7 +72,7 @@ def get_snapshot_files(snapshot_dir):
             rel_path = p.relative_to(snapshot_dir)
             try:
                 files[str(rel_path)] = p.read_text(errors="replace")
-            except Exception:
+            except OSError:
                 files[str(rel_path)] = "<binary or unreadable>"
     return files
 
@@ -88,7 +88,7 @@ def get_highlighted_line(line, lexer):
         return highlight(
             line, lexer, HtmlFormatter(nowrap=True, noclasses=True)
         ).rstrip("\n")
-    except Exception:
+    except (TypeError, ValueError):
         return line
 
 
@@ -98,10 +98,10 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
     if HAS_PYGMENTS:
         try:
             lexer = get_lexer_for_filename(filename)
-        except pygments.util.ClassNotFound:
+        except ClassNotFound:
             try:
                 lexer = guess_lexer(a if a else b)
-            except pygments.util.ClassNotFound:
+            except ClassNotFound:
                 lexer = TextLexer()
 
     # 2. Split lines
@@ -192,24 +192,24 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
             border: 1px solid #d0d7de;
             border-radius: 6px;
         }
-        table.diff { 
-            border-collapse: collapse; 
-            width: 100%; 
+        table.diff {
+            border-collapse: collapse;
+            width: 100%;
             font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
             font-size: 12px;
         }
-        .diff th { 
-            background-color: #f6f8fa; 
-            color: #57606a; 
-            padding: 5px 10px; 
+        .diff th {
+            background-color: #f6f8fa;
+            color: #57606a;
+            padding: 5px 10px;
             text-align: left;
             border-bottom: 1px solid #d0d7de;
         }
-        .diff td { 
-            padding: 0px 10px; 
+        .diff td {
+            padding: 0px 10px;
             vertical-align: top;
             line-height: 20px;
-            white-space: pre; 
+            white-space: pre;
         }
         .lineno {
             color: #6e7781;
@@ -225,19 +225,19 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
             width: 49%;
             color: #24292f;
         }
-        
+
         /* Diff Colors (GitHub Style) */
         .diff-add { background-color: #e6ffec; }
         .diff-add-num { background-color: #ccffd8; }
-        
+
         .diff-del { background-color: #ffebe9; }
         .diff-del-num { background-color: #ffd7d5; }
-        
+
         .diff-mod { background-color: #fff5b1; }
-        
+
         /* Pygments Inline Styles handling */
         pre { margin: 0; }
-        
+
         /* Navigation Controls */
         .nav-controls {
             position: fixed;
@@ -265,7 +265,7 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
             background: #f3f4f6;
         }
     </style>
-    
+
     <script>
         let changes = [];
         let currentIndex = -1;
@@ -275,9 +275,9 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
             const diffCells = document.querySelectorAll('td.code.diff-add, td.code.diff-del, td.code.diff-mod');
             const rows = new Set();
             diffCells.forEach(cell => rows.add(cell.parentElement));
-            
+
             const sortedRows = Array.from(rows).sort((a, b) => a.rowIndex - b.rowIndex);
-            
+
             changes = [];
             if (sortedRows.length > 0) {
                 changes.push(sortedRows[0]);
@@ -293,13 +293,13 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
 
         function scrollToChange(index) {
             if (changes.length === 0) return;
-            
+
             if (index < 0) index = 0;
             if (index >= changes.length) index = changes.length - 1;
-            
+
             currentIndex = index;
             const el = changes[currentIndex];
-            
+
             // Scroll element into view
             el.scrollIntoView({behavior: 'smooth', block: 'center'});
         }
@@ -317,7 +317,7 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
     </script>
     """
 
-    html = f"""
+    return f"""
     {style}
     <div class="nav-controls">
         <button onclick="prevChange()">▲ Prev</button>
@@ -337,7 +337,6 @@ def generate_modern_diff(a, b, name_a, name_b, filename=""):
         </table>
     </div>
     """
-    return html
 
 
 # Parse command line arguments
@@ -345,15 +344,12 @@ default_run_dir = (
     "outputs/variance_runs/gpt-5.2_0.74.0_low_just-solve/20251227T1027"
 )
 
-try:
-    # Use parse_known_args to ignore streamlit's own arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--run-dir", type=str)
-    args, _ = parser.parse_known_args()
-    if args.run_dir:
-        default_run_dir = args.run_dir
-except Exception:
-    pass
+# Use parse_known_args to ignore streamlit's own arguments.
+parser = argparse.ArgumentParser()
+parser.add_argument("--run-dir", type=str)
+args, _ = parser.parse_known_args()
+if args.run_dir:
+    default_run_dir = args.run_dir
 
 # Sidebar
 st.sidebar.title("Configuration")

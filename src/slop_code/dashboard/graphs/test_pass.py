@@ -90,7 +90,7 @@ def build_test_pass_rate_bars(context: ChartContext) -> go.Figure:
             "passed_tests", "total_tests"
         )
 
-        def add_bar(y_val, std_val, r, c, show_legend=False):
+        def add_bar(y_val, std_val, r, c, *, show_legend=False):
             error_y = None
             if is_grouped:
                 error_y = dict(type="data", array=[std_val], visible=True)

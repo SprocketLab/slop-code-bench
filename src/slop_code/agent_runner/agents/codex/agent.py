@@ -87,7 +87,7 @@ class CodexAgent(Agent):
         credential: ProviderCredential | None,
         # Codex specific
         binary: str,
-        model: str,
+        model: str | None,
         timeout: int | None,
         thinking: ThinkingPreset | None,
         max_thinking_tokens: int | None,
