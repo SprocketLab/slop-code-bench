@@ -30,7 +30,7 @@ for cfg_path in sorted(args.cfg or []):
         continue
 
     print(f"{cfg_path}")
-    with open(cfg_path) as f:
+    with cfg_path.open() as f:
         cfg_data = yaml.safe_load(f)
     out_cfg[cfg_path.name] = cfg_data
     done_paths.add(cfg_path.name)
@@ -43,10 +43,10 @@ for cfg_dir in sorted(args.cfg_dir or []):
             print(f"SKIPPING: {cfg_path}")
             continue
         print(f"{cfg_path}")
-        with open(cfg_path) as f:
+        with cfg_path.open() as f:
             cfg_data = yaml.safe_load(f)
         done_paths.add(str(cfg_path.relative_to(cfg_dir.parent)))
         out_cfg[str(cfg_path.relative_to(cfg_dir.parent))] = cfg_data
 
-with open(args.output, "w") as f:
+with args.output.open("w") as f:
     yaml.dump(out_cfg, f)
