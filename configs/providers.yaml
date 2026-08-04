@@ -38,6 +38,18 @@ providers:
         api_base: https://openrouter.ai/api
         api_format: anthropic
 
+  portkey:
+    type: env_var
+    env_var: PORTKEY_API_KEY
+    description: Portkey AI gateway API key
+    endpoints:
+      openai:
+        api_base: https://api.portkey.ai/v1
+        api_format: openai
+      anthropic:
+        api_base: https://api.portkey.ai
+        api_format: anthropic
+
   zhipu:
     type: env_var
     env_var: ZHIPU_API_KEY
