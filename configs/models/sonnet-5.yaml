@@ -12,6 +12,9 @@ aliases:
   - sonnet-5
 
 agent_specific:
+  claude_code:
+    endpoint: anthropic
+
   mini_swe:
     model_name: anthropic/claude-sonnet-5
     model_class: litellm
