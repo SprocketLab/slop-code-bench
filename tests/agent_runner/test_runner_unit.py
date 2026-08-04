@@ -765,7 +765,9 @@ def test_run_problem_concurrent_eval_records_failure_and_continues(
         s.usage = _usage()
         return s
 
-    summaries = {f"checkpoint_{i}": make_summary(f"checkpoint_{i}") for i in (1, 2, 3)}
+    summaries = {
+        f"checkpoint_{i}": make_summary(f"checkpoint_{i}") for i in (1, 2, 3)
+    }
     eval_calls: list[str] = []
 
     def make_report() -> Mock:
@@ -817,7 +819,8 @@ def test_run_problem_concurrent_eval_records_failure_and_continues(
 
     # 3. Boundary warning fired exactly once for cp1 (at cp2's boundary).
     boundary_warnings = [
-        call for call in mock_warning.call_args_list
+        call
+        for call in mock_warning.call_args_list
         if call.args
         and "Concurrent eval failed for earlier checkpoint" in call.args[0]
         and call.kwargs.get("checkpoint") == "checkpoint_1"
@@ -829,9 +832,13 @@ def test_run_problem_concurrent_eval_records_failure_and_continues(
 
     # 4. End-of-run summary warning lists cp1 as a failed eval.
     summary_warnings = [
-        call for call in mock_warning.call_args_list
-        if call.args and "Run completed with concurrent eval failures" in call.args[0]
+        call
+        for call in mock_warning.call_args_list
+        if call.args
+        and "Run completed with concurrent eval failures" in call.args[0]
     ]
     assert len(summary_warnings) == 1
-    assert summary_warnings[0].kwargs.get("failed_checkpoints") == ["checkpoint_1"]
+    assert summary_warnings[0].kwargs.get("failed_checkpoints") == [
+        "checkpoint_1"
+    ]
     assert summary_warnings[0].kwargs.get("count") == 1

@@ -1,0 +1,27 @@
+# Introductory pricing ($2 input / $10 output, cache 0.2/2.5) runs through
+# 2026-08-31; this file uses the standard sticker rates.
+internal_name: claude-sonnet-5
+provider: anthropic
+pricing:
+  input: 3
+  output: 15
+  cache_read: 0.30
+  cache_write: 3.75
+aliases:
+  - claude-sonnet-5
+  - sonnet-5
+
+agent_specific:
+  mini_swe:
+    model_name: anthropic/claude-sonnet-5
+    model_class: litellm
+
+  codex:
+    thinking: medium
+
+  opencode:
+    provider_name: anthropic
+
+provider_slugs:
+  bedrock: anthropic.claude-sonnet-5
+  foundry: claude-sonnet-5

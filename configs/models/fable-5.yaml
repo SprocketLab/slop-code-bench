@@ -1,0 +1,23 @@
+# Claude API only: requires 30-day data retention (400s under ZDR orgs).
+internal_name: claude-fable-5
+provider: anthropic
+pricing:
+  input: 10
+  output: 50
+  cache_read: 1.0
+  cache_write: 12.5
+aliases:
+  - claude-fable-5
+  - fable-5
+  - fable
+
+agent_specific:
+  mini_swe:
+    model_name: anthropic/claude-fable-5
+    model_class: litellm
+
+  codex:
+    thinking: high
+
+  opencode:
+    provider_name: anthropic

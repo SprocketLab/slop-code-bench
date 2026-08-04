@@ -1,0 +1,25 @@
+internal_name: claude-opus-5
+provider: anthropic
+pricing:
+  input: 5
+  output: 25
+  cache_read: 0.5
+  cache_write: 6.25
+aliases:
+  - claude-opus-5
+  - opus-5
+
+agent_specific:
+  mini_swe:
+    model_name: anthropic/claude-opus-5
+    model_class: litellm
+
+  codex:
+    thinking: high
+
+  opencode:
+    provider_name: anthropic
+
+provider_slugs:
+  bedrock: anthropic.claude-opus-5
+  foundry: claude-opus-5
