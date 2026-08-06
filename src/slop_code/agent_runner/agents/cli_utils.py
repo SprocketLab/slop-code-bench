@@ -18,6 +18,9 @@ __all__ = [
     "stream_cli_command",
 ]
 
+type ParsedCliLine = tuple[float | None, TokenUsage | None, dict]
+type CliLineParser = Callable[[str], ParsedCliLine]
+
 
 @dataclass(slots=True)
 class AgentCommandResult:
@@ -32,16 +35,36 @@ class AgentCommandResult:
     error_message: str | None = None
 
 
+def _parse_buffered_lines(
+    buffer_parts: list[str],
+    parser: CliLineParser,
+    *,
+    flush: bool = False,
+) -> Generator[ParsedCliLine, None, None]:
+    buffer = "".join(buffer_parts)
+    if flush:
+        lines = buffer.split("\n")
+        buffer_parts.clear()
+    else:
+        *lines, tail = buffer.split("\n")
+        buffer_parts[:] = [tail] if tail else []
+
+    for line in lines:
+        line = line.strip()
+        if line:
+            yield parser(line)
+
+
 def stream_cli_command(
     runtime: StreamingRuntime,
     command: str,
-    parser: Callable[[str], tuple[float | None, TokenUsage | None, dict]],
+    parser: CliLineParser,
     env: Mapping[str, str] | None = None,
     timeout: float | None = None,
     *,
     parse_stderr: bool = False,
 ) -> Generator[
-    tuple[float | None, TokenUsage | None, dict] | RuntimeResult | None,
+    ParsedCliLine | RuntimeResult | None,
     None,
     None,
 ]:
@@ -56,56 +79,50 @@ def stream_cli_command(
         parse_stderr: If True, also parse stderr lines through the parser
     """
     env = dict(env or {})
-    stdout_buffer = ""
-    stderr_buffer = ""
-    stdout = stderr = ""
+    stdout_buffer_parts: list[str] = []
+    stderr_buffer_parts: list[str] = []
+    stdout_parts: list[str] = []
+    stderr_parts: list[str] = []
     start = time.monotonic()
     result: RuntimeResult | None = None
 
     for event in runtime.stream(command=command, env=env, timeout=timeout):
         if event.kind == "stdout":
-            stdout += event.text or ""
-            stdout_buffer += event.text or ""
-            while "\n" in stdout_buffer:
-                line, stdout_buffer = stdout_buffer.split("\n", 1)
-                line = line.strip()
-                if not line:
-                    continue
-                yield parser(line)
+            chunk = event.text or ""
+            stdout_parts.append(chunk)
+            stdout_buffer_parts.append(chunk)
+            if "\n" in chunk:
+                yield from _parse_buffered_lines(stdout_buffer_parts, parser)
         elif event.kind == "stderr":
-            stderr += event.text or ""
+            chunk = event.text or ""
+            stderr_parts.append(chunk)
             if parse_stderr:
-                stderr_buffer += event.text or ""
-                while "\n" in stderr_buffer:
-                    line, stderr_buffer = stderr_buffer.split("\n", 1)
-                    line = line.strip()
-                    if not line:
-                        continue
-                    yield parser(line)
+                stderr_buffer_parts.append(chunk)
+                if "\n" in chunk:
+                    yield from _parse_buffered_lines(
+                        stderr_buffer_parts,
+                        parser,
+                    )
         elif event.kind == "finished":
             result = event.result
             break
 
     # Flush remaining stdout buffer
-    for line in stdout_buffer.split("\n"):
-        line = line.strip()
-        if not line:
-            continue
-        yield parser(line)
+    yield from _parse_buffered_lines(stdout_buffer_parts, parser, flush=True)
 
     # Flush remaining stderr buffer if parsing stderr
     if parse_stderr:
-        for line in stderr_buffer.split("\n"):
-            line = line.strip()
-            if not line:
-                continue
-            yield parser(line)
+        yield from _parse_buffered_lines(
+            stderr_buffer_parts,
+            parser,
+            flush=True,
+        )
 
     if result is None:
         result = RuntimeResult(
             exit_code=0,
-            stdout=stdout,
-            stderr=stderr,
+            stdout="".join(stdout_parts),
+            stderr="".join(stderr_parts),
             setup_stdout="",
             setup_stderr="",
             elapsed=time.monotonic() - start,
