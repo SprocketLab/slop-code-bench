@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import json
+import os
 import shlex
 import shutil
 import tempfile
@@ -12,12 +13,14 @@ from pathlib import Path
 
 from jinja2 import Template
 from pydantic import Field
+from pydantic import model_validator
 
 from slop_code.agent_runner.agent import RETRY_PROMPT
 from slop_code.agent_runner.agent import Agent
 from slop_code.agent_runner.agent import AgentConfigBase
 from slop_code.agent_runner.agents.cli_utils import AgentCommandResult
 from slop_code.agent_runner.agents.cli_utils import stream_cli_command
+from slop_code.agent_runner.agents.codex.workflow import WorkflowConfig
 from slop_code.agent_runner.agents.utils import HOME_PATH
 from slop_code.agent_runner.agents.utils import copy_jsonl_files
 from slop_code.agent_runner.agents.utils import find_jsonl_files
@@ -34,6 +37,7 @@ from slop_code.execution import DockerEnvironmentSpec
 from slop_code.execution import EnvironmentSpec
 from slop_code.execution import Session
 from slop_code.execution import StreamingRuntime
+from slop_code.execution.docker_runtime import DockerContextEntry
 from slop_code.logging import get_logger
 
 log = get_logger(__name__)
@@ -58,15 +62,87 @@ class CodexConfig(AgentConfigBase):
         default=None,
         description="Optional timeout (in seconds) for the CLI invocation.",
     )
+    workflow: WorkflowConfig | None = Field(
+        default=None,
+        description="Optional single-turn skill workflow.",
+    )
+
+    @model_validator(mode="after")
+    def _reject_interactive_workflow_args(self) -> CodexConfig:
+        if self.workflow is None:
+            return self
+        arguments = " ".join(self.extra_args)
+        enables_user_input = "default_mode_request_user_input" in arguments and (
+            "--enable" in arguments or "=true" in arguments.lower()
+        )
+        if enables_user_input:
+            raise ValueError(
+                "workflow extra_args cannot enable "
+                "default_mode_request_user_input"
+            )
+        if any(arg in {"resume", "--last"} for arg in self.extra_args):
+            raise ValueError(
+                "workflow extra_args cannot select a resumed session"
+            )
+        return self
+
+    def get_image(self, env_name: str) -> str:
+        """Use a distinct image tag for each configured workflow."""
+        base = super().get_image(env_name)
+        if self.workflow is None:
+            return base
+        workflow_version = self.workflow.version
+        if local_hash := self.workflow.local_packages_hash():
+            workflow_version = f"{workflow_version}-local-{local_hash}"
+        return (
+            f"{self.type}-{self.version}-{self.workflow.type}-"
+            f"{workflow_version}-{env_name}"
+        )
 
     def get_docker_file(self, base_image: str) -> str | None:
-        """Render the Docker template with version."""
+        """Render the Docker template with configured dependencies."""
         if self.docker_template is None:
             return None
         template = self.docker_template.read_text()
         return Template(template).render(
-            base_image=base_image, version=self.version
+            base_image=base_image,
+            version=self.version,
+            workflow_install_commands=(
+                tuple(
+                    shlex.join(command)
+                    for command in self.workflow.install_commands
+                )
+                if self.workflow is not None
+                else ()
+            ),
+            workflow_local_packages=(
+                self.workflow.local_packages
+                if self.workflow is not None
+                else ()
+            ),
         )
+
+    def get_docker_context(self) -> dict[str, DockerContextEntry]:
+        """Add configured local workflow packages to the image context."""
+        if self.workflow is None:
+            return {}
+        return {
+            package.context_path: DockerContextEntry(
+                source=package.resolved_source(),
+                excluded_names=frozenset(package.exclude),
+            )
+            for package in self.workflow.local_packages
+        }
+
+    def allocate_problem_resources(
+        self,
+        problem_names: list[str],
+    ) -> CodexConfig:
+        """Assign configured workflow resources before workers are spawned."""
+        if self.workflow is None:
+            return self
+        workflow = self.workflow.allocate_problem_resources(problem_names)
+        return self.model_copy(update={"workflow": workflow})
 
 
 class CodexAgent(Agent):
@@ -93,6 +169,7 @@ class CodexAgent(Agent):
         max_thinking_tokens: int | None,
         extra_args: list[str],
         env: dict[str, str],
+        workflow: WorkflowConfig | None = None,
     ) -> None:
         super().__init__(
             agent_name="codex",
@@ -111,6 +188,7 @@ class CodexAgent(Agent):
         self.max_thinking_tokens = max_thinking_tokens
         self.extra_args = extra_args
         self.env = env
+        self.workflow = workflow
 
         self._image = image
         self._session: Session | None = None
@@ -120,6 +198,8 @@ class CodexAgent(Agent):
         self._trace_tmp: tempfile.TemporaryDirectory | None = None
         self._trace_dir: Path | None = None
         self._saved_trace_paths: set[Path] = set()
+        self._workflow_initialized = False
+        self._workflow_runtime_env: dict[str, str] | None = None
 
         # Get auth file from credential if it's a file credential
         self._auth_file: Path | None = None
@@ -176,6 +256,7 @@ class CodexAgent(Agent):
             max_thinking_tokens=max_thinking_tokens,
             extra_args=config.extra_args,
             env=config.env,
+            workflow=config.workflow,
         )
 
     @staticmethod
@@ -258,6 +339,7 @@ class CodexAgent(Agent):
         self,
         session: Session,
     ) -> None:
+        workflow_env = self._resolve_workflow_environment()
         self._session = session
         self._environment = session.spec
         self._saved_trace_paths = set()
@@ -273,35 +355,164 @@ class CodexAgent(Agent):
                 "bind": f"{HOME_PATH}/.codex",
                 "mode": "rw",
             }
+
+        env_vars = {"HOME": HOME_PATH}
+        env_vars.update(workflow_env)
         self._runtime = session.spawn(
             mounts=mounts,
-            env_vars={
-                "HOME": HOME_PATH,
-            },
+            env_vars=env_vars,
             image=self._image,
             user="agent",
             disable_setup=True,
         )
 
+    def _resolve_workflow_environment(self) -> dict[str, str]:
+        """Resolve configured workflow environment without persisting values."""
+        if self.workflow is None:
+            return {}
+        if self._workflow_runtime_env is not None:
+            return dict(self._workflow_runtime_env)
+
+        missing = [
+            name
+            for name in self.workflow.env_from_host
+            if name not in os.environ
+        ]
+        if missing:
+            names = ", ".join(missing)
+            raise AgentError(
+                "Missing host environment variables required by workflow: "
+                f"{names}"
+            )
+
+        resolved = dict(self.workflow.env)
+        resolved.update(
+            {name: os.environ[name] for name in self.workflow.env_from_host}
+        )
+        try:
+            resolved.update(
+                self.workflow.resource_environment(self.problem_name)
+            )
+        except ValueError as exc:
+            raise AgentError(str(exc)) from exc
+        self._workflow_runtime_env = resolved
+        return dict(resolved)
+
+    def _workflow_workspace(self) -> Path:
+        if isinstance(self.spec, DockerEnvironmentSpec):
+            return Path(self.spec.docker.workdir)
+        return self.session.working_dir
+
+    def _ensure_workflow_initialized(self) -> None:
+        workflow = self.workflow
+        if workflow is None or self._workflow_initialized:
+            return
+
+        command_env = dict(self.env)
+        command_env.update(self._resolve_workflow_environment())
+        for argv in workflow.init_commands:
+            command = shlex.join(argv)
+            for event in self.runtime.stream(
+                command=command,
+                env=command_env,
+                timeout=(
+                    float(self.timeout) if self.timeout is not None else None
+                ),
+            ):
+                if event.kind == "finished":
+                    result = event.result
+                    break
+            else:
+                result = None
+            if result is None:
+                raise AgentError(f"Workflow init command did not finish: {command}")
+            if result.timed_out:
+                raise AgentError(f"Workflow init command timed out: {command}")
+            if result.exit_code != 0:
+                message = (
+                    f"Workflow init command failed with exit code "
+                    f"{result.exit_code}: {command}"
+                )
+                if result.stderr.strip():
+                    message = (
+                        f"{message}\n--- Stderr ---\n{result.stderr.strip()}"
+                    )
+                raise AgentError(message)
+
+        workspace = self._workflow_workspace()
+        for skill_path in workflow.required_skill_paths(workspace):
+            relative = skill_path.relative_to(workspace)
+            if not (self.session.working_dir / relative).is_file():
+                raise AgentError(
+                    f"Workflow initialization did not create {skill_path}"
+                )
+        self._workflow_initialized = True
+
+    def _active_change_id(self) -> str:
+        changes_dir = self.session.working_dir / "openspec" / "changes"
+        candidates = sorted(
+            path.name
+            for path in changes_dir.iterdir()
+            if path.is_dir() and path.name != "archive"
+        ) if changes_dir.is_dir() else []
+        if len(candidates) != 1:
+            found = ", ".join(candidates) or "none"
+            raise AgentError(
+                "Expected exactly one active OpenSpec change for a workflow "
+                f"node requiring change_id; found: {found}"
+            )
+        return candidates[0]
+
+    def _workflow_prompts(self, task: str) -> tp.Iterator[str]:
+        workflow = tp.cast("WorkflowConfig", self.workflow)
+        for node in workflow.skills:
+            change_id = (
+                self._active_change_id()
+                if node.needs_change_id
+                else None
+            )
+            yield workflow.build_prompt(node, task, change_id)
+
     def run(self, task: str) -> None:
         self._last_prompt = task
         self._last_command = None
+
+        execution_tasks: tp.Iterable[str] = (task,)
+        invocation_count = 1
+        if self.workflow is not None:
+            self._ensure_workflow_initialized()
+            execution_tasks = self._workflow_prompts(task)
+            invocation_count = len(self.workflow.skills)
 
         log_kwargs: dict[str, tp.Any] = {
             "workspace": str(self.session.working_dir),
             "prompt_chars": len(task),
             "environment": self.session.spec.type,
             "extra_args": self.extra_args,
+            "invocations": invocation_count,
         }
         if isinstance(self.session.spec, DockerEnvironmentSpec):
             log_kwargs["image"] = self.session.spec.docker.image
         self.log.info("agent.codex.start", **log_kwargs)
 
-        command_result = self._run_invocation(task)
-        self._last_command = command_result
+        stdout_parts: list[str] = []
+        stderr_parts: list[str] = []
+        for execution_task in execution_tasks:
+            command_result = self._run_invocation(execution_task)
+            if command_result.stdout:
+                stdout_parts.append(command_result.stdout.rstrip("\n") + "\n")
+            if command_result.stderr:
+                stderr_parts.append(command_result.stderr.rstrip("\n") + "\n")
+            command_result.stdout = "".join(stdout_parts)
+            command_result.stderr = "".join(stderr_parts)
+            self._last_command = command_result
+            self._sync_usage(command_result.usage_totals)
+            self._raise_for_run_error(command_result)
 
-        self._sync_usage(command_result.usage_totals)
-
+    def _raise_for_run_error(
+        self,
+        command_result: AgentCommandResult,
+    ) -> None:
         runtime_result = command_result.result
         if runtime_result is None:
             message = "Codex process failed to start"
@@ -325,7 +536,6 @@ class CodexAgent(Agent):
                 timeout=self.timeout,
             )
             raise AgentError(message)
-
         if runtime_result.exit_code != 0:
             message = f"Codex process failed with exit code {runtime_result.exit_code}"
             if runtime_result.stderr:
@@ -556,6 +766,7 @@ class CodexAgent(Agent):
     ) -> tuple[list[str], dict[str, str]]:
         """Prepare command and environment overrides for runtime execution."""
         env_overrides = {key: str(value) for key, value in self.env.items()}
+        env_overrides.update(self._resolve_workflow_environment())
 
         # Set credential in environment if it's an env var credential
         if (
@@ -614,6 +825,8 @@ class CodexAgent(Agent):
             )
 
         command.extend(self.extra_args)
+        if self.workflow is not None:
+            command.extend(["--disable", "default_mode_request_user_input"])
         return command
 
     @classmethod
@@ -676,6 +889,8 @@ class CodexAgent(Agent):
             self._trace_tmp = None
             self._trace_dir = None
             self._saved_trace_paths = set()
+        self._workflow_initialized = False
+        self._workflow_runtime_env = None
         self.log.debug("agent.codex.cleanup")
 
 

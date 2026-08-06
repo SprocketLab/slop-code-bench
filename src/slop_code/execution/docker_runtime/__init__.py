@@ -1,3 +1,4 @@
+from slop_code.execution.docker_runtime.context import DockerContextEntry
 from slop_code.execution.docker_runtime.exec import DockerExecRuntime
 from slop_code.execution.docker_runtime.images import build_base_image
 from slop_code.execution.docker_runtime.images import build_image_from_str
@@ -13,6 +14,7 @@ __all__ = [
     "IMAGE_NAME_PREFIX",
     "DockerStreamingRuntime",
     "DockerExecRuntime",
+    "DockerContextEntry",
     "DockerEnvironmentSpec",
     "network_mode_for_address",
     "DockerConfig",

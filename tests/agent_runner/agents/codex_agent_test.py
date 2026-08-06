@@ -16,8 +16,10 @@ from slop_code.agent_runner.agents.codex import CodexConfig
 from slop_code.agent_runner.agents.utils import HOME_PATH
 from slop_code.agent_runner.credentials import ProviderCredential
 from slop_code.agent_runner.models import AgentCostLimits
+from slop_code.agent_runner.registry import build_agent_config
 from slop_code.common.llms import APIPricing
 from slop_code.common.llms import ModelDefinition
+from slop_code.entrypoints.config.loader import load_agent_config
 from slop_code.execution import DockerConfig
 from slop_code.execution import DockerEnvironmentSpec
 from slop_code.execution.runtime import RuntimeEvent
@@ -164,6 +166,220 @@ class TestCodexConfig:
         assert "base-image:latest" in dockerfile
         assert "@openai/codex@2.5.0" in dockerfile
 
+    def test_repository_openspec_config_loads(self):
+        config_path = (
+            Path(__file__).parents[3]
+            / "configs"
+            / "agents"
+            / "codex-openspec.yaml"
+        )
+        _, data = load_agent_config(config_path)
+
+        config = build_agent_config(data)
+
+        assert isinstance(config, CodexConfig)
+        assert config.workflow is not None
+        assert config.workflow.init_commands[0] == (
+            "openspec",
+            "config",
+            "set",
+            "delivery",
+            "both",
+        )
+        assert [node.name for node in config.workflow.skills] == [
+            "openspec-propose",
+            "openspec-apply-change",
+            "openspec-sync-specs",
+            "openspec-archive-change",
+        ]
+        assert config.workflow.skills[0].arguments == (
+            "Please make the changes for the following task. Do not implement "
+            "code for this stage.",
+            "{task}",
+        )
+        assert config.workflow.skills[1].arguments == ("{change_id}",)
+        assert config.cost_limits.max_retries == 0
+
+    def test_repository_plain_codex_config_keeps_original_version(self):
+        config_path = (
+            Path(__file__).parents[3] / "configs" / "agents" / "codex.yaml"
+        )
+        _, data = load_agent_config(config_path)
+
+        config = build_agent_config(data)
+
+        assert isinstance(config, CodexConfig)
+        assert config.version == "0.74.0"
+        assert config.workflow is None
+
+    def test_repository_artnet_config_has_four_neo4j_resources(self):
+        repository = Path(__file__).parents[3]
+        config_path = repository / "configs" / "agents" / "codex-artnet.yaml"
+        _, data = load_agent_config(config_path)
+
+        config = build_agent_config(data)
+
+        assert isinstance(config, CodexConfig)
+        assert config.workflow is not None
+        pool = config.workflow.resource_pool
+        assert pool is not None
+        assert pool.env_var == "ARTNET_NEO4J_URI"
+        assert pool.values == (
+            "bolt://neo4j:7687",
+            "bolt://neo4j-demo:7687",
+            "bolt://neo4j-exp1:7687",
+            "bolt://neo4j-exp2:7687",
+        )
+        assert config.workflow.init_commands[-2] == (
+            "artnet",
+            "init",
+            "--adapter",
+            "openspec",
+        )
+        assert config.workflow.install_commands[-1] == (
+            "bash",
+            "-lc",
+            "cd /opt/workflow-packages/artnet && node _link.mjs",
+        )
+        assert "${ARTNET_NEO4J_URI}" in config.workflow.init_commands[-1][2]
+
+        assigned = config.allocate_problem_resources(
+            ["problem-a", "problem-b", "problem-c"],
+        )
+
+        assert assigned.workflow is not None
+        assert len(set(assigned.workflow.resource_assignments.values())) == 3
+
+    def test_openspec_workflow_uses_exact_versions_and_distinct_image(
+        self, mock_cost_limits
+    ):
+        config = CodexConfig.model_validate(
+            {
+                "type": "codex",
+                "version": "0.146.1",
+                "workflow": {
+                    "type": "openspec",
+                    "version": "1.7.0",
+                    "install_commands": [
+                        [
+                            "npm",
+                            "install",
+                            "-g",
+                            "@fission-ai/openspec@1.7.0",
+                        ]
+                    ],
+                    "skills": [{"name": "openspec-propose"}],
+                },
+                "cost_limits": mock_cost_limits,
+            }
+        )
+
+        dockerfile = config.get_docker_file("base-image:latest")
+
+        assert dockerfile is not None
+        assert "@openai/codex@0.146.1" in dockerfile
+        assert "@fission-ai/openspec@1.7.0" in dockerfile
+        assert 'export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"' in dockerfile
+        assert config.get_image("python") == (
+            "codex-0.146.1-openspec-1.7.0-python"
+        )
+
+    def test_local_workflow_package_is_copied_and_hashed(
+        self,
+        mock_cost_limits,
+        tmp_path,
+    ):
+        package = tmp_path / "artnet"
+        package.mkdir()
+        package_file = package / "package.json"
+        package_file.write_text('{"name":"artnet"}\n')
+        config = CodexConfig.model_validate(
+            {
+                "type": "codex",
+                "version": "0.146.1",
+                "workflow": {
+                    "type": "artnet",
+                    "version": "0.1.0",
+                    "local_packages": [
+                        {"source": str(package), "target": "artnet"}
+                    ],
+                    "install_commands": [
+                        [
+                            "npm",
+                            "install",
+                            "-g",
+                            "--ignore-scripts",
+                            "/opt/workflow-packages/artnet",
+                        ]
+                    ],
+                    "skills": [{"name": "artnet-update"}],
+                },
+                "cost_limits": mock_cost_limits,
+            }
+        )
+
+        dockerfile = config.get_docker_file("base-image:latest")
+        initial_image = config.get_image("python")
+        context = config.get_docker_context()
+
+        assert dockerfile is not None
+        assert (
+            "COPY --chown=1000:1000 workflow-packages/artnet "
+            "/opt/workflow-packages/artnet"
+        ) in dockerfile
+        assert "npm install -g --ignore-scripts " in dockerfile
+        assert context["workflow-packages/artnet"].source == package
+        assert context["workflow-packages/artnet"].excluded_names == frozenset()
+        assert "-local-" in initial_image
+
+        package_file.write_text('{"name":"changed"}\n')
+
+        assert config.get_image("python") != initial_image
+
+    def test_repository_script_uses_checkpoint_only_prompt(self):
+        repository = Path(__file__).parents[3]
+        prompt_path = (
+            repository
+            / "configs"
+            / "prompts"
+            / "checkpoint-only.jinja"
+        )
+        script_path = repository / "run-benchmark.sh"
+        script = script_path.read_text()
+
+        assert prompt_path.read_text() == "{{ spec.strip() }}\n"
+        assert "--prompt checkpoint-only" in script
+        assert "--agent configs/agents/codex-artnet.yaml" in script
+        assert "--environment docker-python3.12-uv-artnet" in script
+        assert "--num-workers 3" in script
+
+    @pytest.mark.parametrize(
+        "extra_args",
+        [
+            ["--enable", "default_mode_request_user_input"],
+            ["--enable=default_mode_request_user_input"],
+            ["--config", "features.default_mode_request_user_input=true"],
+            ["--last"],
+        ],
+    )
+    def test_workflow_rejects_reenabling_user_input(
+        self, mock_cost_limits, extra_args
+    ):
+        with pytest.raises(Exception, match="cannot (?:enable|select)"):
+            CodexConfig.model_validate(
+                {
+                    "type": "codex",
+                    "version": "0.146.1",
+                    "workflow": {
+                        "type": "openspec",
+                        "version": "1.7.0",
+                        "skills": [{"name": "openspec-propose"}],
+                    },
+                    "extra_args": extra_args,
+                    "cost_limits": mock_cost_limits,
+                }
+            )
+
 
 class TestCodexAgent:
     """Tests for CodexAgent."""
@@ -305,6 +521,7 @@ class TestCodexAgent:
         assert "--skip-git-repo-check" in command
         assert "--json" in command
         assert "--dangerously-bypass-approvals-and-sandbox" in command
+        assert "default_mode_request_user_input" not in command
 
     def test_build_command_with_model(self, mock_cost_limits, mock_pricing):
         """_build_command includes model when specified."""

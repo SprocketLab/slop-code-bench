@@ -166,12 +166,12 @@ def _stub_eval_dependencies(
     monkeypatch.setattr(
         eval_run_dir.evaluation_entry,
         "create_problem_reports",
-        lambda _problem_dir, _problem, start_checkpoint=None: ([], []),
+        lambda _problem_dir, _problem: ([], []),
     )
     monkeypatch.setattr(
         eval_run_dir,
         "update_results_jsonl",
-        lambda _report_file, _reports, replace_problems=None: None,
+        lambda _report_file, _reports: None,
     )
     monkeypatch.setattr(
         eval_run_dir,
@@ -342,52 +342,6 @@ class TestEvaluateSelectionBehavior:
         ]
         assert evaluated == ["datagate"]
 
-    def test_start_checkpoint_is_passed_to_eval_and_reports(
-        self,
-        tmp_path: Path,
-        monkeypatch,
-    ) -> None:
-        agent_run_dir = _create_run_dir(tmp_path)
-        problem_dir = agent_run_dir / "datagate"
-        problem_dir.mkdir()
-        (problem_dir / "checkpoint_1").mkdir()
-
-        available_problems = {
-            "datagate": _mock_source_problem("datagate"),
-        }
-        evaluate_mock = _stub_eval_dependencies(
-            monkeypatch,
-            tmp_path,
-            available_problems,
-        )
-        create_reports_mock = MagicMock(return_value=([], []))
-        monkeypatch.setattr(
-            eval_run_dir.evaluation_entry,
-            "create_problem_reports",
-            create_reports_mock,
-        )
-
-        eval_run_dir.evaluate_agent_run(
-            ctx=_ctx(tmp_path),
-            agent_run_dir=agent_run_dir,
-            problem_names=["datagate"],
-            pass_policy=PassPolicy.ALL_CASES,
-            env_config=None,
-            live_progress=False,
-            num_workers=1,
-            overwrite=True,
-            start_checkpoint="checkpoint_1",
-        )
-
-        assert (
-            evaluate_mock.call_args.kwargs["start_checkpoint"]
-            == "checkpoint_1"
-        )
-        assert (
-            create_reports_mock.call_args.kwargs["start_checkpoint"]
-            == "checkpoint_1"
-        )
-
     def test_report_regeneration_uses_all_problem_directories_after_partial_overwrite(
         self,
         tmp_path: Path,
@@ -446,7 +400,7 @@ class TestEvaluateSelectionBehavior:
         monkeypatch.setattr(
             eval_run_dir.evaluation_entry,
             "create_problem_reports",
-            lambda problem_dir, _problem, start_checkpoint=None: (
+            lambda problem_dir, _problem: (
                 [
                     {
                         "problem_name": problem_dir.name,
@@ -500,9 +454,6 @@ class TestEvaluateSelectionBehavior:
 
         report_file, all_reports = update_results_mock.call_args.args
         assert report_file == agent_run_dir / CHECKPOINT_RESULTS_FILENAME
-        assert update_results_mock.call_args.kwargs["replace_problems"] == {
-            "datagate"
-        }
         assert {report["problem_name"] for report in all_reports} == {
             "datagate",
             "other_problem",

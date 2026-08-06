@@ -1,0 +1,39 @@
+type: codex
+binary: codex
+
+version: "0.146.1"
+workflow:
+  type: openspec
+  version: "1.7.0"
+  install_commands:
+    - [npm, install, -g, "@fission-ai/openspec@1.7.0"]
+  init_commands:
+    - [openspec, config, set, delivery, both]
+    - [openspec, init, ., --tools, codex, --profile, core, --force, --no-animation]
+  env:
+    CI: "true"
+    OPENSPEC_TELEMETRY: "0"
+    NO_COLOR: "1"
+  skills:
+    - name: openspec-propose
+      arguments:
+        - >-
+          Please make the changes for the following task. Do not implement code for this stage.
+        - "{task}"
+    - name: openspec-apply-change
+      arguments:
+        - "{change_id}"
+    - name: openspec-sync-specs
+      arguments:
+        - "{change_id}"
+    - name: openspec-archive-change
+      arguments:
+        - "{change_id}"
+timeout: 7200 # seconds per workflow node
+extra_args: []
+env: {}
+cost_limits:
+  cost_limit: 0
+  step_limit: 0
+  net_cost_limit: 0
+  max_retries: 0

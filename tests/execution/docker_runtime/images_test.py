@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import io
+import tarfile
 from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 from docker.errors import ImageNotFound
 
+from slop_code.execution.docker_runtime.context import DockerContextEntry
 from slop_code.execution.docker_runtime.images import BASE_IMAGE_HASH_LABEL
 from slop_code.execution.docker_runtime.images import _build_image
 from slop_code.execution.docker_runtime.images import _get_base_image_hash
+from slop_code.execution.docker_runtime.images import _make_docker_context
 from slop_code.execution.docker_runtime.images import build_base_image
 from slop_code.execution.docker_runtime.images import build_submission_image
 from slop_code.execution.docker_runtime.models import DockerEnvironmentSpec
@@ -128,3 +131,31 @@ def test_build_image_falls_back_to_tag_lookup_after_sdk_image_not_found() -> (
 
     assert result is tagged_image
     client.images.get.assert_called_once_with("slop-code:test-image")
+
+
+def test_docker_context_excludes_local_package_development_files(
+    tmp_path: Path,
+) -> None:
+    package = tmp_path / "package"
+    package.mkdir()
+    (package / "package.json").write_text("{}\n")
+    modules = package / "node_modules"
+    modules.mkdir()
+    (modules / "dependency.js").write_text("large dependency\n")
+
+    context = _make_docker_context(
+        "FROM scratch\n",
+        {
+            "workflow-packages/package": DockerContextEntry(
+                source=package,
+                excluded_names=frozenset({"node_modules"}),
+            )
+        },
+    )
+
+    with tarfile.open(fileobj=context, mode="r") as archive:
+        names = archive.getnames()
+
+    assert "Dockerfile" in names
+    assert "workflow-packages/package/package.json" in names
+    assert all("node_modules" not in name for name in names)

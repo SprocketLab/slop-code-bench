@@ -85,20 +85,20 @@ def _get_scb_check_metrics(checkpoint_dir: Path) -> dict[str, Any]:
     try:
         completed = subprocess.run(  # noqa: S603 - command is fixed above.
             command,  # noqa: S607 - uvx must resolve from the active PATH.
+            check=True,
             capture_output=True,
             text=True,
         )
-        # exit code 1 means violations found (normal); ≥2 means tool error
-        if completed.returncode >= 2:
-            logger.warning(
-                "scb-check failed",
-                checkpoint_dir=str(checkpoint_dir),
-                snapshot_dir=str(snapshot_dir),
-                returncode=completed.returncode,
-                stderr=completed.stderr,
-            )
-            return {}
         report = json.loads(completed.stdout)
+    except subprocess.CalledProcessError as e:
+        logger.warning(
+            "scb-check failed",
+            checkpoint_dir=str(checkpoint_dir),
+            snapshot_dir=str(snapshot_dir),
+            returncode=e.returncode,
+            stderr=e.stderr,
+        )
+        return {}
     except (OSError, json.JSONDecodeError) as e:
         logger.warning(
             "Failed to load scb-check report",

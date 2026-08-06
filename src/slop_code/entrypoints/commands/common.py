@@ -49,6 +49,7 @@ def build_agent_docker(
         image_name=agent_image_name,
         dockerfile=docker_file,
         force_build=force_build,
+        extra_arcs=agent_config.get_docker_context(),
     )
     client.close()
     return agent_image_name

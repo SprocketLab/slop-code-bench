@@ -1389,6 +1389,7 @@ def run_agent(
 
     # 12. Update config with resolved/merged problems for future resumes
     run_cfg.problems = full_problem_list
+    agent_config = agent_config.allocate_problem_resources(full_problem_list)
 
     # 13. Save environment and config to run directory, build docker image if needed
     image_name = _prepare_run_artifacts(

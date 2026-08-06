@@ -24,9 +24,6 @@ from slop_code import logging as slop_logging
 from slop_code.common import SNAPSHOT_DIR_NAME
 from slop_code.entrypoints.evaluation.utils import gather_checkpoint_directories
 from slop_code.entrypoints.evaluation.utils import maybe_update_problem_report
-from slop_code.entrypoints.evaluation.utils import (
-    resolve_start_checkpoint_order,
-)
 from slop_code.evaluation import CheckpointConfig
 from slop_code.evaluation import CorrectnessResults
 from slop_code.evaluation import GroupType
@@ -340,7 +337,6 @@ def evaluate(
     rubric_model: str | None = None,
     rubric_temperature: float = 0.0,
     rubric_provider: RubricProvider = RubricProvider.OPENROUTER,
-    start_checkpoint: str | None = None,
 ) -> tuple[
     dict[str, dict[str, tuple[CorrectnessResults, SnapshotQualityReport]]],
     BatchEvaluationSummary,
@@ -364,35 +360,11 @@ def evaluate(
         rubric_provider=rubric_provider,
     )
 
-    def save_static_context(
-        problem: ProblemConfig,
-        checkpoint: CheckpointConfig,
-        checkpoint_submission: Path,
-        snapshot_dir: Path,
-    ) -> None:
-        entry_file = environment.format_entry_file(problem.entry_file)
-        quality_metrics, file_metrics_list = measure_snapshot_quality(
-            entry_file, snapshot_dir
-        )
-        save_quality_metrics(
-            checkpoint_submission,
-            quality_metrics,
-            file_metrics_list,
-        )
-        logger.info(
-            "Saved static metrics for pre-start checkpoint",
-            problem_name=problem.name,
-            checkpoint_name=checkpoint.name,
-        )
-
     def get_eval_args(
         problem: ProblemConfig, problem_submission: Path
     ) -> Generator[
         tuple[Path, Path, CheckpointConfig, ProblemConfig], None, None
     ]:
-        start_order = resolve_start_checkpoint_order(
-            problem, start_checkpoint
-        )
         for (
             chkpt,
             chkpt_submission,
@@ -403,14 +375,6 @@ def evaluate(
             snapshot_dir_name=snapshot_dir_name,
         ):
             checkpoint = problem.load_checkpoint(chkpt)
-            if checkpoint.order < start_order:
-                save_static_context(
-                    problem,
-                    checkpoint,
-                    chkpt_submission,
-                    snapshot_dir,
-                )
-                continue
 
             yield snapshot_dir, chkpt_submission, checkpoint, problem
 

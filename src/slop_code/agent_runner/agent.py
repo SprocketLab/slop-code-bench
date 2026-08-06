@@ -36,6 +36,7 @@ from slop_code.common.llms import APIPricing
 from slop_code.common.llms import ModelDefinition
 from slop_code.common.llms import ThinkingPreset
 from slop_code.execution import Session
+from slop_code.execution.docker_runtime import DockerContextEntry
 from slop_code.execution.runtime import RuntimeEvent
 from slop_code.logging import get_logger
 
@@ -153,6 +154,22 @@ class AgentConfigBase(BaseModel):
         template = self.docker_template.read_text()
         template = Template(template).render(base_image=base_image)
         return template
+
+    def get_docker_context(self) -> dict[str, DockerContextEntry]:
+        """Return additional host paths for the agent image build context."""
+        return {}
+
+    def allocate_problem_resources(
+        self,
+        problem_names: list[str],
+    ) -> AgentConfigBase:
+        """Return a config with resources assigned to each problem.
+
+        Agent configurations without resource pools are unchanged. Agents
+        that support pooled external resources can override this hook without
+        coupling the problem runner to an agent implementation.
+        """
+        return self
 
 
 class CheckpointInferenceResult(BaseModel):

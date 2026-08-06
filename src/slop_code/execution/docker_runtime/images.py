@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import io
 import tarfile
+from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -12,6 +13,7 @@ from docker.errors import ImageNotFound
 from jinja2 import Template
 
 from slop_code.execution.assets import ResolvedStaticAsset
+from slop_code.execution.docker_runtime.context import DockerContextEntry
 from slop_code.execution.docker_runtime.models import IMAGE_NAME_PREFIX
 from slop_code.execution.docker_runtime.models import DockerEnvironmentSpec
 from slop_code.execution.models import EnvironmentSpec
@@ -29,8 +31,9 @@ if TYPE_CHECKING:
 
 
 def _make_docker_context(
-    docker_file: str, extra_arcs: dict[str, Path] | None = None
-):
+    docker_file: str,
+    extra_arcs: Mapping[str, Path | DockerContextEntry] | None = None,
+) -> io.BytesIO:
     logger.debug(
         "Making docker context", docker_file=docker_file, extra_arcs=extra_arcs
     )
@@ -46,15 +49,43 @@ def _make_docker_context(
             io.BytesIO(dockerfile_data),
         )
 
-        for arc_name, arc_path in (extra_arcs or {}).items():
-            logger.debug(
-                "Adding extra arc", arc_name=arc_name, arc_path=arc_path
+        for arc_name, arc_value in (extra_arcs or {}).items():
+            entry = (
+                arc_value
+                if isinstance(arc_value, DockerContextEntry)
+                else DockerContextEntry(source=arc_value)
             )
-            tar.add(str(arc_path), arcname=arc_name, recursive=True)
+            logger.debug(
+                "Adding extra arc",
+                arc_name=arc_name,
+                arc_path=entry.source,
+                excluded_names=entry.excluded_names,
+            )
+            tar.add(
+                str(entry.source),
+                arcname=arc_name,
+                recursive=True,
+                filter=_exclude_context_names(entry.excluded_names),
+            )
 
     context_tar.seek(0)
 
     return context_tar
+
+
+def _exclude_context_names(
+    excluded_names: frozenset[str],
+):
+    """Build a tar filter that drops matching path components."""
+    if not excluded_names:
+        return None
+
+    def include(member: tarfile.TarInfo) -> tarfile.TarInfo | None:
+        if any(part in excluded_names for part in Path(member.name).parts):
+            return None
+        return member
+
+    return include
 
 
 def _find_image(image_name: str, client: docker.DockerClient) -> Image | None:
@@ -278,11 +309,12 @@ def build_image_from_str(
     dockerfile: str,
     *,
     force_build: bool = False,
+    extra_arcs: Mapping[str, Path | DockerContextEntry] | None = None,
 ) -> Image:
     found_image = _find_image(image_name, client)
     if found_image is not None and not force_build:
         logger.info("Found image and not forcing build")
         return found_image
 
-    context_tar = _make_docker_context(dockerfile)
+    context_tar = _make_docker_context(dockerfile, extra_arcs)
     return _build_image(image_name, client, context_tar)

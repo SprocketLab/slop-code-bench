@@ -18,34 +18,6 @@ from slop_code.metrics import SnapshotQualityReport
 logger = get_logger(__name__)
 
 
-def resolve_start_checkpoint_order(
-    problem: ProblemConfig,
-    start_checkpoint: str | None,
-) -> int:
-    """Resolve a start checkpoint option to a checkpoint order."""
-    if start_checkpoint is None:
-        return 1
-
-    if start_checkpoint.isdigit():
-        start_order = int(start_checkpoint)
-    elif start_checkpoint in problem.checkpoints:
-        start_order = problem.checkpoints[start_checkpoint].order
-    else:
-        raise ValueError(
-            f"Unknown start checkpoint '{start_checkpoint}' for "
-            f"problem '{problem.name}'."
-        )
-
-    orders = [checkpoint.order for checkpoint in problem.checkpoints.values()]
-    if start_order not in orders:
-        raise ValueError(
-            f"Start checkpoint '{start_checkpoint}' does not match a "
-            f"checkpoint order for problem '{problem.name}'."
-        )
-
-    return start_order
-
-
 class EvaluationError(Exception):
     """Base exception for evaluation errors.
 
@@ -152,12 +124,10 @@ def _compute_aggregated_eval_results(
     all_passed_policy = True
 
     # Missing checkpoints are complete failures
-    if (
-        expected_checkpoint_count is not None
-        and len(summaries) < expected_checkpoint_count
-    ):
-        all_passed = False
-        all_passed_policy = False
+    if expected_checkpoint_count is not None:
+        if len(summaries) < expected_checkpoint_count:
+            all_passed = False
+            all_passed_policy = False
 
     for checkpoint_name, (report, quality_report) in summaries.items():
         # Calculate pass rate for this checkpoint

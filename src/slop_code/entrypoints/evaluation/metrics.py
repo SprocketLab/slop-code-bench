@@ -9,9 +9,6 @@ import yaml
 from slop_code.common import PROBLEM_CONFIG_NAME
 from slop_code.common import RUN_INFO_FILENAME
 from slop_code.common import to_relative_path
-from slop_code.entrypoints.evaluation.utils import (
-    resolve_start_checkpoint_order,
-)
 from slop_code.evaluation import ProblemConfig
 from slop_code.logging import get_logger
 from slop_code.metrics import MetricsError
@@ -120,9 +117,7 @@ def create_checkpoint_report(
 
 
 def create_problem_reports(
-    submission_dir: Path,
-    problem: ProblemConfig,
-    start_checkpoint: str | None = None,
+    submission_dir: Path, problem: ProblemConfig
 ) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
     """Create reports for all checkpoints in a problem submission.
 
@@ -146,7 +141,6 @@ def create_problem_reports(
     checkpoint_states = (
         run_summary.get("checkpoints", {}) if run_summary else {}
     )
-    start_order = resolve_start_checkpoint_order(problem, start_checkpoint)
 
     out = []
     errors: list[tuple[str, str]] = []
@@ -176,21 +170,17 @@ def create_problem_reports(
             is_last=idx == len(problem.checkpoints) - 1,
         )
 
-        checkpoint_order = problem.checkpoints[checkpoint_name].order
-        if checkpoint_order >= start_order:
-            out.append(
-                {
-                    "problem": problem.name,
-                    "version": problem_cfg_found.get("version", "unknown"),
-                    "checkpoint": checkpoint_name,
-                    "path": str(submission_dir),
-                    "idx": checkpoint_order,
-                    "state": checkpoint_states.get(
-                        checkpoint_name, "unknown"
-                    ),
-                    **metrics,
-                }
-            )
+        out.append(
+            {
+                "problem": problem.name,
+                "version": problem_cfg_found.get("version", "unknown"),
+                "checkpoint": checkpoint_name,
+                "path": str(submission_dir),
+                "idx": problem.checkpoints[checkpoint_name].order,
+                "state": checkpoint_states.get(checkpoint_name, "unknown"),
+                **metrics,
+            }
+        )
         prior_metrics = metrics
         prior_checkpoint_dir = checkpoint_dir
 
@@ -200,7 +190,6 @@ def create_problem_reports(
 def update_results_jsonl(
     results_file: Path,
     new_reports: list[dict[str, Any]],
-    replace_problems: set[str] | None = None,
 ) -> None:
     """Update results.jsonl with new reports, preserving unmodified entries.
 
@@ -225,11 +214,6 @@ def update_results_jsonl(
                         entry.get("problem", ""),
                         entry.get("checkpoint", ""),
                     )
-                    if (
-                        replace_problems is not None
-                        and key[0] in replace_problems
-                    ):
-                        continue
                     existing_entries[key] = entry
                 except json.JSONDecodeError as e:
                     logger.warning(

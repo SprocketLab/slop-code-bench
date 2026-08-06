@@ -1,0 +1,79 @@
+type: codex
+binary: codex
+
+version: "0.146.1"
+workflow:
+  type: artnet
+  version: "0.1.0"
+  local_packages:
+    - source: ../artnet
+      target: artnet
+      exclude:
+        - .git
+  install_commands:
+    - [npm, install, -g, "@fission-ai/openspec@1.7.0"]
+    - - bash
+      - -lc
+      - cd /opt/workflow-packages/artnet && node _link.mjs
+  init_commands:
+    - [openspec, config, set, delivery, both]
+    - [openspec, init, ., --tools, codex, --profile, core, --force, --no-animation]
+    - [artnet, init, --adapter, openspec]
+    - - sh
+      - -c
+      - |
+        cat > .artnet/config.yaml <<EOF
+        schema: .artnet/schema.yaml
+
+        neo4j:
+          uri: "${ARTNET_NEO4J_URI}"
+          user: neo4j
+          password: "12345678"
+          database: neo4j
+
+        embedding:
+          base_url: https://api.openai.com/v1
+          model: text-embedding-3-small
+          api_key_env: OPENAI_API_KEY
+
+        llm:
+          base_url: https://api.openai.com/v1
+          model: gpt-5.4-nano
+          api_key_env: OPENAI_API_KEY
+        EOF
+  env:
+    CI: "true"
+    OPENSPEC_TELEMETRY: "0"
+    NO_COLOR: "1"
+  env_from_host:
+    - OPENAI_API_KEY
+  resource_pool:
+    env_var: ARTNET_NEO4J_URI
+    values:
+      - bolt://neo4j-exp1:7687
+      - bolt://neo4j-exp2:7687
+      - bolt://neo4j-exp3:7687
+      - bolt://neo4j-exp4:7687
+  skills:
+    - name: openspec-propose
+      arguments:
+        - >-
+          Please make the changes for the following task. Do not implement code for this stage.
+        - "{task}"
+    - name: openspec-apply-change
+      arguments:
+        - "{change_id}"
+    - name: openspec-sync-specs
+      arguments:
+        - "{change_id}"
+    - name: openspec-archive-change
+      arguments:
+        - "{change_id}"
+timeout: 7200 # seconds per workflow node
+extra_args: []
+env: {}
+cost_limits:
+  cost_limit: 0
+  step_limit: 0
+  net_cost_limit: 0
+  max_retries: 0
