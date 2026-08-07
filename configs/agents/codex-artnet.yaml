@@ -32,14 +32,14 @@ workflow:
           database: neo4j
 
         embedding:
-          base_url: https://api.openai.com/v1
-          model: text-embedding-3-small
-          api_key_env: OPENAI_API_KEY
+          base_url: https://openrouter.ai/api/v1/chat/completions
+          model: openai/text-embedding-3-small
+          api_key_env: OPENROUTER_API_KEY
 
         llm:
-          base_url: https://api.openai.com/v1
-          model: gpt-5.4-nano
-          api_key_env: OPENAI_API_KEY
+          base_url: https://openrouter.ai/api/v1/chat/completions
+          model: openai/gpt-5.6-luna
+          api_key_env: OPENROUTER_API_KEY
         EOF
   env:
     CI: "true"
@@ -61,9 +61,6 @@ workflow:
           Please make the changes for the following task. Do not implement code for this stage.
         - "{task}"
     - name: openspec-apply-change
-      arguments:
-        - "{change_id}"
-    - name: openspec-sync-specs
       arguments:
         - "{change_id}"
     - name: openspec-archive-change
