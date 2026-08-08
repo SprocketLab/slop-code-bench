@@ -39,6 +39,7 @@ problems=(
   # meshctl
   # mocked_http
   # recli
+  # test_translator
   # rejector
 )
 

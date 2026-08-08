@@ -666,11 +666,31 @@ class AgentRunner:
         logger.debug("Finishing agent run", problem=self.run_spec.problem.name)
 
         # Cleanup agent
-        self.agent.cleanup()
+        try:
+            self.agent.cleanup()
+        except Exception as error:  # noqa: BLE001
+            logger.warning(
+                "Agent cleanup failed",
+                problem=self.run_spec.problem.name,
+                cleanup_stage="agent",
+                error_type=type(error).__name__,
+                error=str(error),
+                exc_info=True,
+            )
 
         # Close session
         if self._session is not None:
-            self._session.__exit__(None, None, None)
+            try:
+                self._session.__exit__(None, None, None)
+            except Exception as error:  # noqa: BLE001
+                logger.warning(
+                    "Session cleanup failed",
+                    problem=self.run_spec.problem.name,
+                    cleanup_stage="session",
+                    error_type=type(error).__name__,
+                    error=str(error),
+                    exc_info=True,
+                )
 
         # Save final results
         final_results = reporting.save_results(

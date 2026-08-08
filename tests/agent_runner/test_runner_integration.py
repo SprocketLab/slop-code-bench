@@ -3,6 +3,8 @@ from __future__ import annotations
 import queue
 from dataclasses import dataclass
 from pathlib import Path
+from unittest.mock import MagicMock
+from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
@@ -488,3 +490,107 @@ def test_agent_runner_saves_artifacts_when_checkpoint_returns_no_result(
     assert (artifacts_dir / "artifact.txt").read_text(encoding="utf-8") == (
         "artifact"
     )
+
+
+@pytest.mark.parametrize(
+    ("agent_error", "session_error", "expected_stages"),
+    [
+        (RuntimeError("agent cleanup failed"), None, ["agent"]),
+        (None, PermissionError("session cleanup failed"), ["session"]),
+        (
+            RuntimeError("agent cleanup failed"),
+            PermissionError("session cleanup failed"),
+            ["agent", "session"],
+        ),
+    ],
+)
+def test_agent_runner_finish_saves_results_after_cleanup_errors(
+    tmp_path: Path,
+    agent_error: Exception | None,
+    session_error: Exception | None,
+    expected_stages: list[str],
+) -> None:
+    problem = StubProblem(["first"])
+    environment = StubEnvironment()
+    run_spec = _make_run_spec(problem, environment)
+    agent = FailingAgent()
+    agent.cleanup = Mock(side_effect=agent_error)
+    session = MagicMock()
+    session.__exit__.side_effect = session_error
+    output_path = tmp_path / "outputs"
+    expected = {
+        "summary": {
+            "state": AgentStateEnum.COMPLETED.value,
+            "passed_policy": True,
+        }
+    }
+
+    runner_instance = runner.AgentRunner(
+        run_spec=run_spec,
+        agent=agent,
+        output_path=output_path,
+        progress_queue=queue.Queue(),
+    )
+    runner_instance._session = session
+    runner_instance.metrics_tracker.state = AgentStateEnum.COMPLETED
+
+    with (
+        patch(
+            "slop_code.agent_runner.runner.reporting.save_results",
+            return_value=expected,
+        ) as save_results,
+        patch("slop_code.agent_runner.runner.logger.warning") as warning,
+    ):
+        result = runner_instance.finish()
+
+    assert result == expected
+    assert runner_instance.metrics_tracker.state is AgentStateEnum.COMPLETED
+    assert [
+        call.kwargs["cleanup_stage"] for call in warning.call_args_list
+    ] == expected_stages
+    agent.cleanup.assert_called_once_with()
+    session.__exit__.assert_called_once_with(None, None, None)
+    save_results.assert_called_once_with(
+        runner_instance.results,
+        runner_instance.metrics_tracker,
+        run_spec,
+        output_path,
+    )
+
+
+def test_agent_runner_run_preserves_inference_error_when_cleanup_succeeds(
+    tmp_path: Path,
+) -> None:
+    problem = StubProblem(["first"])
+    environment = StubEnvironment()
+    run_spec = _make_run_spec(problem, environment)
+    agent = FailingAgent()
+    runner_instance = runner.AgentRunner(
+        run_spec=run_spec,
+        agent=agent,
+        output_path=tmp_path / "outputs",
+        progress_queue=queue.Queue(),
+    )
+    inference_error = RuntimeError("inference failed")
+    runner_instance.setup = Mock()
+    runner_instance._run_problem = Mock(side_effect=inference_error)
+
+    with (
+        patch(
+            "slop_code.agent_runner.runner.reporting.save_results",
+            return_value={
+                "summary": {
+                    "state": AgentStateEnum.ERROR.value,
+                    "passed_policy": False,
+                }
+            },
+        ) as save_results,
+        pytest.raises(RuntimeError, match="inference failed") as raised,
+    ):
+        runner_instance.run()
+
+    assert raised.value is inference_error
+    assert runner_instance.metrics_tracker.state is AgentStateEnum.ERROR
+    assert runner_instance.metrics_tracker.error_type == "RuntimeError"
+    assert runner_instance.metrics_tracker.error_message == "inference failed"
+    save_results.assert_called_once()

@@ -84,7 +84,13 @@ class DockerEnvironmentSpec(EnvironmentSpec):
         gid = os.getenv("HGID")
         if uid and gid:
             return f"{uid}:{gid}"
-        return "0:0"
+
+        getuid = getattr(os, "getuid", None)
+        getgid = getattr(os, "getgid", None)
+        if callable(getuid) and callable(getgid):
+            return f"{getuid()}:{getgid()}"
+
+        return "1000:1000"
 
     def get_effective_address(self, address: str) -> str:
         """Get the address to pass to commands inside the container.

@@ -32,12 +32,12 @@ workflow:
           database: neo4j
 
         embedding:
-          base_url: https://openrouter.ai/api/v1/chat/completions
+          base_url: https://openrouter.ai/api/v1
           model: openai/text-embedding-3-small
           api_key_env: OPENROUTER_API_KEY
 
         llm:
-          base_url: https://openrouter.ai/api/v1/chat/completions
+          base_url: https://openrouter.ai/api/v1
           model: openai/gpt-5.6-luna
           api_key_env: OPENROUTER_API_KEY
         EOF
@@ -46,7 +46,7 @@ workflow:
     OPENSPEC_TELEMETRY: "0"
     NO_COLOR: "1"
   env_from_host:
-    - OPENAI_API_KEY
+    - OPENROUTER_API_KEY
   resource_pool:
     env_var: ARTNET_NEO4J_URI
     values:
