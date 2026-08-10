@@ -528,7 +528,7 @@ def _validate_problem_paths(
 
 
 def _preview_dry_run(
-    problem_names: list[str],
+    problem_attempts: list[problem_runner.ProblemAttempt],
     run_dir: Path,
     problem_path: Path,
     prompt_template: str,
@@ -537,7 +537,7 @@ def _preview_dry_run(
     """Preview what would be executed without making changes.
 
     Args:
-        problem_names: List of problem names to preview
+        problem_attempts: Problem attempts to preview
         run_dir: The run output directory
         problem_path: Base path to problem definitions
         prompt_template: Current prompt template content
@@ -550,20 +550,22 @@ def _preview_dry_run(
             bold=True,
         )
     )
-    for problem_name in problem_names:
+    for attempt in problem_attempts:
+        problem_name = attempt.problem_name
+        attempt_name = attempt.attempt_name
         full_problem_path = problem_path / problem_name
         try:
             problem_config = ProblemConfig.from_yaml(full_problem_path)
         except Exception as exc:  # noqa: BLE001
             typer.echo(
                 typer.style(
-                    f"\n{problem_name}: Failed to load config - {exc}",
+                    f"\n{attempt_name}: Failed to load config - {exc}",
                     fg=typer.colors.RED,
                 )
             )
             continue
 
-        output_path = run_dir / problem_name
+        output_path = run_dir / attempt_name
         checkpoint_items = list(problem_config.iterate_checkpoint_items())
         checkpoint_names = [name for name, _ in checkpoint_items]
         checkpoints = [cp for _, cp in checkpoint_items]
@@ -584,7 +586,7 @@ def _preview_dry_run(
 
         typer.echo(
             typer.style(
-                f"\n{problem_name}:",
+                f"\n{attempt_name}:",
                 fg=typer.colors.CYAN,
                 bold=True,
             )
@@ -1447,7 +1449,7 @@ def run_agent(
     # 11. Handle dry-run mode
     if dry_run:
         _preview_dry_run(
-            [attempt.problem_name for attempt in problem_attempts_resolved],
+            problem_attempts_resolved,
             run_dir,
             problem_root,
             run_cfg.prompt_content,

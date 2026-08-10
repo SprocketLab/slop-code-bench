@@ -21,10 +21,12 @@ from slop_code.entrypoints.commands.run_agent import (
     _load_and_validate_run_config,
 )
 from slop_code.entrypoints.commands.run_agent import _prepare_run_artifacts
+from slop_code.entrypoints.commands.run_agent import _preview_dry_run
 from slop_code.entrypoints.commands.run_agent import _resolve_output_directory
 from slop_code.entrypoints.commands.run_agent import _resolve_problem_names
 from slop_code.entrypoints.commands.run_agent import _validate_problem_paths
 from slop_code.entrypoints.commands.run_agent import _validate_resume_config
+from slop_code.entrypoints.problem_runner import build_problem_attempts
 from slop_code.entrypoints.problem_runner import resolve_attempt_source_problem
 from slop_code.problem_catalog import CatalogManifest
 
@@ -266,6 +268,50 @@ class TestAttemptReports:
                 "checkpoint": "checkpoint_1",
             },
         ]
+
+
+class TestDryRunAttempts:
+    """Tests for duplicate-attempt dry-run previews."""
+
+    def test_uses_attempt_names_for_output_paths(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        run_dir = tmp_path / "run"
+        problems_base = tmp_path / "problems"
+        attempts = build_problem_attempts(["cfgpipe", "cfgpipe"])
+        problem = MagicMock()
+        problem.iterate_checkpoint_items.return_value = []
+        problem.entry_file = "main.py"
+        detected_paths = []
+
+        monkeypatch.setattr(
+            "slop_code.entrypoints.commands.run_agent.ProblemConfig.from_yaml",
+            lambda path: problem,
+        )
+
+        def capture_output_path(output_path, *_args, **_kwargs):
+            detected_paths.append(output_path)
+
+        monkeypatch.setattr(
+            "slop_code.entrypoints.commands.run_agent.detect_resume_point",
+            capture_output_path,
+        )
+
+        _preview_dry_run(
+            attempts,
+            run_dir,
+            problems_base,
+            "prompt",
+            MagicMock(),
+        )
+
+        assert detected_paths == [
+            run_dir / "cfgpipe__attempt_1",
+            run_dir / "cfgpipe__attempt_2",
+        ]
+        output = capsys.readouterr().out
+        assert "cfgpipe__attempt_1:" in output
+        assert "cfgpipe__attempt_2:" in output
 
 
 class TestResolveOutputDirectory:
