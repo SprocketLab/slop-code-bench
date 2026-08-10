@@ -16,6 +16,7 @@ from slop_code.common import PROBLEM_CONFIG_NAME
 from slop_code.common import SNAPSHOT_DIR_NAME
 from slop_code.common import serialize_path_dict
 from slop_code.entrypoints import evaluation as evaluation_entry
+from slop_code.entrypoints import problem_runner
 from slop_code.entrypoints.commands import common
 from slop_code.entrypoints.config import loader as config_loader
 from slop_code.entrypoints.evaluation.metrics import update_results_jsonl
@@ -27,6 +28,24 @@ from slop_code.evaluation import get_available_problems
 from slop_code.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def _resolve_submission_source_problem(
+    attempt_name: str,
+    valid_problem_names: set[str],
+    problem_root: Path,
+) -> str | None:
+    """Resolve a submission directory to a source problem name."""
+    if attempt_name in valid_problem_names:
+        return attempt_name
+
+    source_name, separator, suffix = attempt_name.rpartition("__attempt_")
+    if separator and suffix.isdecimal() and source_name in valid_problem_names:
+        return source_name
+
+    return problem_runner.resolve_attempt_source_problem(
+        attempt_name, problem_root
+    )
 
 
 REQUIRED_EVAL_FIELDS = [
@@ -222,24 +241,30 @@ def evaluate_agent_run(
 
     problem_root = common.resolve_problem_catalog_root(ctx)
     valid_problems = get_available_problems(problem_root)
+    valid_problem_names = set(valid_problems)
     problems_to_eval = []
     skipped_count = 0
-    selected_problem_names = problem_names or list(valid_problems.keys())
+    selected_problem_names = set(problem_names)
 
-    for problem_name in selected_problem_names:
-        if problem_name not in valid_problems:
+    for problem_dir in sorted(agent_run_dir.iterdir()):
+        if not problem_dir.is_dir():
+            continue
+
+        attempt_name = problem_dir.name
+        problem_name = _resolve_submission_source_problem(
+            attempt_name, valid_problem_names, problem_root
+        )
+        if problem_name is None or problem_name not in valid_problems:
             logger.warning(
                 "Problem not found in available problems",
-                problem_name=problem_name,
+                problem_name=attempt_name,
             )
             continue
 
-        problem_dir = agent_run_dir / problem_name
-        if not problem_dir.exists() or not problem_dir.is_dir():
-            logger.debug(
-                "Problem directory does not exist",
-                problem_dir=str(problem_dir),
-            )
+        if selected_problem_names and (
+            problem_name not in selected_problem_names
+            and attempt_name not in selected_problem_names
+        ):
             continue
 
         if not overwrite and _is_problem_fully_evaluated(problem_dir):
@@ -247,6 +272,7 @@ def evaluate_agent_run(
             logger.info(
                 "Skipping problem evaluation",
                 problem_name=problem_name,
+                attempt_name=attempt_name,
                 reason="already evaluated",
             )
             continue
@@ -257,6 +283,7 @@ def evaluate_agent_run(
         logger.info(
             "Adding problem to evaluation",
             problem_name=problem_name,
+            attempt_name=attempt_name,
             problem_dir=str(problem_dir),
             reason="overwrite requested" if overwrite else "needs evaluation",
         )
@@ -300,7 +327,12 @@ def evaluate_agent_run(
         if not p_dir.is_dir():
             continue
         typer.echo(f"Processing problem {p_dir}")
-        problem_name = p_dir.name
+        attempt_name = p_dir.name
+        problem_name = _resolve_submission_source_problem(
+            attempt_name, valid_problem_names, problem_root
+        )
+        if problem_name is None:
+            continue
         try:
             problem = ProblemConfig.from_yaml(problem_root / problem_name)
         except FileNotFoundError:
@@ -328,10 +360,19 @@ def evaluate_agent_run(
         reports, errors = evaluation_entry.create_problem_reports(
             p_dir, problem
         )
+        if attempt_name != problem_name:
+            reports = [
+                {
+                    **report,
+                    "problem": attempt_name,
+                    "source_problem": problem_name,
+                }
+                for report in reports
+            ]
         all_reports.extend(reports)
         for checkpoint_name, error_msg in errors:
             report_errors.append(
-                (f"{problem_name}/{checkpoint_name}", error_msg)
+                (f"{attempt_name}/{checkpoint_name}", error_msg)
             )
 
     update_results_jsonl(report_file, all_reports)

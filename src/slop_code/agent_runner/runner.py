@@ -536,7 +536,7 @@ class AgentRunner:
         # Send initial progress update
         self.progress_queue.put(
             (
-                self.run_spec.problem.name,
+                self.agent.problem_name,
                 self.agent.usage,
                 self.metrics_tracker,
             )
@@ -569,7 +569,7 @@ class AgentRunner:
                 self.agent,
                 self.metrics_tracker,
                 self.progress_queue,
-                self.run_spec.problem.name,
+                self.agent.problem_name,
             ),
             daemon=True,
         )

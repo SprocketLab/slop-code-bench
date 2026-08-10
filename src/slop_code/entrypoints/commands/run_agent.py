@@ -181,6 +181,8 @@ def _check_problem_needs_rerun(
     problem_path: Path,
     prompt_template: str,
     environment: EnvironmentSpecType,
+    *,
+    output_name: str | None = None,
 ) -> tuple[bool, str | None]:
     """Check if a problem needs to be run based on checkpoint state.
 
@@ -191,16 +193,17 @@ def _check_problem_needs_rerun(
 
     Args:
         run_dir: The run output directory
-        problem_name: Name of the problem
+        problem_name: Name of the source problem
         problem_path: Path to the problem definition
         prompt_template: Current prompt template content
         environment: Current environment spec
+        output_name: Optional run output directory name for this attempt
 
     Returns:
         (needs_rerun, reason) - reason is None if doesn't need rerun,
         otherwise a human-readable explanation
     """
-    output_path = run_dir / problem_name
+    output_path = run_dir / (output_name or problem_name)
 
     # If output directory doesn't exist, need to run
     if not output_path.exists():
@@ -303,6 +306,51 @@ def _filter_problems_for_execution(
                 _clear_problem_outputs(run_dir, p)
         else:
             skipped.append(p)
+
+    return to_run, skipped, rerun_reasons
+
+
+def _filter_problem_attempts_for_execution(
+    run_dir: Path,
+    problem_attempts: list[problem_runner.ProblemAttempt],
+    problem_path: Path,
+    prompt_template: str,
+    environment: EnvironmentSpecType,
+    *,
+    overwrite: bool,
+    resume: bool,
+) -> tuple[
+    list[problem_runner.ProblemAttempt],
+    list[problem_runner.ProblemAttempt],
+    dict[str, str],
+]:
+    """Filter problem attempts using their unique output directory names."""
+    if overwrite:
+        for attempt in problem_attempts:
+            _clear_problem_outputs(run_dir, attempt.attempt_name)
+        return list(problem_attempts), [], {}
+
+    to_run: list[problem_runner.ProblemAttempt] = []
+    skipped: list[problem_runner.ProblemAttempt] = []
+    rerun_reasons: dict[str, str] = {}
+
+    for attempt in problem_attempts:
+        needs_rerun, reason = _check_problem_needs_rerun(
+            run_dir,
+            attempt.problem_name,
+            problem_path / attempt.problem_name,
+            prompt_template,
+            environment,
+            output_name=attempt.attempt_name,
+        )
+        if needs_rerun:
+            to_run.append(attempt)
+            if reason:
+                rerun_reasons[attempt.attempt_name] = reason
+            if not resume:
+                _clear_problem_outputs(run_dir, attempt.attempt_name)
+        else:
+            skipped.append(attempt)
 
     return to_run, skipped, rerun_reasons
 
@@ -996,12 +1044,20 @@ def _create_checkpoint_results_and_summary(
     console: Console,
 ) -> None:
     """Generate checkpoint_results.jsonl and a run summary."""
+    attempts = problem_runner.build_problem_attempts(problem_names)
     problems_to_process = {
-        name for name in problem_names if (run_dir / name).exists()
+        attempt.attempt_name: attempt.problem_name
+        for attempt in attempts
+        if (run_dir / attempt.attempt_name).exists()
     }
     for entry in run_dir.iterdir():
-        if entry.is_dir() and (problems_base_path / entry.name).exists():
-            problems_to_process.add(entry.name)
+        if not entry.is_dir():
+            continue
+        source_name = problem_runner.resolve_attempt_source_problem(
+            entry.name, problems_base_path
+        )
+        if source_name is not None:
+            problems_to_process.setdefault(entry.name, source_name)
 
     if not problems_to_process:
         logger.info(
@@ -1013,8 +1069,8 @@ def _create_checkpoint_results_and_summary(
     results_file = run_dir / CHECKPOINT_RESULTS_FILENAME
     all_reports: list[dict[str, object]] = []
 
-    for problem_name in sorted(problems_to_process):
-        problem_dir = run_dir / problem_name
+    for attempt_name, problem_name in sorted(problems_to_process.items()):
+        problem_dir = run_dir / attempt_name
         try:
             problem = ProblemConfig.from_yaml(problems_base_path / problem_name)
         except Exception as exc:  # noqa: BLE001
@@ -1029,10 +1085,20 @@ def _create_checkpoint_results_and_summary(
             reports, _ = evaluation_entry.create_problem_reports(
                 problem_dir, problem
             )
+            if attempt_name != problem_name:
+                reports = [
+                    {
+                        **report,
+                        "problem": attempt_name,
+                        "source_problem": problem_name,
+                    }
+                    for report in reports
+                ]
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "Failed to create checkpoint reports",
                 problem=problem_name,
+                attempt=attempt_name,
                 error=str(exc),
             )
             continue
@@ -1060,7 +1126,6 @@ def _create_checkpoint_results_and_summary(
     display_and_save_summary(
         results_file, run_dir, config, console, expected_checkpoints
     )
-
 
 def run_agent(
     ctx: typer.Context,
@@ -1314,9 +1379,12 @@ def run_agent(
 
     # Capture full resolved problem list before any filtering (for saving to config)
     full_problem_list = list(problem_names_resolved)
+    problem_attempts_resolved = problem_runner.build_problem_attempts(
+        problem_names_resolved
+    )
 
     # 10. Handle pre-existing run directory
-    requested = list(problem_names_resolved)
+    requested = list(full_problem_list)
     if run_dir_preexisted:
         if ctx.obj.overwrite:
             typer.echo(
@@ -1332,9 +1400,9 @@ def run_agent(
             run_dir, run_cfg, env_spec, is_resuming, ctx.obj.overwrite
         )
 
-        to_run, skipped, rerun_reasons = _filter_problems_for_execution(
+        to_run, skipped, rerun_reasons = _filter_problem_attempts_for_execution(
             run_dir,
-            problem_names_resolved,
+            problem_attempts_resolved,
             problem_root,
             run_cfg.prompt_content,
             env_spec,
@@ -1363,11 +1431,11 @@ def run_agent(
                 )
             )
 
-        problem_names_resolved = to_run
+        problem_attempts_resolved = to_run
 
         # Check if nothing to do
         if _handle_early_completion(
-            problem_names_resolved,
+            [attempt.attempt_name for attempt in problem_attempts_resolved],
             run_dir,
             problem_root,
             console,
@@ -1379,7 +1447,7 @@ def run_agent(
     # 11. Handle dry-run mode
     if dry_run:
         _preview_dry_run(
-            problem_names_resolved,
+            [attempt.problem_name for attempt in problem_attempts_resolved],
             run_dir,
             problem_root,
             run_cfg.prompt_content,
@@ -1389,7 +1457,12 @@ def run_agent(
 
     # 12. Update config with resolved/merged problems for future resumes
     run_cfg.problems = full_problem_list
-    agent_config = agent_config.allocate_problem_resources(full_problem_list)
+    full_problem_attempts = problem_runner.build_problem_attempts(
+        full_problem_list
+    )
+    agent_config = agent_config.allocate_problem_resources(
+        [attempt.attempt_name for attempt in full_problem_attempts]
+    )
 
     # 13. Save environment and config to run directory, build docker image if needed
     image_name = _prepare_run_artifacts(
@@ -1401,7 +1474,7 @@ def run_agent(
     )
     run_logger.info(
         "Starting agent runs",
-        num_problems=len(problem_names_resolved),
+        num_problems=len(problem_attempts_resolved),
         num_workers=num_workers,
     )
 
@@ -1426,7 +1499,7 @@ def run_agent(
 
     # 15. Run problems
     results = problem_runner.run_problems(
-        problem_names=problem_names_resolved,
+        problem_names=problem_attempts_resolved,
         config=task_config,
         num_workers=num_workers,
         console=console,
@@ -1440,7 +1513,7 @@ def run_agent(
         _create_checkpoint_results_and_summary(
             run_dir=run_dir,
             problems_base_path=problem_root,
-            problem_names=problem_names_resolved,
+            problem_names=full_problem_list,
             console=console,
         )
     else:

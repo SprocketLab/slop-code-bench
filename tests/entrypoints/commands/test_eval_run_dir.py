@@ -342,6 +342,70 @@ class TestEvaluateSelectionBehavior:
         ]
         assert evaluated == ["datagate"]
 
+    def test_duplicate_attempt_directories_evaluate_as_separate_submissions(
+        self,
+        tmp_path: Path,
+        monkeypatch,
+    ) -> None:
+        agent_run_dir = _create_run_dir(tmp_path)
+
+        for attempt_name in ["cfgpipe__attempt_1", "cfgpipe__attempt_2"]:
+            problem_dir = agent_run_dir / attempt_name
+            problem_dir.mkdir()
+            (problem_dir / "checkpoint_1").mkdir()
+
+        available_problems = {"cfgpipe": _mock_source_problem("cfgpipe")}
+        evaluate_mock = _stub_eval_dependencies(
+            monkeypatch,
+            tmp_path,
+            available_problems,
+        )
+        captured_reports = []
+
+        monkeypatch.setattr(
+            eval_run_dir.evaluation_entry,
+            "create_problem_reports",
+            lambda problem_dir, _problem: (
+                [
+                    {
+                        "problem": "cfgpipe",
+                        "checkpoint": "checkpoint_1",
+                        "path": str(problem_dir),
+                    }
+                ],
+                [],
+            ),
+        )
+        monkeypatch.setattr(
+            eval_run_dir,
+            "update_results_jsonl",
+            lambda _report_file, reports: captured_reports.extend(reports),
+        )
+
+        eval_run_dir.evaluate_agent_run(
+            ctx=_ctx(tmp_path),
+            agent_run_dir=agent_run_dir,
+            problem_names=[],
+            pass_policy=PassPolicy.ALL_CASES,
+            env_config=None,
+            live_progress=False,
+            num_workers=1,
+            overwrite=True,
+        )
+
+        evaluated = [
+            problem_dir.name
+            for _, problem_dir in evaluate_mock.call_args.kwargs["problems"]
+        ]
+        assert evaluated == ["cfgpipe__attempt_1", "cfgpipe__attempt_2"]
+        assert [report["problem"] for report in captured_reports] == [
+            "cfgpipe__attempt_1",
+            "cfgpipe__attempt_2",
+        ]
+        assert {
+            report["source_problem"] for report in captured_reports
+        } == {"cfgpipe"}
+
     def test_report_regeneration_uses_all_problem_directories_after_partial_overwrite(
         self,
         tmp_path: Path,

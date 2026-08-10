@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
+import pytest
+
 from slop_code.agent_runner import AgentStateEnum
 from slop_code.common import EVALUATION_FILENAME
 from slop_code.common import INFERENCE_RESULT_FILENAME
@@ -15,7 +17,9 @@ from slop_code.entrypoints.problem_runner.driver import (
     _prepopulate_completed_states,
 )
 from slop_code.entrypoints.problem_runner.driver import _run_problems
+from slop_code.entrypoints.problem_runner.models import ProblemAttempt
 from slop_code.entrypoints.problem_runner.models import TaskResult
+from slop_code.entrypoints.problem_runner.models import build_problem_attempts
 from slop_code.entrypoints.problem_runner.state import ProblemStateTracker
 from slop_code.evaluation import GroupType
 
@@ -82,6 +86,21 @@ def _write_checkpoint_artifacts(
 
 def _make_config(run_dir: Path) -> RunTaskConfig:
     return cast("RunTaskConfig", _Config(run_dir=run_dir))
+
+
+def test_build_problem_attempts_suffixes_duplicates() -> None:
+    attempts = build_problem_attempts(["cfgpipe", "code_search", "cfgpipe"])
+
+    assert attempts == [
+        ProblemAttempt("cfgpipe", "cfgpipe__attempt_1"),
+        ProblemAttempt("code_search", "code_search"),
+        ProblemAttempt("cfgpipe", "cfgpipe__attempt_2"),
+    ]
+
+
+def test_build_problem_attempts_rejects_generated_name_collision() -> None:
+    with pytest.raises(ValueError, match="cfgpipe__attempt_1"):
+        build_problem_attempts(["cfgpipe", "cfgpipe", "cfgpipe__attempt_1"])
 
 
 def test_prepopulate_loads_cost_and_passed_counts(tmp_path: Path) -> None:
@@ -213,13 +232,16 @@ def test_run_problems_recycles_workers_between_problems(
         def submit(
             self,
             fn: object,
-            problem_name: str,
+            problem_attempt: ProblemAttempt,
             config: object,
             progress_queue: queue.Queue,
         ) -> Future[TaskResult]:
             future: Future[TaskResult] = Future()
             future.set_result(
-                TaskResult(problem_name=problem_name, success=True)
+                TaskResult(
+                    problem_name=problem_attempt.attempt_name,
+                    success=True,
+                )
             )
             return future
 
@@ -239,3 +261,64 @@ def test_run_problems_recycles_workers_between_problems(
     assert [result.problem_name for result in results] == ["p1", "p2"]
     assert executor_kwargs["max_workers"] == 3
     assert executor_kwargs["max_tasks_per_child"] == 1
+
+
+def test_run_problems_submits_duplicate_attempts(monkeypatch) -> None:
+    submitted: list[ProblemAttempt] = []
+
+    class FakeExecutor:
+        def __init__(
+            self,
+            *,
+            max_workers: int | None = None,
+            max_tasks_per_child: int | None = None,
+        ) -> None:
+            pass
+
+        def __enter__(self) -> FakeExecutor:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            pass
+
+        def submit(
+            self,
+            fn: object,
+            problem_attempt: ProblemAttempt,
+            config: object,
+            progress_queue: queue.Queue,
+        ) -> Future[TaskResult]:
+            submitted.append(problem_attempt)
+            future: Future[TaskResult] = Future()
+            future.set_result(
+                TaskResult(
+                    problem_name=problem_attempt.attempt_name,
+                    success=True,
+                )
+            )
+            return future
+
+    monkeypatch.setattr(
+        driver.concurrent.futures, "ProcessPoolExecutor", FakeExecutor
+    )
+
+    results = _run_problems(
+        ["cfgpipe", "cfgpipe"],
+        cast("RunTaskConfig", object()),
+        num_workers=2,
+        progress_queue=queue.Queue(),
+        progress_display=None,
+        problem_states=ProblemStateTracker(
+            ["cfgpipe__attempt_1", "cfgpipe__attempt_2"],
+            {},
+        ),
+    )
+
+    assert submitted == [
+        ProblemAttempt("cfgpipe", "cfgpipe__attempt_1"),
+        ProblemAttempt("cfgpipe", "cfgpipe__attempt_2"),
+    ]
+    assert [result.problem_name for result in results] == [
+        "cfgpipe__attempt_1",
+        "cfgpipe__attempt_2",
+    ]

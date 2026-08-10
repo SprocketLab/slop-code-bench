@@ -6,6 +6,8 @@ execution state and results.
 
 from __future__ import annotations
 
+from collections import Counter
+from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field
@@ -62,6 +64,66 @@ class TaskResult:
         if self.error_type:
             status = f"{status}, {self.error_type}"
         return f"TaskResult({self.problem_name}, {status})"
+
+
+@dataclass(frozen=True)
+class ProblemAttempt:
+    """One requested problem execution.
+
+    ``problem_name`` is the source problem to load from the catalog.
+    ``attempt_name`` is the unique run/output identifier.
+    """
+
+    problem_name: str
+    attempt_name: str
+
+
+def build_problem_attempts(problem_names: Sequence[str]) -> list[ProblemAttempt]:
+    """Assign unique attempt identifiers to repeated problem names."""
+    counts = Counter(problem_names)
+    ordinals: defaultdict[str, int] = defaultdict(int)
+    attempts: list[ProblemAttempt] = []
+    used_attempt_names: set[str] = set()
+
+    for problem_name in problem_names:
+        if counts[problem_name] == 1:
+            attempt_name = problem_name
+        else:
+            ordinals[problem_name] += 1
+            attempt_name = f"{problem_name}__attempt_{ordinals[problem_name]}"
+
+        if attempt_name in used_attempt_names:
+            raise ValueError(
+                f"Duplicate generated attempt name '{attempt_name}'. "
+                "Rename the source problem or avoid mixing problem names with "
+                "generated __attempt_N names."
+            )
+        used_attempt_names.add(attempt_name)
+        attempts.append(
+            ProblemAttempt(
+                problem_name=problem_name,
+                attempt_name=attempt_name,
+            )
+        )
+
+    return attempts
+
+
+def resolve_attempt_source_problem(
+    attempt_name: str,
+    problems_base_path: Path,
+) -> str | None:
+    """Resolve an output directory name to its source problem name."""
+    if (problems_base_path / attempt_name).exists():
+        return attempt_name
+
+    source_name, separator, suffix = attempt_name.rpartition("__attempt_")
+    if separator and suffix.isdecimal() and (
+        problems_base_path / source_name
+    ).exists():
+        return source_name
+
+    return None
 
 
 @dataclass

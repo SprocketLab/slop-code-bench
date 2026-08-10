@@ -24,8 +24,10 @@ from slop_code.agent_runner.resume import _aggregate_prior_usage
 from slop_code.common.llms import TokenUsage
 from slop_code.entrypoints.live_progress import LiveProgressDisplay
 from slop_code.entrypoints.live_progress import maybe_live_progress
+from slop_code.entrypoints.problem_runner.models import ProblemAttempt
 from slop_code.entrypoints.problem_runner.models import RunTaskConfig
 from slop_code.entrypoints.problem_runner.models import TaskResult
+from slop_code.entrypoints.problem_runner.models import build_problem_attempts
 from slop_code.entrypoints.problem_runner.one_shot import apply_one_shot_mode
 from slop_code.entrypoints.problem_runner.renderer import (
     ProblemProgressRenderer,
@@ -38,8 +40,22 @@ from slop_code.logging import setup_problem_logging
 logger = get_logger(__name__)
 
 
+def _coerce_problem_attempts(
+    problems: Sequence[str] | Sequence[ProblemAttempt],
+) -> list[ProblemAttempt]:
+    """Normalize public string inputs into internal attempt records."""
+    problem_items = list(problems)
+    if not problem_items:
+        return []
+    if all(isinstance(item, ProblemAttempt) for item in problem_items):
+        return list(problem_items)
+    if all(isinstance(item, str) for item in problem_items):
+        return build_problem_attempts(problem_items)
+    raise TypeError("Problems must be all strings or all ProblemAttempt values")
+
+
 def _run_problem_worker(
-    problem_name: str,
+    problem_attempt: ProblemAttempt,
     config: RunTaskConfig,
     progress_queue: queue.Queue,
 ) -> TaskResult:
@@ -50,19 +66,22 @@ def _run_problem_worker(
     the problem.
 
     Args:
-        problem_name: Name of the problem
+        problem_attempt: Source problem name and unique attempt identifier
         config: Shared execution configuration
         progress_queue: Queue for sending progress updates
 
     Returns:
         TaskResult with problem execution outcome
     """
-    prob_save_dir = config.run_dir / problem_name
+    problem_name = problem_attempt.problem_name
+    attempt_name = problem_attempt.attempt_name
+
+    prob_save_dir = config.run_dir / attempt_name
     prob_save_dir.mkdir(parents=True, exist_ok=True)
 
     if config.live_progress or not config.debug:
         setup_problem_logging(
-            prob_save_dir, problem_name, log_file_name="infer.log"
+            prob_save_dir, attempt_name, log_file_name="infer.log"
         )
 
     problem_logger = get_logger()
@@ -70,6 +89,7 @@ def _run_problem_worker(
     problem_logger.info(
         "Running agent for problem",
         problem=problem_name,
+        attempt=attempt_name,
         problem_path=str(problem_path),
     )
 
@@ -77,7 +97,7 @@ def _run_problem_worker(
     try:
         results = run_agent_on_problem(
             problem_config=problem_config,
-            problem_name=problem_name,
+            problem_name=attempt_name,
             config=config,
             progress_queue=progress_queue,
             output_path=prob_save_dir,
@@ -89,8 +109,12 @@ def _run_problem_worker(
         state = summary.get("state", "UNKNOWN")
 
         if state.lower() == "completed":
-            logger.info("Successfully completed problem", problem=problem_name)
-            return TaskResult(problem_name=problem_name, success=True)
+            logger.info(
+                "Successfully completed problem",
+                problem=problem_name,
+                attempt=attempt_name,
+            )
+            return TaskResult(problem_name=attempt_name, success=True)
 
         # Problem failed tests or had error state
         error_msg = summary.get("error_message")
@@ -99,12 +123,13 @@ def _run_problem_worker(
         logger.warning(
             "Problem did not complete successfully",
             problem=problem_name,
+            attempt=attempt_name,
             state=state,
             passed_policy=passed_policy,
             error_message=error_msg,
         )
         return TaskResult(
-            problem_name=problem_name,
+            problem_name=attempt_name,
             success=False,
             error_message=error_msg,
             error_type=summary.get("error_type") or state,
@@ -118,13 +143,14 @@ def _run_problem_worker(
         logger.error(
             "Error running problem",
             problem=problem_name,
+            attempt=attempt_name,
             error_type=error_type,
             error_message=error_msg,
             traceback=traceback_text,
             exc_info=True,
         )
         return TaskResult(
-            problem_name=problem_name,
+            problem_name=attempt_name,
             success=False,
             error_message=error_msg,
             error_type=error_type,
@@ -133,7 +159,7 @@ def _run_problem_worker(
 
 
 def _run_problems(
-    problem_names: Sequence[str],
+    problem_attempts: Sequence[str] | Sequence[ProblemAttempt],
     config: RunTaskConfig,
     num_workers: int,
     progress_queue: queue.Queue,
@@ -143,7 +169,7 @@ def _run_problems(
     """Run problems in parallel with progress monitoring.
 
     Args:
-        problem_names: List of problem names to run
+        problem_attempts: List of problem names or attempts to run
         config: Shared execution configuration
         num_workers: Number of parallel workers
         progress_queue: Queue for progress updates
@@ -153,8 +179,10 @@ def _run_problems(
     Returns:
         List of TaskResult objects
     """
+    problem_attempts = _coerce_problem_attempts(problem_attempts)
+    attempt_names = [attempt.attempt_name for attempt in problem_attempts]
     logger.info(
-        "Starting run problems queue monitor", problem_names=problem_names
+        "Starting run problems queue monitor", problem_names=attempt_names
     )
     with concurrent.futures.ProcessPoolExecutor(
         max_workers=num_workers,
@@ -162,9 +190,9 @@ def _run_problems(
     ) as executor:
         futures = [
             executor.submit(
-                _run_problem_worker, problem_name, config, progress_queue
+                _run_problem_worker, problem_attempt, config, progress_queue
             )
-            for problem_name in problem_names
+            for problem_attempt in problem_attempts
         ]
         while not all(future.done() for future in futures):
             try:
@@ -215,7 +243,7 @@ def _run_problems(
 
 def _prepopulate_completed_states(
     problem_states: ProblemStateTracker,
-    completed_problems: Sequence[str],
+    completed_problems: Sequence[str] | Sequence[ProblemAttempt],
     config: RunTaskConfig,
     checkpoint_map: dict[str, Sequence[str]],
 ) -> None:
@@ -225,7 +253,8 @@ def _prepopulate_completed_states(
     live-progress header reflects the whole run from frame 0, without paying
     the cost of spawning a worker subprocess just to no-op.
     """
-    for name in completed_problems:
+    for attempt in _coerce_problem_attempts(completed_problems):
+        name = attempt.attempt_name
         output_path = config.run_dir / name
         checkpoints = list(checkpoint_map.get(name, []))
         now = datetime.now()
@@ -250,11 +279,11 @@ def _prepopulate_completed_states(
 
 
 def run_problems(
-    problem_names: Sequence[str],
+    problem_names: Sequence[str] | Sequence[ProblemAttempt],
     config: RunTaskConfig,
     num_workers: int = 1,
     console: Console = Console(),
-    completed_problems: Sequence[str] = (),
+    completed_problems: Sequence[str] | Sequence[ProblemAttempt] = (),
 ) -> list[TaskResult]:
     """Run problems either sequentially or in parallel.
 
@@ -262,7 +291,7 @@ def run_problems(
     the multiprocessing infrastructure, progress tracking, and live display.
 
     Args:
-        problem_names: List of problem names to run
+        problem_names: List of problem names or pre-expanded attempts to run
         config: Shared execution configuration for all problems
         num_workers: Number of parallel workers (1 for sequential)
         console: Rich console for output
@@ -276,17 +305,20 @@ def run_problems(
     manager = mp.Manager()
     progress_queue = manager.Queue()
 
-    all_problems = list(problem_names) + list(completed_problems)
+    problem_attempts = _coerce_problem_attempts(problem_names)
+    completed_attempts = _coerce_problem_attempts(completed_problems)
+    all_problems = problem_attempts + completed_attempts
 
     checkpoint_map: dict[str, Sequence[str]] = {}
-    for problem_name in all_problems:
-        problem_path = config.problem_base_path / problem_name
+    for attempt in all_problems:
+        problem_path = config.problem_base_path / attempt.problem_name
         try:
             problem_config = evaluation.ProblemConfig.from_yaml(problem_path)
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "Unable to load problem config for progress tracking",
-                problem=problem_name,
+                problem=attempt.problem_name,
+                attempt=attempt.attempt_name,
                 path=str(problem_path),
                 error=str(exc),
             )
@@ -297,7 +329,7 @@ def run_problems(
         checkpoint_names = [
             name for name, _ in problem_config.iterate_checkpoint_items()
         ]
-        checkpoint_map[problem_name] = checkpoint_names
+        checkpoint_map[attempt.attempt_name] = checkpoint_names
 
     # Calculate total checkpoints across all problems
     total_checkpoints = sum(len(cps) for cps in checkpoint_map.values())
@@ -313,7 +345,7 @@ def run_problems(
     )
 
     _prepopulate_completed_states(
-        states, completed_problems, config, checkpoint_map
+        states, completed_attempts, config, checkpoint_map
     )
 
     with maybe_live_progress(
@@ -323,7 +355,7 @@ def run_problems(
         placeholder=renderer.placeholder,
     ) as progress_display:
         return _run_problems(
-            problem_names,
+            problem_attempts,
             config,
             num_workers,
             progress_queue,

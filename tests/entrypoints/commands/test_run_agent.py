@@ -9,6 +9,9 @@ import typer
 import yaml
 
 from slop_code.entrypoints.commands.run_agent import _build_cli_flags
+from slop_code.entrypoints.commands.run_agent import (
+    _create_checkpoint_results_and_summary,
+)
 from slop_code.entrypoints.commands.run_agent import _create_task_config
 from slop_code.entrypoints.commands.run_agent import _discover_problems
 from slop_code.entrypoints.commands.run_agent import _get_nested
@@ -22,6 +25,7 @@ from slop_code.entrypoints.commands.run_agent import _resolve_output_directory
 from slop_code.entrypoints.commands.run_agent import _resolve_problem_names
 from slop_code.entrypoints.commands.run_agent import _validate_problem_paths
 from slop_code.entrypoints.commands.run_agent import _validate_resume_config
+from slop_code.entrypoints.problem_runner import resolve_attempt_source_problem
 from slop_code.problem_catalog import CatalogManifest
 
 
@@ -182,6 +186,86 @@ class TestResolveProblemNames:
         """Test multiple config problems."""
         result = _resolve_problem_names([], ["prob1", "prob2", "prob3"])
         assert result == ["prob1", "prob2", "prob3"]
+
+
+class TestAttemptReports:
+    """Tests for duplicate-attempt report handling."""
+
+    def test_resolves_attempt_source_problem(self, tmp_path):
+        problems_base = tmp_path / "problems"
+        (problems_base / "cfgpipe").mkdir(parents=True)
+
+        assert (
+            resolve_attempt_source_problem(
+                "cfgpipe__attempt_1", problems_base
+            )
+            == "cfgpipe"
+        )
+        assert resolve_attempt_source_problem("missing", problems_base) is None
+
+    def test_summary_uses_attempt_names_for_duplicate_reports(
+        self, tmp_path, monkeypatch
+    ):
+        run_dir = tmp_path / "run"
+        problems_base = tmp_path / "problems"
+        run_dir.mkdir()
+        (problems_base / "cfgpipe").mkdir(parents=True)
+        (run_dir / "cfgpipe__attempt_1").mkdir()
+        (run_dir / "cfgpipe__attempt_2").mkdir()
+        (run_dir / "config.yaml").write_text(
+            yaml.dump({"problems": ["cfgpipe", "cfgpipe"]})
+        )
+        captured_reports = []
+
+        problem = MagicMock()
+        problem.name = "cfgpipe"
+        monkeypatch.setattr(
+            "slop_code.entrypoints.commands.run_agent.ProblemConfig.from_yaml",
+            lambda _path: problem,
+        )
+        monkeypatch.setattr(
+            "slop_code.entrypoints.commands.run_agent.evaluation_entry.create_problem_reports",
+            lambda _problem_dir, _problem: (
+                [{"problem": "cfgpipe", "checkpoint": "checkpoint_1"}],
+                [],
+            ),
+        )
+
+        def capture_results(_results_file, reports):
+            captured_reports.extend(reports)
+
+        monkeypatch.setattr(
+            "slop_code.entrypoints.commands.run_agent.update_results_jsonl",
+            capture_results,
+        )
+        monkeypatch.setattr(
+            "slop_code.entrypoints.commands.run_agent.count_expected_checkpoints",
+            lambda _config, _problems_base: 2,
+        )
+        monkeypatch.setattr(
+            "slop_code.entrypoints.commands.run_agent.display_and_save_summary",
+            lambda *_args, **_kwargs: None,
+        )
+
+        _create_checkpoint_results_and_summary(
+            run_dir=run_dir,
+            problems_base_path=problems_base,
+            problem_names=["cfgpipe", "cfgpipe"],
+            console=MagicMock(),
+        )
+
+        assert captured_reports == [
+            {
+                "problem": "cfgpipe__attempt_1",
+                "source_problem": "cfgpipe",
+                "checkpoint": "checkpoint_1",
+            },
+            {
+                "problem": "cfgpipe__attempt_2",
+                "source_problem": "cfgpipe",
+                "checkpoint": "checkpoint_1",
+            },
+        ]
 
 
 class TestResolveOutputDirectory:
