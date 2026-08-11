@@ -15,7 +15,7 @@ ENV XDG_DATA_HOME="$HOME/.local/share"
 RUN printf '%s\n' 'export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"' >> "$HOME/.bash_profile"
 
 # --- Install Codex dependencies --------------------------------------------
-RUN npm install -g @openai/codex@{{ version }} && \
+RUN npm install -g --include=optional @openai/codex@{{ version }} && \
     mkdir -p "$HOME/.codex"
 {% for package in workflow_local_packages %}
 COPY --chown=1000:1000 {{ package.context_path }} {{ package.container_path }}

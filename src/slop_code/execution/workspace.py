@@ -14,6 +14,7 @@ Workspaces provide isolated execution environments with proper state management
 and cleanup, supporting both evaluation and agent inference scenarios.
 """
 
+import os
 import shutil
 import tempfile
 from collections.abc import Callable
@@ -305,7 +306,10 @@ class Workspace:
         if self._temp_dir is not None:
             raise WorkspaceError("Workspace already prepared")
         logger.debug("Preparing workspace", verbose=True)
-        self._temp_dir = tempfile.TemporaryDirectory()
+        workspace_base = os.environ.get("SCB_WORKSPACE_DIR")
+        if workspace_base:
+            Path(workspace_base).mkdir(parents=True, exist_ok=True)
+        self._temp_dir = tempfile.TemporaryDirectory(dir=workspace_base or None)
         self._prepare_initial_snapshot()
         logger.debug(
             "Workspace prepared",

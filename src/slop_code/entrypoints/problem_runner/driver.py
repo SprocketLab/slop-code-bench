@@ -335,7 +335,10 @@ def run_problems(
     total_checkpoints = sum(len(cps) for cps in checkpoint_map.values())
 
     start_time = datetime.now()
-    states = ProblemStateTracker(all_problems, checkpoint_map)
+    states = ProblemStateTracker(
+        [attempt.attempt_name for attempt in all_problems],
+        checkpoint_map,
+    )
     renderer = ProblemProgressRenderer(
         states,
         config.run_dir,

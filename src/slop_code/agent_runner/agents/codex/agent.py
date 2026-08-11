@@ -345,7 +345,10 @@ class CodexAgent(Agent):
         self._saved_trace_paths = set()
         mounts: dict[str, dict[str, str] | str] = {}
         if isinstance(session.spec, DockerEnvironmentSpec):
-            self._trace_tmp = tempfile.TemporaryDirectory()
+            workspace_base = os.environ.get("SCB_WORKSPACE_DIR")
+            if workspace_base:
+                Path(workspace_base).mkdir(parents=True, exist_ok=True)
+            self._trace_tmp = tempfile.TemporaryDirectory(dir=workspace_base or None)
             self._trace_dir = Path(self._trace_tmp.name)
             self._trace_dir.mkdir(parents=True, exist_ok=True)
             self._trace_dir.chmod(0o777)

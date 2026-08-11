@@ -4,12 +4,16 @@ import json
 import queue
 from concurrent.futures import Future
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, cast
 
 import pytest
 
 from slop_code.agent_runner import AgentStateEnum
+from slop_code.agent_runner import MetricsTracker
+from slop_code.agent_runner import UsageTracker
 from slop_code.common import EVALUATION_FILENAME
 from slop_code.common import INFERENCE_RESULT_FILENAME
 from slop_code.entrypoints.problem_runner import driver
@@ -322,3 +326,78 @@ def test_run_problems_submits_duplicate_attempts(monkeypatch) -> None:
         "cfgpipe__attempt_1",
         "cfgpipe__attempt_2",
     ]
+
+
+def test_run_problems_tracks_attempt_names_for_progress_updates(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    class FakeProblemConfig:
+        def iterate_checkpoint_items(self) -> list[tuple[str, object]]:
+            return [("checkpoint_1", object())]
+
+    def fake_from_yaml(path: Path) -> FakeProblemConfig:
+        return FakeProblemConfig()
+
+    def fake_apply_one_shot_mode(
+        *,
+        problem_config: FakeProblemConfig,
+        one_shot: object,
+    ) -> FakeProblemConfig:
+        return problem_config
+
+    captured_state: list[AgentStateEnum] = []
+
+    def fake_run_problems(
+        problem_attempts: list[ProblemAttempt],
+        config: RunTaskConfig,
+        num_workers: int,
+        progress_queue: queue.Queue,
+        progress_display: object,
+        problem_states: ProblemStateTracker,
+    ) -> list[TaskResult]:
+        now = datetime.now()
+        metrics = MetricsTracker(
+            state=AgentStateEnum.RUNNING,
+            current_checkpoint="checkpoint_1",
+            usage=UsageTracker(),
+            started=now,
+            checkpoint_started=now,
+        )
+        problem_states.handle_update(
+            "cfgpipe__attempt_1",
+            UsageTracker(cost=0.5, steps=1),
+            metrics,
+        )
+        captured_state.append(problem_states["cfgpipe__attempt_1"].state)
+        return []
+
+    monkeypatch.setattr(
+        driver.evaluation.ProblemConfig,
+        "from_yaml",
+        fake_from_yaml,
+    )
+    monkeypatch.setattr(
+        driver,
+        "apply_one_shot_mode",
+        fake_apply_one_shot_mode,
+    )
+    monkeypatch.setattr(driver, "_run_problems", fake_run_problems)
+
+    config = cast(
+        "RunTaskConfig",
+        SimpleNamespace(
+            problem_base_path=tmp_path,
+            run_dir=tmp_path / "run",
+            one_shot=object(),
+            live_progress=False,
+        ),
+    )
+
+    results = driver.run_problems(
+        [ProblemAttempt("cfgpipe", "cfgpipe__attempt_1")],
+        config,
+    )
+
+    assert results == []
+    assert captured_state == [AgentStateEnum.RUNNING]
