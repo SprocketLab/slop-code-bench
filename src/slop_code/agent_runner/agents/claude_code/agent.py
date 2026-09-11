@@ -611,9 +611,14 @@ class ClaudeCodeAgent(Agent):
 
             if payload is None:
                 continue
-            msg_id = payload.get("message", {}).get("id", None)
-            content = payload.get("message", {}).get("content", {})
-            if "text" in content:
+            # Claude Code >= 2.1.2xx emits some payloads whose "message" is a
+            # plain string (or absent); only dict messages carry id/content.
+            message = payload.get("message")
+            if not isinstance(message, dict):
+                message = {}
+            msg_id = message.get("id", None)
+            content = message.get("content", {})
+            if isinstance(content, dict) and "text" in content:
                 content = content["text"]
             else:
                 content = json.dumps(content, ensure_ascii=False)
