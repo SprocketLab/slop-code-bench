@@ -233,7 +233,8 @@ class ClaudeCodeAgent(Agent):
         self._prior_cost = 0.0
         self._image = image
         self.steps: list[dict[str, tp.Any]] = []
-        self.final_result: RuntimeResult | None = None
+        self._stream_lines: list[str] = []
+        self._stderr_lines: list[str] = []
         self._had_error: bool = False
         self._got_successful_result: bool = False
 
@@ -626,7 +627,7 @@ class ClaudeCodeAgent(Agent):
         gen = stream_cli_command(
             runtime=self.runtime,
             command=command,
-            parser=self.parse_line,
+            parser=self._recorded_parse,
             env=env_overrides,
             timeout=(float(self.timeout) if self.timeout is not None else None),
         )
@@ -767,6 +768,8 @@ class ClaudeCodeAgent(Agent):
         self._last_prompt = task
         self._last_steps = []
         self._last_command = None
+        self._stream_lines = []
+        self._stderr_lines = []
 
         log_kwargs: dict[str, tp.Any] = {
             "workspace": str(self.workspace),
@@ -799,7 +802,7 @@ class ClaudeCodeAgent(Agent):
             )
             raise AgentError(message)
 
-        self.final_result = result
+        self._stderr_lines.extend(result.stderr.splitlines())
 
         self.log.debug(
             "agent.claude_code.command.completed",
@@ -870,7 +873,7 @@ class ClaudeCodeAgent(Agent):
             )
             raise AgentError(message)
 
-        self.final_result = result
+        self._stderr_lines.extend(result.stderr.splitlines())
         if result.timed_out:
             message = (
                 f"Claude Code retry process timed out after {self.timeout}s."
@@ -985,16 +988,23 @@ class ClaudeCodeAgent(Agent):
         args.append("--")
         return args
 
+    def _recorded_parse(self, line: str):
+        """Keep the line for stdout.jsonl before parsing it, so the stream
+        survives a crash in _run() and a retry adds to it."""
+        self._stream_lines.append(line)
+        return self.parse_line(line)
+
     def _write_artifacts(
         self,
         output_dir: Path,
     ) -> None:
-        if self.final_result is not None:
+        if self._stream_lines:
             (output_dir / self.STDOUT_FILENAME).write_text(
-                self.final_result.stdout or ""
+                "\n".join(self._stream_lines) + "\n"
             )
+        if self._stderr_lines:
             (output_dir / self.STDERR_FILENAME).write_text(
-                self.final_result.stderr
+                "\n".join(self._stderr_lines) + "\n"
             )
 
     def reset(self) -> None:
