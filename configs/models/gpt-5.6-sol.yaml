@@ -11,6 +11,8 @@ aliases:
   - sol
   - gpt-5.6-sol
 provider_slugs:
+  # Portkey model-catalog slug: "@<integration>/<model>", where <integration>
+  # is the provider integration name in your Portkey workspace.
   portkey: "@openai/gpt-5.6-sol"
 
 # Endpoints resolve against the CLI provider, not this config's provider.

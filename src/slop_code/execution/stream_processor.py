@@ -35,6 +35,10 @@ DEFAULT_WAIT_TIMEOUT = 7200.0  # 2 hours
 # is a daemon and only appends to an in-memory queue, so abandoning it is safe;
 # blocking on it forever is not.
 PUMP_JOIN_TIMEOUT = 30.0
+# How long to wait for in-flight output before signalling the pump to stop.
+# The window for output queued but not yet drained is milliseconds; a stream
+# that keeps producing without ever reaching EOF must not extend it.
+DRAIN_JOIN_TIMEOUT = 2.0
 EXIT_CODE_WAIT = 10.0
 
 
@@ -172,6 +176,16 @@ def process_stream(
 
         yield from handle_event(kind, payload)
 
+    elapsed = time.monotonic() - start_time
+    if not timed_out:
+        # The process can exit before the loop above polls it even once,
+        # leaving its output in flight. The pump queues every event and ends
+        # with "finished", so joining it first makes the drain below exact
+        # instead of a race against the thread. The join must not be signalled
+        # — the pump breaks as soon as ``stop_event`` is set, truncating a fast
+        # multi-chunk command — so it is bounded by the in-flight window.
+        thread.join(timeout=min(DRAIN_JOIN_TIMEOUT, max(timeout_fn(), 0.0)))
+
     # Handle any remaining events in the queue
     while True:
         try:
@@ -189,7 +203,6 @@ def process_stream(
 
         yield from handle_event(kind, payload)
 
-    elapsed = time.monotonic() - start_time
     stop_event.set()
     thread.join(timeout=min(PUMP_JOIN_TIMEOUT, max(timeout_fn(), 1.0)))
     if thread.is_alive():

@@ -646,7 +646,7 @@ class ClaudeCodeAgent(Agent):
             message = payload.get("message")
             if not isinstance(message, dict):
                 message = {}
-            msg_id = message.get("id", None)
+            msg_id = message.get("id")
             content = message.get("content", {})
             if isinstance(content, dict) and "text" in content:
                 content = content["text"]

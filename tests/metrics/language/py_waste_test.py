@@ -687,6 +687,45 @@ class TestSingleUseVariables:
 class TestUnusedVariables:
     """Tests for unused variable detection."""
 
+    def test_module_constant_read_in_function_not_flagged(self, tmp_path):
+        """A module constant read only inside a function is used."""
+        source = tmp_path / "test.py"
+        source.write_text(
+            dedent("""
+        from pathlib import Path
+
+        JOBS_DIR = Path("jobs")
+
+        def next_queued():
+            return sorted(JOBS_DIR.glob("*.json"))
+        """)
+        )
+
+        symbols = get_symbols(source)
+        metrics = calculate_waste_metrics(source, symbols)
+
+        assert "JOBS_DIR" not in {v.name for v in metrics.unused_variables}
+
+    def test_instance_attribute_not_flagged(self, tmp_path):
+        """Assigning ``self.x`` in one method is not a local binding."""
+        source = tmp_path / "test.py"
+        source.write_text(
+            dedent("""
+        class Daemon:
+            def stop(self):
+                self._abort = True
+
+            def loop(self):
+                while not self._abort:
+                    pass
+        """)
+        )
+
+        symbols = get_symbols(source)
+        metrics = calculate_waste_metrics(source, symbols)
+
+        assert "_abort" not in {v.name for v in metrics.unused_variables}
+
     def test_unused_variable_in_function(self, tmp_path):
         """Variable assigned but never referenced is flagged."""
         source = tmp_path / "test.py"
@@ -810,3 +849,124 @@ class TestUnusedVariables:
 
         unused_names = {v.name for v in metrics.unused_variables}
         assert "_" not in unused_names
+
+    def test_function_local_class_fields_not_flagged(self, tmp_path):
+        """A class body inside a function is not the function's scope."""
+        source = tmp_path / "test.py"
+        source.write_text(
+            dedent("""
+        from dataclasses import dataclass
+
+        def make():
+            @dataclass
+            class Bar:
+                live: int
+
+                def show(self):
+                    return self.live
+
+            return Bar(1)
+        """)
+        )
+
+        symbols = get_symbols(source)
+        metrics = calculate_waste_metrics(source, symbols)
+
+        unused_names = {v.name for v in metrics.unused_variables}
+        assert "live" not in unused_names
+
+    def test_module_binding_shadowed_by_attribute_is_flagged(self, tmp_path):
+        """``self.value`` is not a read of the module-level ``value``."""
+        source = tmp_path / "test.py"
+        source.write_text(
+            dedent("""
+        value = 1
+
+        class Holder:
+            def show(self):
+                return self.value
+        """)
+        )
+
+        symbols = get_symbols(source)
+        metrics = calculate_waste_metrics(source, symbols)
+
+        module_unused = {
+            v.name for v in metrics.unused_variables if v.scope == "module"
+        }
+        assert "value" in module_unused
+
+    def test_local_read_inside_nested_class_not_flagged(self, tmp_path):
+        """A function local read inside a nested class body is used."""
+        source = tmp_path / "test.py"
+        source.write_text(
+            dedent("""
+        def make():
+            limit = 10
+
+            class Holder:
+                cap = limit
+
+                def show(self):
+                    return limit
+
+            return Holder()
+        """)
+        )
+
+        symbols = get_symbols(source)
+        metrics = calculate_waste_metrics(source, symbols)
+
+        unused_names = {v.name for v in metrics.unused_variables}
+        assert "limit" not in unused_names
+
+    def test_nested_class_base_is_a_read(self, tmp_path):
+        """A local used as a nested class's base is used."""
+        source = tmp_path / "test.py"
+        source.write_text(
+            dedent("""
+        def make(Base):
+            base = Base
+
+            class Holder(base):
+                pass
+
+            return Holder()
+        """)
+        )
+
+        symbols = get_symbols(source)
+        metrics = calculate_waste_metrics(source, symbols)
+
+        unused_names = {v.name for v in metrics.unused_variables}
+        assert "base" not in unused_names
+
+    def test_module_constant_read_in_inner_class_not_flagged(self, tmp_path):
+        """A module constant read only inside an inner class is used."""
+        source = tmp_path / "test.py"
+        source.write_text(
+            dedent("""
+        import functools
+
+        CONST = 1
+        LIMIT = 2
+
+        class Outer:
+            class Inner:
+                v = CONST
+
+        @functools.cache
+        def build():
+            class Local:
+                v = LIMIT
+
+            return Local()
+        """)
+        )
+
+        symbols = get_symbols(source)
+        metrics = calculate_waste_metrics(source, symbols)
+
+        unused_names = {v.name for v in metrics.unused_variables}
+        assert "CONST" not in unused_names
+        assert "LIMIT" not in unused_names

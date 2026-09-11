@@ -12,6 +12,8 @@ aliases:
 
 provider_slugs:
   openrouter: moonshotai/kimi-k3
+  # Portkey model-catalog slug: "@<integration>/<model>", where <integration>
+  # is the provider integration name in your Portkey workspace.
   portkey: "@openrouter/moonshotai/kimi-k3"
 
 agent_specific:
