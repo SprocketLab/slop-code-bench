@@ -2056,3 +2056,103 @@ class TestOpenRouterMode:
         assert env["ANTHROPIC_API_KEY"] == ""
         assert env["ANTHROPIC_BASE_URL"] == "https://openrouter.ai/api"
         assert env["ANTHROPIC_DEFAULT_OPUS_MODEL"] == "z-ai/glm-5"
+
+
+class TestStreamMessageShapes:
+    """Claude Code 2.1.251 streams payloads whose message is not a dict.
+
+    The permission_denied case is a real line from an Opus 5 run: a safety
+    check blocked `cd /tmp/x && rm -rf *`, and the old parser crashed on it.
+    """
+
+    @pytest.fixture
+    def agent(self, mock_cost_limits, mock_pricing, mock_credential):
+        agent = ClaudeCodeAgent(
+            problem_name="test-problem",
+            image="test-image",
+            verbose=False,
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=mock_credential,
+            binary="claude",
+            model="claude-test",
+            timeout=None,
+            settings={},
+            env={},
+            extra_args=[],
+            append_system_prompt=None,
+            allowed_tools=[],
+            disallowed_tools=[],
+            permission_mode=None,
+            base_url=None,
+            thinking=None,
+            max_thinking_tokens=None,
+            max_output_tokens=None,
+        )
+        agent._runtime = cast("StreamingRuntime", FakeRuntime())  # noqa: SLF001
+        return agent
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {
+                "type": "system",
+                "subtype": "permission_denied",
+                "tool_name": "Bash",
+                "tool_use_id": "toolu_01MmLuZ88wmSt44XiMhns7FV",
+                "decision_reason_type": "safetyCheck",
+                "decision_reason": "Dangerous rm operation on "
+                "statically-unresolvable target: /workspace/*",
+                "message": "Dangerous rm operation detected: '/workspace/*'",
+            },
+            {"type": "system", "subtype": "init"},
+            {"type": "system", "message": None},
+            {"type": "system", "message": ["not", "a", "dict"]},
+            {
+                "type": "user",
+                "message": {"role": "user", "content": "the text"},
+            },
+            {"type": "user", "message": {"role": "user", "content": None}},
+        ],
+        ids=[
+            "permission-denied-string-message",
+            "absent-message",
+            "null-message",
+            "list-message",
+            "string-content-containing-text",
+            "null-content",
+        ],
+    )
+    def test_run_survives_payload_and_still_records_result(
+        self, monkeypatch, agent, payload
+    ):
+        result = {
+            "type": "result",
+            "total_cost_usd": 0.5,
+            "usage": {"input_tokens": 2, "output_tokens": 30},
+        }
+
+        def fake_stream_cli_command(*, parser, **_: object):
+            for line in (json.dumps(payload), json.dumps(result)):
+                yield parser(line)
+            yield RuntimeResult(
+                exit_code=0,
+                stdout="",
+                stderr="",
+                setup_stdout="",
+                setup_stderr="",
+                elapsed=1.0,
+                timed_out=False,
+            )
+
+        monkeypatch.setattr(
+            "slop_code.agent_runner.agents.claude_code.agent.stream_cli_command",
+            fake_stream_cli_command,
+        )
+
+        final = agent._run("claude", {})  # noqa: SLF001
+
+        assert final is not None
+        assert final.exit_code == 0
+        assert agent.steps == [payload, result]
+        assert agent.usage.cost == 0.5
