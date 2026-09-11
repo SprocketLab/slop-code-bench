@@ -5,11 +5,14 @@ from __future__ import annotations
 import json
 import shlex
 import typing as tp
+from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
 
 from jinja2 import Template
 from pydantic import Field
 
+from slop_code.agent_runner.agent import RETRY_PROMPT
 from slop_code.agent_runner.agent import Agent
 from slop_code.agent_runner.agent import AgentConfigBase
 from slop_code.agent_runner.agents.cli_utils import AgentCommandResult
@@ -37,12 +40,33 @@ from slop_code.execution import StreamingRuntime
 _DEFAULT_MAX_CONTEXT_SIZE = 131072
 _SIGTERM_EXIT_CODE = 128 + 15
 _KIMI_CONFIG_PATH = "/tmp/kimi-config.json"  # noqa: S108
+_NO_FINAL_RESULT_MARKER = (
+    "kimi-cli: stdout closed before a final result was received"
+)
 _MAX_REASONING_CHARS = 1800
 _MAX_ASSISTANT_CHARS = 1200
 _MAX_TOOL_ARG_CHARS = 160
 _MAX_TOOL_OUTPUT_CHARS = 400
 _MAX_SECTION_CHARS = 1800
 _MAX_EVENT_SUMMARY_CHARS = 280
+
+
+@dataclass
+class _AttemptRecord:
+    """Raw artifacts captured for a single Kimi CLI invocation.
+
+    ``run_checkpoint`` may invoke the CLI several times (one initial run plus
+    retries) before artifacts are saved once at the end. Keeping one record per
+    invocation prevents a crashed attempt's stderr from being overwritten by
+    the attempt that follows it.
+    """
+
+    prompt: str
+    command_text: str
+    stdout: str
+    stderr: str
+    events: list[dict[str, tp.Any]] = field(default_factory=list)
+
 
 _PROVIDER_CONFIG: dict[str, dict[str, tp.Any]] = {
     "moonshot": {
@@ -54,6 +78,13 @@ _PROVIDER_CONFIG: dict[str, dict[str, tp.Any]] = {
         "type": "kimi",
         "base_url": "https://api.kimi.com/coding/v1",
         "env_keys": ["KIMI_API_KEY", "MOONSHOT_API_KEY"],
+    },
+    # Portkey gateway (OpenAI-compatible); model slugs must be Portkey model
+    # catalog ids, e.g. "@openrouter/moonshotai/kimi-k3" via provider_slugs.
+    "portkey": {
+        "type": "kimi",
+        "base_url": "https://api.portkey.ai/v1",
+        "env_keys": ["PORTKEY_API_KEY"],
     },
 }
 
@@ -154,11 +185,13 @@ class KimiCliAgent(Agent):
         self._environment: EnvironmentSpec | None = None
         self._runtime: StreamingRuntime | None = None
 
+        self._task: str = ""
         self._last_prompt: str = ""
         self._last_command_text: str = ""
         self._last_stdout: str = ""
         self._last_stderr: str = ""
         self._last_events: list[dict[str, tp.Any]] = []
+        self._attempts: list[_AttemptRecord] = []
 
     @classmethod
     def _from_config(
@@ -298,11 +331,50 @@ class KimiCliAgent(Agent):
             mounts={},
             env_vars={"HOME": HOME_PATH},
             image=self._image,
-            user="agent",
             disable_setup=True,
         )
 
     def run(self, task: str) -> None:
+        self._task = task
+        self._execute_prompt(task)
+
+    def retry(self) -> None:
+        """Re-run the CLI, always restating the original task.
+
+        The Kimi CLI has no session resume: every invocation starts a fresh
+        process with an empty context. A bare "continue from where you left
+        off" therefore reaches a model that has no idea what the task was, and
+        it answers truthfully that there is nothing to continue - a clean exit
+        that the runner records as a completed checkpoint over an empty
+        workspace. Restating the task makes the retry a real second attempt.
+        """
+        if not self._task:
+            raise AgentError("KimiCliAgent has no task to retry")
+
+        has_progress = self._workspace_has_files()
+        prompt = (
+            f"{RETRY_PROMPT} The original task was:\n\n{self._task}"
+            if has_progress
+            else self._task
+        )
+        self.log.info(
+            "agent.kimi_cli.retry",
+            workspace=str(self.session.working_dir),
+            workspace_has_files=has_progress,
+            attempts=len(self._attempts),
+        )
+        self._execute_prompt(prompt)
+
+    def _workspace_has_files(self) -> bool:
+        working_dir = self.session.working_dir
+        if not working_dir.is_dir():
+            return False
+        return any(
+            entry.name != ".git" and not entry.name.startswith(".")
+            for entry in working_dir.iterdir()
+        )
+
+    def _execute_prompt(self, task: str) -> None:
         self._last_prompt = task
         self._last_command_text = ""
         self._last_stdout = ""
@@ -415,6 +487,15 @@ class KimiCliAgent(Agent):
         self._last_stdout = stdout_text
         self._last_stderr = stderr_text
         self._last_events = parse_wire_events(stdout_text)
+        self._attempts.append(
+            _AttemptRecord(
+                prompt=task,
+                command_text=command_text,
+                stdout=stdout_text,
+                stderr=stderr_text,
+                events=self._last_events,
+            )
+        )
         wire_steps = group_events_into_steps(self._last_events)
         usage_totals = self._summarize_wire_steps(wire_steps)
         usage_totals["steps"] = len(wire_steps)
@@ -689,10 +770,18 @@ class KimiCliAgent(Agent):
                 f"printf %s {escaped_config} > {_KIMI_CONFIG_PATH}",
                 f'(printf "%s\\n" {escaped_prompt}; sleep 86400) | '
                 f"{kimi_command} | (",
+                "saw_result=",
                 "while IFS= read -r line; do",
                 '  printf "%s\\n" "$line"',
-                '  case "$line" in *\'"id":"1"\'*) break ;; esac',
+                '  case "$line" in *\'"id":"1"\'*) saw_result=1; break ;; esac',
                 "done",
+                # Reaching EOF without a final result means the CLI itself
+                # closed stdout (crash or stall). The `kill 0` below would
+                # otherwise make that indistinguishable from the harness
+                # terminating a healthy run.
+                'if [ -z "$saw_result" ]; then',
+                f'  echo "{_NO_FINAL_RESULT_MARKER}" >&2',
+                "fi",
                 "kill 0 2>/dev/null",
                 ")",
             ]
@@ -806,11 +895,13 @@ class KimiCliAgent(Agent):
             raise AgentError("KimiCliAgent exceeded configured usage limits")
 
     def reset(self) -> None:
+        self._task = ""
         self._last_prompt = ""
         self._last_command_text = ""
         self._last_stdout = ""
         self._last_stderr = ""
         self._last_events = []
+        self._attempts = []
 
     def save_artifacts(self, path: Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
@@ -839,17 +930,11 @@ class KimiCliAgent(Agent):
             encoding="utf-8",
         )
 
+        self._save_prior_attempts(path)
+
         if self._last_events:
             wire_steps = group_events_into_steps(self._last_events)
-            with (path / self.EVENTS_FILENAME).open("w", encoding="utf-8") as f:
-                for index, wire_step in enumerate(wire_steps, start=1):
-                    f.write(
-                        json.dumps(
-                            self._build_event_row(index, wire_step),
-                            ensure_ascii=False,
-                        )
-                    )
-                    f.write("\n")
+            self._write_events_file(path / self.EVENTS_FILENAME, wire_steps)
 
             with (path / self.TRAJECTORY_FILENAME).open(
                 "w", encoding="utf-8"
@@ -874,6 +959,48 @@ class KimiCliAgent(Agent):
 
                     f.write(json.dumps(row, ensure_ascii=False))
                     f.write("\n")
+
+    def _write_events_file(
+        self, path: Path, wire_steps: list[_WireStep]
+    ) -> None:
+        with path.open("w", encoding="utf-8") as f:
+            for index, wire_step in enumerate(wire_steps, start=1):
+                f.write(
+                    json.dumps(
+                        self._build_event_row(index, wire_step),
+                        ensure_ascii=False,
+                    )
+                )
+                f.write("\n")
+
+    def _save_prior_attempts(self, path: Path) -> None:
+        """Write per-attempt artifacts when the CLI ran more than once.
+
+        The canonical ``stdout.log``/``stderr.log``/``events.jsonl`` files hold
+        the final attempt only; without these copies the stderr of a crashed
+        attempt (the evidence for why a retry happened) would be lost.
+        """
+        if len(self._attempts) < 2:
+            return
+
+        for index, attempt in enumerate(self._attempts):
+            suffix = f".attempt{index}"
+            (path / f"{self.PROMPT_FILENAME}{suffix}").write_text(
+                attempt.prompt, encoding="utf-8"
+            )
+            (path / f"{self.COMMAND_FILENAME}{suffix}").write_text(
+                attempt.command_text, encoding="utf-8"
+            )
+            (path / f"{self.STDOUT_FILENAME}{suffix}").write_text(
+                attempt.stdout, encoding="utf-8"
+            )
+            (path / f"{self.STDERR_FILENAME}{suffix}").write_text(
+                attempt.stderr, encoding="utf-8"
+            )
+            self._write_events_file(
+                path / f"{self.EVENTS_FILENAME}{suffix}",
+                group_events_into_steps(attempt.events),
+            )
 
     def cleanup(self) -> None:
         if self._runtime is not None:

@@ -20,7 +20,6 @@ from slop_code.logging import get_logger
 logger = get_logger(__name__)
 
 BASE_IMAGE_TEMPLATE = Path(__file__).parent / "setup_base.docker.j2"
-AGENT_USER = "1000:1000"
 BASE_IMAGE_HASH_LABEL = "io.slop-code.base-image-hash"
 
 if TYPE_CHECKING:
@@ -156,6 +155,7 @@ def make_submission_docker_file(
     base_image: str,
     static_assets: dict[str, ResolvedStaticAsset],
 ) -> str:
+    agent_user = env_spec.get_container_user()
     lines = [
         f"FROM {base_image}",
         "",
@@ -168,12 +168,12 @@ def make_submission_docker_file(
         lines.append("RUN mkdir -p /static")
         for asset in static_assets.values():
             lines.append(
-                f"COPY --chown={AGENT_USER} {asset.save_path} /static/{str(asset.save_path)}"
+                f"COPY --chown={agent_user} {asset.save_path} /static/{str(asset.save_path)}"
             )
 
     lines.append("")
     lines.append("# Copy submission")
-    lines.append(f"COPY --chown={AGENT_USER} submission submission")
+    lines.append(f"COPY --chown={agent_user} submission submission")
     lines.append("ENV SUBMISSION_PATH=/submission")
     lines.append("WORKDIR /submission")
 
@@ -181,11 +181,11 @@ def make_submission_docker_file(
         f"RUN {' && '.join(env_spec.get_setup_commands(is_evaluation=True))}"
     )
 
-    lines.append(f"RUN chown -R {AGENT_USER} /submission")
+    lines.append(f"RUN chown -R {agent_user} /submission")
     lines.append(f"WORKDIR {env_spec.docker.workdir}")
-    lines.append(f"RUN chown -R {AGENT_USER} {env_spec.docker.workdir}")
-    lines.append(f"RUN chown -R {AGENT_USER} /tmp")
-    lines.append(f"USER {AGENT_USER}")
+    lines.append(f"RUN chown -R {agent_user} {env_spec.docker.workdir}")
+    lines.append(f"RUN chown -R {agent_user} /tmp")
+    lines.append(f"USER {agent_user}")
 
     return "\n".join(lines)
 

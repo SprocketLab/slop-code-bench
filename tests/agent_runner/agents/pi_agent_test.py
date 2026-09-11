@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import base64
 import json
+import threading
+from collections.abc import Callable
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,6 +31,28 @@ from slop_code.execution.runtime import RuntimeResult
 
 if TYPE_CHECKING:
     from slop_code.execution import Session
+
+
+def run_with_deadline(call: Callable[[], None], timeout: float) -> None:
+    """Run ``call`` on a worker thread, failing if it does not finish in time."""
+    outcome: list[BaseException | None] = []
+
+    def target() -> None:
+        try:
+            call()
+        except BaseException as exc:  # noqa: BLE001
+            outcome.append(exc)
+        else:
+            outcome.append(None)
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+    thread.join(timeout)
+    if thread.is_alive():
+        raise AssertionError(f"call did not finish within {timeout}s")
+    error = outcome[0]
+    if error is not None:
+        raise error
 
 
 class FakeRuntime:
@@ -110,6 +134,44 @@ def mock_model_def(mock_pricing: APIPricing) -> ModelDefinition:
             "openai": "gpt-5.2-codex",
             "openai-codex": "gpt-5.2-codex",
         },
+    )
+
+
+@pytest.fixture
+def gateway_model_def() -> ModelDefinition:
+    return ModelDefinition(
+        internal_name="kimi-k3",
+        name="kimi-k3",
+        provider="openrouter",
+        pricing=APIPricing(
+            input=3.0,
+            output=15.0,
+            cache_read=0.3,
+            cache_write=0.0,
+        ),
+        provider_slugs={
+            "openrouter": "moonshotai/kimi-k3",
+            "portkey": "@openrouter/moonshotai/kimi-k3",
+        },
+        agent_specific={
+            "pi": {
+                "endpoint": "openai",
+                "reasoning": True,
+                "context_window": 262144,
+                "max_tokens": 65536,
+            }
+        },
+    )
+
+
+@pytest.fixture
+def portkey_credential() -> ProviderCredential:
+    return ProviderCredential(
+        provider="portkey",
+        credential_type=CredentialType.ENV_VAR,
+        value="portkey-secret",
+        source="SCB_PORTKEY",
+        destination_key="PORTKEY_API_KEY",
     )
 
 
@@ -300,6 +362,181 @@ class TestPiAgent:
         with pytest.raises(ValueError, match="Unsupported PI provider mapping"):
             PiAgent._resolve_pi_provider("unknown_provider")
 
+    def test_builtin_provider_model_has_no_models_json(
+        self,
+        mock_cost_limits: AgentCostLimits,
+        mock_model_def: ModelDefinition,
+    ) -> None:
+        agent = PiAgent._from_config(
+            config=PiConfig(
+                type="pi",
+                version="0.74.0",
+                cost_limits=mock_cost_limits,
+            ),
+            model=mock_model_def,
+            credential=ProviderCredential(
+                provider="openai",
+                credential_type=CredentialType.ENV_VAR,
+                value="test-api-key",
+                source="OPENAI_API_KEY",
+                destination_key="OPENAI_API_KEY",
+            ),
+            problem_name="test-problem",
+            verbose=False,
+            image="test-image",
+        )
+
+        assert isinstance(agent, PiAgent)
+        assert agent.models_json is None
+
+    def test_gateway_model_becomes_custom_models_json_provider(
+        self,
+        mock_cost_limits: AgentCostLimits,
+        gateway_model_def: ModelDefinition,
+        portkey_credential: ProviderCredential,
+    ) -> None:
+        agent = PiAgent._from_config(
+            config=PiConfig(
+                type="pi",
+                version="0.74.0",
+                cost_limits=mock_cost_limits,
+            ),
+            model=gateway_model_def,
+            credential=portkey_credential,
+            problem_name="test-problem",
+            verbose=False,
+            image="test-image",
+        )
+
+        assert isinstance(agent, PiAgent)
+        assert agent.provider == "portkey"
+        assert agent.model == "@openrouter/moonshotai/kimi-k3"
+        assert agent.models_json is not None
+        provider_entry = agent.models_json["providers"]["portkey"]
+        assert provider_entry["baseUrl"] == "https://api.portkey.ai/v1"
+        assert provider_entry["api"] == "openai-completions"
+        assert provider_entry["apiKey"] == "PORTKEY_API_KEY"
+        assert provider_entry["models"] == [
+            {
+                "id": "@openrouter/moonshotai/kimi-k3",
+                "name": "kimi-k3",
+                "reasoning": True,
+                "input": ["text"],
+                "contextWindow": 262144,
+                "maxTokens": 65536,
+                "cost": {
+                    "input": 3.0,
+                    "output": 15.0,
+                    "cacheRead": 0.3,
+                    "cacheWrite": 0.0,
+                },
+            }
+        ]
+
+    def test_gateway_model_defaults_context_and_output_limits(
+        self,
+        gateway_model_def: ModelDefinition,
+        portkey_credential: ProviderCredential,
+    ) -> None:
+        gateway_model_def.agent_specific["pi"] = {"endpoint": "openai"}
+
+        models_json = PiAgent._build_models_json(
+            provider="portkey",
+            model=gateway_model_def,
+            credential=portkey_credential,
+        )
+
+        assert models_json is not None
+        entry = models_json["providers"]["portkey"]["models"][0]
+        assert entry["reasoning"] is False
+        assert entry["contextWindow"] == 128_000
+        assert entry["maxTokens"] == 16_384
+
+    def test_gateway_model_maps_anthropic_endpoint_to_pi_api(
+        self,
+        gateway_model_def: ModelDefinition,
+        portkey_credential: ProviderCredential,
+    ) -> None:
+        gateway_model_def.agent_specific["pi"] = {"endpoint": "anthropic"}
+
+        models_json = PiAgent._build_models_json(
+            provider="portkey",
+            model=gateway_model_def,
+            credential=portkey_credential,
+        )
+
+        assert models_json is not None
+        provider_entry = models_json["providers"]["portkey"]
+        assert provider_entry["api"] == "anthropic-messages"
+        assert provider_entry["baseUrl"] == "https://api.portkey.ai"
+
+    def test_setup_writes_models_json_into_pi_agent_dir(
+        self,
+        tmp_path: Path,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+        portkey_credential: ProviderCredential,
+    ) -> None:
+        spec = DockerEnvironmentSpec(
+            name="docker-test",
+            docker=DockerConfig(image="pi-test-image"),
+        )
+        session = FakeSession(
+            runtime=FakeRuntime(), working_dir=tmp_path, spec=spec
+        )
+        models_json = {"providers": {"portkey": {"models": []}}}
+
+        agent = PiAgent(
+            problem_name="test-problem",
+            verbose=False,
+            image="pi-test-image",
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=portkey_credential,
+            binary="pi",
+            provider="portkey",
+            model="@openrouter/moonshotai/kimi-k3",
+            timeout=None,
+            thinking=None,
+            extra_args=[],
+            env={},
+            models_json=models_json,
+        )
+
+        agent.setup(cast("Session", session))
+
+        assert agent._pi_auth_dir is not None
+        written = agent._pi_auth_dir / PiAgent.MODELS_FILENAME
+        assert json.loads(written.read_text()) == models_json
+
+    def test_gateway_credential_uses_provider_env_var(
+        self,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+        portkey_credential: ProviderCredential,
+    ) -> None:
+        agent = PiAgent(
+            problem_name="test-problem",
+            verbose=False,
+            image="test-image",
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=portkey_credential,
+            binary="pi",
+            provider="portkey",
+            model="@openrouter/moonshotai/kimi-k3",
+            timeout=None,
+            thinking=None,
+            extra_args=[],
+            env={},
+            models_json=None,
+        )
+
+        command, env_overrides = agent._prepare_runtime_execution("do it")
+
+        assert env_overrides["PORTKEY_API_KEY"] == "portkey-secret"
+        assert "portkey-secret" not in " ".join(command)
+
     def test_build_command_has_required_flags(
         self,
         mock_cost_limits: AgentCostLimits,
@@ -319,6 +556,7 @@ class TestPiAgent:
             thinking=None,
             extra_args=[],
             env={},
+            models_json=None,
         )
 
         command = agent._build_command("do something")
@@ -351,6 +589,7 @@ class TestPiAgent:
             thinking="minimal",
             extra_args=[],
             env={},
+            models_json=None,
         )
 
         command = agent._build_command("do something")
@@ -395,6 +634,7 @@ class TestPiAgent:
             thinking=None,
             extra_args=["--mode", "text"],
             env={},
+            models_json=None,
         )
 
         with pytest.raises(
@@ -428,6 +668,7 @@ class TestPiAgent:
             thinking=None,
             extra_args=[],
             env={},
+            models_json=None,
         )
 
         command, env_overrides = agent._prepare_runtime_execution(
@@ -513,6 +754,7 @@ class TestPiAgent:
             thinking=None,
             extra_args=[],
             env={},
+            models_json=None,
         )
 
         agent.setup(cast("Session", session))
@@ -566,6 +808,7 @@ class TestPiAgent:
             thinking=None,
             extra_args=[],
             env={},
+            models_json=None,
         )
 
         with pytest.raises(AgentError, match="Failed to parse Codex auth JSON"):
@@ -694,6 +937,7 @@ class TestPiAgent:
             thinking=None,
             extra_args=[],
             env={},
+            models_json=None,
         )
 
         agent.setup(cast("Session", session))
@@ -763,6 +1007,7 @@ class TestPiAgent:
             thinking=None,
             extra_args=[],
             env={},
+            models_json=None,
         )
 
         agent.setup(cast("Session", session))
@@ -837,6 +1082,7 @@ class TestPiAgent:
             thinking=None,
             extra_args=[],
             env={},
+            models_json=None,
         )
 
         agent.setup(cast("Session", session))
@@ -856,6 +1102,54 @@ class TestPiAgent:
         assert not (output_dir / "messages.jsonl").exists()
         assert (output_dir / "stderr.log").read_text() == "warning\n"
         assert (output_dir / "prompt.txt").read_text() == "do something"
+
+    def test_run_raises_when_stream_ends_without_final_message(
+        self,
+        tmp_path: Path,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+    ) -> None:
+        """A clean exit with no assistant message must fail, not hang."""
+        runtime = FakeRuntime()
+        runtime.events = [
+            RuntimeEvent(
+                kind="finished",
+                result=RuntimeResult(
+                    exit_code=0,
+                    stdout="",
+                    stderr="",
+                    setup_stdout="",
+                    setup_stderr="",
+                    elapsed=0.1,
+                    timed_out=False,
+                ),
+            ),
+        ]
+        spec = DockerEnvironmentSpec(
+            name="docker-test",
+            docker=DockerConfig(image="pi-test-image"),
+        )
+        session = FakeSession(runtime=runtime, working_dir=tmp_path, spec=spec)
+        agent = PiAgent(
+            problem_name="test-problem",
+            verbose=False,
+            image="pi-test-image",
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=None,
+            binary="pi",
+            provider="openrouter",
+            model="moonshotai/kimi-k3",
+            timeout=7200,
+            thinking="high",
+            extra_args=[],
+            env={},
+            models_json=None,
+        )
+
+        agent.setup(cast("Session", session))
+        with pytest.raises(AgentError, match="without emitting a final"):
+            run_with_deadline(lambda: agent.run("do something"), timeout=10.0)
 
     def test_run_allows_sigterm_exit_to_preserve_partial_solution(
         self,
@@ -897,6 +1191,7 @@ class TestPiAgent:
             thinking="high",
             extra_args=[],
             env={},
+            models_json=None,
         )
 
         agent.setup(cast("Session", session))

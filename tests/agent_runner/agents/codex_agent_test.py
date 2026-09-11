@@ -13,6 +13,7 @@ import pytest
 
 from slop_code.agent_runner.agents.codex import CodexAgent
 from slop_code.agent_runner.agents.codex import CodexConfig
+from slop_code.agent_runner.agents.codex.agent import CodexModelProvider
 from slop_code.agent_runner.agents.utils import HOME_PATH
 from slop_code.agent_runner.credentials import ProviderCredential
 from slop_code.agent_runner.models import AgentCostLimits
@@ -232,6 +233,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         # Before setup, session access should raise
@@ -267,6 +269,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         agent.setup(cast("Session", session))
@@ -298,6 +301,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         command = agent._build_command("do something")
@@ -325,6 +329,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         command = agent._build_command("do something")
@@ -350,6 +355,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         command = agent._build_command("continue", resume=True)
@@ -372,6 +378,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         command = agent._build_command("do something")
@@ -398,6 +405,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=["--custom-flag", "value"],
             env={},
+            model_provider=None,
         )
 
         command = agent._build_command("do something")
@@ -426,6 +434,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         agent.setup(cast("Session", session))
@@ -537,6 +546,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         agent.setup(cast("Session", session))
@@ -600,6 +610,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         agent.setup(cast("Session", session))
@@ -664,6 +675,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         agent.setup(cast("Session", session))
@@ -709,6 +721,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         agent.setup(cast("Session", session))
@@ -740,6 +753,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
         logger = FakeLogger()
         agent.log = logger
@@ -779,6 +793,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         trace_dir = tmp_path / "codex_traces"
@@ -822,6 +837,7 @@ class TestCodexAgent:
             max_thinking_tokens=None,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         command = agent._build_command("do something")
@@ -851,6 +867,7 @@ class TestCodexAgent:
             max_thinking_tokens=8192,
             extra_args=[],
             env={},
+            model_provider=None,
         )
 
         command = agent._build_command("do something")
@@ -858,3 +875,190 @@ class TestCodexAgent:
         assert "--config" in command
         config_idx = command.index("--config")
         assert "model_max_output_tokens=8192" in command[config_idx + 1]
+
+
+class TestCodexModelProviderRouting:
+    """Tests for routing Codex through a gateway provider endpoint."""
+
+    @pytest.fixture
+    def portkey_credential(self):
+        """Credential resolved from the portkey provider."""
+        from slop_code.agent_runner.credentials import CredentialType
+
+        return ProviderCredential(
+            provider="portkey",
+            value="test-portkey-key",
+            source="SCB_PORTKEY",
+            destination_key="PORTKEY_API_KEY",
+            credential_type=CredentialType.ENV_VAR,
+        )
+
+    @pytest.fixture
+    def gateway_model(self, mock_pricing):
+        """Model declaring a codex endpoint plus a portkey-specific slug."""
+        return ModelDefinition(
+            internal_name="gpt-5.6-sol",
+            provider="openai",
+            pricing=mock_pricing,
+            provider_slugs={"portkey": "@openai/gpt-5.6-sol"},
+            agent_specific={"codex": {"endpoint": "openai", "thinking": "high"}},
+        )
+
+    def test_from_config_without_endpoint_leaves_provider_unset(
+        self, mock_cost_limits, mock_model_def, mock_credential
+    ):
+        """A model with no codex endpoint keeps Codex pointed at OpenAI."""
+        config = CodexConfig(
+            type="codex", version="1.0.0", cost_limits=mock_cost_limits
+        )
+
+        agent = CodexAgent._from_config(
+            config=config,
+            model=mock_model_def,
+            credential=mock_credential,
+            problem_name="test-problem",
+            verbose=False,
+            image="test-image",
+        )
+
+        assert agent.model_provider is None
+        assert "model_provider" not in " ".join(agent._build_command("go"))
+
+    def test_from_config_without_provider_endpoint_leaves_provider_unset(
+        self, mock_cost_limits, gateway_model, mock_credential
+    ):
+        """Declaring an endpoint is inert when the provider declares none."""
+        config = CodexConfig(
+            type="codex", version="1.0.0", cost_limits=mock_cost_limits
+        )
+
+        agent = CodexAgent._from_config(
+            config=config,
+            model=gateway_model,
+            credential=mock_credential,
+            problem_name="test-problem",
+            verbose=False,
+            image="test-image",
+        )
+
+        assert agent.model_provider is None
+
+    def test_from_config_builds_provider_from_credential_provider(
+        self, mock_cost_limits, gateway_model, portkey_credential
+    ):
+        """The endpoint resolves against the credential provider, not the model's."""
+        config = CodexConfig(
+            type="codex", version="1.0.0", cost_limits=mock_cost_limits
+        )
+
+        agent = CodexAgent._from_config(
+            config=config,
+            model=gateway_model,
+            credential=portkey_credential,
+            problem_name="test-problem",
+            verbose=False,
+            image="test-image",
+        )
+
+        assert agent.model_provider == CodexModelProvider(
+            provider_id="portkey",
+            base_url="https://api.portkey.ai/v1",
+            env_key="PORTKEY_API_KEY",
+        )
+        assert agent.model == "@openai/gpt-5.6-sol"
+
+    def test_from_config_rejects_non_openai_endpoint(
+        self, mock_cost_limits, mock_pricing, portkey_credential
+    ):
+        """Codex only speaks the OpenAI wire format."""
+        model = ModelDefinition(
+            internal_name="gpt-5.6-sol",
+            provider="openai",
+            pricing=mock_pricing,
+            agent_specific={"codex": {"endpoint": "anthropic"}},
+        )
+        config = CodexConfig(
+            type="codex", version="1.0.0", cost_limits=mock_cost_limits
+        )
+
+        with pytest.raises(ValueError, match="OpenAI-compatible endpoint"):
+            CodexAgent._from_config(
+                config=config,
+                model=model,
+                credential=portkey_credential,
+                problem_name="test-problem",
+                verbose=False,
+                image="test-image",
+            )
+
+    def test_build_command_registers_and_selects_provider(
+        self, mock_cost_limits, mock_pricing
+    ):
+        """_build_command emits the model_providers config flags before --model."""
+        agent = CodexAgent(
+            problem_name="test-problem",
+            verbose=False,
+            image="test-image",
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=None,
+            binary="codex",
+            model="@openai/gpt-5.6-sol",
+            timeout=None,
+            thinking="high",
+            max_thinking_tokens=None,
+            extra_args=[],
+            env={},
+            model_provider=CodexModelProvider(
+                provider_id="portkey",
+                base_url="https://api.portkey.ai/v1",
+                env_key="PORTKEY_API_KEY",
+            ),
+        )
+
+        command = agent._build_command("do something")
+        configs = [
+            command[idx + 1]
+            for idx, arg in enumerate(command)
+            if arg == "--config"
+        ]
+
+        assert configs == [
+            'model_provider="portkey"',
+            'model_providers.portkey.name="portkey"',
+            'model_providers.portkey.base_url="https://api.portkey.ai/v1"',
+            'model_providers.portkey.env_key="PORTKEY_API_KEY"',
+            'model_providers.portkey.wire_api="responses"',
+            'model_reasoning_effort="high"',
+        ]
+        assert command[command.index("--model") + 1] == "@openai/gpt-5.6-sol"
+
+    def test_prepare_runtime_execution_exports_provider_env_key(
+        self, mock_cost_limits, mock_pricing, portkey_credential
+    ):
+        """The env_key named in the config flags is what gets exported."""
+        agent = CodexAgent(
+            problem_name="test-problem",
+            verbose=False,
+            image="test-image",
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=portkey_credential,
+            binary="codex",
+            model="@openai/gpt-5.6-sol",
+            timeout=None,
+            thinking=None,
+            max_thinking_tokens=None,
+            extra_args=[],
+            env={},
+            model_provider=CodexModelProvider(
+                provider_id="portkey",
+                base_url="https://api.portkey.ai/v1",
+                env_key="PORTKEY_API_KEY",
+            ),
+        )
+
+        command, env_overrides = agent._prepare_runtime_execution("do it")
+
+        assert env_overrides["PORTKEY_API_KEY"] == "test-portkey-key"
+        assert 'model_providers.portkey.env_key="PORTKEY_API_KEY"' in command

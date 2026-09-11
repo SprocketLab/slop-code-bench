@@ -95,9 +95,7 @@ class DockerExecRuntime(ExecRuntime):
         """Get the user to run commands as."""
         if self._user is not None:
             return self._user
-        if self._is_evaluation:
-            return self.spec.get_eval_user()
-        return self.spec.get_actual_user()
+        return self.spec.get_container_user()
 
     def _get_setup_commands(self) -> list[str]:
         """Get list of setup commands to run."""

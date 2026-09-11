@@ -153,7 +153,7 @@ FROM {{ base_image }}
 
 RUN npm install -g @anthropic/claude-code@{{ version }}
 
-USER 1000:1000
+USER agent
 WORKDIR /workspace
 ```
 

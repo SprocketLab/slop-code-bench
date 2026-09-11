@@ -16,6 +16,22 @@ logger = get_logger(__name__)
 IMAGE_NAME_PREFIX = "slop-code"
 
 
+def resolve_host_user() -> str:
+    """Resolve the ``uid:gid`` containers must run as on this host.
+
+    Containers bind-mount host directories (the workspace above all), so the
+    process inside the container has to own the same uid/gid as the harness
+    process outside it. Otherwise the agent cannot write to ``/workspace`` and
+    the host cannot read back or delete whatever the container did write.
+
+    ``HUID``/``HGID`` override the live ids for callers that are themselves
+    containerized and whose in-process ids differ from the mount owner's.
+    """
+    uid = os.getenv("HUID") or str(os.getuid())
+    gid = os.getenv("HGID") or str(os.getgid())
+    return f"{uid}:{gid}"
+
+
 class DockerConfig(BaseModel):
     """Docker-specific configuration for container execution.
 
@@ -26,7 +42,8 @@ class DockerConfig(BaseModel):
         mount_workspace: Whether to bind-mount workspace into container
         extra_mounts: Additional host-to-container mount mappings
         network: Docker network to attach the container to
-        user: User specifier for docker run (e.g. '1000:1000')
+        user: User specifier for docker run (e.g. '1000:1000'); defaults to
+            the invoking host user
         keep_container_after_clean: Prevents container removal after cleanup
     """
 
@@ -57,7 +74,10 @@ class DockerConfig(BaseModel):
     )
     user: str | None = Field(
         default=None,
-        description="User specifier for docker run (e.g. '1000:1000').",
+        description=(
+            "User specifier for docker run (e.g. '1000:1000'). Defaults to "
+            "the invoking host user so bind mounts stay writable."
+        ),
     )
 
 
@@ -71,20 +91,11 @@ class DockerEnvironmentSpec(EnvironmentSpec):
     type: Literal["docker"] = "docker"
     docker: DockerConfig
 
-    def get_eval_user(self) -> str:
+    def get_container_user(self) -> str:
+        """Resolve the user containers for this spec run as."""
         if self.docker.user:
             return self.docker.user
-        return "1000:1000"
-
-    def get_actual_user(self) -> str:
-        """Resolve the user to run as outside evaluation contexts."""
-        if self.docker.user:
-            return self.docker.user
-        uid = os.getenv("HUID")
-        gid = os.getenv("HGID")
-        if uid and gid:
-            return f"{uid}:{gid}"
-        return "0:0"
+        return resolve_host_user()
 
     def get_effective_address(self, address: str) -> str:
         """Get the address to pass to commands inside the container.

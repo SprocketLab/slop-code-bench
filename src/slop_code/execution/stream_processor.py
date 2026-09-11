@@ -31,6 +31,11 @@ from slop_code.execution.runtime import RuntimeResult
 logger = structlog.get_logger(__name__)
 
 DEFAULT_WAIT_TIMEOUT = 7200.0  # 2 hours
+# How long to wait for the pump thread to notice the stream is done. The thread
+# is a daemon and only appends to an in-memory queue, so abandoning it is safe;
+# blocking on it forever is not.
+PUMP_JOIN_TIMEOUT = 30.0
+EXIT_CODE_WAIT = 10.0
 
 
 def ensure_string(data: bytes | str) -> str:
@@ -186,10 +191,27 @@ def process_stream(
 
     elapsed = time.monotonic() - start_time
     stop_event.set()
-    thread.join()
+    thread.join(timeout=min(PUMP_JOIN_TIMEOUT, max(timeout_fn(), 1.0)))
+    if thread.is_alive():
+        logger.warning(
+            "Stream pump thread did not finish; abandoning it",
+            join_timeout=PUMP_JOIN_TIMEOUT,
+        )
 
-    exit_code = exit_code or poll_fn()
     if exit_code is None:
+        # The stream can reach EOF an instant before the process is reaped;
+        # give the exit code a bounded window to materialize instead of
+        # misreporting a clean exit as -1.
+        deadline = time.monotonic() + EXIT_CODE_WAIT
+        while (exit_code := poll_fn()) is None:
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(0.05)
+    if exit_code is None:
+        logger.warning(
+            "Process exit code unavailable after stream end; reporting -1",
+            wait_seconds=EXIT_CODE_WAIT,
+        )
         exit_code = -1
     logger.debug(
         "Setup stdout", setup_stdout=setup_stdout, setup_stderr=setup_stderr

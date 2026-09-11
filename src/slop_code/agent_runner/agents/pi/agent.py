@@ -94,6 +94,17 @@ _CREDENTIAL_ENV_KEYS: dict[str, str] = {
     "cerebras": "CEREBRAS_API_KEY",
 }
 
+# pi speaks these API dialects; keys are the ``api_format`` values used by the
+# provider catalog endpoints in ``configs/providers.yaml``.
+_PI_API_FORMATS: dict[str, str] = {
+    "openai": "openai-completions",
+    "anthropic": "anthropic-messages",
+}
+
+# pi's own defaults for custom models (docs/models.md).
+_PI_DEFAULT_CONTEXT_WINDOW = 128_000
+_PI_DEFAULT_MAX_TOKENS = 16_384
+
 _AWS_ENV_KEYS = (
     "AWS_PROFILE",
     "AWS_ACCESS_KEY_ID",
@@ -204,6 +215,7 @@ class PiAgent(Agent):
     PROMPT_FILENAME = "prompt.txt"
     STDOUT_FILENAME = "stdout.jsonl"
     STDERR_FILENAME = "stderr.log"
+    MODELS_FILENAME = "models.json"
 
     def __init__(
         self,
@@ -222,6 +234,7 @@ class PiAgent(Agent):
         thinking: PiThinking | None,
         extra_args: list[str],
         env: dict[str, str],
+        models_json: dict[str, tp.Any] | None,
     ) -> None:
         super().__init__(
             agent_name="pi",
@@ -239,6 +252,7 @@ class PiAgent(Agent):
         self.thinking = thinking
         self.extra_args = extra_args
         self.env = env
+        self.models_json = models_json
 
         self._image = image
         self._session: Session | None = None
@@ -251,6 +265,7 @@ class PiAgent(Agent):
         self._last_prompt: str = ""
         self._last_command: AgentCommandResult | None = None
         self._artifact_payloads: list[dict[str, tp.Any]] = []
+        self._saw_assistant_message_end = False
 
     @classmethod
     def _from_config(
@@ -270,12 +285,21 @@ class PiAgent(Agent):
             raise ValueError("PiAgent requires an image")
 
         pi_provider_input = config.provider or credential.provider
-        pi_provider = cls._resolve_pi_provider(pi_provider_input)
-        model_slug = cls._resolve_model_slug(
+        models_json = cls._build_models_json(
+            provider=pi_provider_input,
             model=model,
-            pi_provider=pi_provider,
-            credential_provider=credential.provider,
+            credential=credential,
         )
+        if models_json is None:
+            pi_provider = cls._resolve_pi_provider(pi_provider_input)
+            model_slug = cls._resolve_model_slug(
+                model=model,
+                pi_provider=pi_provider,
+                credential_provider=credential.provider,
+            )
+        else:
+            pi_provider = pi_provider_input
+            model_slug = model.get_model_slug(pi_provider_input)
         thinking = cls._resolve_pi_thinking(
             config_thinking=config.thinking,
             thinking_preset=thinking_preset,
@@ -296,6 +320,70 @@ class PiAgent(Agent):
             thinking=thinking,
             extra_args=config.extra_args,
             env=config.env,
+            models_json=models_json,
+        )
+
+    @classmethod
+    def _build_models_json(
+        cls,
+        provider: str,
+        model: ModelDefinition,
+        credential: ProviderCredential,
+    ) -> dict[str, tp.Any] | None:
+        """Describe a gateway provider for pi's ``models.json``.
+
+        pi only knows its built-in providers. A model routed through a gateway
+        (Portkey, for instance) declares ``agent_specific.pi.endpoint``; the
+        endpoint resolves against the credential provider's entry in
+        ``configs/providers.yaml`` and becomes a custom pi provider named after
+        that credential provider. Models without that declaration keep using
+        pi's built-in providers and get ``None`` here.
+        """
+        endpoint = model.get_agent_endpoint("pi", provider_override=provider)
+        if endpoint is None:
+            return None
+
+        settings = model.get_agent_settings("pi") or {}
+        pricing = model.pricing
+        return {
+            "providers": {
+                provider: {
+                    "baseUrl": endpoint.api_base,
+                    "api": _PI_API_FORMATS[endpoint.api_format],
+                    "apiKey": cls._credential_env_key(credential),
+                    "models": [
+                        {
+                            "id": model.get_model_slug(provider),
+                            "name": model.name or model.internal_name,
+                            "reasoning": bool(settings.get("reasoning", False)),
+                            "input": ["text"],
+                            "contextWindow": int(
+                                settings.get(
+                                    "context_window",
+                                    _PI_DEFAULT_CONTEXT_WINDOW,
+                                )
+                            ),
+                            "maxTokens": int(
+                                settings.get(
+                                    "max_tokens", _PI_DEFAULT_MAX_TOKENS
+                                )
+                            ),
+                            "cost": {
+                                "input": pricing.input,
+                                "output": pricing.output,
+                                "cacheRead": pricing.cache_read,
+                                "cacheWrite": pricing.cache_write,
+                            },
+                        }
+                    ],
+                }
+            }
+        }
+
+    @staticmethod
+    def _credential_env_key(credential: ProviderCredential) -> str:
+        return _CREDENTIAL_ENV_KEYS.get(
+            credential.provider, credential.destination_key
         )
 
     @staticmethod
@@ -482,6 +570,13 @@ class PiAgent(Agent):
         ):
             self._write_converted_codex_auth(self._pi_auth_dir)
 
+        if self.models_json is not None:
+            models_path = self._pi_auth_dir / self.MODELS_FILENAME
+            models_path.write_text(
+                json.dumps(self.models_json, indent=2), encoding="utf-8"
+            )
+            models_path.chmod(0o666)
+
         pi_agent_container_path = f"{HOME_PATH}/.pi/agent"
         mounts: dict[str, dict[str, str] | str] = {}
         if isinstance(session.spec, DockerEnvironmentSpec):
@@ -500,7 +595,6 @@ class PiAgent(Agent):
                 "PI_CODING_AGENT_DIR": self._pi_agent_dir_env,
             },
             image=self._image,
-            user="agent",
             disable_setup=True,
         )
 
@@ -525,6 +619,7 @@ class PiAgent(Agent):
         self._last_prompt = task
         self._last_command = None
         self._artifact_payloads = []
+        self._saw_assistant_message_end = False
 
         log_kwargs: dict[str, tp.Any] = {
             "workspace": str(self.session.working_dir),
@@ -593,6 +688,23 @@ class PiAgent(Agent):
             self.log.error("agent.pi.message_error", error_message=message)
             raise AgentError(message)
 
+        if (
+            runtime_result.exit_code != _SIGTERM_EXIT_CODE
+            and not self._saw_assistant_message_end
+        ):
+            message = (
+                "PI exited with code "
+                f"{runtime_result.exit_code} without emitting a final assistant "
+                "message."
+            )
+            self.log.error(
+                "agent.pi.missing_final_message",
+                error_message=message,
+                exit_code=runtime_result.exit_code,
+                stderr=runtime_result.stderr,
+            )
+            raise AgentError(message)
+
     def _run_invocation(self, task: str) -> AgentCommandResult:
         command, env_overrides = self._prepare_runtime_execution(task)
         if self._session is None:
@@ -641,6 +753,7 @@ class PiAgent(Agent):
                 ):
                     step_count += 1
                     self.usage.steps += 1
+                    self._saw_assistant_message_end = True
                     stop_reason = message.get("stopReason")
                     if isinstance(stop_reason, str) and stop_reason in {
                         "error",
@@ -719,11 +832,9 @@ class PiAgent(Agent):
         if self.credential.credential_type != CredentialType.ENV_VAR:
             return {}
 
-        env_key = _CREDENTIAL_ENV_KEYS.get(self.credential.provider)
-        if env_key is None:
-            env_key = self.credential.destination_key
-
-        return {env_key: self.credential.value}
+        return {
+            self._credential_env_key(self.credential): self.credential.value
+        }
 
     def _build_command(self, prompt: str) -> list[str]:
         self._validate_extra_args()
@@ -806,6 +917,7 @@ class PiAgent(Agent):
         self._last_prompt = ""
         self._last_command = None
         self._artifact_payloads = []
+        self._saw_assistant_message_end = False
 
     def save_artifacts(self, path: Path) -> None:
         path.mkdir(parents=True, exist_ok=True)

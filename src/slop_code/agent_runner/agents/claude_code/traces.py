@@ -49,7 +49,7 @@ def copy_new_trace_files(
         nonlocal skipped
         skipped += 1
         logger.warning(
-            "agent.claude_code.traces.unreadable",
+            "agent.claude_code.traces.unreadable_dir",
             path=error.filename,
             error=str(error),
         )
@@ -69,7 +69,7 @@ def copy_new_trace_files(
             except (PermissionError, OSError) as error:
                 skipped += 1
                 logger.warning(
-                    "agent.claude_code.traces.skip_file",
+                    "agent.claude_code.traces.unreadable_file",
                     path=str(source),
                     error=str(error),
                 )

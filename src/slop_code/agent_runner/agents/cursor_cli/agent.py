@@ -230,7 +230,6 @@ class CursorCliAgent(Agent):
                 "HOME": HOME_PATH,
             },
             image=self._image,
-            user="agent",
             disable_setup=True,
         )
 

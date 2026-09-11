@@ -108,9 +108,9 @@ container-specific knobs:
   mounts (validated to avoid nesting under `workdir`).
 - `network: str | None` – desired Docker network; reconciled via
   `effective_network_mode()` to account for platform constraints.
-- `user: str | None` – user/group for container processes. Helpers
-  `get_eval_user()` / `get_actual_user()` provide sensible defaults for
-  evaluation vs agent inference contexts.
+- `user: str | None` – user/group for container processes. When unset,
+  `get_container_user()` resolves the invoking host user (`HUID`/`HGID` env
+  vars override) so bind mounts stay writable on both sides.
 - `keep_container_after_clean: bool` – skip container removal so failed runs can
   be inspected manually.
 

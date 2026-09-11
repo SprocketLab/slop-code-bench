@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -371,10 +372,10 @@ class TestDockerExecRuntimeUser:
             )
             assert runtime.user == "custom:user"
 
-    def test_user_for_evaluation(
+    def test_user_defaults_to_host_user(
         self, docker_spec: DockerEnvironmentSpec, tmp_path: Path
     ) -> None:
-        """Evaluation context uses eval user."""
+        """Falling back to the spec resolves the invoking host user."""
         with patch("slop_code.execution.docker_runtime.exec.docker"):
             runtime = DockerExecRuntime(
                 spec=docker_spec,
@@ -387,7 +388,7 @@ class TestDockerExecRuntimeUser:
                 env_vars={},
                 setup_command=None,
             )
-            assert runtime.user == "1000:1000"
+            assert runtime.user == f"{os.getuid()}:{os.getgid()}"
 
 
 class TestDockerExecRuntimeResolvePorts:

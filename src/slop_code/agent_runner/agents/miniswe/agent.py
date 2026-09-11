@@ -550,7 +550,7 @@ class MiniSWEAgent(Agent):
 
             if env_spec.docker.network:
                 run_args.extend(["--network", env_spec.docker.network])
-            user = env_spec.get_actual_user()
+            user = env_spec.get_container_user()
             if user:
                 run_args.extend(["--user", user])
             env_vars = {

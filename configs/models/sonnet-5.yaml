@@ -7,6 +7,8 @@ pricing:
   output: 15
   cache_read: 0.30
   cache_write: 3.75
+# Claude 5 family: adaptive thinking, steered by effort level.
+thinking_style: effort
 aliases:
   - claude-sonnet-5
   - sonnet-5

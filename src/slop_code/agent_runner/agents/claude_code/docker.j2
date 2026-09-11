@@ -14,5 +14,10 @@ ENV XDG_DATA_HOME="$HOME/.local/share"
 RUN npm install -g @anthropic-ai/claude-code@{{version}} @musistudio/claude-code-router && \
     mkdir -p "$HOME/.claude/projects"
 
+# --- Make the agent home usable by any runtime uid ---------------------------
+# Containers run as the host user's uid:gid, not as `agent`, so relax modes
+# on everything installed above.
+RUN chmod -R a+rwX "$HOME"
+
 # --- Default shell ----------------------------------------------------------
 CMD ["claude"]

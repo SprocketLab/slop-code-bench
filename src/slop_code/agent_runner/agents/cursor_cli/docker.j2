@@ -14,5 +14,10 @@ RUN curl https://cursor.com/install -fsS | bash && \
     mkdir -p "$HOME/.cursor" && \
     "$HOME/.local/bin/cursor-agent" --version
 
+# --- Make the agent home usable by any runtime uid ---------------------------
+# Containers run as the host user's uid:gid, not as `agent`, so relax modes
+# on everything installed above.
+RUN chmod -R a+rwX "$HOME"
+
 # --- Default shell ----------------------------------------------------------
 CMD ["cursor-agent"]

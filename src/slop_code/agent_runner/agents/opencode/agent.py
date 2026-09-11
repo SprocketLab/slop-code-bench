@@ -336,7 +336,6 @@ class OpenCodeAgent(Agent):
             env_vars=env_vars,
             disable_setup=True,
             image=self.image,
-            user="1000:1000",
         )
         self.log.debug("Opencode agent has been setup")
 

@@ -666,6 +666,190 @@ class TestKimiCliAgent:
         with pytest.raises(AgentError, match="exit code 143"):
             agent.run("solve task")
 
+    def _crash_then_succeed_agent(
+        self,
+        tmp_path: Path,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+        moonshot_credential: ProviderCredential,
+    ) -> tuple[KimiCliAgent, FakeRuntime]:
+        """Agent whose first invocation dies with exit 143 and no result."""
+        runtime = FakeRuntime()
+        runtime.events = [_finished_event(exit_code=143)]
+        session = FakeSession(
+            runtime=runtime,
+            working_dir=tmp_path / "workspace",
+            spec=SimpleNamespace(type="docker"),
+        )
+        session.working_dir.mkdir()
+        agent = KimiCliAgent(
+            problem_name="demo-problem",
+            verbose=False,
+            image="kimi-image",
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=moonshot_credential,
+            binary="kimi",
+            provider="moonshot",
+            model="kimi-k2-5",
+            timeout=120,
+            extra_args=[],
+            env={},
+            base_url=None,
+            max_context_size=None,
+        )
+        agent.setup(session)
+        with pytest.raises(AgentError, match="exit code 143"):
+            agent.run("solve the original task")
+        return agent, runtime
+
+    def test_retry_resends_original_task_when_workspace_is_empty(
+        self,
+        tmp_path: Path,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+        moonshot_credential: ProviderCredential,
+    ) -> None:
+        agent, runtime = self._crash_then_succeed_agent(
+            tmp_path, mock_cost_limits, mock_pricing, moonshot_credential
+        )
+        runtime.events = [
+            RuntimeEvent(
+                kind="stdout",
+                text='{"jsonrpc":"2.0","id":"1","result":{"status":"ok"}}\n',
+            ),
+            _finished_event(exit_code=0),
+        ]
+
+        agent.retry()
+
+        command = runtime.last_stream_args[0][0]
+        assert "solve the original task" in command
+        assert "Continue from where you left off" not in command
+
+    def test_retry_prefixes_continue_when_workspace_has_files(
+        self,
+        tmp_path: Path,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+        moonshot_credential: ProviderCredential,
+    ) -> None:
+        agent, runtime = self._crash_then_succeed_agent(
+            tmp_path, mock_cost_limits, mock_pricing, moonshot_credential
+        )
+        (agent.session.working_dir / "main.py").write_text("print(1)")
+        runtime.events = [
+            RuntimeEvent(
+                kind="stdout",
+                text='{"jsonrpc":"2.0","id":"1","result":{"status":"ok"}}\n',
+            ),
+            _finished_event(exit_code=0),
+        ]
+
+        agent.retry()
+
+        command = runtime.last_stream_args[0][0]
+        assert "Continue from where you left off" in command
+        assert "solve the original task" in command
+
+    def test_retry_without_a_prior_task_raises(
+        self,
+        tmp_path: Path,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+        moonshot_credential: ProviderCredential,
+    ) -> None:
+        agent, _ = self._crash_then_succeed_agent(
+            tmp_path, mock_cost_limits, mock_pricing, moonshot_credential
+        )
+        agent.reset()
+
+        with pytest.raises(AgentError, match="no task to retry"):
+            agent.retry()
+
+    def test_save_artifacts_keeps_per_attempt_logs(
+        self,
+        tmp_path: Path,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+        moonshot_credential: ProviderCredential,
+    ) -> None:
+        agent, runtime = self._crash_then_succeed_agent(
+            tmp_path, mock_cost_limits, mock_pricing, moonshot_credential
+        )
+        agent._attempts[0].stderr = "kimi: fatal stall"
+        runtime.events = [
+            RuntimeEvent(
+                kind="stdout",
+                text='{"jsonrpc":"2.0","id":"1","result":{"status":"ok"}}\n',
+            ),
+            _finished_event(exit_code=0),
+        ]
+        agent.retry()
+
+        artifact_dir = tmp_path / "agent"
+        agent.save_artifacts(artifact_dir)
+
+        assert (artifact_dir / "stderr.log.attempt0").read_text(
+            encoding="utf-8"
+        ) == "kimi: fatal stall"
+        assert (
+            "solve the original task"
+            in (artifact_dir / "prompt.txt.attempt0").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert (artifact_dir / "stdout.log.attempt1").exists()
+        assert (artifact_dir / "events.jsonl.attempt1").exists()
+        assert (artifact_dir / "stderr.log").read_text(encoding="utf-8") == ""
+
+    def test_save_artifacts_skips_attempt_files_for_single_run(
+        self,
+        tmp_path: Path,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+        moonshot_credential: ProviderCredential,
+    ) -> None:
+        agent, _ = self._crash_then_succeed_agent(
+            tmp_path, mock_cost_limits, mock_pricing, moonshot_credential
+        )
+
+        artifact_dir = tmp_path / "agent"
+        agent.save_artifacts(artifact_dir)
+
+        assert not (artifact_dir / "stdout.log.attempt0").exists()
+
+    def test_command_flags_stdout_close_without_final_result(
+        self,
+        mock_cost_limits: AgentCostLimits,
+        mock_pricing: APIPricing,
+        moonshot_credential: ProviderCredential,
+    ) -> None:
+        agent = KimiCliAgent(
+            problem_name="demo-problem",
+            verbose=False,
+            image="kimi-image",
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=moonshot_credential,
+            binary="kimi",
+            provider="moonshot",
+            model="kimi-k2-5",
+            timeout=120,
+            extra_args=[],
+            env={},
+            base_url=None,
+            max_context_size=None,
+        )
+        command, _ = agent._prepare_runtime_execution("solve task")
+        script = command[-1]
+        assert "saw_result=1" in script
+        assert (
+            'if [ -z "$saw_result" ]; then\n'
+            "  echo \"kimi-cli: stdout closed before a final result was "
+            'received" >&2\nfi' in script
+        )
+
     def test_registry_exposes_kimi_cli(self) -> None:
         data = yaml.safe_load(Path("configs/agents/kimi_cli.yaml").read_text())
         config = build_agent_config(data)

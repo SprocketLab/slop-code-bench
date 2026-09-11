@@ -11,6 +11,7 @@ import typing as tp
 from pathlib import Path
 
 from jinja2 import Template
+from pydantic import BaseModel
 from pydantic import Field
 
 from slop_code.agent_runner.agent import RETRY_PROMPT
@@ -37,6 +38,44 @@ from slop_code.execution import StreamingRuntime
 from slop_code.logging import get_logger
 
 log = get_logger(__name__)
+
+
+class CodexModelProvider(BaseModel):
+    """A custom ``model_providers.<id>`` entry for the Codex CLI.
+
+    Codex only knows OpenAI's own endpoint out of the box. A model routed
+    through a gateway declares ``agent_specific.codex.endpoint``; the endpoint
+    resolves against the credential provider's entry in
+    ``configs/providers.yaml`` and becomes a custom Codex provider named after
+    that credential provider.
+
+    Attributes:
+        provider_id: Codex provider id, also used as its display name.
+        base_url: OpenAI-compatible API base, e.g. ``https://api.portkey.ai/v1``.
+            Codex appends ``/responses`` to it.
+        env_key: Environment variable inside the container holding the API key.
+    """
+
+    provider_id: str
+    base_url: str
+    env_key: str
+
+    def config_args(self) -> list[str]:
+        """Render the ``--config`` flags that register and select the provider."""
+        prefix = f"model_providers.{self.provider_id}"
+        settings = {
+            "model_provider": self.provider_id,
+            f"{prefix}.name": self.provider_id,
+            f"{prefix}.base_url": self.base_url,
+            f"{prefix}.env_key": self.env_key,
+            # "responses" is the only wire_api Codex still supports, and a
+            # curl probe confirms Portkey serves /v1/responses.
+            f"{prefix}.wire_api": "responses",
+        }
+        args: list[str] = []
+        for key, value in settings.items():
+            args.extend(["--config", f'{key}="{value}"'])
+        return args
 
 
 class CodexConfig(AgentConfigBase):
@@ -93,6 +132,7 @@ class CodexAgent(Agent):
         max_thinking_tokens: int | None,
         extra_args: list[str],
         env: dict[str, str],
+        model_provider: CodexModelProvider | None,
     ) -> None:
         super().__init__(
             agent_name="codex",
@@ -111,6 +151,7 @@ class CodexAgent(Agent):
         self.max_thinking_tokens = max_thinking_tokens
         self.extra_args = extra_args
         self.env = env
+        self.model_provider = model_provider
 
         self._image = image
         self._session: Session | None = None
@@ -176,6 +217,35 @@ class CodexAgent(Agent):
             max_thinking_tokens=max_thinking_tokens,
             extra_args=config.extra_args,
             env=config.env,
+            model_provider=cls._build_model_provider(model, credential),
+        )
+
+    @staticmethod
+    def _build_model_provider(
+        model: ModelDefinition,
+        credential: ProviderCredential,
+    ) -> CodexModelProvider | None:
+        """Describe the gateway Codex should talk to, if the model declares one.
+
+        Models without ``agent_specific.codex.endpoint``, or whose credential
+        provider declares no matching endpoint, keep Codex pointed at OpenAI
+        and get ``None`` here.
+        """
+        endpoint = model.get_agent_endpoint(
+            "codex", provider_override=credential.provider
+        )
+        if endpoint is None:
+            return None
+        if endpoint.api_format != "openai":
+            raise ValueError(
+                f"Codex requires an OpenAI-compatible endpoint, but provider "
+                f"{credential.provider!r} declares api_format "
+                f"{endpoint.api_format!r} for model {model.internal_name!r}."
+            )
+        return CodexModelProvider(
+            provider_id=credential.provider,
+            base_url=endpoint.api_base,
+            env_key=credential.destination_key,
         )
 
     @staticmethod
@@ -279,7 +349,6 @@ class CodexAgent(Agent):
                 "HOME": HOME_PATH,
             },
             image=self._image,
-            user="agent",
             disable_setup=True,
         )
 
@@ -586,8 +655,10 @@ class CodexAgent(Agent):
                 "--dangerously-bypass-approvals-and-sandbox",
             ]
         )
+        if self.model_provider is not None:
+            command.extend(self.model_provider.config_args())
         if self.model:
-            command.extend(["--model", self.model])
+            command.extend(["--model", shlex.quote(self.model)])
             if self.model == "gpt-5.2-codex":
                 command.extend(["--config", "model_verbosity='medium'"])
 

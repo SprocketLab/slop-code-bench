@@ -6,6 +6,8 @@ pricing:
   output: 50
   cache_read: 1.0
   cache_write: 12.5
+# Claude 5 family: adaptive thinking, steered by effort level.
+thinking_style: effort
 aliases:
   - claude-fable-5
   - fable-5

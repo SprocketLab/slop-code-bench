@@ -10,6 +10,7 @@ import contextlib
 import queue
 import subprocess
 import threading
+import time
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -35,6 +36,14 @@ if TYPE_CHECKING:
     from docker.models.containers import Container as DockerContainer
 
 logger = get_logger(__name__)
+
+# How long to wait on the output queue before re-checking whether the docker
+# exec process is still alive.
+OUTPUT_POLL_INTERVAL = 0.5
+# How long to keep draining pipes after the docker exec process exited. Past
+# this, a pipe that never reaches EOF (its write end is still held by some
+# process that inherited it) is abandoned instead of blocking forever.
+EXIT_DRAIN_GRACE = 10.0
 
 
 class DockerStreamingRuntime(StreamingRuntime):
@@ -118,9 +127,7 @@ class DockerStreamingRuntime(StreamingRuntime):
         """Get the user to run commands as."""
         if self._user is not None:
             return self._user
-        if self._is_evaluation:
-            return self.spec.get_eval_user()
-        return self.spec.get_actual_user()
+        return self.spec.get_container_user()
 
     def _get_setup_commands(self) -> list[str]:
         """Get list of setup commands to run."""
@@ -383,8 +390,26 @@ class DockerStreamingRuntime(StreamingRuntime):
         stderr_thread.start()
 
         finished_streams = 0
+        exited_at: float | None = None
         while finished_streams < 2:
-            label, payload = output_queue.get()
+            try:
+                label, payload = output_queue.get(timeout=OUTPUT_POLL_INTERVAL)
+            except queue.Empty:
+                if proc.poll() is None:
+                    exited_at = None
+                    continue
+                if exited_at is None:
+                    exited_at = time.monotonic()
+                    continue
+                if time.monotonic() - exited_at < EXIT_DRAIN_GRACE:
+                    continue
+                logger.warning(
+                    "docker exec output pipes still open after process exit; "
+                    "abandoning readers",
+                    exit_code=proc.returncode,
+                    open_streams=2 - finished_streams,
+                )
+                return
             if payload is None:
                 finished_streams += 1
                 continue

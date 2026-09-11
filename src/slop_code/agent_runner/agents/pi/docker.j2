@@ -11,3 +11,8 @@ ENV XDG_DATA_HOME="$HOME/.local/share"
 
 RUN npm install -g @earendil-works/pi-coding-agent@{{ version }} && \
     mkdir -p "$HOME/.pi/agent"
+
+# --- Make the agent home usable by any runtime uid ---------------------------
+# Containers run as the host user's uid:gid, not as `agent`, so relax modes
+# on everything installed above.
+RUN chmod -R a+rwX "$HOME"

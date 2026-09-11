@@ -14,5 +14,10 @@ ENV XDG_DATA_HOME="$HOME/.local/share"
 RUN uv tool install --python 3.13 kimi-cli=={{ version }} && \
     /tmp/agent_home/.local/bin/kimi --version
 
+# --- Make the agent home usable by any runtime uid ---------------------------
+# Containers run as the host user's uid:gid, not as `agent`, so relax modes
+# on everything installed above.
+RUN chmod -R a+rwX "$HOME"
+
 # --- Default shell ----------------------------------------------------------
 CMD ["kimi"]
