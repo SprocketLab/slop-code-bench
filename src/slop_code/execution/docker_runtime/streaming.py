@@ -10,6 +10,7 @@ import contextlib
 import queue
 import subprocess
 import threading
+import time
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -36,6 +37,14 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+# How long to wait on the output queue before re-checking whether the docker
+# exec process is still alive.
+OUTPUT_POLL_INTERVAL = 0.5
+# How long to keep draining pipes after the docker exec process exited. Past
+# this, a pipe that never reaches EOF (its write end is still held by some
+# process that inherited it) is abandoned instead of blocking forever.
+EXIT_DRAIN_GRACE = 10.0
+
 
 class DockerStreamingRuntime(StreamingRuntime):
     """Docker-based streaming runtime for agent execution.
@@ -49,6 +58,7 @@ class DockerStreamingRuntime(StreamingRuntime):
         spec: DockerEnvironmentSpec,
         working_dir: Path,
         static_assets: dict[str, ResolvedStaticAsset],
+        *,
         is_evaluation: bool,
         ports: dict[int, int],
         mounts: dict[str, dict[str, str] | str],
@@ -83,7 +93,7 @@ class DockerStreamingRuntime(StreamingRuntime):
         )
         self.spec = spec
         self.cwd = working_dir
-        self._client = docker.from_env()
+        self._client: docker.DockerClient | None = docker.from_env()
         self._container: DockerContainer | None = None
         self._exit_code: int | None = None
         self._static_assets = static_assets or {}
@@ -101,6 +111,8 @@ class DockerStreamingRuntime(StreamingRuntime):
     @property
     def client(self) -> docker.DockerClient:
         """Get Docker client instance."""
+        if self._client is None:
+            raise SolutionRuntimeError("Docker client is closed")
         return self._client
 
     @property
@@ -115,9 +127,7 @@ class DockerStreamingRuntime(StreamingRuntime):
         """Get the user to run commands as."""
         if self._user is not None:
             return self._user
-        if self._is_evaluation:
-            return self.spec.get_eval_user()
-        return self.spec.get_actual_user()
+        return self.spec.get_container_user()
 
     def _get_setup_commands(self) -> list[str]:
         """Get list of setup commands to run."""
@@ -236,9 +246,15 @@ class DockerStreamingRuntime(StreamingRuntime):
                     verbose=True,
                 )
             else:
-                state = container.attrs.get("State", {})
-                if state.get("Status") == "running":
-                    return container
+                attrs = container.attrs
+                if isinstance(attrs, dict):
+                    state = attrs.get("State", {})
+                    if (
+                        isinstance(state, dict)
+                        and "Status" in state
+                        and state["Status"] == "running"
+                    ):
+                        return container
             logger.debug("Recreating Docker container", verbose=True)
             self._stop_and_remove_container(container)
             self._container = None
@@ -324,7 +340,7 @@ class DockerStreamingRuntime(StreamingRuntime):
             verbose=True,
         )
         try:
-            proc = subprocess.Popen(
+            proc = subprocess.Popen(  # noqa: S603 - command is constructed by this Docker runtime.
                 exec_args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -374,8 +390,26 @@ class DockerStreamingRuntime(StreamingRuntime):
         stderr_thread.start()
 
         finished_streams = 0
+        exited_at: float | None = None
         while finished_streams < 2:
-            label, payload = output_queue.get()
+            try:
+                label, payload = output_queue.get(timeout=OUTPUT_POLL_INTERVAL)
+            except queue.Empty:
+                if proc.poll() is None:
+                    exited_at = None
+                    continue
+                if exited_at is None:
+                    exited_at = time.monotonic()
+                    continue
+                if time.monotonic() - exited_at < EXIT_DRAIN_GRACE:
+                    continue
+                logger.warning(
+                    "docker exec output pipes still open after process exit; "
+                    "abandoning readers",
+                    exit_code=proc.returncode,
+                    open_streams=2 - finished_streams,
+                )
+                return
             if payload is None:
                 finished_streams += 1
                 continue

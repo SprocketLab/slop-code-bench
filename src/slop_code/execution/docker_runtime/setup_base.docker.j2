@@ -98,12 +98,19 @@ ENV PATH="/tmp/agent_home/.cargo/bin:${PATH}"
     ENV {{ key }}={{ value }}
 {% endfor %}
 
-# Create non-root user and workspace
+# Create non-root user and workspace.
+#
+# Containers run as the uid:gid of the host process driving them (see
+# resolve_host_user) so that bind-mounted directories stay writable on both
+# sides. That uid is unknown at build time and is usually not `agent`, so
+# everything the container writes to -- $HOME above all -- is left writable by
+# any uid rather than only by the baked-in `agent` user.
 RUN groupadd -g 1000 agent && \
     useradd -m -u 1000 -g 1000 -d "$HOME" -s /bin/bash agent && \
     (getent group docker >/dev/null || groupadd docker) && \
     usermod -aG docker agent && \
     mkdir -p /workspace && \
-    chown -R agent:agent "$HOME" /workspace
+    chown -R agent:agent "$HOME" /workspace && \
+    chmod -R a+rwX "$HOME" /workspace
 ENV CARGO_HOME=$HOME/.cargo
 ENV RUSTUP_HOME=$HOME/.rustup

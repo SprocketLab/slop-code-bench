@@ -5,11 +5,16 @@ pricing:
   output: 25
   cache_read: 0.5
   cache_write: 6.25
+# Claude 5 family: adaptive thinking, steered by effort level.
+thinking_style: effort
 aliases:
   - claude-opus-5
   - opus-5
 
 agent_specific:
+  claude_code:
+    endpoint: anthropic
+
   mini_swe:
     model_name: anthropic/claude-opus-5
     model_class: litellm
@@ -23,3 +28,6 @@ agent_specific:
 provider_slugs:
   bedrock: anthropic.claude-opus-5
   foundry: claude-opus-5
+  # Portkey model-catalog slug: "@<integration>/<model>", where <integration>
+  # is the provider integration name in your Portkey workspace.
+  portkey: "@anthropic/claude-opus-5"

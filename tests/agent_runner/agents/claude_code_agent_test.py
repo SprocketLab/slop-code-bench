@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
@@ -24,6 +25,7 @@ from slop_code.execution import DockerConfig
 from slop_code.execution import DockerEnvironmentSpec
 from slop_code.execution import Session
 from slop_code.execution import StreamingRuntime
+from slop_code.execution.runtime import RuntimeEvent
 from slop_code.execution.runtime import RuntimeResult
 
 
@@ -76,19 +78,39 @@ class FakeRuntime:
 
     def __init__(self) -> None:
         self.cleaned = False
+        self.streamed_commands: list[str] = []
+
+    def stream(self, command: str, env: dict, timeout: float | None):
+        self.streamed_commands.append(command)
+        yield RuntimeEvent(
+            kind="finished",
+            result=RuntimeResult(
+                exit_code=0,
+                stdout="",
+                stderr="",
+                setup_stdout="",
+                setup_stderr="",
+                elapsed=0.0,
+                timed_out=False,
+            ),
+        )
 
     def cleanup(self) -> None:
         self.cleaned = True
 
 
 class FakeLogger:
-    """Capture debug logs for assertions."""
+    """Capture debug and warning logs for assertions."""
 
     def __init__(self) -> None:
         self.debug_calls: list[tuple[str, dict]] = []
+        self.warning_calls: list[tuple[str, dict]] = []
 
     def debug(self, event: str, **kwargs: object) -> None:
         self.debug_calls.append((event, kwargs))
+
+    def warning(self, event: str, **kwargs: object) -> None:
+        self.warning_calls.append((event, kwargs))
 
 
 @dataclass
@@ -149,6 +171,128 @@ class TestClaudeCodeConfig:
 
 class TestClaudeCodeAgent:
     """Tests for ClaudeCodeAgent."""
+
+    def test_run_relaxes_permissions_on_mounted_claude_home(
+        self,
+        tmp_path,
+        monkeypatch,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+    ):
+        """The container widens modes on its Claude home after the CLI run."""
+        runtime = FakeRuntime()
+        agent = ClaudeCodeAgent(
+            problem_name="test-problem",
+            image="test-image",
+            verbose=False,
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=mock_credential,
+            binary="claude",
+            model="claude-test",
+            timeout=None,
+            settings={},
+            env={},
+            extra_args=[],
+            append_system_prompt=None,
+            allowed_tools=[],
+            disallowed_tools=[],
+            permission_mode=None,
+            base_url=None,
+            thinking=None,
+            max_thinking_tokens=None,
+            max_output_tokens=None,
+        )
+        agent._runtime = cast("StreamingRuntime", runtime)  # noqa: SLF001
+        agent._trace_dir = tmp_path  # noqa: SLF001
+
+        def fake_stream_cli_command(**_: object):
+            yield RuntimeResult(
+                exit_code=0,
+                stdout="",
+                stderr="",
+                setup_stdout="",
+                setup_stderr="",
+                elapsed=1.0,
+                timed_out=False,
+            )
+
+        monkeypatch.setattr(
+            "slop_code.agent_runner.agents.claude_code.agent.stream_cli_command",
+            fake_stream_cli_command,
+        )
+
+        agent._run("claude", {})  # noqa: SLF001
+
+        assert runtime.streamed_commands == [
+            f"chmod -R a+rwX {HOME_PATH}/.claude"
+        ]
+
+    @pytest.mark.skipif(
+        os.geteuid() == 0,
+        reason="root bypasses file permission checks",
+    )
+    def test_save_traces_skips_unreadable_files(
+        self,
+        tmp_path,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+    ):
+        """Unreadable trace files are skipped instead of failing the save."""
+        agent = ClaudeCodeAgent(
+            problem_name="test-problem",
+            image="test-image",
+            verbose=False,
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=mock_credential,
+            binary="claude",
+            model="claude-test",
+            timeout=None,
+            settings={},
+            env={},
+            extra_args=[],
+            append_system_prompt=None,
+            allowed_tools=[],
+            disallowed_tools=[],
+            permission_mode=None,
+            base_url=None,
+            thinking=None,
+            max_thinking_tokens=None,
+            max_output_tokens=None,
+        )
+        logger = FakeLogger()
+        agent.log = logger
+
+        trace_dir = tmp_path / "claude_home"
+        project_dir = trace_dir / "projects" / "-workspace"
+        project_dir.mkdir(parents=True, exist_ok=True)
+        readable = project_dir / "readable.jsonl"
+        readable.write_text('{"type":"system"}\n')
+        unreadable = project_dir / "unreadable.jsonl"
+        unreadable.write_text('{"type":"system"}\n')
+        unreadable.chmod(0o000)
+        agent._trace_dir = trace_dir  # noqa: SLF001
+
+        output_dir = tmp_path / "artifacts"
+        agent._save_claude_traces(output_dir)  # noqa: SLF001
+
+        assert (
+            output_dir / "workspace" / "projects" / "-workspace" / "readable.jsonl"
+        ).exists()
+        assert not (
+            output_dir
+            / "workspace"
+            / "projects"
+            / "-workspace"
+            / "unreadable.jsonl"
+        ).exists()
+        assert any(
+            event == "agent.claude_code.traces.unreadable_file"
+            for event, _ in logger.warning_calls
+        )
 
     def test_save_artifacts_copies_claude_traces(
         self,
@@ -394,6 +538,102 @@ class TestClaudeCodeAgent:
         )
         assert saved_new_trace.exists()
         assert saved_new_trace.read_text() == second_trace.read_text()
+
+    def test_save_claude_traces_skips_unreadable_subdir(
+        self,
+        tmp_path,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+    ):
+        """Unreadable subdirs under the trace root must not raise."""
+        agent = ClaudeCodeAgent(
+            problem_name="test-problem",
+            image="test-image",
+            verbose=False,
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=mock_credential,
+            binary="claude",
+            model="claude-test",
+            timeout=None,
+            settings={},
+            env={},
+            extra_args=[],
+            append_system_prompt=None,
+            allowed_tools=[],
+            disallowed_tools=[],
+            permission_mode=None,
+            base_url=None,
+            thinking=None,
+            max_thinking_tokens=None,
+            max_output_tokens=None,
+        )
+        logger = FakeLogger()
+        agent.log = logger
+
+        trace_dir = tmp_path / "claude_home"
+        readable = trace_dir / "projects" / "-workspace" / "trace.jsonl"
+        readable.parent.mkdir(parents=True, exist_ok=True)
+        readable.write_text('{"type":"system","subtype":"init"}\n')
+        locked_dir = trace_dir / "projects" / "-workspace" / "locked"
+        locked_dir.mkdir(parents=True, exist_ok=True)
+        (locked_dir / "secret.jsonl").write_text("nope")
+        agent._trace_dir = trace_dir
+
+        locked_dir.chmod(0o000)
+        try:
+            output_dir = tmp_path / "artifacts"
+            agent._save_claude_traces(output_dir)
+        finally:
+            locked_dir.chmod(0o700)
+
+        saved_trace = (
+            output_dir / "workspace" / "projects" / "-workspace" / "trace.jsonl"
+        )
+        assert saved_trace.exists()
+        assert any(
+            event == "agent.claude_code.traces.unreadable_dir"
+            for event, _ in logger.warning_calls
+        )
+
+    def test_prepare_runtime_execution_traps_claude_home_chmod(
+        self,
+        tmp_path,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+    ):
+        """The shell command must trap EXIT to relax ~/.claude perms."""
+        agent = ClaudeCodeAgent(
+            problem_name="test-problem",
+            image="test-image",
+            verbose=False,
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=mock_credential,
+            binary="claude",
+            model="claude-test",
+            timeout=None,
+            settings={},
+            env={},
+            extra_args=[],
+            append_system_prompt=None,
+            allowed_tools=[],
+            disallowed_tools=[],
+            permission_mode=None,
+            base_url=None,
+            thinking=None,
+            max_thinking_tokens=None,
+            max_output_tokens=None,
+        )
+
+        command_str, _env = agent._prepare_runtime_execution("hello task")
+
+        assert isinstance(command_str, str)
+        assert "trap" in command_str
+        assert 'chmod -R u+rwX "$HOME/.claude"' in command_str
+        assert command_str.index("trap") < command_str.index("claude")
 
     def test_prepare_mounts_includes_max_output_tokens_in_settings(
         self,
@@ -680,6 +920,199 @@ class TestClaudeCodeAgent:
         assert isinstance(agent, ClaudeCodeAgent)
         assert agent.env["ANTHROPIC_DEFAULT_OPUS_MODEL"] == "z-ai/glm-5"
         assert agent.env["ANTHROPIC_DEFAULT_SONNET_MODEL"] == "z-ai/glm-4.7"
+
+
+class TestThinkingConfiguration:
+    """Tests for how thinking presets become Claude Code env vars."""
+
+    @staticmethod
+    def _make_model(
+        pricing: APIPricing,
+        thinking_style: str,
+        **thinking: object,
+    ) -> ModelDefinition:
+        return ModelDefinition(
+            internal_name="claude-test-5",
+            provider="anthropic",
+            pricing=pricing,
+            thinking_style=thinking_style,
+            **thinking,
+        )
+
+    def _make_agent(
+        self,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+        model: ModelDefinition,
+        thinking_preset=None,
+        thinking_max_tokens=None,
+    ) -> ClaudeCodeAgent:
+        config = ClaudeCodeConfig(
+            type="claude_code",
+            version="2.0.51",
+            cost_limits=mock_cost_limits,
+        )
+        agent = ClaudeCodeAgent._from_config(
+            config=config,
+            model=model,
+            credential=mock_credential,
+            problem_name="test-problem",
+            verbose=False,
+            image="test-image",
+            thinking_preset=thinking_preset,
+            thinking_max_tokens=thinking_max_tokens,
+        )
+        assert isinstance(agent, ClaudeCodeAgent)
+        return agent
+
+    @pytest.mark.parametrize("preset", ["low", "medium", "high", "xhigh"])
+    def test_effort_model_sets_effort_level_only(
+        self,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+        preset,
+    ):
+        agent = self._make_agent(
+            mock_cost_limits,
+            mock_pricing,
+            mock_credential,
+            self._make_model(mock_pricing, "effort"),
+            thinking_preset=preset,
+        )
+
+        _, env = agent._prepare_runtime_execution("task")
+
+        assert env["CLAUDE_CODE_EFFORT_LEVEL"] == preset
+        assert "MAX_THINKING_TOKENS" not in env
+
+    @pytest.mark.parametrize("preset", [None, "none"])
+    def test_effort_model_without_preset_sets_nothing(
+        self,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+        preset,
+    ):
+        agent = self._make_agent(
+            mock_cost_limits,
+            mock_pricing,
+            mock_credential,
+            self._make_model(mock_pricing, "effort"),
+            thinking_preset=preset,
+        )
+
+        _, env = agent._prepare_runtime_execution("task")
+
+        assert "CLAUDE_CODE_EFFORT_LEVEL" not in env
+        assert "MAX_THINKING_TOKENS" not in env
+
+    def test_effort_model_uses_model_default_preset(
+        self,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+    ):
+        model = self._make_model(mock_pricing, "effort", thinking="high")
+        agent = self._make_agent(
+            mock_cost_limits, mock_pricing, mock_credential, model
+        )
+
+        _, env = agent._prepare_runtime_execution("task")
+
+        assert env["CLAUDE_CODE_EFFORT_LEVEL"] == "high"
+        assert "MAX_THINKING_TOKENS" not in env
+
+    def test_effort_model_rejects_max_thinking_tokens(
+        self,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+    ):
+        with pytest.raises(ValueError, match="rejects a thinking token budget"):
+            self._make_agent(
+                mock_cost_limits,
+                mock_pricing,
+                mock_credential,
+                self._make_model(mock_pricing, "effort"),
+                thinking_max_tokens=12_000,
+            )
+
+    def test_effort_model_rejects_disabled_thinking(
+        self,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+    ):
+        with pytest.raises(ValueError, match="cannot disable thinking"):
+            self._make_agent(
+                mock_cost_limits,
+                mock_pricing,
+                mock_credential,
+                self._make_model(mock_pricing, "effort"),
+                thinking_preset="disabled",
+            )
+
+    def test_model_definition_rejects_effort_with_token_budget(
+        self, mock_pricing
+    ):
+        with pytest.raises(
+            ValueError, match="cannot take a thinking token budget"
+        ):
+            self._make_model(mock_pricing, "effort", max_thinking_tokens=8000)
+
+    def test_budget_model_sets_token_budget(
+        self,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+    ):
+        agent = self._make_agent(
+            mock_cost_limits,
+            mock_pricing,
+            mock_credential,
+            self._make_model(mock_pricing, "budget"),
+            thinking_preset="high",
+        )
+
+        _, env = agent._prepare_runtime_execution("task")
+
+        assert env["MAX_THINKING_TOKENS"] == "31999"
+        assert env["CLAUDE_CODE_EFFORT_LEVEL"] == "high"
+
+    def test_budget_model_disabled_preset_zeroes_budget(
+        self,
+        mock_cost_limits,
+        mock_pricing,
+        mock_credential,
+    ):
+        agent = self._make_agent(
+            mock_cost_limits,
+            mock_pricing,
+            mock_credential,
+            self._make_model(mock_pricing, "budget"),
+            thinking_preset="disabled",
+        )
+
+        _, env = agent._prepare_runtime_execution("task")
+
+        assert env["MAX_THINKING_TOKENS"] == "0"
+        assert "CLAUDE_CODE_EFFORT_LEVEL" not in env
+
+    def test_budget_is_the_default_style(self, mock_pricing):
+        model = ModelDefinition(
+            internal_name="claude-test-4-5",
+            provider="anthropic",
+            pricing=mock_pricing,
+        )
+        assert model.thinking_style == "budget"
+
+    @pytest.mark.parametrize("name", ["opus-5", "sonnet-5", "fable-5"])
+    def test_claude_5_configs_declare_effort_style(self, name):
+        model = ModelCatalog.get(name)
+        assert model is not None
+        assert model.thinking_style == "effort"
 
 
 class TestParseLineErrorHandling:
@@ -1623,3 +2056,103 @@ class TestOpenRouterMode:
         assert env["ANTHROPIC_API_KEY"] == ""
         assert env["ANTHROPIC_BASE_URL"] == "https://openrouter.ai/api"
         assert env["ANTHROPIC_DEFAULT_OPUS_MODEL"] == "z-ai/glm-5"
+
+
+class TestStreamMessageShapes:
+    """Claude Code 2.1.251 streams payloads whose message is not a dict.
+
+    The permission_denied case is a real line from an Opus 5 run: a safety
+    check blocked `cd /tmp/x && rm -rf *`, and the old parser crashed on it.
+    """
+
+    @pytest.fixture
+    def agent(self, mock_cost_limits, mock_pricing, mock_credential):
+        agent = ClaudeCodeAgent(
+            problem_name="test-problem",
+            image="test-image",
+            verbose=False,
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=mock_credential,
+            binary="claude",
+            model="claude-test",
+            timeout=None,
+            settings={},
+            env={},
+            extra_args=[],
+            append_system_prompt=None,
+            allowed_tools=[],
+            disallowed_tools=[],
+            permission_mode=None,
+            base_url=None,
+            thinking=None,
+            max_thinking_tokens=None,
+            max_output_tokens=None,
+        )
+        agent._runtime = cast("StreamingRuntime", FakeRuntime())  # noqa: SLF001
+        return agent
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {
+                "type": "system",
+                "subtype": "permission_denied",
+                "tool_name": "Bash",
+                "tool_use_id": "toolu_01MmLuZ88wmSt44XiMhns7FV",
+                "decision_reason_type": "safetyCheck",
+                "decision_reason": "Dangerous rm operation on "
+                "statically-unresolvable target: /workspace/*",
+                "message": "Dangerous rm operation detected: '/workspace/*'",
+            },
+            {"type": "system", "subtype": "init"},
+            {"type": "system", "message": None},
+            {"type": "system", "message": ["not", "a", "dict"]},
+            {
+                "type": "user",
+                "message": {"role": "user", "content": "the text"},
+            },
+            {"type": "user", "message": {"role": "user", "content": None}},
+        ],
+        ids=[
+            "permission-denied-string-message",
+            "absent-message",
+            "null-message",
+            "list-message",
+            "string-content-containing-text",
+            "null-content",
+        ],
+    )
+    def test_run_survives_payload_and_still_records_result(
+        self, monkeypatch, agent, payload
+    ):
+        result = {
+            "type": "result",
+            "total_cost_usd": 0.5,
+            "usage": {"input_tokens": 2, "output_tokens": 30},
+        }
+
+        def fake_stream_cli_command(*, parser, **_: object):
+            for line in (json.dumps(payload), json.dumps(result)):
+                yield parser(line)
+            yield RuntimeResult(
+                exit_code=0,
+                stdout="",
+                stderr="",
+                setup_stdout="",
+                setup_stderr="",
+                elapsed=1.0,
+                timed_out=False,
+            )
+
+        monkeypatch.setattr(
+            "slop_code.agent_runner.agents.claude_code.agent.stream_cli_command",
+            fake_stream_cli_command,
+        )
+
+        final = agent._run("claude", {})  # noqa: SLF001
+
+        assert final is not None
+        assert final.exit_code == 0
+        assert agent.steps == [payload, result]
+        assert agent.usage.cost == 0.5

@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: uv run ruff check .
+        language: system
+        pass_filenames: false
+      - id: ty
+        name: ty
+        entry: uv run ty check
+        language: system
+        pass_filenames: false
+      - id: vulture
+        name: vulture
+        entry: uv run vulture src tests scripts --min-confidence 80
+        language: system
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        pass_filenames: false

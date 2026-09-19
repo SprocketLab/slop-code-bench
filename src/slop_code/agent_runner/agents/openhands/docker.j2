@@ -4,7 +4,7 @@ USER root
 
 # Create OpenHands directories outside the workspace mount.
 RUN mkdir -p /openhands /opt/openhands-venv && \
-    chown -R 1000:1000 /openhands /opt/openhands-venv
+    chown -R agent:agent /openhands /opt/openhands-venv
 
 # Install tmux (needed by OpenHands)
 RUN apt-get update && apt-get install -y tmux && rm -rf /var/lib/apt/lists/*
@@ -14,6 +14,10 @@ RUN uv venv /opt/openhands-venv --python 3.13 && \
     uv pip install --python /opt/openhands-venv/bin/python --prerelease=allow openhands-ai=={{ version }} \
         ipykernel jupyterlab notebook jupyter \
         jupyter-console jupyter-client nbconvert
+
+# Containers run as the host user's uid:gid, not as `agent`, so relax modes
+# on everything installed above.
+RUN chmod -R a+rwX "$HOME" /openhands /opt/openhands-venv
 
 USER agent
 WORKDIR /workspace

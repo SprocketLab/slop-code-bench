@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from slop_code.metrics.languages.python.parser import get_python_parser
 from slop_code.metrics.languages.python.symbols import _get_block_child
 from slop_code.metrics.languages.python.symbols import _get_name_from_node
+from slop_code.metrics.languages.python.symbols import _node_text
 from slop_code.metrics.languages.python.utils import read_python_code
 from slop_code.metrics.models import SingleUseFunction
 from slop_code.metrics.models import SingleUseVariable
@@ -32,11 +33,11 @@ def _find_call_sites(root: Node) -> dict[str, list[int]]:
                 func = current.named_children[0]
             name: str | None = None
             if func and func.type == "identifier":
-                name = func.text.decode("utf-8")
+                name = _node_text(func)
             elif func and func.type == "attribute":
                 attr_child = func.child_by_field_name("attribute")
                 if attr_child and attr_child.type == "identifier":
-                    name = attr_child.text.decode("utf-8")
+                    name = _node_text(attr_child)
             if name:
                 call_sites.setdefault(name, []).append(
                     current.start_point[0] + 1
@@ -88,12 +89,12 @@ def _callee_name(call: Node) -> str | None:
     if not func:
         return None
     if func.type == "identifier":
-        return func.text.decode("utf-8")
+        return _node_text(func)
     if func.type == "attribute":
         # your current behavior: last attribute only (foo.bar -> "bar")
         attr = func.child_by_field_name("attribute")
         if attr and attr.type == "identifier":
-            return attr.text.decode("utf-8")
+            return _node_text(attr)
     return None
 
 
@@ -153,7 +154,7 @@ def _extract_parameter_names(func_node: Node) -> set[str]:
         return names
     for child in params_node.named_children:
         if child.type == "identifier":
-            names.add(child.text.decode("utf-8"))
+            names.add(_node_text(child))
         elif child.type in {
             "typed_parameter",
             "default_parameter",
@@ -166,11 +167,11 @@ def _extract_parameter_names(func_node: Node) -> set[str]:
                         name_node = subchild
                         break
             if name_node:
-                names.add(name_node.text.decode("utf-8"))
+                names.add(_node_text(name_node))
         elif child.type in {"list_splat_pattern", "dictionary_splat_pattern"}:
             for subchild in child.children:
                 if subchild.type == "identifier":
-                    names.add(subchild.text.decode("utf-8"))
+                    names.add(_node_text(subchild))
                     break
     return names
 
@@ -186,38 +187,69 @@ def _count_variable_occurrences(
     # {name: [def_count, use_count, first_def_line]}
     counts: dict[str, list[int]] = {}
 
-    stack: list[tuple[Node, bool]] = [(block, False)]
+    # When ``block`` is a decorated definition, the decorators belong to the
+    # enclosing scope but the definition they wrap is the scope being counted.
+    scope_ids = {block.id}
+    if block.type == "decorated_definition":
+        wrapped = block.child_by_field_name("definition")
+        if wrapped is not None:
+            scope_ids.add(wrapped.id)
+
+    # (node, is an assignment target, binds names in the counted block)
+    stack: list[tuple[Node, bool, bool]] = [(block, False, True)]
     while stack:
-        current, in_target = stack.pop()
+        current, in_target, binds = stack.pop()
+
+        if current.type == "class_definition" and current.id not in scope_ids:
+            # A class body is its own scope, so its assignments bind class
+            # attributes rather than names of the block being counted. What it
+            # reads — bases, decorators, annotations, values, method bodies —
+            # still comes from the enclosing scope, so walk it bind-free.
+            for child in reversed(current.children):
+                stack.append((child, False, False))
+            continue
 
         if current.type in _ASSIGNMENT_TYPES:
             target = current.child_by_field_name("left")
             if target is None:
                 target = current.child_by_field_name("target")
             if target:
-                stack.append((target, True))
+                stack.append((target, True, binds))
             value = current.child_by_field_name("right")
             if value is None:
                 value = current.child_by_field_name("value")
             if value:
-                stack.append((value, False))
+                stack.append((value, False, binds))
             type_node = current.child_by_field_name("type")
             if type_node:
-                stack.append((type_node, False))
+                stack.append((type_node, False, binds))
+            continue
+
+        if current.type == "attribute":
+            # ``obj.attr`` reads ``obj``; ``attr`` is never a local binding.
+            obj = current.child_by_field_name("object")
+            if obj is not None:
+                stack.append((obj, False, binds))
+            continue
+
+        if current.type == "subscript":
+            # ``d[k] = v`` reads ``d`` and ``k``; it binds nothing.
+            for child in reversed(current.children):
+                stack.append((child, False, binds))
             continue
 
         if current.type == "identifier":
-            name = current.text.decode("utf-8")
+            name = _node_text(current)
             if name not in counts:
                 counts[name] = [0, 0, current.start_point[0] + 1]
-            if in_target:
+            if in_target and binds:
                 counts[name][0] += 1
                 counts[name][2] = current.start_point[0] + 1
             else:
                 counts[name][1] += 1
         else:
             for child in reversed(current.children):
-                stack.append((child, in_target))
+                stack.append((child, in_target, binds))
 
     return {n: (c[0], c[1], c[2]) for n, c in counts.items()}
 
@@ -296,7 +328,7 @@ def _find_single_use_variables(
                 continue
 
             if current.type == "identifier":
-                name = current.text.decode("utf-8")
+                name = _node_text(current)
                 if name not in module_counts:
                     module_counts[name] = [0, 0, current.start_point[0] + 1]
                 if in_target:
@@ -383,8 +415,19 @@ def _find_unused_variables(
                     sub_stack.append((type_node, False))
                 continue
 
+            if current.type == "attribute":
+                obj = current.child_by_field_name("object")
+                if obj is not None:
+                    sub_stack.append((obj, False))
+                continue
+
+            if current.type == "subscript":
+                for ch in reversed(current.children):
+                    sub_stack.append((ch, False))
+                continue
+
             if current.type == "identifier":
-                name = current.text.decode("utf-8")
+                name = _node_text(current)
                 if name not in module_counts:
                     module_counts[name] = [0, 0, current.start_point[0] + 1]
                 if in_target:
@@ -396,8 +439,26 @@ def _find_unused_variables(
                 for ch in reversed(current.children):
                     sub_stack.append((ch, in_target))
 
+    # Module names read inside function or class bodies are not unused. Only
+    # actual reads exempt a module binding, so an attribute name or a nested
+    # name that is merely assigned no longer hides a dead one. A nested name
+    # that is both assigned and read still does, as does one matching a
+    # parameter or keyword-argument name, since those identifiers count as
+    # reads of the definition being scanned; scope analysis is out of scope.
+    nested_reads: set[str] = set()
+    for child in root.children:
+        if child.type not in {
+            "function_definition",
+            "class_definition",
+            "decorated_definition",
+        }:
+            continue
+        for name, (_, uses, _) in _count_variable_occurrences(child).items():
+            if uses:
+                nested_reads.add(name)
+
     for var_name, (defs, uses, def_line) in module_counts.items():
-        if var_name in _IGNORED_VARIABLE_NAMES:
+        if var_name in _IGNORED_VARIABLE_NAMES or var_name in nested_reads:
             continue
         if defs >= 1 and uses == 0:
             results.append(

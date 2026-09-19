@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import os
+import threading
 from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
 
+from slop_code.execution.docker_runtime import streaming
 from slop_code.execution.docker_runtime.models import DockerConfig
 from slop_code.execution.docker_runtime.models import DockerEnvironmentSpec
 from slop_code.execution.docker_runtime.streaming import DockerStreamingRuntime
@@ -171,10 +174,10 @@ class TestDockerStreamingRuntimeUser:
             )
             assert runtime.user == "custom:user"
 
-    def test_user_for_evaluation(
+    def test_user_defaults_to_host_user(
         self, docker_spec: DockerEnvironmentSpec, tmp_path: Path
     ) -> None:
-        """Evaluation context uses eval user."""
+        """Falling back to the spec resolves the invoking host user."""
         with patch("slop_code.execution.docker_runtime.streaming.docker"):
             runtime = DockerStreamingRuntime(
                 spec=docker_spec,
@@ -186,7 +189,7 @@ class TestDockerStreamingRuntimeUser:
                 env_vars={},
                 setup_command=None,
             )
-            assert runtime.user == "1000:1000"
+            assert runtime.user == f"{os.getuid()}:{os.getgid()}"
 
 
 class TestDockerStreamingRuntimeContainer:
@@ -304,6 +307,57 @@ class TestDockerStreamingRuntimePoll:
                 setup_command=None,
             )
             assert runtime.poll() is None
+
+
+class TestDockerStreamingRuntimeExecOutput:
+    """Tests for draining docker exec pipes."""
+
+    def test_iter_exec_output_stops_when_pipes_outlive_process(
+        self,
+        docker_spec: DockerEnvironmentSpec,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Pipes that never reach EOF are abandoned once the process exits."""
+        monkeypatch.setattr(streaming, "OUTPUT_POLL_INTERVAL", 0.05)
+        monkeypatch.setattr(streaming, "EXIT_DRAIN_GRACE", 0.2)
+        release = threading.Event()
+
+        class BlockingPipe:
+            def read1(self, _size: int) -> bytes:
+                release.wait()
+                return b""
+
+        proc = MagicMock()
+        proc.stdout = BlockingPipe()
+        proc.stderr = BlockingPipe()
+        proc.poll.return_value = 0
+        proc.returncode = 0
+
+        with patch("slop_code.execution.docker_runtime.streaming.docker"):
+            runtime = DockerStreamingRuntime(
+                spec=docker_spec,
+                working_dir=tmp_path,
+                static_assets={},
+                is_evaluation=False,
+                ports={},
+                mounts={},
+                env_vars={},
+                setup_command=None,
+            )
+
+            chunks: list[tuple[bytes | str, bytes | str]] = []
+
+            def drain() -> None:
+                chunks.extend(runtime._iter_exec_output(proc))
+
+            thread = threading.Thread(target=drain, daemon=True)
+            thread.start()
+            thread.join(timeout=10.0)
+            release.set()
+
+            assert not thread.is_alive(), "exec output iteration never ended"
+            assert chunks == []
 
 
 class TestDockerStreamingRuntimeKill:
@@ -469,6 +523,7 @@ class TestDockerStreamingRuntimeIntegration:
         try:
             events = list(runtime.stream("exit 42", env={}, timeout=30))
             finished = events[-1]
+            assert finished.result is not None
             assert finished.result.exit_code == 42
         finally:
             runtime.cleanup()
@@ -559,6 +614,7 @@ class TestDockerStreamingRuntimeIntegration:
         try:
             events = list(runtime.stream("sleep 60", env={}, timeout=1))
             finished = events[-1]
+            assert finished.result is not None
             assert finished.result.timed_out is True
         finally:
             runtime.cleanup()

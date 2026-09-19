@@ -1,0 +1,41 @@
+# Reasoning model; spends heavily on reasoning tokens, so claude_code gets a
+# large output cap. Accessed via OpenRouter (directly or through Portkey).
+internal_name: kimi-k3
+provider: openrouter
+pricing:
+  input: 3.00
+  output: 15.00
+  cache_read: 0.30
+  cache_write: 0
+aliases:
+  - moonshotai/kimi-k3
+
+provider_slugs:
+  openrouter: moonshotai/kimi-k3
+  # Portkey model-catalog slug: "@<integration>/<model>", where <integration>
+  # is the provider integration name in your Portkey workspace.
+  portkey: "@openrouter/moonshotai/kimi-k3"
+
+agent_specific:
+  claude_code:
+    endpoint: anthropic
+    env_overrides:
+      CLAUDE_CODE_MAX_OUTPUT_TOKENS: "65536"
+
+  opencode:
+    provider_name: openrouter
+
+  # litellm openai-compatible route through the Portkey gateway; the endpoint
+  # resolves the api_base from the credential provider (portkey -> /v1).
+  mini_swe:
+    model_class: litellm
+    model_name: openai/@openrouter/moonshotai/kimi-k3
+    endpoint: openai
+
+  # pi has no built-in Portkey provider, so the endpoint below is written to
+  # models.json as a custom OpenAI-compatible provider.
+  pi:
+    endpoint: openai
+    reasoning: true
+    context_window: 262144
+    max_tokens: 65536

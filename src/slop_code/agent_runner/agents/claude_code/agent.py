@@ -17,6 +17,12 @@ from pydantic import JsonValue
 from slop_code.agent_runner.agent import RETRY_PROMPT
 from slop_code.agent_runner.agent import Agent
 from slop_code.agent_runner.agent import AgentConfigBase
+from slop_code.agent_runner.agents.claude_code.traces import (
+    copy_new_trace_files,
+)
+from slop_code.agent_runner.agents.claude_code.traces import (
+    wrap_command_with_trace_cleanup,
+)
 from slop_code.agent_runner.agents.cli_utils import AgentCommandResult
 from slop_code.agent_runner.agents.cli_utils import stream_cli_command
 from slop_code.agent_runner.agents.utils import HOME_PATH
@@ -30,6 +36,7 @@ from slop_code.common import mask_sensitive_values
 from slop_code.common.llms import APIPricing
 from slop_code.common.llms import ModelDefinition
 from slop_code.common.llms import ThinkingPreset
+from slop_code.common.llms import ThinkingStyle
 from slop_code.common.llms import TokenUsage
 from slop_code.execution import DockerEnvironmentSpec
 from slop_code.execution import EnvironmentSpec
@@ -47,7 +54,11 @@ _THINKING_TOKEN_MAP: dict[str, int] = {
     "high": 31999,
     "xhigh": 31999,
 }
-_CLAUDE_WORKSPACE_PROJECT = Path("projects") / "-workspace"
+_EFFORT_LEVELS: frozenset[str] = frozenset(
+    {"low", "medium", "high", "xhigh"}
+)
+_CLAUDE_HOME_CONTAINER_PATH = f"{HOME_PATH}/.claude"
+_PERMISSION_FIX_TIMEOUT = 60.0
 
 
 def _format_command_for_logging(
@@ -175,6 +186,7 @@ class ClaudeCodeAgent(Agent):
         max_thinking_tokens: int | None,
         max_output_tokens: int | None,
         *,
+        thinking_style: ThinkingStyle = "budget",
         bedrock: bool = False,
         foundry: bool = False,
     ) -> None:
@@ -201,6 +213,7 @@ class ClaudeCodeAgent(Agent):
         self.base_url = base_url
         self.thinking = thinking
         self.max_thinking_tokens = max_thinking_tokens
+        self.thinking_style = thinking_style
         self.max_output_tokens = max_output_tokens
         self._bedrock = bedrock
         self._foundry = foundry
@@ -285,6 +298,22 @@ class ClaudeCodeAgent(Agent):
                 "claude_code"
             )
 
+        if model.thinking_style == "effort":
+            if max_thinking_tokens is not None:
+                raise ValueError(
+                    f"Model '{model.name or model.internal_name}' controls "
+                    "thinking with an effort level and rejects a thinking token "
+                    "budget. Use a thinking preset "
+                    f"({'/'.join(sorted(_EFFORT_LEVELS))}) instead of "
+                    "max_thinking_tokens."
+                )
+            if thinking == "disabled":
+                raise ValueError(
+                    f"Model '{model.name or model.internal_name}' controls "
+                    "thinking with an effort level and cannot disable thinking. "
+                    "Use 'none' to leave the Claude Code default in place."
+                )
+
         return cls(
             problem_name=problem_name,
             image=image,
@@ -305,6 +334,7 @@ class ClaudeCodeAgent(Agent):
             base_url=base_url,
             thinking=thinking,
             max_thinking_tokens=max_thinking_tokens,
+            thinking_style=model.thinking_style,
             max_output_tokens=config.max_output_tokens,
             bedrock=credential.provider == "bedrock",
             foundry=credential.provider == "foundry",
@@ -611,9 +641,14 @@ class ClaudeCodeAgent(Agent):
 
             if payload is None:
                 continue
-            msg_id = payload.get("message", {}).get("id", None)
-            content = payload.get("message", {}).get("content", {})
-            if "text" in content:
+            # Claude Code >= 2.1.2xx emits some payloads whose "message" is a
+            # plain string (or absent); only dict messages carry id/content.
+            message = payload.get("message")
+            if not isinstance(message, dict):
+                message = {}
+            msg_id = message.get("id")
+            content = message.get("content", {})
+            if isinstance(content, dict) and "text" in content:
                 content = content["text"]
             else:
                 content = json.dumps(content, ensure_ascii=False)
@@ -663,13 +698,47 @@ class ClaudeCodeAgent(Agent):
                 self.usage.net_tokens += tokens
                 added_msg_ids.add(msg_id)
             self.steps.append(payload)
+        self._relax_claude_home_permissions()
         return final_result
+
+    def _relax_claude_home_permissions(self) -> None:
+        """Widen modes on the mounted Claude home from inside the container.
+
+        The container normally runs as the host user's uid, so the traces are
+        already readable outside. This is the safety net for the cases where it
+        does not: an environment spec pinning ``docker.user`` to some other id,
+        or a container the CLI itself dropped privileges in. Whatever the CLI
+        wrote is then owned by that other uid, often with owner-only modes, and
+        the host can neither copy the traces out nor delete the temporary
+        directory backing the mount. Only the owner can relax those modes, so
+        it has to happen inside the container while it is still running.
+        """
+        if self._trace_dir is None:
+            return
+        command = f"chmod -R a+rwX {shlex.quote(_CLAUDE_HOME_CONTAINER_PATH)}"
+        result: RuntimeResult | None = None
+        for event in self.runtime.stream(
+            command=command,
+            env={},
+            timeout=_PERMISSION_FIX_TIMEOUT,
+        ):
+            if event.kind == "finished":
+                result = event.result
+                break
+        if result is None or result.exit_code != 0:
+            self.log.warning(
+                "agent.claude_code.permissions.relax_failed",
+                exit_code=(result.exit_code if result else None),
+                stderr=(result.stderr[:512] if result else None),
+            )
 
     def setup(self, session: Session) -> None:
         self._session = session
         self._environment = session.spec
         self._workspace = session.working_dir
-        self._tmp_dir = tempfile.TemporaryDirectory()
+        self._tmp_dir = tempfile.TemporaryDirectory(
+            ignore_cleanup_errors=True,
+        )
         self._saved_trace_paths = set()
         volumes: dict[str, dict[str, str] | str] = {}
         if isinstance(session.spec, DockerEnvironmentSpec):
@@ -680,7 +749,6 @@ class ClaudeCodeAgent(Agent):
                 "HOME": HOME_PATH,
             },
             image=self._image,
-            user="1000:1000",
             disable_setup=True,
         )
         self.log.debug(
@@ -844,26 +912,33 @@ class ClaudeCodeAgent(Agent):
         env_overrides["DISABLE_AUTOUPDATER"] = "1"
         env_overrides["DISABLE_NON_ESSENTIAL_MODEL_CALLS"] = "1"
 
-        # Set thinking tokens from preset or explicit value
-        thinking_tokens: int | None = None
-        if self.max_thinking_tokens is not None:
-            thinking_tokens = self.max_thinking_tokens
-        elif self.thinking == "disabled":
-            # Explicitly disable thinking with 0 tokens
-            thinking_tokens = 0
-        elif self.thinking is not None and self.thinking != "none":
-            thinking_tokens = _THINKING_TOKEN_MAP[self.thinking]
+        if self.thinking_style == "effort":
+            # These models reject MAX_THINKING_TOKENS with a 400; thinking is
+            # adaptive and steered solely by the effort level. A preset of
+            # "none" leaves the Claude Code default in place.
+            if self.thinking in _EFFORT_LEVELS:
+                env_overrides["CLAUDE_CODE_EFFORT_LEVEL"] = self.thinking
+        else:
+            # Set thinking tokens from preset or explicit value
+            thinking_tokens: int | None = None
+            if self.max_thinking_tokens is not None:
+                thinking_tokens = self.max_thinking_tokens
+            elif self.thinking == "disabled":
+                # Explicitly disable thinking with 0 tokens
+                thinking_tokens = 0
+            elif self.thinking is not None and self.thinking != "none":
+                thinking_tokens = _THINKING_TOKEN_MAP[self.thinking]
 
-        if thinking_tokens is not None:
-            env_overrides["MAX_THINKING_TOKENS"] = str(thinking_tokens)
+            if thinking_tokens is not None:
+                env_overrides["MAX_THINKING_TOKENS"] = str(thinking_tokens)
 
-        # Set reasoning effort level from thinking preset
-        if self.thinking in ("low", "medium", "high", "xhigh"):
-            env_overrides["CLAUDE_CODE_EFFORT_LEVEL"] = self.thinking
+            # Set reasoning effort level from thinking preset
+            if self.thinking in _EFFORT_LEVELS:
+                env_overrides["CLAUDE_CODE_EFFORT_LEVEL"] = self.thinking
 
         cli_args = self._build_cli_args(resume=resume)
         cli_args.append(shlex.quote(task))
-        command_str = " ".join(cli_args)
+        command_str = wrap_command_with_trace_cleanup(" ".join(cli_args))
         return command_str, env_overrides
 
     def _build_cli_args(
@@ -948,24 +1023,17 @@ class ClaudeCodeAgent(Agent):
                 reason="trace_dir_missing",
             )
             return
-        trace_root = self._trace_dir / _CLAUDE_WORKSPACE_PROJECT
-        dest = output_dir / "workspace"
-        copied = 0
-        for item in trace_root.rglob("*"):
-            if not item.is_file():
-                continue
-            rel = item.relative_to(self._trace_dir)
-            if rel in self._saved_trace_paths:
-                continue
-            target = dest / rel
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(item.read_bytes())
-            self._saved_trace_paths.add(rel)
-            copied += 1
+        result = copy_new_trace_files(
+            self._trace_dir,
+            output_dir,
+            self._saved_trace_paths,
+            self.log,
+        )
         self.log.debug(
             "agent.claude_code.traces.saved",
             output_dir=str(output_dir),
-            saved=copied,
+            saved=result.saved,
+            skipped=result.skipped,
         )
 
     def cleanup(self) -> None:

@@ -21,6 +21,8 @@ ThinkingPreset = tp.Literal[
     "none", "disabled", "low", "medium", "high", "xhigh"
 ]
 
+ThinkingStyle = tp.Literal["budget", "effort"]
+
 log = get_logger(__name__)
 
 
@@ -137,8 +139,17 @@ class ModelDefinition(BaseModel):
                 env overrides keyed by provider name (for exact fallback model IDs)
 
         codex:
+            endpoint: str - Provider endpoint name; declaring it routes Codex
+                through a custom model_providers.* entry instead of OpenAI
             reasoning_effort: str - "low" | "medium" | "high"
             env_overrides: dict[str, str] - Environment variable overrides
+
+        pi:
+            endpoint: str - Provider endpoint name; declaring it routes pi
+                through a custom models.json provider instead of a built-in one
+            reasoning: bool - Whether the custom model supports thinking
+            context_window: int - Context window size in tokens
+            max_tokens: int - Maximum output tokens
 
         opencode:
             provider_name: str - Provider identifier for opencode config
@@ -148,6 +159,11 @@ class ModelDefinition(BaseModel):
     Thinking Configuration:
         thinking: Preset for thinking budget (none/low/medium/high)
         max_thinking_tokens: Explicit token limit (mutually exclusive with thinking)
+        thinking_style: How the model's API expects thinking to be controlled.
+            "budget" (default) means an explicit token budget, e.g. Claude Code's
+            MAX_THINKING_TOKENS. "effort" means an adaptive effort level, e.g.
+            Claude Code's CLAUDE_CODE_EFFORT_LEVEL; models in this mode reject a
+            token budget with a 400, so max_thinking_tokens is invalid for them.
 
         Can also be specified per-agent in agent_specific:
             agent_specific:
@@ -167,6 +183,7 @@ class ModelDefinition(BaseModel):
     # Thinking configuration (top-level defaults)
     thinking: ThinkingPreset | None = None
     max_thinking_tokens: int | None = None
+    thinking_style: ThinkingStyle = "budget"
 
     @model_validator(mode="after")
     def validate_thinking_config(self) -> ModelDefinition:
@@ -176,6 +193,15 @@ class ModelDefinition(BaseModel):
                 "Cannot specify both 'thinking' and 'max_thinking_tokens'. "
                 "Use 'thinking' for presets or 'max_thinking_tokens' for "
                 "fine-grained control."
+            )
+        if (
+            self.thinking_style == "effort"
+            and self.max_thinking_tokens is not None
+        ):
+            raise ValueError(
+                "Model uses thinking_style 'effort' and cannot take a thinking "
+                "token budget. Use the 'thinking' preset instead of "
+                "'max_thinking_tokens'."
             )
         return self
 

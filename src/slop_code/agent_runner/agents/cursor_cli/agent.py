@@ -176,12 +176,12 @@ class CursorCliAgent(Agent):
     def parse_line(
         line: str,
         pricing: APIPricing | None = None,
-    ) -> tuple[float | None, TokenUsage | None, dict | None]:
+    ) -> tuple[float | None, TokenUsage | None, dict]:
         """Parse a single JSONL line from Cursor stream-json output."""
         try:
             payload = json.loads(line)
         except json.JSONDecodeError:
-            return None, None, None
+            return None, None, {}
 
         if payload.get("type") != "result":
             return None, None, payload
@@ -230,7 +230,6 @@ class CursorCliAgent(Agent):
                 "HOME": HOME_PATH,
             },
             image=self._image,
-            user="agent",
             disable_setup=True,
         )
 

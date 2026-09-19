@@ -129,10 +129,15 @@ When using bridge networking:
 
 ### User Mapping
 
-- **HUID/HGID environment variables:** Host UID/GID passed to container
-- **Evaluation context:** Uses host UID to match permissions
-- **Agent context:** May use different user for isolation
-- Helpers: `get_eval_user()` vs `get_actual_user()`
+Containers run as the uid:gid of the host process that launched them so that
+bind-mounted directories (the workspace above all) stay writable inside the
+container and readable/removable outside it.
+
+- **Default:** `os.getuid()`/`os.getgid()` of the harness process
+- **HUID/HGID environment variables:** override the live ids when the harness
+  itself runs in a container
+- **`docker.user` in the environment spec:** explicit override, wins over both
+- Helper: `resolve_host_user()` / `DockerEnvironmentSpec.get_container_user()`
 
 ## Docker Configuration
 
@@ -149,13 +154,12 @@ Docker-specific settings:
 | `mount_workspace` | bool | `True` | Mount session workspace into container |
 | `extra_mounts` | dict | `{}` | Additional volume mounts |
 | `network` | str \| None | `None` | Docker network mode (reconciled by platform) |
-| `user` | str \| None | `None` | User specification (e.g., "1000:1000") |
+| `user` | str \| None | `None` | User override; defaults to the host uid:gid |
 
 ### Helper Methods
 
 - `get_base_image()` → Returns `"slop-code:{env_name}"`
-- `get_eval_user()` → User for evaluation context (respects HUID/HGID)
-- `get_actual_user()` → User for agent context
+- `get_container_user()` → `docker.user` if set, else the host uid:gid
 - `effective_network_mode()` → Platform-aware network mode (host only on Linux)
 - `get_effective_address(addr)` → Rewrites loopback for bridge mode
 

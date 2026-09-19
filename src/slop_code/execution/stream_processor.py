@@ -31,6 +31,15 @@ from slop_code.execution.runtime import RuntimeResult
 logger = structlog.get_logger(__name__)
 
 DEFAULT_WAIT_TIMEOUT = 7200.0  # 2 hours
+# How long to wait for the pump thread to notice the stream is done. The thread
+# is a daemon and only appends to an in-memory queue, so abandoning it is safe;
+# blocking on it forever is not.
+PUMP_JOIN_TIMEOUT = 30.0
+# How long to wait for in-flight output before signalling the pump to stop.
+# The window for output queued but not yet drained is milliseconds; a stream
+# that keeps producing without ever reaching EOF must not extend it.
+DRAIN_JOIN_TIMEOUT = 2.0
+EXIT_CODE_WAIT = 10.0
 
 
 def ensure_string(data: bytes | str) -> str:
@@ -167,6 +176,16 @@ def process_stream(
 
         yield from handle_event(kind, payload)
 
+    elapsed = time.monotonic() - start_time
+    if not timed_out:
+        # The process can exit before the loop above polls it even once,
+        # leaving its output in flight. The pump queues every event and ends
+        # with "finished", so joining it first makes the drain below exact
+        # instead of a race against the thread. The join must not be signalled
+        # — the pump breaks as soon as ``stop_event`` is set, truncating a fast
+        # multi-chunk command — so it is bounded by the in-flight window.
+        thread.join(timeout=min(DRAIN_JOIN_TIMEOUT, max(timeout_fn(), 0.0)))
+
     # Handle any remaining events in the queue
     while True:
         try:
@@ -184,12 +203,28 @@ def process_stream(
 
         yield from handle_event(kind, payload)
 
-    elapsed = time.monotonic() - start_time
     stop_event.set()
-    thread.join()
+    thread.join(timeout=min(PUMP_JOIN_TIMEOUT, max(timeout_fn(), 1.0)))
+    if thread.is_alive():
+        logger.warning(
+            "Stream pump thread did not finish; abandoning it",
+            join_timeout=PUMP_JOIN_TIMEOUT,
+        )
 
-    exit_code = exit_code or poll_fn()
     if exit_code is None:
+        # The stream can reach EOF an instant before the process is reaped;
+        # give the exit code a bounded window to materialize instead of
+        # misreporting a clean exit as -1.
+        deadline = time.monotonic() + EXIT_CODE_WAIT
+        while (exit_code := poll_fn()) is None:
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(0.05)
+    if exit_code is None:
+        logger.warning(
+            "Process exit code unavailable after stream end; reporting -1",
+            wait_seconds=EXIT_CODE_WAIT,
+        )
         exit_code = -1
     logger.debug(
         "Setup stdout", setup_stdout=setup_stdout, setup_stderr=setup_stderr

@@ -30,7 +30,7 @@ def calculate_lint_metrics(source: Path) -> LintMetrics:
         str(source.absolute()),
     ]
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603 - invokes the configured Ruff binary.
             cmd,
             capture_output=True,
             text=True,

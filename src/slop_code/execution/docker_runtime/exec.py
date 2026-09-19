@@ -40,6 +40,7 @@ class DockerExecRuntime(ExecRuntime):
         working_dir: Path,
         command: str,
         static_assets: dict[str, ResolvedStaticAsset],
+        *,
         is_evaluation: bool,
         ports: dict[int, int],
         mounts: dict[str, dict[str, str] | str],
@@ -94,9 +95,7 @@ class DockerExecRuntime(ExecRuntime):
         """Get the user to run commands as."""
         if self._user is not None:
             return self._user
-        if self._is_evaluation:
-            return self.spec.get_eval_user()
-        return self.spec.get_actual_user()
+        return self.spec.get_container_user()
 
     def _get_setup_commands(self) -> list[str]:
         """Get list of setup commands to run."""
@@ -285,7 +284,7 @@ class DockerExecRuntime(ExecRuntime):
         timed_out = False
 
         try:
-            proc = subprocess.Popen(
+            proc = subprocess.Popen(  # noqa: S603 - command is built by this runtime.
                 run_args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
