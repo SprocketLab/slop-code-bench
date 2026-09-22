@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "SlopCodeBench: Measuring Code Erosion Under Iterative Specification Refinement"
+title: "SlopCodeBench: Benchmarking How Coding Agents Degrade Over Long-Horizon Iterative Tasks"
 type: article
 authors:
   - family-names: Orlanski
@@ -17,10 +17,12 @@ authors:
     given-names: Albert
   - family-names: Adila
     given-names: Dyah
-  - family-names: Albarghouthi
-    given-names: Aws
+  - family-names: Roberts
+    given-names: Nicholas
   - family-names: Sala
     given-names: Frederic
+  - family-names: Albarghouthi
+    given-names: Aws
 doi: 10.5281/zenodo.19257129
 date-released: 2025-12-18
 url: "https://arxiv.org/abs/2603.24755"

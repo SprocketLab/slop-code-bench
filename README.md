@@ -127,11 +127,13 @@ This is early-stage software. Your contributions will shape its direction.
 
 If you found this useful, please cite us as:
 ```bibtex
-@article{Orlanski2025SlopCodeBench,
-  author = {Orlanski, Gabriel and Roy, Devjeet and Yun, Alexander and Shin, Changho and Gu, Alex and Ge, Albert and Adila, Dyah and Albarghouthi, Aws and Sala, Frederic},
-  title = {{SlopCodeBench: Measuring Code Erosion Under Iterative Specification Refinement}},
-  journal = {arXiv preprint arXiv:2603.24755},
-  year = {2025},
+@misc{Orlanski2026SlopCodeBench,
+  author = {Orlanski, Gabriel and Roy, Devjeet and Yun, Alexander and Shin, Changho and Gu, Alex and Ge, Albert and Adila, Dyah and Roberts, Nicholas and Sala, Frederic and Albarghouthi, Aws},
+  title = {{SlopCodeBench: Benchmarking How Coding Agents Degrade Over Long-Horizon Iterative Tasks}},
+  year = {2026},
+  eprint = {2603.24755},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.SE},
   url = {https://arxiv.org/abs/2603.24755}
 }
 ```
