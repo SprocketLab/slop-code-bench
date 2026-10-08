@@ -19,6 +19,23 @@ def test_process_checkpoint_row_uses_new_pass_rate_names() -> None:
     assert processed["passed_chkpt"] is True
 
 
+def test_process_checkpoint_row_zero_tests_is_not_a_pass() -> None:
+    row = {
+        "strict_pass_rate": 0.0,
+        "isolated_pass_rate": 0.0,
+        "total_tests": 0,
+        "passed_tests": 0,
+    }
+
+    assert process_checkpoint_row(row)["passed_chkpt"] is False
+    # A real failure and a real pass are unchanged.
+    assert process_checkpoint_row({**row, "total_tests": 23})["passed_chkpt"] is False
+    assert (
+        process_checkpoint_row({**row, "total_tests": 23, "passed_tests": 23})["passed_chkpt"]
+        is True
+    )
+
+
 def test_problem_deltas_need_no_scb_metrics() -> None:
     deltas = compute_problem_deltas(
         pd.DataFrame(
