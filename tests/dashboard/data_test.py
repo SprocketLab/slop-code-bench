@@ -29,9 +29,14 @@ def test_process_checkpoint_row_zero_tests_is_not_a_pass() -> None:
 
     assert process_checkpoint_row(row)["passed_chkpt"] is False
     # A real failure and a real pass are unchanged.
-    assert process_checkpoint_row({**row, "total_tests": 23})["passed_chkpt"] is False
     assert (
-        process_checkpoint_row({**row, "total_tests": 23, "passed_tests": 23})["passed_chkpt"]
+        process_checkpoint_row({**row, "total_tests": 23})["passed_chkpt"]
+        is False
+    )
+    assert (
+        process_checkpoint_row({**row, "total_tests": 23, "passed_tests": 23})[
+            "passed_chkpt"
+        ]
         is True
     )
 
