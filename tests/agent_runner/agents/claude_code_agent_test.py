@@ -2156,3 +2156,127 @@ class TestStreamMessageShapes:
         assert final.exit_code == 0
         assert agent.steps == [payload, result]
         assert agent.usage.cost == 0.5
+
+
+def _system_line(session_id: str) -> str:
+    """One stdout log entry: the init line Claude Code streams first."""
+    return json.dumps(
+        {"type": "system", "subtype": "init", "session_id": session_id}
+    )
+
+
+def _finished(
+    lines: list[str], stderr: str, *, timed_out: bool = False
+) -> RuntimeResult:
+    """The result of a process that logged these entries to stdout and exited."""
+    return RuntimeResult(
+        exit_code=0,
+        stdout="\n".join(lines) + "\n",
+        stderr=stderr,
+        setup_stdout="",
+        setup_stderr="",
+        elapsed=1.0,
+        timed_out=timed_out,
+    )
+
+
+class TestStreamTranscriptArtifacts:
+    """stdout.jsonl holds what this checkpoint streamed, whatever ended it."""
+
+    @pytest.fixture
+    def agent(self, tmp_path, mock_cost_limits, mock_pricing, mock_credential):
+        agent = ClaudeCodeAgent(
+            problem_name="test-problem",
+            image="test-image",
+            verbose=False,
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=mock_credential,
+            binary="claude",
+            model="claude-test",
+            timeout=None,
+            settings={},
+            env={},
+            extra_args=[],
+            append_system_prompt=None,
+            allowed_tools=[],
+            disallowed_tools=[],
+            permission_mode=None,
+            base_url=None,
+            thinking=None,
+            max_thinking_tokens=None,
+            max_output_tokens=None,
+        )
+        session = FakeSession(
+            runtime=FakeRuntime(),
+            working_dir=tmp_path / "workspace",
+            spec=DockerEnvironmentSpec(
+                name="test",
+                docker=DockerConfig(image="test-image"),
+            ),
+        )
+        agent.setup(cast("Session", session))
+        return agent
+
+    @staticmethod
+    def play_streams(monkeypatch, *streams: tuple[list[str], object]) -> None:
+        """Each Claude Code process plays the next stream: its lines, then how it
+        ended (a RuntimeResult, or an exception raised mid-stream)."""
+        pending = list(streams)
+
+        def fake_stream_cli_command(*, parser, **_: object):
+            lines, ending = pending.pop(0)
+            for line in lines:
+                yield parser(line)
+            if isinstance(ending, Exception):
+                raise ending
+            yield ending
+
+        monkeypatch.setattr(
+            "slop_code.agent_runner.agents.claude_code.agent.stream_cli_command",
+            fake_stream_cli_command,
+        )
+
+    def test_crashed_checkpoint_saves_its_own_partial_stream(
+        self, tmp_path, monkeypatch, agent
+    ):
+        first = [_system_line("checkpoint-1")]
+        second = [_system_line("checkpoint-2")]
+        self.play_streams(
+            monkeypatch,
+            (first, _finished(first, "checkpoint 1 stderr\n")),
+            (second, RuntimeError("stream handling failed")),
+        )
+
+        assert not agent.run_checkpoint("task 1").had_error
+        agent.save_artifacts(tmp_path / "checkpoint_1")
+        agent.finish_checkpoint()
+        assert agent.run_checkpoint("task 2").had_error
+        agent.save_artifacts(tmp_path / "checkpoint_2")
+
+        saved = tmp_path / "checkpoint_2"
+        assert (
+            tmp_path / "checkpoint_1" / "stdout.jsonl"
+        ).read_text().splitlines() == first
+        assert (saved / "stdout.jsonl").read_text().splitlines() == second
+        assert not (saved / "stderr.log").exists()
+
+    def test_retry_appends_to_the_attempt_it_retries(
+        self, tmp_path, monkeypatch, agent
+    ):
+        first = [_system_line("attempt-1")]
+        second = [_system_line("attempt-2")]
+        self.play_streams(
+            monkeypatch,
+            (first, _finished(first, "attempt 1 stderr\n", timed_out=True)),
+            (second, _finished(second, "attempt 2 stderr\n")),
+        )
+
+        assert not agent.run_checkpoint("task").had_error
+        agent.save_artifacts(tmp_path / "checkpoint")
+
+        saved = tmp_path / "checkpoint"
+        stdout = (saved / "stdout.jsonl").read_text().splitlines()
+        stderr = (saved / "stderr.log").read_text().splitlines()
+        assert stdout == first + second
+        assert stderr == ["attempt 1 stderr", "attempt 2 stderr"]
