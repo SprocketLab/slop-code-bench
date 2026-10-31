@@ -1,0 +1,14 @@
+internal_name: gpt-6-luna
+provider: openai
+pricing:
+  # Prompts above 272k input tokens use 2x input and 1.5x output pricing.
+  input: 0.20
+  output: 0.75
+  cache_read: 0.02
+  cache_write: 0.25
+  prompt_tiers:
+    - max_input_tokens: 272000
+      input: 0.10
+      output: 0.50
+      cache_read: 0.01
+      cache_write: 0.125

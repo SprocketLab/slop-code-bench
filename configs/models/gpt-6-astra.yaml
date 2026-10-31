@@ -1,0 +1,14 @@
+internal_name: gpt-6-astra
+provider: openai
+pricing:
+  # Prompts above 272k input tokens use 2x input and 1.5x output pricing.
+  input: 20.00
+  output: 75.00
+  cache_read: 2.00
+  cache_write: 25.00
+  prompt_tiers:
+    - max_input_tokens: 272000
+      input: 10.00
+      output: 50.00
+      cache_read: 1.00
+      cache_write: 12.50

@@ -1,0 +1,14 @@
+internal_name: gpt-6.1-terra
+provider: openai
+pricing:
+  # Prompts above 272k input tokens use 2x input and 1.5x output pricing.
+  input: 2.00
+  output: 7.50
+  cache_read: 0.10
+  cache_write: 2.50
+  prompt_tiers:
+    - max_input_tokens: 272000
+      input: 1.00
+      output: 5.00
+      cache_read: 0.05
+      cache_write: 1.25
