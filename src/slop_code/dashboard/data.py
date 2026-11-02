@@ -423,10 +423,14 @@ def process_checkpoint_row(row: dict[str, Any]) -> dict[str, Any]:
     tests_passed = row.get("passed_tests", 0)
 
     processed = dict(row)
+    # A checkpoint whose evaluation collected no tests was not measured, so it
+    # is not a pass. Without this guard, 0 == 0 marks it passed, which disagrees
+    # with compute_pass_rate in metrics/summary/stats.py (None for total == 0).
+    measured = bool(tests_total)
     processed["passed_chkpt"] = (
         _full_pass(row.get("strict_pass_rate"))
         or _full_pass(row.get("isolated_pass_rate"))
-        or (tests_total == tests_passed)
+        or (measured and tests_total == tests_passed)
     )
     return processed
 
