@@ -21,6 +21,9 @@ from slop_code.agent_runner.models import UsageTracker
 from slop_code.agent_runner.reporting import AgentCheckpointSummary
 from slop_code.agent_runner.reporting import MetricsTracker
 from slop_code.agent_runner.resume import ResumeInfo
+from slop_code.agent_runner.review import Reviewer
+from slop_code.agent_runner.review import feedback_prompt
+from slop_code.agent_runner.review import specs_through
 from slop_code.agent_runner.state import AgentStateEnum
 from slop_code.evaluation import CheckpointConfig
 from slop_code.evaluation import CorrectnessResults
@@ -345,6 +348,62 @@ def evaluate_agent_snapshot(
     return report, quality_report
 
 
+def _run_review_loop(
+    *,
+    agent: Agent,
+    reviewer: Reviewer,
+    specs: list[tuple[str, str]],
+    workspace: Path,
+    save_dir: Path,
+    checkpoint_name: str,
+) -> None:
+    """Review the finished checkpoint; send rejections back to the agent.
+
+    Each round is one review. A rejection goes to the same agent session and
+    the next round reviews the result; after the last allowed send-back there is
+    no further review. Every round is saved to ``review.json`` with its cost,
+    which is not added to the agent's own usage.
+    """
+    rounds: list[dict[str, Any]] = []
+    for round_index in range(reviewer.config.max_rounds):
+        review = reviewer.review(specs, workspace)
+        entry = {"round": round_index + 1, **review.model_dump(mode="json")}
+        rounds.append(entry)
+        logger.info(
+            "Checkpoint review",
+            checkpoint=checkpoint_name,
+            round=round_index + 1,
+            verdict=review.verdict,
+            findings=len(review.findings),
+            cost=review.cost,
+        )
+        if not review.rejected:
+            break
+        try:
+            agent.continue_with(feedback_prompt(review))
+        except Exception as exc:  # noqa: BLE001 - recorded, checkpoint still snapshots
+            entry["send_back_error"] = f"{type(exc).__name__}: {exc}"
+            logger.error(
+                "Agent failed on review feedback",
+                checkpoint=checkpoint_name,
+                error=str(exc),
+            )
+            break
+        entry["sent_back"] = True
+    save_dir.mkdir(parents=True, exist_ok=True)
+    (save_dir / "review.json").write_text(
+        json.dumps(
+            {
+                "mode": "in_loop",
+                "max_rounds": reviewer.config.max_rounds,
+                "rounds": rounds,
+                "review_cost": sum(r["cost"] for r in rounds),
+            },
+            indent=2,
+        )
+    )
+
+
 def _run_inference(
     checkpoint_name: str,
     session: Session,
@@ -354,6 +413,8 @@ def _run_inference(
     replay_path: Path | None = None,
     *,
     compress_artifacts: bool = False,
+    reviewer: Reviewer | None = None,
+    specs: list[tuple[str, str]] | None = None,
 ):
     logger.info("Running inference for checkpoint", checkpoint=checkpoint_name)
     snapshot_dir = save_dir / common.SNAPSHOT_DIR_NAME
@@ -370,6 +431,18 @@ def _run_inference(
             "Completed checkpoint inference",
             checkpoint=checkpoint_name,
         )
+        if reviewer is not None and not result.had_error:
+            _run_review_loop(
+                agent=agent,
+                reviewer=reviewer,
+                specs=specs or [],
+                workspace=session.working_dir,
+                save_dir=save_dir,
+                checkpoint_name=checkpoint_name,
+            )
+            result.completed = datetime.now()
+            result.elapsed = (result.completed - started).total_seconds()
+            result.usage = agent.usage.model_copy(deep=True)
     except Exception:
         completed = datetime.now()
         error = traceback.format_exc()
@@ -414,6 +487,7 @@ def run_checkpoint(
     agent_type: str | None = None,
     agent_version: str | None = None,
     model_name: str | None = None,
+    reviewer: Reviewer | None = None,
 ) -> tuple[Path, CheckpointInferenceResult | None, SnapshotDiff]:
     task = get_task_for_checkpoint(
         checkpoint_name=checkpoint.name,
@@ -435,6 +509,8 @@ def run_checkpoint(
         save_dir=save_dir,
         replay_path=replay_path,
         compress_artifacts=compress_artifacts,
+        reviewer=reviewer,
+        specs=specs_through(problem, checkpoint.name) if reviewer else None,
     )
     return snapshot_dir, result, diff
 
@@ -451,8 +527,10 @@ class AgentRunner:
         *,
         replay_path: Path | None = None,
         resume_info: ResumeInfo | None = None,
+        reviewer: Reviewer | None = None,
     ):
         self.run_spec = run_spec
+        self.reviewer = reviewer
         self.agent = agent
         self.output_path = output_path
         self.progress_queue = progress_queue
@@ -739,6 +817,7 @@ class AgentRunner:
                 agent_type=self.run_spec.agent_type,
                 agent_version=self.run_spec.agent_version,
                 model_name=self.run_spec.model_name,
+                reviewer=self.reviewer,
             )
             if result is not None:
                 reporting.save_agent_checkpoint_info(
@@ -1202,6 +1281,7 @@ def run_agent(
     *,
     replay_path: Path | None = None,
     resume_info: ResumeInfo | None = None,
+    reviewer: Reviewer | None = None,
 ) -> dict[str, Any]:
     """Run an agent through a complete problem specification.
 
@@ -1228,5 +1308,6 @@ def run_agent(
         progress_queue=progress_queue,
         replay_path=replay_path,
         resume_info=resume_info,
+        reviewer=reviewer,
     )
     return runner.run()

@@ -887,12 +887,15 @@ class ClaudeCodeAgent(Agent):
             raise AgentError(message)
 
     def retry(self) -> None:
+        self.continue_with(RETRY_PROMPT)
+
+    def continue_with(self, prompt: str) -> None:
         self.log.debug(
             "Starting retry...",
             thinking=self.thinking,
             max_thinking_tokens=self.max_thinking_tokens,
         )
-        self._last_prompt = RETRY_PROMPT
+        self._last_prompt = prompt
         self._last_steps = []
         self._last_command = None
         self._had_error = False
@@ -905,7 +908,7 @@ class ClaudeCodeAgent(Agent):
         )
 
         command, env_overrides = self._prepare_runtime_execution(
-            RETRY_PROMPT,
+            prompt,
             resume=True,
         )
         result = self._run(command, env_overrides)

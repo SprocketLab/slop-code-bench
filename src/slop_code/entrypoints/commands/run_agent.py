@@ -930,6 +930,7 @@ def _create_task_config(
         image=image_name,
         resume=resume,
         one_shot=run_cfg.one_shot,
+        review=run_cfg.review,
     )
 
 
