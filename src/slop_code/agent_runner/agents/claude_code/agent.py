@@ -57,6 +57,7 @@ _THINKING_TOKEN_MAP: dict[str, int] = {
 _EFFORT_LEVELS: frozenset[str] = frozenset(
     {"low", "medium", "high", "xhigh"}
 )
+_VERTEX_KEY_CONTAINER_PATH = "/run/secrets/gcp-vertex-key.json"
 _CLAUDE_HOME_CONTAINER_PATH = f"{HOME_PATH}/.claude"
 _PERMISSION_FIX_TIMEOUT = 60.0
 
@@ -189,6 +190,7 @@ class ClaudeCodeAgent(Agent):
         thinking_style: ThinkingStyle = "budget",
         bedrock: bool = False,
         foundry: bool = False,
+        vertex: bool = False,
     ) -> None:
         super().__init__(
             agent_name="claude_code",
@@ -217,6 +219,7 @@ class ClaudeCodeAgent(Agent):
         self.max_output_tokens = max_output_tokens
         self._bedrock = bedrock
         self._foundry = foundry
+        self._vertex = vertex
         self._session: Session | None = None
         self._environment: EnvironmentSpec | None = None
         self._runtime: StreamingRuntime | None = None
@@ -339,6 +342,7 @@ class ClaudeCodeAgent(Agent):
             max_output_tokens=config.max_output_tokens,
             bedrock=credential.provider == "bedrock",
             foundry=credential.provider == "foundry",
+            vertex=credential.provider == "vertex",
         )
 
     @property
@@ -409,12 +413,26 @@ class ClaudeCodeAgent(Agent):
         self._settings_path = settings_path
         self._trace_dir = claude_home
 
-        return {
+        mounts: dict[str, dict[str, str] | str] = {
             str(claude_home): {
                 "bind": f"{HOME_PATH}/.claude",
                 "mode": "rw",
             },
         }
+        if self._vertex:
+            # The key is mounted read-only outside ~/.claude so it never lands
+            # in the trace files copied out of that directory.
+            key_path = Path(self.credential.value).expanduser()
+            if not key_path.is_file():
+                raise AgentError(
+                    "Vertex provider expects GOOGLE_APPLICATION_CREDENTIALS to "
+                    f"point at a service-account key file, got {key_path}"
+                )
+            mounts[str(key_path.resolve())] = {
+                "bind": _VERTEX_KEY_CONTAINER_PATH,
+                "mode": "ro",
+            }
+        return mounts
 
     def _build_runtime_auth_env(self) -> dict[str, str]:
         """Build authentication environment variables for runtime execution."""
@@ -447,6 +465,33 @@ class ClaudeCodeAgent(Agent):
                 ),
             ):
                 env_overrides[var] = os.environ.get(var, default)
+            return env_overrides
+
+        if self._vertex:
+            project = os.environ.get("ANTHROPIC_VERTEX_PROJECT_ID")
+            if not project:
+                raise AgentError(
+                    "Vertex provider requires ANTHROPIC_VERTEX_PROJECT_ID"
+                )
+            env_overrides["CLAUDE_CODE_USE_VERTEX"] = "1"
+            env_overrides["ANTHROPIC_VERTEX_PROJECT_ID"] = project
+            env_overrides["CLOUD_ML_REGION"] = os.environ.get(
+                "CLOUD_ML_REGION", "global"
+            )
+            env_overrides["GOOGLE_APPLICATION_CREDENTIALS"] = (
+                _VERTEX_KEY_CONTAINER_PATH
+            )
+            # Pin every model Claude Code may pick (including the small/fast
+            # model it uses for background work) to the run model, so a run
+            # spends tokens on one model only and never on one the project
+            # has not enabled.
+            for var in (
+                "ANTHROPIC_DEFAULT_OPUS_MODEL",
+                "ANTHROPIC_DEFAULT_SONNET_MODEL",
+                "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+                "ANTHROPIC_SMALL_FAST_MODEL",
+            ):
+                env_overrides[var] = os.environ.get(var, self.model)
             return env_overrides
 
         if self._foundry:
@@ -500,7 +545,7 @@ class ClaudeCodeAgent(Agent):
         settings_env.update(
             {key: str(value) for key, value in self.env.items()}
         )
-        if self._bedrock or self._foundry:
+        if self._bedrock or self._foundry or self._vertex:
             return settings_env
         if self.credential.destination_key not in (
             "ANTHROPIC_API_KEY",
