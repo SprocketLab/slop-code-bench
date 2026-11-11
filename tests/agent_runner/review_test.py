@@ -119,6 +119,56 @@ def test_reviewer_parses_rejection_and_costs_it(tmp_path: Path):
     assert "print hello" in call["messages"][0]["content"]
 
 
+def _review_with_findings(tmp_path: Path, findings) -> ReviewResult:
+    reviewer = Reviewer(ReviewConfig(enabled=True), _model_def(), _credential(), None)
+    reviewer._client = _FakeClient(
+        _message([_tool_call({"verdict": "reject", "findings": findings})])
+    )
+    return reviewer.review([("checkpoint_1", "spec")], tmp_path)
+
+
+def test_reviewer_defaults_missing_evidence_to_empty(tmp_path: Path):
+    finding = {
+        "category": "spec",
+        "location": "main.py",
+        "problem": "no --json flag",
+    }
+    result = _review_with_findings(tmp_path, [finding])
+
+    assert result.rejected
+    assert result.skipped_findings == 0
+    assert len(result.findings) == 1
+    assert result.findings[0].evidence == ""
+    assert "no --json flag" in feedback_prompt(result)
+    assert "evidence" not in feedback_prompt(result)
+
+
+def test_reviewer_skips_and_counts_non_object_findings(tmp_path: Path):
+    good = {
+        "category": "correctness",
+        "location": "main.py",
+        "problem": "crashes on empty input",
+        "evidence": "checkpoint_1: empty input prints 0",
+    }
+    result = _review_with_findings(
+        tmp_path, ["main.py: crashes on empty input", good, None, 3]
+    )
+
+    assert result.rejected
+    assert [f.problem for f in result.findings] == ["crashes on empty input"]
+    assert result.skipped_findings == 3
+
+
+def test_reviewer_skips_findings_that_do_not_validate(tmp_path: Path):
+    result = _review_with_findings(
+        tmp_path, [{"category": "style", "location": "main.py", "problem": "x"}]
+    )
+
+    assert result.rejected
+    assert result.findings == []
+    assert result.skipped_findings == 1
+
+
 def test_reviewer_without_tool_call_is_an_error_not_a_verdict(tmp_path: Path):
     reviewer = Reviewer(ReviewConfig(enabled=True), _model_def(), _credential(), None)
     reviewer._client = _FakeClient(

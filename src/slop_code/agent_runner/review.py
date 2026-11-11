@@ -26,6 +26,7 @@ from typing import Any, Literal
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
+from pydantic import ValidationError
 
 from slop_code.agent_runner.credentials import ProviderCredential
 from slop_code.common.llms import ModelDefinition
@@ -128,7 +129,7 @@ class ReviewFinding(BaseModel):
     category: Literal["correctness", "spec", "quality"]
     location: str
     problem: str
-    evidence: str
+    evidence: str = ""
 
 
 class ReviewResult(BaseModel):
@@ -139,10 +140,36 @@ class ReviewResult(BaseModel):
     usage: TokenUsage = Field(default_factory=TokenUsage)
     cost: float = 0.0
     truncated_files: list[str] = Field(default_factory=list)
+    skipped_findings: int = 0
 
     @property
     def rejected(self) -> bool:
         return self.verdict == "reject"
+
+
+def parse_findings(raw: Any) -> tuple[list[ReviewFinding], int]:
+    """Read the findings of a ``submit_review`` call, tolerating bad items.
+
+    The tool schema is a request, not a guarantee: a model sometimes returns a
+    finding as a bare string or leaves a field out. One malformed finding must
+    not end the problem, so it is skipped and counted instead. A finding
+    without ``evidence`` is kept, with the evidence left empty.
+
+    Returns the findings that parsed and the number that were skipped.
+    """
+    if not isinstance(raw, list):
+        return [], 0 if raw is None else 1
+    findings: list[ReviewFinding] = []
+    skipped = 0
+    for item in raw:
+        if not isinstance(item, dict):
+            skipped += 1
+            continue
+        try:
+            findings.append(ReviewFinding(**item))
+        except (ValidationError, TypeError):
+            skipped += 1
+    return findings, skipped
 
 
 def collect_workspace(root: Path) -> tuple[str, list[str]]:
@@ -191,10 +218,10 @@ def feedback_prompt(result: ReviewResult) -> str:
         "",
     ]
     for finding in result.findings:
-        lines.append(
-            f"- [{finding.category}] {finding.location}: {finding.problem} "
-            f"(evidence: {finding.evidence})"
-        )
+        line = f"- [{finding.category}] {finding.location}: {finding.problem}"
+        if finding.evidence:
+            line += f" (evidence: {finding.evidence})"
+        lines.append(line)
     return "\n".join(lines)
 
 
@@ -305,13 +332,22 @@ class Reviewer:
                 truncated_files=truncated,
             )
         payload = call.input if isinstance(call.input, dict) else json.loads(call.input)
+        findings, skipped = parse_findings(payload.get("findings"))
+        if skipped:
+            logger.warning(
+                "review.findings_skipped",
+                skipped=skipped,
+                kept=len(findings),
+                model=self.model,
+            )
         return ReviewResult(
             verdict=payload["verdict"],
-            findings=[ReviewFinding(**f) for f in payload.get("findings", [])],
+            findings=findings,
             model=self.model,
             usage=usage,
             cost=cost,
             truncated_files=truncated,
+            skipped_findings=skipped,
         )
 
 
