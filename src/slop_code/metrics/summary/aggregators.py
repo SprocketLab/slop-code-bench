@@ -11,12 +11,14 @@ import statistics
 from typing import Any
 
 from slop_code.logging import get_logger
+from slop_code.metrics.checkpoint.regression import REGRESSION_BREAKDOWN_KEYS
 from slop_code.metrics.models import CostsStats
 from slop_code.metrics.models import CyclomaticComplexityStats
 from slop_code.metrics.models import MetricStats
 from slop_code.metrics.models import PassRatesByType
 from slop_code.metrics.models import PassRatesStats
 from slop_code.metrics.models import RatiosStats
+from slop_code.metrics.models import RegressionBreakdownStats
 from slop_code.metrics.models import StepsStats
 from slop_code.metrics.models import TimeStats
 from slop_code.metrics.models import TokenMeans
@@ -270,6 +272,25 @@ def compute_pass_rates_stats(
         ),
         problem=PassRatesByType(
             **{t: safe_mean(problem_pass_rates[t]) for t in test_types}
+        ),
+    )
+
+
+def compute_regression_breakdown(
+    checkpoints: list[dict[str, Any]],
+) -> RegressionBreakdownStats:
+    """Sum the per-checkpoint Regression breakdown and pool the hazard."""
+    totals = {
+        key: sum(int(c.get(key, 0)) for c in checkpoints)
+        for key in REGRESSION_BREAKDOWN_KEYS
+    }
+    previously_passed = totals["regression_previously_passed"]
+    return RegressionBreakdownStats(
+        **totals,
+        true_regression_hazard=(
+            totals["true_regressions"] / previously_passed
+            if previously_passed > 0
+            else 0.0
         ),
     )
 

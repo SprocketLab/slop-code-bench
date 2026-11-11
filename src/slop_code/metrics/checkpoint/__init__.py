@@ -8,9 +8,11 @@ from slop_code.metrics.checkpoint.extractors import get_inference_metrics
 from slop_code.metrics.checkpoint.extractors import get_quality_metrics
 from slop_code.metrics.checkpoint.extractors import get_rubric_metrics
 from slop_code.metrics.checkpoint.mass import compute_mass_metrics
+from slop_code.metrics.checkpoint.regression import RegressionHistory
 
 __all__ = [
     "DELTA_METRIC_KEYS",
+    "RegressionHistory",
     "compute_checkpoint_delta",
     "compute_mass_metrics",
     "get_checkpoint_metrics",

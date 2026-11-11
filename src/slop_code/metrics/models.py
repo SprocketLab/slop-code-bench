@@ -639,6 +639,20 @@ class PassRatesStats(BaseModel):
     checkpoint: PassRatesByType = Field(default_factory=PassRatesByType)
 
 
+class RegressionBreakdownStats(BaseModel):
+    """Regression failures split by each test's earlier outcomes (run totals).
+
+    ``true_regression_hazard`` is pooled: total true regressions over total
+    previously-passed Regression tests evaluated.
+    """
+
+    true_regressions: int = 0
+    carryover_failures: int = 0
+    newly_active_failures: int = 0
+    regression_previously_passed: int = 0
+    true_regression_hazard: float = 0.0
+
+
 class RatiosStats(BaseModel):
     """Quality ratio statistics (per LOC)."""
 
@@ -690,6 +704,11 @@ class RunSummary(BaseModel):
 
     # Pass rates by test type: {problem, checkpoint} x {core, total, error, ...}
     pass_rates: PassRatesStats = Field(default_factory=PassRatesStats)
+
+    # Regression failures: true regressions vs. carryover vs. newly active
+    regression_breakdown: RegressionBreakdownStats = Field(
+        default_factory=RegressionBreakdownStats
+    )
 
     # Cyclomatic complexity
     cc: CyclomaticComplexityStats = Field(
