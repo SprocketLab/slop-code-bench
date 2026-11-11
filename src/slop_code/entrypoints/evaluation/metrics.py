@@ -13,6 +13,7 @@ from slop_code.evaluation import ProblemConfig
 from slop_code.logging import get_logger
 from slop_code.metrics import MetricsError
 from slop_code.metrics import get_checkpoint_metrics
+from slop_code.metrics.checkpoint import RegressionHistory
 
 logger = get_logger(__name__)
 
@@ -146,6 +147,7 @@ def create_problem_reports(
     errors: list[tuple[str, str]] = []
     prior_metrics = None
     prior_checkpoint_dir = None
+    regression_history = RegressionHistory()
     for idx, checkpoint_name in enumerate(
         sorted(
             problem.checkpoints.keys(),
@@ -169,6 +171,7 @@ def create_problem_reports(
             is_first=idx == 0,
             is_last=idx == len(problem.checkpoints) - 1,
         )
+        metrics.update(regression_history.observe_dir(checkpoint_dir))
 
         out.append(
             {
