@@ -350,6 +350,15 @@ class Agent(ABC):
         """Continue after a failed agent run."""
         self.run(RETRY_PROMPT)
 
+    def continue_with(self, prompt: str) -> None:
+        """Send a follow-up message into the current checkpoint's session.
+
+        Used by the in-loop reviewer. Agents that keep their conversation across
+        ``run`` calls get this for free; CLI agents that start a new process per
+        call override it to resume their session.
+        """
+        self.run(prompt)
+
     @abstractmethod
     def reset(self) -> None:
         """Resets the state of the agent and the context.

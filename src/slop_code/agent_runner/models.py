@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 
+from slop_code.agent_runner.review import ReviewConfig
 from slop_code.common.llms import TokenUsage
 from slop_code.evaluation import PassPolicy
 from slop_code.evaluation import ProblemConfig
@@ -182,6 +183,10 @@ class AgentRunSpec(BaseModel):
             "the next solve); agent errors and rate limits still stop the run."
         ),
     ] = False
+    review: Annotated[
+        ReviewConfig,
+        Field(description="In-loop reviewer (verification-layers arm C)"),
+    ] = Field(default_factory=ReviewConfig)
     verbose: Annotated[
         bool, Field(description="Whether to print verbose output")
     ] = False

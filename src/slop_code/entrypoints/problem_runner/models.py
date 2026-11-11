@@ -19,6 +19,7 @@ from pydantic import Field
 from slop_code.agent_runner import AgentStateEnum
 from slop_code.agent_runner import MetricsTracker
 from slop_code.agent_runner import UsageTracker
+from slop_code.agent_runner.review import ReviewConfig
 from slop_code.entrypoints.config.run_config import OneShotConfig
 
 _TERMINAL_STATES = frozenset(
@@ -88,6 +89,7 @@ class RunTaskConfig:
     resume: bool = False
     dry_run: bool = False
     one_shot: OneShotConfig = field(default_factory=OneShotConfig)
+    review: ReviewConfig = field(default_factory=ReviewConfig)
 
 
 class ProblemState(BaseModel):
