@@ -31,6 +31,7 @@ Providers define where credentials come from for each API service. They map prov
 | `minimax` | `MINIMAX_API_KEY` | MiniMax API key |
 | `moonshot` | `MOONSHOT_API_KEY` | Moonshot AI API key for Kimi models |
 | `claude_code_oauth` | `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code OAuth token |
+| `vertex` | `GOOGLE_APPLICATION_CREDENTIALS` | Path to a Google service-account key, for Claude Code via Vertex AI (see below) |
 
 ### File-based Providers
 
@@ -75,6 +76,26 @@ codex auth login
 ```
 
 File-based credentials are read once and cached.
+
+### Vertex AI (Claude Code)
+
+The `vertex` provider runs the Claude Code agent against Anthropic models on Google
+Vertex AI. It is file-backed, but the "file" is a service-account key rather than a
+CLI auth file:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=~/keys/vertex-only.json   # service-account key
+export ANTHROPIC_VERTEX_PROJECT_ID=my-gcp-project
+export CLOUD_ML_REGION=global                                    # default: global
+slop-code run --model vertex/sonnet-4.5 --problem file_backup
+```
+
+Inside the container the key is mounted read-only at `/run/secrets/gcp-vertex-key.json`,
+outside `~/.claude`, so it never ends up in the trace files copied out of that directory.
+The agent sets `CLAUDE_CODE_USE_VERTEX=1` and pins every model Claude Code may choose
+(including its small/fast background model) to the run model, so a run spends tokens on
+one model only and never on one the project has not enabled. Override a pin by setting
+`ANTHROPIC_DEFAULT_*_MODEL` / `ANTHROPIC_SMALL_FAST_MODEL` yourself.
 
 ## PI Provider Notes
 

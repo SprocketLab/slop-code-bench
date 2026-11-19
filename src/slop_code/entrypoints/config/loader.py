@@ -10,6 +10,7 @@ import yaml
 from omegaconf import OmegaConf
 from pydantic import ValidationError
 
+from slop_code.agent_runner.review import ReviewConfig
 from slop_code.common import CONFIG_FILENAME
 from slop_code.entrypoints.config.resolvers import register_resolvers
 from slop_code.entrypoints.config.run_config import ModelConfig
@@ -503,6 +504,12 @@ def load_run_config(
     except ValidationError as exc:
         raise ValueError(f"Invalid one_shot configuration: {exc}") from exc
 
+    # 12b. Handle review config (verification-layers arm C)
+    try:
+        review = ReviewConfig(**(cfg_dict.get("review") or {}))
+    except ValidationError as exc:
+        raise ValueError(f"Invalid review configuration: {exc}") from exc
+
     # 13. Build interpolation context and resolve output_path
     context = _build_interpolation_context(
         agent_data=agent_data,
@@ -553,6 +560,7 @@ def load_run_config(
         save_template=save_template,
         output_path=output_path,
         one_shot=one_shot,
+        review=review,
     )
 
 

@@ -2280,3 +2280,127 @@ class TestStreamTranscriptArtifacts:
         stderr = (saved / "stderr.log").read_text().splitlines()
         assert stdout == first + second
         assert stderr == ["attempt 1 stderr", "attempt 2 stderr"]
+
+
+class TestVertexMode:
+    """Tests for Vertex AI integration in ClaudeCodeAgent."""
+
+    @pytest.fixture
+    def key_file(self, tmp_path):
+        path = tmp_path / "sa-key.json"
+        path.write_text('{"type": "service_account"}')
+        return path
+
+    @pytest.fixture
+    def vertex_credential(self, key_file):
+        return ProviderCredential(
+            provider="vertex",
+            value=str(key_file),
+            source="GOOGLE_APPLICATION_CREDENTIALS",
+            destination_key="GOOGLE_APPLICATION_CREDENTIALS",
+            credential_type=CredentialType.ENV_VAR,
+        )
+
+    def _make_agent(self, mock_cost_limits, mock_pricing, credential):
+        return ClaudeCodeAgent(
+            problem_name="test-problem",
+            image="test-image",
+            verbose=False,
+            cost_limits=mock_cost_limits,
+            pricing=mock_pricing,
+            credential=credential,
+            binary="claude",
+            model="claude-sonnet-5",
+            timeout=None,
+            settings={},
+            env={},
+            extra_args=[],
+            append_system_prompt=None,
+            allowed_tools=[],
+            disallowed_tools=[],
+            permission_mode=None,
+            base_url=None,
+            thinking=None,
+            max_thinking_tokens=None,
+            max_output_tokens=None,
+            vertex=True,
+        )
+
+    def test_vertex_env_vars(
+        self, mock_cost_limits, mock_pricing, vertex_credential, monkeypatch
+    ):
+        monkeypatch.setenv("ANTHROPIC_VERTEX_PROJECT_ID", "my-project")
+        monkeypatch.delenv("CLOUD_ML_REGION", raising=False)
+        for var in (
+            "ANTHROPIC_DEFAULT_OPUS_MODEL",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            "ANTHROPIC_SMALL_FAST_MODEL",
+        ):
+            monkeypatch.delenv(var, raising=False)
+        agent = self._make_agent(
+            mock_cost_limits, mock_pricing, vertex_credential
+        )
+        _, env = agent._prepare_runtime_execution("task")
+
+        assert env["CLAUDE_CODE_USE_VERTEX"] == "1"
+        assert env["ANTHROPIC_VERTEX_PROJECT_ID"] == "my-project"
+        assert env["CLOUD_ML_REGION"] == "global"
+        # The container sees the mounted path, never the host path.
+        assert env["GOOGLE_APPLICATION_CREDENTIALS"] != vertex_credential.value
+        assert env["GOOGLE_APPLICATION_CREDENTIALS"].startswith("/run/secrets/")
+        assert env["ANTHROPIC_SMALL_FAST_MODEL"] == "claude-sonnet-5"
+        assert env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "claude-sonnet-5"
+        assert "ANTHROPIC_API_KEY" not in env
+        assert "ANTHROPIC_AUTH_TOKEN" not in env
+
+    def test_vertex_requires_project(
+        self, mock_cost_limits, mock_pricing, vertex_credential, monkeypatch
+    ):
+        monkeypatch.delenv("ANTHROPIC_VERTEX_PROJECT_ID", raising=False)
+        agent = self._make_agent(
+            mock_cost_limits, mock_pricing, vertex_credential
+        )
+        with pytest.raises(AgentError, match="ANTHROPIC_VERTEX_PROJECT_ID"):
+            agent._prepare_runtime_execution("task")
+
+    def test_vertex_key_mounted_read_only_outside_trace_dir(
+        self,
+        mock_cost_limits,
+        mock_pricing,
+        vertex_credential,
+        key_file,
+        tmp_path,
+    ):
+        import tempfile
+
+        agent = self._make_agent(
+            mock_cost_limits, mock_pricing, vertex_credential
+        )
+        agent._tmp_dir = tempfile.TemporaryDirectory(dir=tmp_path)
+        agent._workspace = tmp_path
+        mounts = agent._prepare_mounts()
+
+        key_mount = mounts[str(key_file.resolve())]
+        assert key_mount["mode"] == "ro"
+        assert not key_mount["bind"].startswith(f"{HOME_PATH}/.claude")
+        settings = json.loads(agent._settings_path.read_text())
+        assert "ANTHROPIC_AUTH_TOKEN" not in settings.get("env", {})
+
+    def test_vertex_missing_key_file_raises(
+        self, mock_cost_limits, mock_pricing, tmp_path
+    ):
+        import tempfile
+
+        credential = ProviderCredential(
+            provider="vertex",
+            value=str(tmp_path / "missing.json"),
+            source="GOOGLE_APPLICATION_CREDENTIALS",
+            destination_key="GOOGLE_APPLICATION_CREDENTIALS",
+            credential_type=CredentialType.ENV_VAR,
+        )
+        agent = self._make_agent(mock_cost_limits, mock_pricing, credential)
+        agent._tmp_dir = tempfile.TemporaryDirectory(dir=tmp_path)
+        agent._workspace = tmp_path
+        with pytest.raises(AgentError, match="service-account key"):
+            agent._prepare_mounts()

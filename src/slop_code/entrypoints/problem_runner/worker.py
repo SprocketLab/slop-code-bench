@@ -20,6 +20,7 @@ from slop_code.agent_runner.reporting import MetricsTracker
 from slop_code.agent_runner.resume import ResumeInfo
 from slop_code.agent_runner.resume import detect_resume_point
 from slop_code.agent_runner.resume import format_resume_summary
+from slop_code.agent_runner.review import Reviewer
 from slop_code.agent_runner.state import AgentStateEnum
 from slop_code.common.llms import TokenUsage
 from slop_code.entrypoints.problem_runner.models import RunTaskConfig
@@ -176,6 +177,7 @@ def run_agent_on_problem(
         pass_policy=config.pass_policy,
         skip_evaluation=config.disable_evaluation,
         concurrent_evaluation=config.concurrent_evaluation,
+        review=config.review,
         verbose=config.verbosity > 0,
         image=config.image,
         agent_type=config.agent_config.type,
@@ -198,4 +200,14 @@ def run_agent_on_problem(
         output_path=output_path,
         progress_queue=progress_queue,
         resume_info=resume_info,
+        reviewer=(
+            Reviewer(
+                config.review,
+                model_def=config.model_def,
+                credential=config.credential,
+                thinking_preset=config.thinking_preset,
+            )
+            if config.review.enabled
+            else None
+        ),
     )

@@ -10,6 +10,7 @@ from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import model_validator
 
+from slop_code.agent_runner.review import ReviewConfig
 from slop_code.evaluation import PassPolicy
 
 ThinkingPresetType = Literal[
@@ -112,6 +113,8 @@ class RunConfig(BaseModel):
 
     one_shot: OneShotConfig = Field(default_factory=OneShotConfig)
 
+    review: ReviewConfig = Field(default_factory=ReviewConfig)
+
     # Output path configuration with interpolation support
     # Available variables: ${model.name}, ${model.provider}, ${agent.type},
     # ${agent.version}, ${prompt}, ${thinking}, ${env.name}, ${now:FORMAT}
@@ -174,3 +177,4 @@ class ResolvedRunConfig(BaseModel):
     save_template: str
     output_path: str
     one_shot: OneShotConfig = Field(default_factory=OneShotConfig)
+    review: ReviewConfig = Field(default_factory=ReviewConfig)
