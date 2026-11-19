@@ -112,6 +112,13 @@ providers:
     env_var: ANTHROPIC_FOUNDRY_API_KEY
     description: Microsoft (Azure AI) Foundry API key for Claude Code via Foundry
 
+  vertex:
+    type: env_var
+    env_var: GOOGLE_APPLICATION_CREDENTIALS
+    description: >-
+      Path to a Google service-account key for Claude Code via Vertex AI. Also
+      needs ANTHROPIC_VERTEX_PROJECT_ID; CLOUD_ML_REGION defaults to global.
+
   xai:
     type: env_var
     env_var: XAI_API_KEY
