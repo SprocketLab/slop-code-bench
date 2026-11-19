@@ -402,7 +402,11 @@ def apply_collection_inventory(
     results: CorrectnessResults,
     collection: CheckpointTestCollection,
 ) -> CorrectnessResults:
-    """Apply collected inventory to execution results and backfill misses."""
+    """Apply collected inventory to execution results and backfill misses.
+
+    Skipped tests remain in ``results.tests`` but are excluded from
+    ``total_counts`` and ``pass_counts`` (matching ``add_test_result``).
+    """
     existing_by_nodeid = {
         _result_nodeid(result): result for result in results.tests
     }
@@ -439,6 +443,8 @@ def apply_collection_inventory(
     totals = dict.fromkeys(GroupType, 0)
     passes = dict.fromkeys(GroupType, 0)
     for test in merged:
+        if test.status == "skipped":
+            continue
         totals[test.group_type] += 1
         if test.status == "passed":
             passes[test.group_type] += 1
