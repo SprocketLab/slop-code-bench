@@ -19,6 +19,7 @@ import docker
 from docker.errors import APIError
 from docker.errors import DockerException
 
+from slop_code.common import mask_sensitive_values
 from slop_code.execution.assets import ResolvedStaticAsset
 from slop_code.execution.docker_runtime.models import DockerEnvironmentSpec
 from slop_code.execution.models import EnvironmentSpec
@@ -319,9 +320,15 @@ class DockerStreamingRuntime(StreamingRuntime):
             args.extend(["--env", f"{key}={value}"])
         args.append(container.id)
         args.extend(["/bin/sh", "-c", command])
+        masked_env = mask_sensitive_values(exec_env)
+        masked_arg = {
+            f"{key}={value}": f"{key}={masked_env[key]}"
+            for key, value in exec_env.items()
+            if masked_env[key] != value
+        }
         logger.debug(
             "Built docker exec command",
-            args=args,
+            args=[masked_arg.get(arg, arg) for arg in args],
             verbose=True,
         )
         return args
