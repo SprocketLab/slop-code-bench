@@ -38,12 +38,19 @@ class RegressionHistory:
     """Per-test outcomes across the checkpoints of one problem run.
 
     Tests are identified by (originating checkpoint, test id). Call
-    ``observe`` once per checkpoint, in checkpoint order.
+    ``observe`` once per checkpoint, in checkpoint order. Once a checkpoint
+    gap occurs (for example, a missing ``evaluation.json``), subsequent calls
+    return an empty dict so later checkpoints are not mislabeled.
     """
 
     def __init__(self) -> None:
         self._passed: set[tuple[str, str]] = set()
         self._failed: set[tuple[str, str]] = set()
+        self._has_gap: bool = False
+
+    def mark_gap(self) -> None:
+        """Record a missing checkpoint so later checkpoints emit no breakdown."""
+        self._has_gap = True
 
     def observe(self, tests: GroupedTests) -> dict[str, int | float]:
         """Return the Regression breakdown for a checkpoint, then record it.
@@ -53,8 +60,11 @@ class RegressionHistory:
 
         Returns:
             Counts for ``REGRESSION_BREAKDOWN_KEYS`` plus
-            ``true_regression_hazard`` (0.0 when nothing previously passed).
+            ``true_regression_hazard`` (0.0 when nothing previously passed),
+            or an empty dict if an earlier checkpoint had a gap.
         """
+        if self._has_gap:
+            return {}
         counts = dict.fromkeys(REGRESSION_BREAKDOWN_KEYS, 0)
         for key, buckets in tests.items():
             checkpoint, _, group = key.rpartition("-")
@@ -98,13 +108,18 @@ class RegressionHistory:
     ) -> dict[str, int | float]:
         """Observe a checkpoint directory's evaluation.json.
 
-        Returns an empty dict (and records nothing) if the file is missing.
+        If the file is missing or lacks grouped tests, records a gap and
+        returns an empty dict for this and all subsequent checkpoints.
         """
+        if self._has_gap:
+            return {}
         eval_file = checkpoint_dir / eval_file_name
         if not eval_file.exists():
+            self._has_gap = True
             return {}
         with eval_file.open("r") as f:
-            tests = json.load(f).get("tests", {})
+            tests = json.load(f).get("tests")
         if not isinstance(tests, Mapping):
+            self._has_gap = True
             return {}
         return self.observe(tests)

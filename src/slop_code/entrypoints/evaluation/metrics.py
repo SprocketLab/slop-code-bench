@@ -163,6 +163,7 @@ def create_problem_reports(
             errors.append(
                 (checkpoint_name, f"File not found: {checkpoint_dir}")
             )
+            regression_history.mark_gap()
             continue
         metrics = get_checkpoint_metrics(
             checkpoint_dir,
