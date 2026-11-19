@@ -1,0 +1,36 @@
+type: claude_code
+binary: /usr/local/bin/claude-nomos
+docker_template: configs/agents/docker_nomos.j2
+permission_mode: bypassPermissions
+version: "2.1.252"
+timeout: 900
+env:
+  IS_SANDBOX: "1"
+cost_limits:
+  cost_limit: 0
+  step_limit: 100
+  net_cost_limit: 0
+settings:
+  hooks:
+    SessionStart:
+      - hooks:
+          - type: command
+            command: "/usr/local/bin/nomos hook session-start --container-sandbox"
+            timeout: 10
+    PreToolUse:
+      - matcher: "Bash|Read|Write|Edit|MultiEdit|NotebookEdit|Glob|Grep|WebFetch|WebSearch|Task.*|mcp__.*"
+        hooks:
+          - type: command
+            command: "/usr/local/bin/nomos hook pre-tool --container-sandbox"
+            timeout: 10
+    PostToolUse:
+      - matcher: "Bash|Read|Write|Edit|MultiEdit|NotebookEdit|Glob|Grep"
+        hooks:
+          - type: command
+            command: "/usr/local/bin/nomos hook post-tool --container-sandbox"
+            timeout: 15
+    Stop:
+      - hooks:
+          - type: command
+            command: "/usr/local/bin/nomos hook stop --container-sandbox"
+            timeout: 15
