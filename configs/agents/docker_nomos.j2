@@ -1,0 +1,79 @@
+FROM {{ base_image }}
+
+# --- Install pinned Apache 2.0 Nomos binary (SHA-256 verified) --------------
+USER root
+ARG NOMOS_VERSION=4.24.0
+RUN set -eu; \
+    arch="$(uname -m)"; \
+    case "$arch" in \
+      x86_64|amd64) \
+        asset="nomos_Linux_x86_64.tar.gz"; \
+        sha256="571c169ab5f841af4d139289b3ce1c2168b7d8286e0422d0cac658d102f49b19" ;; \
+      aarch64|arm64) \
+        asset="nomos_Linux_arm64.tar.gz"; \
+        sha256="f60f889403096b6baa9f34ad7c8973a2b4cb5a19ab67fa1ca6dac533c8fca7b4" ;; \
+      *) echo "Unsupported architecture: $arch" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/mgantlett/nomos/releases/download/v${NOMOS_VERSION}/${asset}" -o "/tmp/${asset}"; \
+    echo "${sha256}  /tmp/${asset}" | sha256sum -c -; \
+    tar -xzf "/tmp/${asset}" -C /usr/local/bin nomos; \
+    chmod 0755 /usr/local/bin/nomos; \
+    rm -f "/tmp/${asset}"; \
+    /usr/local/bin/nomos --version
+
+# --- Install Claude Code + Nomos container entrypoint wrapper ---------------
+RUN printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'set -euo pipefail' \
+    'export PATH="/usr/local/bin:$HOME/.npm-global/bin:$PATH"' \
+    'mkdir -p "$HOME/.cache/nomos/hooks"' \
+    '' \
+    'git config --global user.name "Nomos Agent" 2>/dev/null || true' \
+    'git config --global user.email "agent@local" 2>/dev/null || true' \
+    'git config --global init.defaultBranch main 2>/dev/null || true' \
+    'git config --global --add safe.directory /workspace 2>/dev/null || true' \
+    '' \
+    'if [ ! -d /workspace/.git ]; then' \
+    '  git -C /workspace init -q -b main' \
+    '  git -C /workspace add -A' \
+    '  git -C /workspace commit -q --allow-empty -m "chore: initial scb baseline"' \
+    '  (cd /workspace && /usr/local/bin/nomos init --strict --local --agents claude >/dev/null)' \
+    '  git -C /workspace switch -q -c feat/scb' \
+    'else' \
+    '  cur_branch="$(git -C /workspace rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")"' \
+    '  if [ "$cur_branch" = "main" ] || [ "$cur_branch" = "master" ]; then' \
+    '    if [ ! -f /workspace/nomos.yaml ]; then' \
+    '      (cd /workspace && /usr/local/bin/nomos init --strict --local --agents claude >/dev/null)' \
+    '    fi' \
+    '    git -C /workspace switch -q -c feat/scb 2>/dev/null || git -C /workspace switch -q feat/scb' \
+    '  elif [ ! -f /workspace/nomos.yaml ]; then' \
+    '    (cd /workspace && /usr/local/bin/nomos init --strict --local --agents claude >/dev/null)' \
+    '  fi' \
+    'fi' \
+    '' \
+    '# Let slop-code-bench settings.hooks govern hook registration cleanly' \
+    'rm -f /workspace/.claude/settings.json' \
+    'rmdir /workspace/.claude 2>/dev/null || true' \
+    '' \
+    'exec "$HOME/.npm-global/bin/claude" "$@"' \
+    > /usr/local/bin/claude-nomos && chmod 0755 /usr/local/bin/claude-nomos
+
+# --- Switch to non-root -----------------------------------------------------
+USER agent
+WORKDIR /workspace
+
+# Configure npm globals under user home
+ENV NPM_CONFIG_PREFIX="$HOME/.npm-global"
+ENV PATH="/usr/local/bin:$HOME/.npm-global/bin:$PATH"
+ENV XDG_CONFIG_HOME="$HOME/.config"
+ENV XDG_DATA_HOME="$HOME/.local/share"
+
+# --- Install Claude Code dependencies ---------------------------------------
+RUN npm install -g @anthropic-ai/claude-code@{{version}} @musistudio/claude-code-router && \
+    mkdir -p "$HOME/.claude/projects" "$HOME/.cache/nomos/hooks"
+
+# --- Make the agent home usable by any runtime uid --------------------------
+RUN chmod -R a+rwX "$HOME"
+
+# --- Default shell ----------------------------------------------------------
+CMD ["claude-nomos"]
