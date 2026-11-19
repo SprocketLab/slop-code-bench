@@ -39,6 +39,7 @@ from slop_code.metrics.models import MetricStats
 from slop_code.metrics.models import PassRatesByType
 from slop_code.metrics.models import PassRatesStats
 from slop_code.metrics.models import RatiosStats
+from slop_code.metrics.models import RegressionBreakdownStats
 from slop_code.metrics.models import RunSummary
 from slop_code.metrics.models import SnapshotMetrics
 from slop_code.metrics.models import SnapshotQualityReport
@@ -90,6 +91,7 @@ __all__ = [
     "PassRatesByType",
     "PassRatesStats",
     "RatiosStats",
+    "RegressionBreakdownStats",
     "RunSummary",
     "StepsStats",
     "TimeStats",
